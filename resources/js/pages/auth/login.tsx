@@ -10,7 +10,7 @@ import { request } from '@/routes/password';
 import { inertiaFormProps } from '@/lib/inertia-form-props';
 
 const inputUnderlineClassName =
-    'w-full border-0 border-b border-[var(--o-border2)] bg-transparent py-3 pl-9 pr-3 font-[family-name:var(--font-body)] text-sm text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:border-[var(--o-amber)]/60 focus:outline-none transition-colors duration-150';
+    'w-full border-0 border-b border-[var(--o-border2)] bg-transparent py-3 pl-9 pr-3 font-[family-name:var(--font-body)] text-sm text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:border-[var(--auth-focus-border)] focus:outline-none transition-colors duration-150';
 
 type Props = {
     status?: string;
@@ -43,8 +43,8 @@ export default function Login({
                     <div className="relative flex flex-col gap-8">
                         {/* Card header: icon + título + subtítulo */}
                         <div className="flex flex-col gap-3">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--o-amber)]/15">
-                                <AppLogoIcon className="size-6 fill-[var(--o-amber)]" />
+                            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--auth-header-icon-bg)]">
+                                <AppLogoIcon className="size-6 fill-[var(--auth-cta-from)]" />
                             </div>
                             <div>
                                 <h1 className="font-[family-name:var(--font-display)] text-xl font-bold text-[var(--foreground)]">
@@ -65,7 +65,7 @@ export default function Login({
                                         Usuario o documento
                                     </label>
                                     <div className="relative">
-                                        <User className="absolute left-0 top-1/2 size-4 -translate-y-1/2 text-[var(--muted-foreground)]" />
+                                        <User className="absolute left-0 top-1/2 size-4 -translate-y-1/2 text-[var(--auth-icon)]" />
                                         <input
                                             id="login"
                                             type="text"
@@ -95,7 +95,7 @@ export default function Login({
                                         {canResetPassword && (
                                             <TextLink
                                                 href={request()}
-                                                className="font-[family-name:var(--font-body)] text-xs text-[var(--muted-foreground)] hover:text-[var(--o-amber)]"
+                                                className="font-[family-name:var(--font-body)] text-xs text-[var(--auth-link)] decoration-[var(--auth-link)]/35 underline-offset-4 hover:text-[var(--auth-link-hover)] hover:decoration-[var(--auth-link-hover)]"
                                                 tabIndex={5}
                                             >
                                                 ¿Olvidaste tu contraseña?
@@ -103,7 +103,7 @@ export default function Login({
                                         )}
                                     </div>
                                     <div className="relative">
-                                        <Lock className="absolute left-0 top-1/2 size-4 -translate-y-1/2 text-[var(--muted-foreground)]" />
+                                        <Lock className="absolute left-0 top-1/2 size-4 -translate-y-1/2 text-[var(--auth-icon)]" />
                                         <input
                                             id="password"
                                             type={showPassword ? 'text' : 'password'}
@@ -119,7 +119,7 @@ export default function Login({
                                             onClick={() =>
                                                 setShowPassword((p) => !p)
                                             }
-                                            className="absolute right-0 top-1/2 -translate-y-1/2 cursor-pointer p-2 text-[var(--muted-foreground)] hover:text-[var(--foreground)] focus:outline-none"
+                                            className="absolute right-0 top-1/2 -translate-y-1/2 cursor-pointer p-2 text-[var(--auth-icon)] hover:text-[var(--auth-link)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--auth-ring)] rounded-md"
                                             aria-label={
                                                 showPassword
                                                     ? 'Ocultar contraseña'
@@ -145,7 +145,7 @@ export default function Login({
                                         type="checkbox"
                                         name="remember"
                                         tabIndex={3}
-                                        className="size-4 rounded border-[var(--o-border2)] bg-transparent text-[var(--o-amber)] focus:ring-[var(--o-amber)]/50"
+                                        className="size-4 rounded border-[var(--o-border2)] bg-transparent text-[var(--auth-cta-from)] focus:ring-[var(--auth-ring)]"
                                     />
                                     <span className="font-[family-name:var(--font-body)] text-sm text-[var(--muted-foreground)]">
                                         Mantener sesión iniciada
@@ -157,14 +157,11 @@ export default function Login({
                                     tabIndex={4}
                                     disabled={processing}
                                     data-test="login-button"
-                                    className="w-full cursor-pointer rounded-xl py-3 font-[family-name:var(--font-display)] text-sm font-semibold text-[var(--o-void)] transition-opacity duration-150 hover:opacity-95 disabled:cursor-default disabled:opacity-60"
-                                    style={{
-                                        background: 'linear-gradient(135deg, var(--o-amber) 0%, var(--o-amber2) 100%)',
-                                    }}
+                                    className="auth-cta w-full cursor-pointer rounded-xl py-3 font-[family-name:var(--font-display)] text-sm font-semibold transition-[filter,opacity] duration-150 disabled:cursor-default"
                                 >
                                     {processing ? (
                                         <span className="inline-flex items-center justify-center gap-2">
-                                            <span className="size-4 animate-spin rounded-full border-2 border-[var(--o-void)] border-t-transparent" />
+                                            <span className="size-4 animate-spin rounded-full border-2 border-[var(--auth-cta-fg)] border-t-transparent" />
                                             Verificando...
                                         </span>
                                     ) : (
@@ -178,7 +175,7 @@ export default function Login({
                                     ¿No tienes cuenta?{' '}
                                     <TextLink
                                         href="/register"
-                                        className="font-medium text-[var(--o-amber)] hover:underline"
+                                        className="font-medium text-[var(--auth-link)] hover:text-[var(--auth-link-hover)]"
                                         tabIndex={5}
                                     >
                                         Crear cuenta gratis →
@@ -187,8 +184,8 @@ export default function Login({
                             )}
 
                             {/* Footer card: conexión segura */}
-                            <div className="mt-8 flex items-center justify-center gap-2 border-t border-[var(--o-border2)] pt-6 font-[family-name:var(--font-mono)] text-[10px] text-[var(--muted-foreground)] opacity-60">
-                                <ShieldCheck className="size-3.5" />
+                            <div className="mt-8 flex items-center justify-center gap-2 border-t border-[var(--o-border2)] pt-6 font-[family-name:var(--font-mono)] text-[10px] text-[var(--muted-foreground)]">
+                                <ShieldCheck className="size-3.5 text-[var(--auth-icon)]" />
                                 <span>Conexión segura</span>
                                 <span className="opacity-50">·</span>
                                 <span>ORVAE</span>
@@ -197,7 +194,7 @@ export default function Login({
                             {processing && (
                                 <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-[color-mix(in_oklab,var(--o-dark2)_88%,transparent)] backdrop-blur-xl">
                                     <div className="flex flex-col items-center gap-3">
-                                        <span className="size-8 animate-spin rounded-full border-2 border-[var(--o-amber)]/80 border-t-transparent" />
+                                        <span className="size-8 animate-spin rounded-full border-2 border-[var(--auth-cta-from)] border-t-transparent" />
                                         <p className="font-mono text-xs text-[var(--foreground)]/85">
                                             Iniciando sesión...
                                         </p>

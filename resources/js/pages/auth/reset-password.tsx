@@ -18,10 +18,10 @@ type Props = {
 
 export default function ResetPassword({ token, email }: Props) {
     const inputUnderlineClassName =
-        'w-full border-0 border-b border-[var(--o-border2)] bg-transparent rounded-none shadow-none py-3 pl-9 pr-3 font-[family-name:var(--font-body)] text-sm text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:border-[var(--o-amber)]/60 transition-colors duration-150';
+        'w-full border-0 border-b border-[var(--o-border2)] bg-transparent rounded-none shadow-none py-3 pl-9 pr-3 font-[family-name:var(--font-body)] text-sm text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:border-[var(--auth-focus-border)] transition-colors duration-150';
 
     const passwordUnderlineClassName =
-        'w-full border-0 border-b border-[var(--o-border2)] bg-transparent rounded-none shadow-none py-3 pl-9 pr-10 font-[family-name:var(--font-body)] text-sm text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:border-[var(--o-amber)]/60 transition-colors duration-150';
+        'w-full border-0 border-b border-[var(--o-border2)] bg-transparent rounded-none shadow-none py-3 pl-9 pr-10 font-[family-name:var(--font-body)] text-sm text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:border-[var(--auth-focus-border)] transition-colors duration-150';
 
     return (
         <AuthOrvaeLoginLayout
@@ -33,8 +33,8 @@ export default function ResetPassword({ token, email }: Props) {
 
             <div className="flex flex-col gap-8">
                 <div className="flex flex-col gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--o-amber)]/15">
-                        <Lock className="size-6 text-[var(--o-amber)]" />
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--auth-header-icon-bg)]">
+                        <Lock className="size-6 text-[var(--auth-cta-from)]" />
                     </div>
                     <div>
                         <h1 className="font-[family-name:var(--font-display)] text-xl font-bold text-[var(--foreground)]">
@@ -90,7 +90,7 @@ export default function ResetPassword({ token, email }: Props) {
                                     Contraseña
                                 </Label>
                                 <div className="relative">
-                                    <Lock className="absolute left-0 top-1/2 size-4 -translate-y-1/2 text-[var(--muted-foreground)]" />
+                                    <Lock className="absolute left-0 top-1/2 size-4 -translate-y-1/2 text-[var(--auth-icon)]" />
                                     <PasswordInput
                                         id="password"
                                         name="password"
@@ -114,7 +114,7 @@ export default function ResetPassword({ token, email }: Props) {
                                     Confirmar contraseña
                                 </Label>
                                 <div className="relative">
-                                    <Lock className="absolute left-0 top-1/2 size-4 -translate-y-1/2 text-[var(--muted-foreground)]" />
+                                    <Lock className="absolute left-0 top-1/2 size-4 -translate-y-1/2 text-[var(--auth-icon)]" />
                                     <PasswordInput
                                         id="password_confirmation"
                                         name="password_confirmation"
@@ -131,15 +131,14 @@ export default function ResetPassword({ token, email }: Props) {
 
                             <Button
                                 type="submit"
+                                variant="ghost"
                                 disabled={processing}
                                 data-test="reset-password-button"
-                                className="mt-2 w-full cursor-pointer rounded-xl py-3 font-[family-name:var(--font-display)] text-sm font-semibold text-[var(--o-void)] transition-opacity duration-150 hover:opacity-95 disabled:cursor-default disabled:opacity-60"
-                                style={{
-                                    background:
-                                        'linear-gradient(135deg, var(--o-amber) 0%, var(--o-amber2) 100%)',
-                                }}
+                                className="auth-cta mt-2 h-auto w-full cursor-pointer rounded-xl py-3 font-[family-name:var(--font-display)] text-sm font-semibold text-[var(--auth-cta-fg)] transition-[filter,opacity] duration-150 hover:bg-transparent hover:text-[var(--auth-cta-fg)] disabled:cursor-default"
                             >
-                                {processing && <Spinner />}
+                                {processing && (
+                                    <Spinner className="text-[var(--auth-cta-fg)]" />
+                                )}
                                 Restablecer contraseña
                             </Button>
 
@@ -148,7 +147,7 @@ export default function ResetPassword({ token, email }: Props) {
                                 <TextLink
                                     href="/login"
                                     tabIndex={10}
-                                    className="font-medium text-[var(--o-amber)] hover:underline"
+                                    className="font-medium text-[var(--auth-link)] hover:text-[var(--auth-link-hover)]"
                                 >
                                     Inicia sesión
                                 </TextLink>

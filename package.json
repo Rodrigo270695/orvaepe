@@ -10,7 +10,8 @@
         "format:check": "prettier --check resources/",
         "lint": "eslint . --fix",
         "lint:check": "eslint .",
-        "types:check": "tsc --noEmit"
+        "types:check": "tsc --noEmit",
+        "pwa:icons": "node scripts/generate-pwa-icons.mjs"
     },
     "devDependencies": {
         "@eslint/js": "^9.19.0",
@@ -26,6 +27,7 @@
         "eslint-plugin-react-hooks": "^7.0.0",
         "prettier": "^3.4.2",
         "prettier-plugin-tailwindcss": "^0.6.11",
+        "sharp": "^0.34.5",
         "typescript-eslint": "^8.23.0"
     },
     "dependencies": {

@@ -1,11 +1,20 @@
 import MarketingLayout from '@/components/marketing/MarketingLayout';
+import { marketingSeo } from '@/marketing/seoCopy';
 import MarketingHero from '@/components/marketing/MarketingHero';
 import Section from '@/components/welcome/Section';
 import CTASection from '@/components/welcome/sections/CTASection';
 
 export default function MoreServices() {
     return (
-        <MarketingLayout title="Más servicios">
+        <MarketingLayout
+            title={marketingSeo.masServicios.title}
+            description={marketingSeo.masServicios.description}
+            canonicalPath="/otros-servicios"
+            breadcrumbs={[
+                { name: 'Inicio', path: '/' },
+                { name: 'Más servicios', path: '/otros-servicios' },
+            ]}
+        >
             <MarketingHero
                 eyebrow="Más servicios"
                 title={

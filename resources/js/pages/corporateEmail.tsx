@@ -1,11 +1,20 @@
 import MarketingLayout from '@/components/marketing/MarketingLayout';
+import { marketingSeo } from '@/marketing/seoCopy';
 import MarketingHero from '@/components/marketing/MarketingHero';
 import Section from '@/components/welcome/Section';
 import CTASection from '@/components/welcome/sections/CTASection';
 
 export default function CorporateEmail() {
     return (
-        <MarketingLayout title="Correos corporativos">
+        <MarketingLayout
+            title={marketingSeo.correos.title}
+            description={marketingSeo.correos.description}
+            canonicalPath="/correos-corporativos"
+            breadcrumbs={[
+                { name: 'Inicio', path: '/' },
+                { name: 'Correos corporativos', path: '/correos-corporativos' },
+            ]}
+        >
             <MarketingHero
                 eyebrow="Correos corporativos"
                 title={

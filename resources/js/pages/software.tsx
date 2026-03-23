@@ -1,6 +1,6 @@
-import { Head } from '@inertiajs/react';
-
+import SeoHead from '@/components/seo/SeoHead';
 import MarketingUnifiedNavbar from '@/components/marketing/MarketingUnifiedNavbar';
+import { marketingSeo } from '@/marketing/seoCopy';
 import SoftwareCategories from '@/components/software/SoftwareCategories';
 import SoftwareDevelopmentHero from '@/components/software/SoftwareDevelopmentHero';
 import AppearanceFloatingRailToggle from '@/components/welcome/AppearanceFloatingRailToggle';
@@ -26,7 +26,15 @@ export default function Software({
 }) {
     return (
         <>
-            <Head title="Orvae ERP — Software desarrollado" />
+            <SeoHead
+                title={marketingSeo.software.title}
+                description={marketingSeo.software.description}
+                canonicalPath="/software"
+                breadcrumbs={[
+                    { name: 'Inicio', path: '/' },
+                    { name: 'Software', path: '/software' },
+                ]}
+            />
 
             <div className="min-h-screen bg-background text-foreground">
                 <MarketingUnifiedNavbar canRegister={canRegister} />

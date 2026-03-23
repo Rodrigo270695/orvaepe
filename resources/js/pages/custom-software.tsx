@@ -1,11 +1,20 @@
 import MarketingLayout from '@/components/marketing/MarketingLayout';
+import { marketingSeo } from '@/marketing/seoCopy';
 import MarketingHero from '@/components/marketing/MarketingHero';
 import Section from '@/components/welcome/Section';
 import CTASection from '@/components/welcome/sections/CTASection';
 
 export default function CustomSoftware() {
     return (
-        <MarketingLayout title="Software a medida">
+        <MarketingLayout
+            title={marketingSeo.softwareMedida.title}
+            description={marketingSeo.softwareMedida.description}
+            canonicalPath="/software-a-medida"
+            breadcrumbs={[
+                { name: 'Inicio', path: '/' },
+                { name: 'Software a medida', path: '/software-a-medida' },
+            ]}
+        >
             <MarketingHero
                 eyebrow="Software a medida"
                 title={

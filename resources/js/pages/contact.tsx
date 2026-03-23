@@ -16,6 +16,7 @@ import {
 import { type ComponentType, useEffect, useState } from 'react';
 
 import MarketingLayout from '@/components/marketing/MarketingLayout';
+import { marketingSeo } from '@/marketing/seoCopy';
 import InputError from '@/components/input-error';
 import {
     Select,
@@ -94,7 +95,15 @@ export default function Contact() {
     }, [status]);
 
     return (
-        <MarketingLayout title="Contacto">
+        <MarketingLayout
+            title={marketingSeo.contacto.title}
+            description={marketingSeo.contacto.description}
+            canonicalPath="/contacto"
+            breadcrumbs={[
+                { name: 'Inicio', path: '/' },
+                { name: 'Contacto', path: '/contacto' },
+            ]}
+        >
             <div className="relative overflow-hidden border-b border-[color-mix(in_oklab,var(--border)_50%,transparent)]">
                 <GeometricBackground variant="grid-dots" opacity={0.06} />
                 <div className="relative z-10 mx-auto max-w-3xl px-4 py-14 sm:px-6 sm:py-20">

@@ -3,6 +3,7 @@ import { ArrowLeft, Minus, Plus, ShoppingBag, Tag, Trash2, X } from 'lucide-reac
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import MarketingLayout from '@/components/marketing/MarketingLayout';
+import { marketingSeo } from '@/marketing/seoCopy';
 import GeometricBackground from '@/components/welcome/GeometricBackground';
 import {
     cartTotalsWithIgv,
@@ -448,7 +449,13 @@ export default function MarketingCart() {
         'cursor-pointer inline-flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2';
 
     return (
-        <MarketingLayout title="Carrito">
+        <MarketingLayout
+            title={marketingSeo.carrito.title}
+            description={marketingSeo.carrito.description}
+            canonicalPath="/carrito"
+            noindex
+            structuredData="none"
+        >
             <div className="relative overflow-hidden border-b border-[color-mix(in_oklab,var(--border)_80%,transparent)]">
                 <GeometricBackground variant="grid-dots" opacity={0.06} />
                 <div className="relative mx-auto max-w-6xl px-4 py-10 sm:px-6 md:py-14">

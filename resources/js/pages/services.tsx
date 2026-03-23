@@ -1,6 +1,7 @@
 import { usePage } from '@inertiajs/react';
 
 import MarketingLayout from '@/components/marketing/MarketingLayout';
+import { marketingSeo } from '@/marketing/seoCopy';
 import MarketingHero from '@/components/marketing/MarketingHero';
 import LicenseOemSkuCard, {
     type LicenseSkuItem,
@@ -25,7 +26,15 @@ export default function Services() {
     const { sections = [] } = usePage<PageProps>().props;
 
     return (
-        <MarketingLayout title="Servicios">
+        <MarketingLayout
+            title={marketingSeo.servicios.title}
+            description={marketingSeo.servicios.description}
+            canonicalPath="/servicios"
+            breadcrumbs={[
+                { name: 'Inicio', path: '/' },
+                { name: 'Servicios', path: '/servicios' },
+            ]}
+        >
             <MarketingHero
                 eyebrow="Servicios"
                 title={

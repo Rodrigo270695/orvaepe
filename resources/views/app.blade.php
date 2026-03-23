@@ -4,6 +4,13 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
+        <meta name="theme-color" content="#4A80B8" media="(prefers-color-scheme: light)">
+        <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)">
+        <meta name="application-name" content="{{ config('app.name', 'ORVAE') }}">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+        <meta name="apple-mobile-web-app-title" content="{{ config('app.name', 'ORVAE') }}">
+        <meta name="mobile-web-app-capable" content="yes">
 
         {{-- Inline script to detect system dark mode preference and apply it immediately --}}
         <script>
@@ -58,7 +65,8 @@
         <title inertia>{{ config('app.name', 'Laravel') }}</title>
 
         <link id="favicon" rel="icon" href="/orvae-transparent.ico" sizes="any">
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+        <link rel="manifest" href="/manifest.webmanifest">
+        <link rel="apple-touch-icon" href="/icons/pwa/icon-180.png">
 
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

@@ -179,6 +179,21 @@
     --neu-inset:
         inset 4px 4px 10px var(--inset-light),
         inset -3px -3px 8px var(--inset-dark);
+
+    /*
+     * Auth (login / registro / reset): solo paleta ORVAE.
+     * CTA modo claro: grafito (void→dark) + texto crema (alto contraste sobre fondo claro de página).
+     * No usar --o-amber/--o-amber2 como gradiente + --o-void como texto (mismo rango de luminancia).
+     */
+    --auth-cta-from: var(--o-void);
+    --auth-cta-to: var(--o-dark);
+    --auth-cta-fg: var(--o-cream2);
+    --auth-ring: color-mix(in oklab, var(--o-tech) 40%, transparent);
+    --auth-link: var(--o-void);
+    --auth-link-hover: var(--o-dark2);
+    --auth-icon: var(--o-dark2);
+    --auth-header-icon-bg: color-mix(in oklab, var(--o-tech) 16%, transparent);
+    --auth-focus-border: color-mix(in oklab, var(--o-tech) 55%, var(--o-void) 45%);
 }
 
 .dark {
@@ -285,6 +300,56 @@
     --neu-inset:
         inset 4px 4px 10px var(--inset-light),
         inset -3px -3px 8px var(--inset-dark);
+
+    /* CTA modo oscuro: mismo criterio que --primary (tech + texto void) */
+    --auth-cta-from: var(--o-tech);
+    --auth-cta-to: var(--o-tech2);
+    --auth-cta-fg: var(--o-void);
+    --auth-ring: color-mix(in oklab, var(--o-tech) 48%, transparent);
+    --auth-link: var(--o-tech2);
+    --auth-link-hover: var(--o-cream2);
+    --auth-icon: var(--o-warm);
+    --auth-header-icon-bg: color-mix(in oklab, var(--o-tech) 20%, transparent);
+    --auth-focus-border: color-mix(in oklab, var(--o-tech2) 58%, white 8%);
+}
+
+/* Botón principal en pantallas auth (login, registro, recuperar) */
+.auth-cta {
+    background: linear-gradient(
+        135deg,
+        var(--auth-cta-from) 0%,
+        var(--auth-cta-to) 100%
+    );
+    color: var(--auth-cta-fg);
+    box-shadow:
+        0 1px 2px color-mix(in oklab, var(--auth-cta-to) 38%, transparent),
+        inset 0 1px 0 color-mix(in oklab, white 14%, transparent);
+}
+
+.dark .auth-cta {
+    box-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.35),
+        inset 0 1px 0 color-mix(in oklab, white 18%, transparent);
+}
+
+.auth-cta:hover:not(:disabled) {
+    filter: brightness(1.06);
+    color: var(--auth-cta-fg);
+}
+
+.auth-cta:active:not(:disabled) {
+    filter: brightness(0.96);
+}
+
+.auth-cta:focus-visible {
+    outline: none;
+    box-shadow:
+        0 0 0 3px var(--auth-ring),
+        0 1px 2px color-mix(in oklab, var(--auth-cta-to) 38%, transparent);
+}
+
+.auth-cta:disabled {
+    opacity: 0.62;
 }
 
 /* Admin panel only: neumorphism-light palette */

@@ -12,7 +12,7 @@ import { inertiaFormProps } from '@/lib/inertia-form-props';
 
 export default function ForgotPassword({ status }: { status?: string }) {
     const inputUnderlineClassName =
-        'w-full border-0 border-b border-[var(--o-border2)] bg-transparent rounded-none shadow-none py-3 pl-9 pr-3 font-[family-name:var(--font-body)] text-sm text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:border-[var(--o-amber)]/60 focus-visible:outline-none focus-visible:ring-0 focus-visible:border-[var(--o-amber)]/60 transition-colors duration-150';
+        'w-full border-0 border-b border-[var(--o-border2)] bg-transparent rounded-none shadow-none py-3 pl-9 pr-3 font-[family-name:var(--font-body)] text-sm text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:border-[var(--auth-focus-border)] focus-visible:outline-none focus-visible:ring-0 focus-visible:border-[var(--auth-focus-border)] transition-colors duration-150';
 
     return (
         <AuthOrvaeLoginLayout
@@ -48,7 +48,7 @@ export default function ForgotPassword({ status }: { status?: string }) {
                             <div className="grid gap-2">
                                 <Label
                                     htmlFor="email"
-                                    className="font-[family-name:var(--font-mono)] text-[10px] font-normal uppercase tracking-[0.2em] text-[var(--o-warm)]"
+                                    className="font-[family-name:var(--font-mono)] text-[10px] font-normal uppercase tracking-[0.2em] text-[var(--muted-foreground)]"
                                 >
                                     Correo electrónico
                                 </Label>
@@ -70,16 +70,13 @@ export default function ForgotPassword({ status }: { status?: string }) {
 
                             <div className="my-6 flex items-center justify-start">
                                 <Button
-                                    className="w-full cursor-pointer rounded-xl py-3 font-[family-name:var(--font-display)] text-sm font-semibold text-[var(--o-void)] transition-opacity duration-150 hover:opacity-95 disabled:cursor-default disabled:opacity-60"
+                                    variant="ghost"
+                                    className="auth-cta h-auto w-full cursor-pointer rounded-xl py-3 font-[family-name:var(--font-display)] text-sm font-semibold text-[var(--auth-cta-fg)] transition-[filter,opacity] duration-150 hover:bg-transparent hover:text-[var(--auth-cta-fg)] disabled:cursor-default"
                                     disabled={processing}
                                     data-test="email-password-reset-link-button"
-                                    style={{
-                                        background:
-                                            'linear-gradient(135deg, var(--o-amber) 0%, var(--o-amber2) 100%)',
-                                    }}
                                 >
                                     {processing && (
-                                        <LoaderCircle className="h-4 w-4 animate-spin" />
+                                        <LoaderCircle className="h-4 w-4 animate-spin text-[var(--auth-cta-fg)]" />
                                     )}
                                     Enviar enlace para restablecer contraseña
                                 </Button>
@@ -92,7 +89,7 @@ export default function ForgotPassword({ status }: { status?: string }) {
                     <span>O vuelve a</span>
                     <TextLink
                         href="/login"
-                        className="font-medium text-[var(--o-amber)] hover:underline"
+                        className="font-medium text-[var(--auth-link)] hover:text-[var(--auth-link-hover)]"
                     >
                         iniciar sesión
                     </TextLink>

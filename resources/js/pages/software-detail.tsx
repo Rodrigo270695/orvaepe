@@ -2,7 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { usePage } from '@inertiajs/react';
 
+import type { SeoDefaults } from '@/components/seo/SeoHead';
 import MarketingLayout from '@/components/marketing/MarketingLayout';
+import { marketingSeo } from '@/marketing/seoCopy';
 import SoftwareDetailGlassCard from '@/components/software/SoftwareDetailGlassCard';
 import SoftwareDetailPlanCard from '@/components/software/SoftwareDetailPlanCard';
 import SoftwareDetailSection from '@/components/software/SoftwareDetailSection';
@@ -27,8 +29,8 @@ type SoftwareDetailPageProps = {
 };
 
 export default function SoftwareDetail() {
-    const page = usePage<SoftwareDetailPageProps>();
-    const { system: systemFromServer } = page.props;
+    const page = usePage<SoftwareDetailPageProps & { seo: SeoDefaults }>();
+    const { system: systemFromServer, seo } = page.props;
     const { url } = page;
 
     /** Slug de la URL actual (Inertia `url` coincide en SSR y tras navegación cliente). */
@@ -172,9 +174,59 @@ export default function SoftwareDetail() {
         window.setTimeout(() => setAddedCount(0), 2000);
     };
 
+    const softwareApplicationLd = useMemo((): Record<string, unknown> | undefined => {
+        if (!system) {
+            return undefined;
+        }
+
+        const productUrl = `${seo.siteUrl}/software/${system.slug}`;
+        const orgId = `${seo.siteUrl}#organization`;
+        const webpageId = `${productUrl}#webpage`;
+
+        const base: Record<string, unknown> = {
+            '@type': 'SoftwareApplication',
+            '@id': `${productUrl}#product`,
+            name: system.name,
+            description: system.shortDescription,
+            applicationCategory: 'BusinessApplication',
+            operatingSystem: 'Web',
+            url: productUrl,
+            mainEntityOfPage: { '@id': webpageId },
+            brand: { '@id': orgId },
+            provider: { '@id': orgId },
+        };
+
+        const first = system.pricingPlans[0];
+        if (first) {
+            base.offers = {
+                '@type': 'Offer',
+                url: productUrl,
+                priceCurrency: 'PEN',
+                availability: 'https://schema.org/InStock',
+                name: first.label,
+            };
+        }
+
+        return base;
+    }, [system, seo.siteUrl]);
+
     if (!system) {
         return (
-            <MarketingLayout title={isStaleInertiaProps ? 'Cargando…' : 'Sistema'}>
+            <MarketingLayout
+                title={isStaleInertiaProps ? 'Cargando producto…' : 'Producto no disponible'}
+                description={
+                    isStaleInertiaProps
+                        ? marketingSeo.software.description
+                        : 'Este producto no está publicado en el catálogo ORVAE o el enlace ha cambiado.'
+                }
+                canonicalPath={isStaleInertiaProps ? undefined : '/software'}
+                noindex={!isStaleInertiaProps}
+                structuredData={isStaleInertiaProps ? 'minimal' : 'none'}
+                breadcrumbs={[
+                    { name: 'Inicio', path: '/' },
+                    { name: 'Software', path: '/software' },
+                ]}
+            >
                 {isStaleInertiaProps ? (
                     <div className="mx-auto max-w-6xl px-4 py-24 sm:px-6">
                         <div className="animate-pulse space-y-4">
@@ -302,7 +354,19 @@ export default function SoftwareDetail() {
     }, [selectedPlan]);
 
     return (
-        <MarketingLayout title={system.name}>
+        <MarketingLayout
+            title={`${system.name} — Software ORVAE`}
+            description={system.shortDescription}
+            canonicalPath={`/software/${system.slug}`}
+            ogType="product"
+            ogImageAlt={`${system.name} — software ORVAE`}
+            breadcrumbs={[
+                { name: 'Inicio', path: '/' },
+                { name: 'Software', path: '/software' },
+                { name: system.name, path: `/software/${system.slug}` },
+            ]}
+            jsonLd={softwareApplicationLd ? [softwareApplicationLd] : undefined}
+        >
             <div ref={rootRef} className="software-detail-root relative overflow-hidden pb-24 md:pb-0">
                 <div className="sd-scroll-progress" aria-hidden />
 

@@ -18,7 +18,7 @@ export default function Register() {
     const [phoneLen, setPhoneLen] = useState(0);
 
     const inputUnderlineClassName =
-        'w-full border-0 border-b border-[var(--o-border2)] bg-transparent rounded-none shadow-none py-3 pl-9 pr-3 font-[family-name:var(--font-body)] text-sm text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:border-[var(--o-amber)]/60 focus-visible:outline-none focus-visible:ring-0 focus-visible:border-[var(--o-amber)]/60 transition-colors duration-150';
+        'w-full border-0 border-b border-[var(--o-border2)] bg-transparent rounded-none shadow-none py-3 pl-9 pr-3 font-[family-name:var(--font-body)] text-sm text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:border-[var(--auth-focus-border)] focus-visible:outline-none focus-visible:ring-0 focus-visible:border-[var(--auth-focus-border)] transition-colors duration-150';
 
     // El documento puede ser 8 (DNI) o 11 (RUC). Mostramos /8 mientras tenga hasta 8 dígitos,
     // y cambiamos a /11 cuando el usuario ingresa el 9º dígito.
@@ -61,8 +61,8 @@ export default function Register() {
             <Head title="Registrarse" />
             <div className="flex flex-col gap-8">
                 <div className="flex flex-col gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--o-amber)]/15">
-                        <UserPlus className="size-6 text-[var(--o-amber)]" />
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--auth-header-icon-bg)]">
+                        <UserPlus className="size-6 text-[var(--auth-cta-from)]" />
                     </div>
                     <div>
                         <h1 className="font-[family-name:var(--font-display)] text-xl font-bold text-[var(--foreground)]">
@@ -86,13 +86,13 @@ export default function Register() {
                             <div className="grid gap-2 md:col-span-2">
                                 <Label
                                     htmlFor="email"
-                                    className="font-[family-name:var(--font-mono)] text-[10px] font-normal uppercase tracking-[0.2em] text-[var(--o-warm)]"
+                                    className="font-[family-name:var(--font-mono)] text-[10px] font-normal uppercase tracking-[0.2em] text-[var(--muted-foreground)]"
                                 >
                                     Correo electrónico
-                                    <span className="ml-0.5 text-[var(--o-amber)]">*</span>
+                                    <span className="ml-0.5 text-[var(--auth-cta-from)]">*</span>
                                 </Label>
                                 <div className="relative">
-                                    <Mail className="absolute left-0 top-1/2 size-4 -translate-y-1/2 text-[var(--o-warm)]" />
+                                    <Mail className="absolute left-0 top-1/2 size-4 -translate-y-1/2 text-[var(--auth-icon)]" />
                                     <Input
                                         id="email"
                                         type="email"
@@ -112,13 +112,13 @@ export default function Register() {
                             <div className="grid gap-2">
                                 <Label
                                     htmlFor="name"
-                                    className="font-[family-name:var(--font-mono)] text-[10px] font-normal uppercase tracking-[0.2em] text-[var(--o-warm)]"
+                                    className="font-[family-name:var(--font-mono)] text-[10px] font-normal uppercase tracking-[0.2em] text-[var(--muted-foreground)]"
                                 >
                                     Nombre
-                                    <span className="ml-0.5 text-[var(--o-amber)]">*</span>
+                                    <span className="ml-0.5 text-[var(--auth-cta-from)]">*</span>
                                 </Label>
                                 <div className="relative">
-                                    <User className="absolute left-0 top-1/2 size-4 -translate-y-1/2 text-[var(--o-warm)]" />
+                                    <User className="absolute left-0 top-1/2 size-4 -translate-y-1/2 text-[var(--auth-icon)]" />
                                     <Input
                                         id="name"
                                         type="text"
@@ -139,13 +139,13 @@ export default function Register() {
                             <div className="grid gap-2">
                                 <Label
                                     htmlFor="lastname"
-                                    className="font-[family-name:var(--font-mono)] text-[10px] font-normal uppercase tracking-[0.2em] text-[var(--o-warm)]"
+                                    className="font-[family-name:var(--font-mono)] text-[10px] font-normal uppercase tracking-[0.2em] text-[var(--muted-foreground)]"
                                 >
                                     Apellido
-                                    <span className="ml-0.5 text-[var(--o-amber)]">*</span>
+                                    <span className="ml-0.5 text-[var(--auth-cta-from)]">*</span>
                                 </Label>
                                 <div className="relative">
-                                    <User className="absolute left-0 top-1/2 size-4 -translate-y-1/2 text-[var(--o-warm)]" />
+                                    <User className="absolute left-0 top-1/2 size-4 -translate-y-1/2 text-[var(--auth-icon)]" />
                                     <Input
                                         id="lastname"
                                         type="text"
@@ -169,13 +169,13 @@ export default function Register() {
                             <div className="grid gap-2">
                                 <Label
                                     htmlFor="document_number"
-                                    className="font-[family-name:var(--font-mono)] text-[10px] font-normal uppercase tracking-[0.2em] text-[var(--o-warm)]"
+                                    className="font-[family-name:var(--font-mono)] text-[10px] font-normal uppercase tracking-[0.2em] text-[var(--muted-foreground)]"
                                 >
                                     N.º de documento
-                                    <span className="ml-0.5 text-[var(--o-amber)]">*</span>
+                                    <span className="ml-0.5 text-[var(--auth-cta-from)]">*</span>
                                 </Label>
                                 <div className="relative">
-                                    <IdCard className="absolute left-0 top-1/2 size-4 -translate-y-1/2 text-[var(--o-warm)]" />
+                                    <IdCard className="absolute left-0 top-1/2 size-4 -translate-y-1/2 text-[var(--auth-icon)]" />
                                     <Input
                                         id="document_number"
                                         type="text"
@@ -189,7 +189,7 @@ export default function Register() {
                                         maxLength={11}
                                         onInput={handleDigitsOnlyDocument}
                                     />
-                                    <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 font-[family-name:var(--font-mono)] text-[10px] text-[var(--o-warm)] opacity-70">
+                                    <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 font-[family-name:var(--font-mono)] text-[10px] text-[var(--auth-icon)]">
                                         {documentNumberLen}/{documentNumberMax}
                                     </span>
                                 </div>
@@ -202,12 +202,12 @@ export default function Register() {
                             <div className="grid gap-2">
                                 <Label
                                     htmlFor="phone"
-                                    className="font-[family-name:var(--font-mono)] text-[10px] font-normal uppercase tracking-[0.2em] text-[var(--o-warm)]"
+                                    className="font-[family-name:var(--font-mono)] text-[10px] font-normal uppercase tracking-[0.2em] text-[var(--muted-foreground)]"
                                 >
                                     Celular (9 dígitos)
                                 </Label>
                                 <div className="relative">
-                                    <Phone className="absolute left-0 top-1/2 size-4 -translate-y-1/2 text-[var(--o-warm)]" />
+                                    <Phone className="absolute left-0 top-1/2 size-4 -translate-y-1/2 text-[var(--auth-icon)]" />
                                     <Input
                                         id="phone"
                                         type="text"
@@ -220,7 +220,7 @@ export default function Register() {
                                         maxLength={9}
                                         onInput={handleDigitsOnlyPhone}
                                     />
-                                    <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 font-[family-name:var(--font-mono)] text-[10px] text-[var(--o-warm)] opacity-70">
+                                    <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 font-[family-name:var(--font-mono)] text-[10px] text-[var(--auth-icon)]">
                                         {phoneLen}/9
                                     </span>
                                 </div>
@@ -236,13 +236,13 @@ export default function Register() {
                             <div className="grid gap-2">
                                 <Label
                                     htmlFor="password"
-                                    className="font-[family-name:var(--font-mono)] text-[10px] font-normal uppercase tracking-[0.2em] text-[var(--o-warm)]"
+                                    className="font-[family-name:var(--font-mono)] text-[10px] font-normal uppercase tracking-[0.2em] text-[var(--muted-foreground)]"
                                 >
                                     Contraseña
-                                    <span className="ml-0.5 text-[var(--o-amber)]">*</span>
+                                    <span className="ml-0.5 text-[var(--auth-cta-from)]">*</span>
                                 </Label>
                                 <div className="relative">
-                                    <Lock className="absolute left-0 top-1/2 size-4 -translate-y-1/2 text-[var(--o-warm)]" />
+                                    <Lock className="absolute left-0 top-1/2 size-4 -translate-y-1/2 text-[var(--auth-icon)]" />
                                     <PasswordInput
                                         id="password"
                                         required
@@ -259,13 +259,13 @@ export default function Register() {
                             <div className="grid gap-2">
                                 <Label
                                     htmlFor="password_confirmation"
-                                    className="font-[family-name:var(--font-mono)] text-[10px] font-normal uppercase tracking-[0.2em] text-[var(--o-warm)]"
+                                    className="font-[family-name:var(--font-mono)] text-[10px] font-normal uppercase tracking-[0.2em] text-[var(--muted-foreground)]"
                                 >
                                     Confirmar contraseña
-                                    <span className="ml-0.5 text-[var(--o-amber)]">*</span>
+                                    <span className="ml-0.5 text-[var(--auth-cta-from)]">*</span>
                                 </Label>
                                 <div className="relative">
-                                    <Lock className="absolute left-0 top-1/2 size-4 -translate-y-1/2 text-[var(--o-warm)]" />
+                                    <Lock className="absolute left-0 top-1/2 size-4 -translate-y-1/2 text-[var(--auth-icon)]" />
                                     <PasswordInput
                                         id="password_confirmation"
                                         required
@@ -285,16 +285,15 @@ export default function Register() {
 
                             <Button
                                 type="submit"
+                                variant="ghost"
                                 tabIndex={9}
                                 data-test="register-user-button"
                                 disabled={processing}
-                                className="mt-2 w-full cursor-pointer rounded-xl py-3 font-[family-name:var(--font-display)] text-sm font-semibold text-[var(--o-void)] transition-opacity duration-150 hover:opacity-95 disabled:cursor-default disabled:opacity-60"
-                                style={{
-                                    background:
-                                        'linear-gradient(135deg, var(--o-amber) 0%, var(--o-amber2) 100%)',
-                                }}
+                                className="auth-cta mt-2 h-auto w-full cursor-pointer rounded-xl py-3 font-[family-name:var(--font-display)] text-sm font-semibold text-[var(--auth-cta-fg)] transition-[filter,opacity] duration-150 hover:bg-transparent hover:text-[var(--auth-cta-fg)] disabled:cursor-default"
                             >
-                                {processing && <Spinner />}
+                                {processing && (
+                                    <Spinner className="text-[var(--auth-cta-fg)]" />
+                                )}
                                 Crear cuenta
                             </Button>
 
@@ -303,7 +302,7 @@ export default function Register() {
                                 <TextLink
                                     href="/login"
                                     tabIndex={10}
-                                    className="font-medium text-[var(--o-amber)] hover:underline"
+                                    className="font-medium text-[var(--auth-link)] hover:text-[var(--auth-link-hover)]"
                                 >
                                     Inicia sesión
                                 </TextLink>

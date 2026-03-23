@@ -1,6 +1,6 @@
-import { Head } from '@inertiajs/react';
-
+import SeoHead from '@/components/seo/SeoHead';
 import MarketingUnifiedNavbar from '@/components/marketing/MarketingUnifiedNavbar';
+import { marketingSeo } from '@/marketing/seoCopy';
 import PageHero from '@/components/marketing/PageHero';
 import AppearanceFloatingRailToggle from '@/components/welcome/AppearanceFloatingRailToggle';
 import ClientsCarousel from '@/components/welcome/ClientsCarousel';
@@ -18,7 +18,11 @@ export default function Welcome({
 }) {
     return (
         <>
-            <Head title="Orvae ERP — Enterprise software, refined" />
+            <SeoHead
+                title={marketingSeo.home.title}
+                description={marketingSeo.home.description}
+                canonicalPath="/"
+            />
 
             <div className="min-h-screen bg-background text-foreground">
                 <MarketingUnifiedNavbar canRegister={canRegister} />
