@@ -1,0 +1,169 @@
+import { Link, usePage } from '@inertiajs/react';
+import { ArrowRight, Building2, Receipt } from 'lucide-react';
+
+import { ClientPageTitleCard } from '@/components/client-portal/client-page-title-card';
+import ClientPortalLayout from '@/layouts/client-portal-layout';
+import type { ClientUserProfile } from '@/types/client';
+
+type Props = {
+    profile: ClientUserProfile | null;
+};
+
+export default function ClientePanel({ profile }: Props) {
+    const { auth } = usePage().props;
+    const user = auth.user;
+
+    const displayName =
+        profile?.legal_name ||
+        profile?.company_name ||
+        (user && 'name' in user
+            ? `${user.name}${user.lastname ? ` ${user.lastname}` : ''}`
+            : 'Cliente');
+
+    const addressLine =
+        profile?.address ||
+        profile?.city ||
+        'Completa tu dirección en datos de facturación';
+
+    return (
+        <ClientPortalLayout
+            title="Mi panel"
+            headTitle="Mi panel — Área del cliente"
+            titleInHeader={false}
+            breadcrumbs={[{ label: 'Área del cliente' }]}
+        >
+            <div className="mx-auto max-w-6xl space-y-6">
+                <ClientPageTitleCard title="Mi panel" />
+
+                <div className="grid gap-6 lg:grid-cols-3">
+                    <div className="lg:col-span-1">
+                        {/* Gris ORVAE solo en esta tarjeta (sustituye el bloque violeta/azul anterior) */}
+                        <div className="rounded-2xl bg-gradient-to-br from-[var(--o-dark2)] via-[var(--o-dark)] to-[var(--o-void)] p-6 text-white shadow-lg">
+                            <div className="mb-4 flex items-start gap-3">
+                                <div className="rounded-xl bg-white/15 p-2">
+                                    <Building2 className="size-6 text-[var(--o-tech2)]" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                    <p className="text-lg font-semibold leading-tight">
+                                        {displayName}
+                                    </p>
+                                    <p className="mt-1 text-sm text-[var(--o-tech2)]">
+                                        {addressLine}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                <Link
+                                    href="/cliente/facturacion"
+                                    className="inline-flex items-center rounded-lg bg-white px-3 py-2 text-sm font-medium text-[var(--o-void)] shadow hover:bg-zinc-100"
+                                >
+                                    Actualizar datos
+                                </Link>
+                                <Link
+                                    href="/cliente/facturacion"
+                                    className="inline-flex items-center gap-1 text-sm text-[var(--o-tech2)] underline-offset-2 hover:underline"
+                                >
+                                    Facturación
+                                    <Receipt className="size-4" />
+                                </Link>
+                            </div>
+                        </div>
+
+                        <div className="mt-4 rounded-xl border border-zinc-200 bg-white p-4 text-sm text-zinc-600 shadow-sm">
+                            <p className="font-medium text-zinc-800">
+                                Accesos rápidos
+                            </p>
+                            <ul className="mt-2 space-y-2">
+                                <li>
+                                    <Link
+                                        href="/software"
+                                        className="text-violet-700 hover:underline"
+                                    >
+                                        Ver catálogo
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link
+                                        href="/cliente/pagos"
+                                        className="text-violet-700 hover:underline"
+                                    >
+                                        Pagos y pedidos
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link
+                                        href="/cliente/facturacion"
+                                        className="inline-flex items-center gap-1 font-medium text-violet-700 hover:underline"
+                                    >
+                                        Datos fiscales para factura
+                                        <ArrowRight className="size-3.5" />
+                                    </Link>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div className="space-y-6 lg:col-span-2">
+                        <div className="grid gap-4 sm:grid-cols-3">
+                            {[
+                                { label: 'Servicios activos', value: '0' },
+                                { label: 'Recibos pendientes', value: '0' },
+                                { label: 'Tickets', value: '0' },
+                            ].map((stat) => (
+                                <div
+                                    key={stat.label}
+                                    className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
+                                >
+                                    <p className="text-sm text-zinc-500">
+                                        {stat.label}
+                                    </p>
+                                    <p className="mt-1 text-2xl font-semibold text-zinc-900">
+                                        {stat.value}
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md">
+                            <h2 className="text-lg font-semibold text-zinc-900">
+                                Productos / servicios
+                            </h2>
+                            <p className="mt-2 text-sm text-zinc-500">
+                                Cuando contrates servicios, aparecerán aquí con
+                                estado y enlaces de administración.
+                            </p>
+                            <div className="mt-6 rounded-lg border border-dashed border-zinc-200 bg-zinc-50 py-12 text-center text-sm text-zinc-500">
+                                Aún no hay servicios registrados.
+                            </div>
+                        </div>
+
+                        <div className="grid gap-6 md:grid-cols-2">
+                            <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md">
+                                <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
+                                    Soporte reciente
+                                </h2>
+                                <p className="mt-3 text-sm text-zinc-500">
+                                    Sin tickets por ahora.
+                                </p>
+                            </div>
+                            <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md">
+                                <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
+                                    Avisos
+                                </h2>
+                                <p className="mt-3 text-sm text-zinc-500">
+                                    Consulta tus notificaciones en un solo lugar.
+                                </p>
+                                <Link
+                                    href="/cliente/notificaciones"
+                                    className="mt-3 inline-flex text-sm font-medium text-violet-700 hover:underline"
+                                >
+                                    Ver notificaciones
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </ClientPortalLayout>
+    );
+}

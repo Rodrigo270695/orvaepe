@@ -1,0 +1,39 @@
+import { Head } from '@inertiajs/react';
+
+import AccesoClientesIndex from '@/components/acceso/clientes/AccesoClientesIndex';
+import { panelPath, panelSectionTitle } from '@/config/admin-panel';
+import AppLayout from '@/layouts/app-layout';
+import { dashboard } from '@/routes';
+import type { BreadcrumbItem } from '@/types';
+
+type Props = {
+    users: any;
+    filters?: {
+        q?: string;
+        date_from?: string;
+        date_to?: string;
+    };
+};
+
+export default function AccesoClientesPage({ users, filters }: Props) {
+    const section = 'acceso-clientes';
+
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: 'Panel', href: dashboard() },
+        { title: panelSectionTitle(section), href: panelPath(section) },
+    ];
+
+    return (
+        <AppLayout breadcrumbs={breadcrumbs}>
+            <Head title={panelSectionTitle(section)} />
+            <div className="px-4 py-6 md:px-6 lg:px-7">
+                <AccesoClientesIndex
+                    users={users}
+                    initialQuery={filters?.q ?? ''}
+                    initialDateFrom={filters?.date_from ?? ''}
+                    initialDateTo={filters?.date_to ?? ''}
+                />
+            </div>
+        </AppLayout>
+    );
+}

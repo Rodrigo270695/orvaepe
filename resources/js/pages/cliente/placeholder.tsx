@@ -1,0 +1,31 @@
+import ClientPortalLayout from '@/layouts/client-portal-layout';
+import { ClientPageTitleCard } from '@/components/client-portal/client-page-title-card';
+
+type Props = {
+    title: string;
+    description: string;
+};
+
+export default function ClientePlaceholder({ title, description }: Props) {
+    return (
+        <ClientPortalLayout
+            title={title}
+            headTitle={title}
+            titleInHeader={false}
+            breadcrumbs={[
+                { label: 'Área del cliente', href: '/cliente' },
+                { label: title },
+            ]}
+        >
+            <div className="mx-auto max-w-2xl space-y-5">
+                <ClientPageTitleCard title={title} />
+                <div className="rounded-xl border border-dashed border-zinc-300 bg-white p-10 text-center shadow-sm">
+                    <p className="text-[15px] leading-relaxed text-zinc-600">
+                        {description}
+                    </p>
+                    <p className="mt-4 text-sm text-zinc-400">Próximamente</p>
+                </div>
+            </div>
+        </ClientPortalLayout>
+    );
+}
