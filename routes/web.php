@@ -20,6 +20,7 @@ use App\Http\Controllers\Catalog\CatalogSkusController;
 use App\Http\Controllers\Catalog\CouponsController;
 use App\Http\Controllers\Catalog\SoftwareReleaseAssetsController;
 use App\Http\Controllers\Catalog\SoftwareReleasesController;
+use App\Http\Controllers\Checkout\CheckoutMercadoPagoController;
 use App\Http\Controllers\Checkout\CheckoutPayPalController;
 use App\Http\Controllers\Client\ClientPortalController;
 use App\Http\Controllers\DashboardController;
@@ -75,7 +76,14 @@ Route::inertia('/otros-servicios', 'moreServices', [
     'canRegister' => $canRegister,
 ])->name('marketing-more-services');
 
+Route::match(['GET', 'POST'], '/webhooks/mercadopago', [CheckoutMercadoPagoController::class, 'webhook'])
+    ->name('webhooks.mercadopago');
+
 Route::middleware(['auth', 'verified'])->group(function () {
+    Route::post('/checkout/mercadopago', [CheckoutMercadoPagoController::class, 'store'])->name('checkout.mercadopago.store');
+    Route::get('/checkout/mercadopago/return', [CheckoutMercadoPagoController::class, 'handleReturn'])->name('checkout.mercadopago.return');
+    Route::get('/checkout/mercadopago/cancel', [CheckoutMercadoPagoController::class, 'cancel'])->name('checkout.mercadopago.cancel');
+
     Route::post('/checkout/paypal', [CheckoutPayPalController::class, 'store'])->name('checkout.paypal.store');
     Route::post('/checkout/paypal/simulate', [CheckoutPayPalController::class, 'simulateStore'])->name('checkout.paypal.simulate');
     Route::get('/checkout/paypal/simulate-return/{order}', [CheckoutPayPalController::class, 'simulateApprove'])

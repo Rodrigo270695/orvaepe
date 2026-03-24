@@ -14,6 +14,7 @@ class MarketingCartController extends Controller
         return Inertia::render('marketing-cart', [
             'canRegister' => Features::enabled(Features::registration()),
             'paypalSimulateCheckout' => config('paypal.simulate_checkout') && app()->environment('local'),
+            'mercadoPagoEnabled' => trim((string) config('mercadopago.access_token')) !== '',
             'salesIgvRate' => (float) config('sales.igv_rate', 0.18),
         ]);
     }

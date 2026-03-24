@@ -38,12 +38,13 @@ type CartPageProps = {
     auth?: { user?: { name?: string } | null };
     flash?: { status?: string | null; toast?: unknown };
     paypalSimulateCheckout?: boolean;
+    mercadoPagoEnabled?: boolean;
     /** Tasa IGV (ej. 0.18), alineada a config/sales */
     salesIgvRate?: number;
 };
 
 export default function MarketingCart() {
-    const { auth, flash, paypalSimulateCheckout, salesIgvRate } = usePage<CartPageProps>().props;
+    const { auth, flash, paypalSimulateCheckout, mercadoPagoEnabled, salesIgvRate } = usePage<CartPageProps>().props;
     const [lines, setLines] = useState<SoftwareCartItem[]>([]);
     const [mounted, setMounted] = useState(false);
     const [couponInput, setCouponInput] = useState('');
@@ -57,6 +58,7 @@ export default function MarketingCart() {
     const [skuPricesLoading, setSkuPricesLoading] = useState(false);
     const [checkoutLoading, setCheckoutLoading] = useState(false);
     const [checkoutError, setCheckoutError] = useState<string | null>(null);
+    const [selectedGateway, setSelectedGateway] = useState<'paypal' | 'mercadopago'>('paypal');
 
     const linesKeyRef = useRef<string | undefined>(undefined);
     const skipNextInvalidationRef = useRef(true);
@@ -445,6 +447,61 @@ export default function MarketingCart() {
         }
     };
 
+    const startMercadoPagoCheckout = async () => {
+        setCheckoutError(null);
+        if (lines.length === 0 || totalPayable === null) {
+            return;
+        }
+
+        setCheckoutLoading(true);
+        try {
+            const res = await fetch('/checkout/mercadopago', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    'X-CSRF-TOKEN': getCsrfToken(),
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    lines: lines.map((l) => ({ plan_id: l.planId, qty: l.qty })),
+                    coupon_code: appliedCoupon,
+                }),
+            });
+
+            const data = (await res.json()) as {
+                message?: string;
+                approval_url?: string;
+            };
+
+            if (res.status === 401) {
+                window.location.href = '/login';
+                return;
+            }
+
+            if (!res.ok) {
+                setCheckoutError(
+                    typeof data.message === 'string'
+                        ? data.message
+                        : 'No se pudo iniciar el pago con Mercado Pago.',
+                );
+                return;
+            }
+
+            if (typeof data.approval_url === 'string' && data.approval_url !== '') {
+                window.location.href = data.approval_url;
+                return;
+            }
+
+            setCheckoutError('Respuesta inesperada del servidor.');
+        } catch {
+            setCheckoutError('Error de red. Inténtalo de nuevo.');
+        } finally {
+            setCheckoutLoading(false);
+        }
+    };
+
     const pointerBtn =
         'cursor-pointer inline-flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2';
 
@@ -658,16 +715,7 @@ export default function MarketingCart() {
                                 Total con impuestos. Cupón: descuento sobre el total.
                             </p>
 
-                            <div
-                                className="mt-4 text-xs font-semibold uppercase tracking-[0.1em] text-[var(--muted-foreground)]"
-                                id="cart-tax-breakdown"
-                            >
-                                Desglose
-                            </div>
-                            <div
-                                className="mt-3 space-y-2 border-t border-[color-mix(in_oklab,var(--border)_70%,transparent)] pt-4"
-                                aria-labelledby="cart-tax-breakdown"
-                            >
+                            <div className="mt-4 space-y-2 border-t border-[color-mix(in_oklab,var(--border)_70%,transparent)] pt-4">
                                 <div className="flex justify-between text-sm">
                                     <span className="text-[var(--muted-foreground)]">Subtotal (base imponible)</span>
                                     <span className="font-semibold tabular-nums text-[var(--foreground)]">
@@ -842,10 +890,35 @@ export default function MarketingCart() {
                                     href="/login"
                                     className="mt-6 flex w-full cursor-pointer items-center justify-center rounded-xl border border-[color-mix(in_oklab,var(--primary)_40%,var(--border))] bg-transparent px-4 py-3 text-sm font-semibold text-[var(--foreground)] transition-colors hover:bg-[color-mix(in_oklab,var(--primary)_8%,transparent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                                 >
-                                    Inicia sesión para pagar con PayPal
+                                    Inicia sesión para pagar con PayPal o Mercado Pago
                                 </Link>
                             ) : (
                                 <>
+                                    <div className="mt-6 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                                        <button
+                                            type="button"
+                                            className={`rounded-xl border px-3 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] ${
+                                                selectedGateway === 'paypal'
+                                                    ? 'border-[var(--primary)] bg-[color-mix(in_oklab,var(--primary)_12%,transparent)] text-[var(--foreground)]'
+                                                    : 'border-[var(--border)] bg-background/70 text-[var(--muted-foreground)] hover:text-[var(--foreground)]'
+                                            }`}
+                                            onClick={() => setSelectedGateway('paypal')}
+                                        >
+                                            PayPal
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className={`rounded-xl border px-3 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] ${
+                                                selectedGateway === 'mercadopago'
+                                                    ? 'border-[var(--primary)] bg-[color-mix(in_oklab,var(--primary)_12%,transparent)] text-[var(--foreground)]'
+                                                    : 'border-[var(--border)] bg-background/70 text-[var(--muted-foreground)] hover:text-[var(--foreground)]'
+                                            }`}
+                                            onClick={() => setSelectedGateway('mercadopago')}
+                                        >
+                                            Mercado Pago
+                                        </button>
+                                    </div>
+
                                     <button
                                         type="button"
                                         disabled={
@@ -855,14 +928,26 @@ export default function MarketingCart() {
                                             lines.length === 0
                                         }
                                         className="mt-6 w-full cursor-pointer rounded-xl bg-[var(--primary)] px-4 py-3 text-sm font-semibold text-[var(--primary-foreground)] transition-colors hover:brightness-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-60"
-                                        onClick={() => void startPayPalCheckout()}
+                                        onClick={() =>
+                                            void (selectedGateway === 'mercadopago'
+                                                ? startMercadoPagoCheckout()
+                                                : startPayPalCheckout())
+                                        }
                                     >
-                                        {checkoutLoading ? 'Conectando con PayPal…' : 'Pagar con PayPal'}
+                                        {checkoutLoading
+                                            ? selectedGateway === 'mercadopago'
+                                                ? 'Conectando con Mercado Pago…'
+                                                : 'Conectando con PayPal…'
+                                            : selectedGateway === 'mercadopago'
+                                              ? 'Pagar con Mercado Pago'
+                                              : 'Pagar con PayPal'}
                                     </button>
                                     <p className="mt-2 text-center text-xs text-[var(--muted-foreground)]">
-                                        PayPal puede cobrar en USD; el pedido se registra en PEN.
+                                        {selectedGateway === 'mercadopago'
+                                            ? 'Mercado Pago Checkout Pro: serás redirigido para completar el pago.'
+                                            : 'PayPal puede cobrar en USD; el pedido se registra en PEN.'}
                                     </p>
-                                    {paypalSimulateCheckout ? (
+                                    {paypalSimulateCheckout && selectedGateway === 'paypal' ? (
                                         <button
                                             type="button"
                                             disabled={
