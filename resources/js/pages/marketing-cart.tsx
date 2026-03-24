@@ -223,6 +223,36 @@ export default function MarketingCart() {
         [lines, skuPrices, igvRate],
     );
 
+    const cartLineRows = useMemo(() => {
+        return lines.map((line) => {
+            const unit = effectiveLineUnit(line, skuPrices);
+            const igvAppliesSku = unit?.igv_applies ?? true;
+            const amounts =
+                unit !== null
+                    ? peruIgvLineAmounts(
+                          line.qty,
+                          unit.list_price,
+                          unit.tax_included ?? false,
+                          igvRate,
+                          igvAppliesSku,
+                      )
+                    : null;
+            const productHref = line.systemSlug.startsWith('oem-')
+                ? `/licencias#${line.systemSlug}`
+                : line.systemSlug.startsWith('svc-')
+                  ? `/servicios#${line.systemSlug}`
+                  : `/software/${line.systemSlug}`;
+
+            return {
+                line,
+                unit,
+                igvAppliesSku,
+                amounts,
+                productHref,
+            };
+        });
+    }, [lines, skuPrices, igvRate]);
+
     const totalPayable = useMemo(() => {
         if (!totalsWithIgv) {
             return null;
@@ -567,41 +597,139 @@ export default function MarketingCart() {
                     </div>
                 ) : (
                     <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)] lg:items-start">
-                        <div className="overflow-x-auto rounded-2xl border border-[var(--border)] bg-card/60 shadow-sm backdrop-blur-sm">
-                            <table className="w-full min-w-[36rem] text-left text-sm">
+                        <div className="space-y-4 md:hidden" aria-label="Líneas del carrito">
+                            {cartLineRows.map(
+                                ({ line, unit, igvAppliesSku, amounts, productHref }) => (
+                                    <article
+                                        key={`${line.systemSlug}:${line.planId}`}
+                                        className="rounded-2xl border border-[var(--border)] bg-card/60 p-4 shadow-sm backdrop-blur-sm"
+                                    >
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div className="min-w-0 flex-1">
+                                                <Link
+                                                    href={productHref}
+                                                    className="cursor-pointer text-base font-semibold leading-snug text-[var(--foreground)] underline-offset-4 hover:underline"
+                                                >
+                                                    {line.systemName ?? line.systemSlug}
+                                                </Link>
+                                                <p className="mt-1 text-sm text-[var(--muted-foreground)]">
+                                                    {skuPrices[line.planId]?.name ?? formatPlanLabel(line)}
+                                                </p>
+                                                {line.priceText ? (
+                                                    <p className="mt-1 font-mono text-xs text-[var(--muted-foreground)]">
+                                                        {line.priceText}
+                                                    </p>
+                                                ) : null}
+                                            </div>
+                                            <button
+                                                type="button"
+                                                className={`${pointerBtn} shrink-0 gap-1.5 rounded-lg px-2 py-1.5 text-xs font-semibold text-[var(--muted-foreground)] hover:bg-[color-mix(in_oklab,var(--destructive)_14%,transparent)] hover:text-[var(--destructive)] focus-visible:ring-[var(--destructive)] focus-visible:ring-offset-2 focus-visible:ring-offset-background`}
+                                                onClick={() => remove(line)}
+                                            >
+                                                <Trash2 className="size-4" aria-hidden />
+                                                <span className="sr-only">Quitar del carrito</span>
+                                            </button>
+                                        </div>
+
+                                        {unit !== null && igvAppliesSku === false ? (
+                                            <p
+                                                className="mt-3 text-[11px] font-medium text-[var(--muted-foreground)]"
+                                                role="status"
+                                            >
+                                                Este producto no aplica IGV (detalle en el resumen).
+                                            </p>
+                                        ) : null}
+
+                                        <div className="mt-4 flex flex-col gap-3 border-t border-[color-mix(in_oklab,var(--border)_55%,transparent)] pt-4">
+                                            <div className="flex flex-wrap items-baseline justify-between gap-2">
+                                                <span className="text-xs font-medium uppercase tracking-wide text-[var(--muted-foreground)]">
+                                                    Precio unitario (lista)
+                                                </span>
+                                                <span className="font-mono text-sm font-semibold tabular-nums text-[var(--foreground)]">
+                                                    {unit !== null ? (
+                                                        <>
+                                                            {formatPenValue(unit.list_price)}{' '}
+                                                            <span className="text-[var(--muted-foreground)]">
+                                                                {unit.currency}
+                                                            </span>
+                                                        </>
+                                                    ) : skuPricesLoading ? (
+                                                        <span className="text-[var(--muted-foreground)]">…</span>
+                                                    ) : (
+                                                        <span className="text-[var(--muted-foreground)]">—</span>
+                                                    )}
+                                                </span>
+                                            </div>
+
+                                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                                <span className="text-xs font-medium uppercase tracking-wide text-[var(--muted-foreground)]">
+                                                    Cantidad
+                                                </span>
+                                                <div className="inline-flex w-full max-w-[11rem] items-center justify-center rounded-xl border border-[var(--border)] bg-background/80 p-1 sm:ml-auto sm:w-auto">
+                                                    <button
+                                                        type="button"
+                                                        className={`${pointerBtn} size-10 shrink-0 rounded-lg text-[var(--foreground)] hover:bg-[color-mix(in_oklab,var(--muted)_50%,transparent)] focus-visible:ring-[var(--primary)]`}
+                                                        aria-label="Reducir cantidad"
+                                                        onClick={() => bumpQty(line, -1)}
+                                                    >
+                                                        <Minus className="size-4" />
+                                                    </button>
+                                                    <span className="min-w-12 flex-1 text-center text-base font-bold tabular-nums">
+                                                        {line.qty}
+                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        className={`${pointerBtn} size-10 shrink-0 rounded-lg text-[var(--foreground)] hover:bg-[color-mix(in_oklab,var(--muted)_50%,transparent)] focus-visible:ring-[var(--primary)]`}
+                                                        aria-label="Aumentar cantidad"
+                                                        onClick={() => bumpQty(line, 1)}
+                                                    >
+                                                        <Plus className="size-4" />
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-[color-mix(in_oklab,var(--muted)_10%,transparent)] px-3 py-2.5">
+                                                <span className="text-xs font-semibold uppercase tracking-wide text-[var(--muted-foreground)]">
+                                                    Total línea
+                                                </span>
+                                                <span className="font-mono text-base font-bold tabular-nums text-[var(--foreground)]">
+                                                    {amounts !== null && unit !== null ? (
+                                                        <>
+                                                            {formatPenValue(amounts.lineTotal)}{' '}
+                                                            <span className="text-sm font-semibold text-[var(--muted-foreground)]">
+                                                                {unit.currency}
+                                                            </span>
+                                                        </>
+                                                    ) : skuPricesLoading ? (
+                                                        <span className="text-[var(--muted-foreground)]">…</span>
+                                                    ) : (
+                                                        <span className="text-[var(--muted-foreground)]">—</span>
+                                                    )}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </article>
+                                ),
+                            )}
+                        </div>
+
+                        <div className="hidden overflow-x-auto rounded-2xl border border-[var(--border)] bg-card/60 shadow-sm backdrop-blur-sm md:block">
+                            <table className="w-full min-w-0 text-left text-sm">
                                 <caption className="sr-only">
                                     Líneas del carrito: precio de lista y total por línea
                                 </caption>
                                 <thead className="border-b border-[color-mix(in_oklab,var(--border)_80%,transparent)] bg-[color-mix(in_oklab,var(--muted)_12%,transparent)] text-xs font-semibold uppercase tracking-wide text-[var(--muted-foreground)]">
                                     <tr>
                                         <th className="px-4 py-3">Producto / plan</th>
-                                        <th className="hidden px-2 py-3 sm:table-cell">Precio unit. (lista)</th>
+                                        <th className="px-2 py-3">Precio unit. (lista)</th>
                                         <th className="px-4 py-3 text-center">Cant.</th>
                                         <th className="px-4 py-3 text-right">Total línea</th>
                                         <th className="w-px px-4 py-3" />
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {lines.map((line) => {
-                                        const unit = effectiveLineUnit(line, skuPrices);
-                                        const igvAppliesSku = unit?.igv_applies ?? true;
-                                        const amounts =
-                                            unit !== null
-                                                ? peruIgvLineAmounts(
-                                                      line.qty,
-                                                      unit.list_price,
-                                                      unit.tax_included ?? false,
-                                                      igvRate,
-                                                      igvAppliesSku,
-                                                  )
-                                                : null;
-                                        const productHref = line.systemSlug.startsWith('oem-')
-                                            ? `/licencias#${line.systemSlug}`
-                                            : line.systemSlug.startsWith('svc-')
-                                              ? `/servicios#${line.systemSlug}`
-                                              : `/software/${line.systemSlug}`;
-
-                                        return (
+                                    {cartLineRows.map(
+                                        ({ line, unit, igvAppliesSku, amounts, productHref }) => (
                                             <tr
                                                 key={`${line.systemSlug}:${line.planId}`}
                                                 className="border-b border-[color-mix(in_oklab,var(--border)_55%,transparent)] last:border-0"
@@ -630,7 +758,7 @@ export default function MarketingCart() {
                                                         </p>
                                                     ) : null}
                                                 </td>
-                                                <td className="hidden align-top px-2 py-4 font-mono tabular-nums text-[var(--foreground)] sm:table-cell">
+                                                <td className="align-top px-2 py-4 font-mono tabular-nums text-[var(--foreground)]">
                                                     {unit !== null ? (
                                                         <div className="flex flex-col items-end gap-0.5">
                                                             <span>
@@ -701,8 +829,8 @@ export default function MarketingCart() {
                                                     </button>
                                                 </td>
                                             </tr>
-                                        );
-                                    })}
+                                        ),
+                                    )}
                                 </tbody>
                             </table>
                         </div>
