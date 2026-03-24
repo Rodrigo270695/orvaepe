@@ -1,7 +1,6 @@
 import { Form, Head } from '@inertiajs/react';
 import { Eye, EyeOff, Lock, ShieldCheck, User } from 'lucide-react';
 import { useState } from 'react';
-import AppLogoIcon from '@/components/app-logo-icon';
 import InputError from '@/components/input-error';
 import TextLink from '@/components/text-link';
 import AuthOrvaeLoginLayout from '@/layouts/auth/auth-orvae-login-layout';
@@ -41,11 +40,8 @@ export default function Login({
             >
                 {({ processing, errors }) => (
                     <div className="relative flex flex-col gap-8">
-                        {/* Card header: icon + título + subtítulo */}
+                        {/* Card header: título + subtítulo */}
                         <div className="flex flex-col gap-3">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--auth-header-icon-bg)]">
-                                <AppLogoIcon className="size-6 fill-[var(--auth-cta-from)]" />
-                            </div>
                             <div>
                                 <h1 className="font-[family-name:var(--font-display)] text-xl font-bold text-[var(--foreground)]">
                                     Iniciar sesión
@@ -80,7 +76,7 @@ export default function Login({
                                     </div>
                                     <InputError
                                         message={errors.login}
-                                        className="font-mono text-xs text-red-400"
+                                        className="font-mono text-xs text-[var(--state-danger)]"
                                     />
                                 </div>
 
@@ -136,7 +132,7 @@ export default function Login({
                                     </div>
                                     <InputError
                                         message={errors.password}
-                                        className="font-mono text-xs text-red-400"
+                                        className="font-mono text-xs text-[var(--state-danger)]"
                                     />
                                 </div>
 
@@ -185,10 +181,20 @@ export default function Login({
 
                             {/* Footer card: conexión segura */}
                             <div className="mt-8 flex items-center justify-center gap-2 border-t border-[var(--o-border2)] pt-6 font-[family-name:var(--font-mono)] text-[10px] text-[var(--muted-foreground)]">
-                                <ShieldCheck className="size-3.5 text-[var(--auth-icon)]" />
-                                <span>Conexión segura</span>
+                                <ShieldCheck
+                                    className="size-3.5"
+                                    style={{
+                                        color: 'var(--state-info)',
+                                        filter: 'drop-shadow(0 0 4px color-mix(in oklab, var(--state-info) 62%, transparent))',
+                                    }}
+                                />
+                                <span className="text-[color-mix(in_oklab,var(--state-info)_68%,var(--muted-foreground))]">
+                                    Conexión segura
+                                </span>
                                 <span className="opacity-50">·</span>
-                                <span>ORVAE</span>
+                                <span className="text-[color-mix(in_oklab,var(--state-success)_52%,var(--muted-foreground))]">
+                                    ORVAE
+                                </span>
                             </div>
                             {/* Overlay de carga tipo glass cuando se procesa el login */}
                             {processing && (
@@ -206,7 +212,7 @@ export default function Login({
             </Form>
 
             {status && (
-                <div className="mt-4 rounded-sm border border-[var(--o-success)]/20 bg-[var(--o-success)]/10 px-4 py-3 font-[family-name:var(--font-mono)] text-xs tracking-wide text-green-400">
+                <div className="mt-4 rounded-sm border border-[color-mix(in_oklab,var(--state-success)_35%,transparent)] bg-[color-mix(in_oklab,var(--state-success)_12%,transparent)] px-4 py-3 font-[family-name:var(--font-mono)] text-xs tracking-wide text-[var(--state-success)]">
                     {status}
                 </div>
             )}

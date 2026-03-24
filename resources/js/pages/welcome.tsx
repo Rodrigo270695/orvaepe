@@ -24,46 +24,61 @@ export default function Welcome({
                 canonicalPath="/"
             />
 
-            <div className="min-h-screen bg-background text-foreground">
-                <MarketingUnifiedNavbar canRegister={canRegister} />
-                <div className="h-16 shrink-0" aria-hidden />
-                <AppearanceFloatingRailToggle />
+            <div className="landing-page relative min-h-screen text-foreground">
+                {/* Textura sutil: profundidad en claro/oscuro sin cargar peso visual */}
+                <div className="landing-grain absolute inset-0 z-0" aria-hidden />
+                <div className="landing-ambient-orbs" aria-hidden>
+                    <div className="landing-orb landing-orb--a" />
+                    <div className="landing-orb landing-orb--b" />
+                </div>
+                <div className="relative z-[1]">
+                    <MarketingUnifiedNavbar canRegister={canRegister} />
+                    <div className="h-16 shrink-0" aria-hidden />
+                    <AppearanceFloatingRailToggle />
 
-                <main>
+                    <main id="main-content" className="outline-none">
                     <PageHero
                         id="inicio"
                         eyebrow="Software desarrollado"
                         title={
                             <>
-                                Sistemas desarrollados para
-                                <span className="text-[var(--o-amber)]"> operar</span>
+                                Sistemas desarrollados para{' '}
+                                <span className="bg-gradient-to-br from-foreground via-[var(--o-amber)] to-[var(--o-tech)] bg-clip-text text-transparent dark:from-[var(--o-cream2)]">
+                                    operar
+                                </span>
                             </>
                         }
                         description="Software ya construido y listo para usar: contabilidad, ventas, inventario y más. Elige SaaS, licencia o módulos sueltos con implementación en días o semanas."
                         ctas={[
+                            { href: '/software', label: 'Ver catálogo', variant: 'primary' },
                             { href: '#contacto', label: 'Solicitar demo', variant: 'outline' },
-                            { href: '/software', label: 'Ver software', variant: 'primary' },
-                            { href: '/licencias', label: 'Ver licencias', variant: 'outline' },
+                            { href: '/licencias', label: 'Licencias OEM', variant: 'outline' },
                         ]}
                     />
+                    <div className="landing-section-flair mx-4 px-4" aria-hidden />
                     <ScrollReveal direction="up">
                         <OfferingsSummary />
                     </ScrollReveal>
+                    <div className="landing-section-flair mx-4 px-4" aria-hidden />
                     <ScrollReveal direction="up">
                         <MissionVision />
                     </ScrollReveal>
+                    <div className="landing-section-flair mx-4 px-4" aria-hidden />
                     <ScrollReveal direction="up">
                         <ClientsCarousel />
                     </ScrollReveal>
+                    <div className="landing-section-flair mx-4 px-4" aria-hidden />
                     <ScrollReveal direction="up">
                         <TestimonialsSection />
                     </ScrollReveal>
-                </main>
+                    <div className="landing-section-flair mx-4 px-4" aria-hidden />
+                    </main>
 
-                <ScrollReveal direction="up">
-                    <WelcomeFooter />
-                </ScrollReveal>
-                <ScrollToTopButton />
+                    <ScrollReveal direction="up">
+                        <WelcomeFooter />
+                    </ScrollReveal>
+                    <ScrollToTopButton />
+                </div>
             </div>
         </>
     );

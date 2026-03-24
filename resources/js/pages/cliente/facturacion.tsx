@@ -13,7 +13,7 @@ type Props = {
     profile: ClientUserProfile | null;
 };
 
-const labelClass = 'text-sm font-semibold text-zinc-700';
+const labelClass = 'text-sm font-semibold text-foreground/85';
 
 export default function ClienteFacturacion({ profile }: Props) {
     const { auth } = usePage().props;
@@ -39,11 +39,11 @@ export default function ClienteFacturacion({ profile }: Props) {
         >
             <div className="mx-auto max-w-3xl space-y-5">
                 <ClientPageTitleCard title="Datos de facturación" />
-                <div className="rounded-xl border border-zinc-200 bg-white px-5 py-4 shadow-sm md:px-6">
-                    <h2 className="text-lg font-semibold tracking-tight text-zinc-900">
+                <div className="rounded-xl border border-[color-mix(in_oklab,var(--state-info)_20%,var(--border))] bg-[color-mix(in_oklab,var(--card)_92%,var(--background))] px-5 py-4 shadow-sm md:px-6">
+                    <h2 className="text-lg font-semibold tracking-tight text-foreground">
                         Información de facturación
                     </h2>
-                    <p className="mt-1 text-sm leading-relaxed text-zinc-600">
+                    <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
                         Estos datos se usarán como adquirente en tus comprobantes electrónicos.
                         Mantén el RUC y la razón social alineados con SUNAT.
                     </p>
@@ -53,7 +53,7 @@ export default function ClienteFacturacion({ profile }: Props) {
                     action="/cliente/facturacion"
                     method="patch"
                     options={{ preserveScroll: true }}
-                    className="space-y-6 rounded-xl border border-zinc-200 bg-white p-6 shadow-sm md:p-8"
+                    className="space-y-6 rounded-xl border border-[color-mix(in_oklab,var(--state-info)_20%,var(--border))] bg-[color-mix(in_oklab,var(--card)_94%,var(--background))] p-6 shadow-sm md:p-8"
                 >
                     {({ processing, recentlySuccessful, errors }) => (
                         <>
@@ -185,7 +185,7 @@ export default function ClienteFacturacion({ profile }: Props) {
                                 </div>
                             </div>
 
-                            <div className="flex justify-end border-t border-zinc-100 pt-6">
+                            <div className="flex justify-end border-t border-[color-mix(in_oklab,var(--state-info)_14%,var(--border))] pt-6">
                                 <Transition
                                     show={recentlySuccessful}
                                     enter="transition ease-in-out"
@@ -193,14 +193,14 @@ export default function ClienteFacturacion({ profile }: Props) {
                                     leave="transition ease-in-out"
                                     leaveTo="opacity-0"
                                 >
-                                    <p className="mr-4 self-center text-sm text-zinc-500" aria-live="polite">
+                                    <p className="mr-4 self-center text-sm text-muted-foreground" aria-live="polite">
                                         Datos guardados
                                     </p>
                                 </Transition>
                                 <Button
                                     type="submit"
                                     disabled={processing}
-                                    className="h-11 min-w-40 cursor-pointer bg-(--o-void) text-[15px] font-semibold text-white hover:bg-(--o-dark) disabled:cursor-not-allowed disabled:bg-zinc-400"
+                                    className="h-11 min-w-40 cursor-pointer bg-[linear-gradient(120deg,var(--state-info),var(--state-success))] text-[15px] font-semibold text-[color-mix(in_oklab,white_95%,var(--foreground))] shadow-[0_12px_28px_-18px_var(--state-info)] hover:brightness-105 disabled:cursor-not-allowed disabled:bg-zinc-400"
                                 >
                                     {processing ? 'Guardando…' : 'Guardar datos'}
                                 </Button>

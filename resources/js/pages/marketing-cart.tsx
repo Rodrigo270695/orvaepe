@@ -543,12 +543,17 @@ export default function MarketingCart() {
             noindex
             structuredData="none"
         >
-            <div className="relative overflow-hidden border-b border-[color-mix(in_oklab,var(--border)_80%,transparent)]">
-                <GeometricBackground variant="grid-dots" opacity={0.06} />
+            <div className="landing-page relative overflow-hidden border-b border-[color-mix(in_oklab,var(--state-info)_22%,var(--border))]">
+                <div className="landing-grain pointer-events-none absolute inset-0 z-0" aria-hidden />
+                <div className="landing-ambient-orbs pointer-events-none absolute inset-0 z-0" aria-hidden>
+                    <div className="landing-orb landing-orb--a" />
+                    <div className="landing-orb landing-orb--b" />
+                </div>
+                <GeometricBackground variant="grid-dots" opacity={0.08} />
                 <div className="relative mx-auto max-w-6xl px-4 py-10 sm:px-6 md:py-14">
                     <Link
                         href="/software"
-                        className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-[var(--muted-foreground)] transition-colors hover:text-[var(--foreground)]"
+                        className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[color-mix(in_oklab,var(--state-info)_24%,var(--border))] bg-[color-mix(in_oklab,var(--state-info)_8%,transparent)] px-3 py-1.5 text-sm font-medium text-[var(--muted-foreground)] transition-colors hover:text-[var(--foreground)]"
                     >
                         <ArrowLeft className="size-4" aria-hidden />
                         Seguir comprando
@@ -564,7 +569,7 @@ export default function MarketingCart() {
                             </p>
                         </div>
                         {mounted && totalUnits > 0 && (
-                            <p className="text-sm font-medium text-[var(--muted-foreground)]">
+                            <p className="rounded-full border border-[color-mix(in_oklab,var(--state-success)_26%,var(--border))] bg-[color-mix(in_oklab,var(--state-success)_10%,transparent)] px-3 py-1 text-sm font-medium text-[var(--muted-foreground)]">
                                 {totalUnits} {totalUnits === 1 ? 'unidad' : 'unidades'} en total
                             </p>
                         )}
@@ -574,13 +579,13 @@ export default function MarketingCart() {
 
             <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 md:py-12">
                 {!mounted ? (
-                    <div className="animate-pulse space-y-4 rounded-2xl border border-[var(--border)] bg-card/40 p-8">
+                    <div className="animate-pulse space-y-4 rounded-2xl border border-[color-mix(in_oklab,var(--state-info)_22%,var(--border))] bg-[color-mix(in_oklab,var(--card)_88%,transparent)] p-8">
                         <div className="h-6 w-1/3 rounded bg-[var(--muted)]" />
                         <div className="h-16 rounded bg-[var(--muted)]" />
                         <div className="h-16 rounded bg-[var(--muted)]" />
                     </div>
                 ) : lines.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--border)] bg-[color-mix(in_oklab,var(--muted)_22%,transparent)] px-6 py-20 text-center">
+                    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-[color-mix(in_oklab,var(--state-alert)_30%,var(--border))] bg-[color-mix(in_oklab,var(--card)_85%,var(--background))] px-6 py-20 text-center">
                         <ShoppingBag className="mx-auto size-12 text-[var(--muted-foreground)]" aria-hidden />
                         <p className="mt-4 text-lg font-semibold text-[var(--foreground)]">
                             El carrito está vacío
@@ -590,7 +595,7 @@ export default function MarketingCart() {
                         </p>
                         <Link
                             href="/software"
-                            className="mt-8 inline-flex cursor-pointer items-center justify-center rounded-xl bg-[var(--primary)] px-6 py-3 text-sm font-semibold text-[var(--primary-foreground)] transition-colors hover:brightness-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                            className="mt-8 inline-flex cursor-pointer items-center justify-center rounded-xl bg-[linear-gradient(120deg,var(--state-info),var(--state-success))] px-6 py-3 text-sm font-semibold text-[color-mix(in_oklab,white_95%,var(--foreground))] transition-colors hover:brightness-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--state-info)] focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                         >
                             Ir al catálogo de software
                         </Link>
@@ -602,7 +607,7 @@ export default function MarketingCart() {
                                 ({ line, unit, igvAppliesSku, amounts, productHref }) => (
                                     <article
                                         key={`${line.systemSlug}:${line.planId}`}
-                                        className="rounded-2xl border border-[var(--border)] bg-card/60 p-4 shadow-sm backdrop-blur-sm"
+                                        className="rounded-2xl border border-[color-mix(in_oklab,var(--state-info)_22%,var(--border))] bg-[linear-gradient(160deg,color-mix(in_oklab,var(--card)_90%,transparent),color-mix(in_oklab,var(--state-info)_7%,transparent))] p-4 shadow-sm backdrop-blur-sm"
                                     >
                                         <div className="flex items-start justify-between gap-3">
                                             <div className="min-w-0 flex-1">
@@ -713,12 +718,12 @@ export default function MarketingCart() {
                             )}
                         </div>
 
-                        <div className="hidden overflow-x-auto rounded-2xl border border-[var(--border)] bg-card/60 shadow-sm backdrop-blur-sm md:block">
+                        <div className="hidden overflow-x-auto rounded-2xl border border-[color-mix(in_oklab,var(--state-info)_22%,var(--border))] bg-[linear-gradient(165deg,color-mix(in_oklab,var(--card)_92%,transparent),color-mix(in_oklab,var(--state-info)_6%,transparent))] shadow-sm backdrop-blur-sm md:block">
                             <table className="w-full min-w-0 text-left text-sm">
                                 <caption className="sr-only">
                                     Líneas del carrito: precio de lista y total por línea
                                 </caption>
-                                <thead className="border-b border-[color-mix(in_oklab,var(--border)_80%,transparent)] bg-[color-mix(in_oklab,var(--muted)_12%,transparent)] text-xs font-semibold uppercase tracking-wide text-[var(--muted-foreground)]">
+                                <thead className="border-b border-[color-mix(in_oklab,var(--state-info)_20%,var(--border))] bg-[color-mix(in_oklab,var(--state-info)_10%,transparent)] text-xs font-semibold uppercase tracking-wide text-[var(--muted-foreground)]">
                                     <tr>
                                         <th className="px-4 py-3">Producto / plan</th>
                                         <th className="px-2 py-3">Precio unit. (lista)</th>
@@ -835,7 +840,7 @@ export default function MarketingCart() {
                             </table>
                         </div>
 
-                        <aside className="rounded-2xl border border-[color-mix(in_oklab,var(--border)_90%,transparent)] bg-[color-mix(in_oklab,var(--muted)_18%,transparent)] p-6 shadow-inner">
+                        <aside className="rounded-2xl border border-[color-mix(in_oklab,var(--state-info)_24%,var(--border))] bg-[linear-gradient(165deg,color-mix(in_oklab,var(--card)_90%,transparent),color-mix(in_oklab,var(--state-info)_8%,transparent),color-mix(in_oklab,var(--state-success)_7%,transparent))] p-6 shadow-[0_14px_34px_-24px_color-mix(in_oklab,var(--state-info)_65%,transparent)]">
                             <h2 className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--foreground)]">
                                 Resumen
                             </h2>
@@ -949,7 +954,7 @@ export default function MarketingCart() {
                                         </span>
                                         <button
                                             type="button"
-                                            className="inline-flex cursor-pointer items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-[var(--muted-foreground)] transition-colors hover:bg-[color-mix(in_oklab,var(--destructive)_12%,transparent)] hover:text-[var(--destructive)]"
+                                        className="inline-flex cursor-pointer items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-[var(--muted-foreground)] transition-colors hover:bg-[color-mix(in_oklab,var(--state-danger)_12%,transparent)] hover:text-[var(--state-danger)]"
                                             onClick={removeCoupon}
                                         >
                                             <X className="size-3.5" aria-hidden />
@@ -987,7 +992,7 @@ export default function MarketingCart() {
                                     </div>
                                 )}
                                 {couponError && (
-                                    <p className="mt-2 text-xs text-[var(--destructive)]" role="alert">
+                                    <p className="mt-2 text-xs text-[var(--state-danger)]" role="alert">
                                         {couponError}
                                     </p>
                                 )}
@@ -1008,7 +1013,7 @@ export default function MarketingCart() {
                             ) : null}
 
                             {checkoutError ? (
-                                <p className="mt-4 text-sm text-[var(--destructive)]" role="alert">
+                                <p className="mt-4 text-sm text-[var(--state-danger)]" role="alert">
                                     {checkoutError}
                                 </p>
                             ) : null}
@@ -1055,7 +1060,7 @@ export default function MarketingCart() {
                                             totalPayable === null ||
                                             lines.length === 0
                                         }
-                                        className="mt-6 w-full cursor-pointer rounded-xl bg-[var(--primary)] px-4 py-3 text-sm font-semibold text-[var(--primary-foreground)] transition-colors hover:brightness-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-60"
+                                        className="mt-6 w-full cursor-pointer rounded-xl bg-[linear-gradient(120deg,var(--state-info),var(--state-success))] px-4 py-3 text-sm font-semibold text-[color-mix(in_oklab,white_95%,var(--foreground))] transition-colors hover:brightness-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--state-info)] focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-60"
                                         onClick={() =>
                                             void (selectedGateway === 'mercadopago'
                                                 ? startMercadoPagoCheckout()

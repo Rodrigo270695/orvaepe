@@ -41,7 +41,7 @@ export default function ClientePerfil({
 
             <div className="mx-auto max-w-3xl space-y-5">
                 <ClientPageTitleCard title="Mi perfil" />
-                <div className="rounded-xl border border-zinc-200 bg-white px-5 py-4 shadow-sm md:px-6">
+                <div className="rounded-xl border border-[color-mix(in_oklab,var(--state-info)_20%,var(--border))] bg-[color-mix(in_oklab,var(--card)_92%,var(--background))] px-5 py-4 shadow-sm md:px-6">
                     <Heading
                         variant="small"
                         title="Información personal"
@@ -54,7 +54,7 @@ export default function ClientePerfil({
                     options={{
                         preserveScroll: true,
                     }}
-                    className="space-y-6 rounded-xl border border-zinc-200 bg-white p-6 shadow-sm md:p-8"
+                    className="space-y-6 rounded-xl border border-[color-mix(in_oklab,var(--state-info)_20%,var(--border))] bg-[color-mix(in_oklab,var(--card)_94%,var(--background))] p-6 shadow-sm md:p-8"
                 >
                     {({ processing, recentlySuccessful, errors }) => (
                         <>
@@ -190,12 +190,12 @@ export default function ClientePerfil({
                                     </div>
                                 )}
 
-                            <div className="flex flex-wrap items-center justify-end gap-4 border-t border-zinc-100 pt-6">
+                            <div className="flex flex-wrap items-center justify-end gap-4 border-t border-[color-mix(in_oklab,var(--state-info)_14%,var(--border))] pt-6">
                                 <Button
                                     type="submit"
                                     disabled={processing}
                                     data-test="update-profile-button"
-                                    className="h-11 min-w-40 cursor-pointer bg-(--o-void) text-[15px] font-semibold text-white hover:bg-(--o-dark) disabled:cursor-not-allowed disabled:bg-zinc-400"
+                                    className="h-11 min-w-40 cursor-pointer bg-[linear-gradient(120deg,var(--state-info),var(--state-success))] text-[15px] font-semibold text-[color-mix(in_oklab,white_95%,var(--foreground))] shadow-[0_12px_28px_-18px_var(--state-info)] hover:brightness-105 disabled:cursor-not-allowed disabled:bg-zinc-400"
                                 >
                                     {processing
                                         ? 'Guardando...'
@@ -209,7 +209,7 @@ export default function ClientePerfil({
                                     leave="transition ease-in-out"
                                     leaveTo="opacity-0"
                                 >
-                                    <p className="text-sm text-zinc-500">
+                                    <p className="text-sm text-muted-foreground">
                                         Guardado
                                     </p>
                                 </Transition>

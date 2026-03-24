@@ -14,7 +14,6 @@ import SoftwareProductHero from '@/components/software/SoftwareProductHero';
 import GeometricBackground from '@/components/welcome/GeometricBackground';
 import ScrollReveal from '@/components/welcome/ScrollReveal';
 import ScrollToTopButton from '@/components/welcome/ScrollToTopButton';
-import CTASection from '@/components/welcome/sections/CTASection';
 import { parsePenUnitFromPriceText } from '@/lib/cartPricing';
 import { readSoftwareCart, writeSoftwareCart } from '@/lib/softwareCartStorage';
 import {
@@ -29,6 +28,13 @@ type SoftwareDetailPageProps = {
 };
 
 export default function SoftwareDetail() {
+    const semanticAccents = [
+        'var(--state-info)',
+        'var(--state-success)',
+        'var(--state-alert)',
+        'var(--state-danger)',
+    ] as const;
+
     const page = usePage<SoftwareDetailPageProps & { seo: SeoDefaults }>();
     const { system: systemFromServer, seo } = page.props;
     const { url } = page;
@@ -257,7 +263,6 @@ export default function SoftwareDetail() {
                                 </a>
                             </div>
                         </SoftwareDetailSection>
-                        <CTASection />
                     </>
                 )}
             </MarketingLayout>
@@ -367,7 +372,15 @@ export default function SoftwareDetail() {
             ]}
             jsonLd={softwareApplicationLd ? [softwareApplicationLd] : undefined}
         >
-            <div ref={rootRef} className="software-detail-root relative overflow-hidden pb-24 md:pb-0">
+            <div
+                ref={rootRef}
+                className="software-detail-root landing-page relative overflow-hidden pb-24 md:pb-0"
+            >
+                <div className="landing-grain absolute inset-0 z-0" aria-hidden />
+                <div className="landing-ambient-orbs" aria-hidden>
+                    <div className="landing-orb landing-orb--a" />
+                    <div className="landing-orb landing-orb--b" />
+                </div>
                 <div className="sd-scroll-progress" aria-hidden />
 
                 {/* Capas geométricas con parallax sutil según scroll */}
@@ -391,6 +404,7 @@ export default function SoftwareDetail() {
                         categorySlug={system.categorySlug}
                         modules={system.modules}
                     />
+                    <div className="landing-section-flair mx-4 px-4" aria-hidden />
 
                     <ScrollReveal direction="up">
                         <SoftwareDetailSection
@@ -404,10 +418,15 @@ export default function SoftwareDetail() {
                                 <GeometricBackground variant="circles-blur" opacity={0.06} />
                                 <div className="relative z-10">
                                     <div className="mt-2 flex flex-wrap gap-2">
-                                        {system.badges.map((b) => (
+                                        {system.badges.map((b, i) => (
                                             <span
                                                 key={b}
-                                                className="rounded-full border border-[color-mix(in_oklab,var(--primary)_28%,var(--border))] bg-[color-mix(in_oklab,var(--primary)_9%,transparent)] px-3 py-1 text-xs font-semibold text-[color-mix(in_oklab,var(--primary)_92%,var(--foreground))]"
+                                                className="rounded-full border px-3 py-1 text-xs font-semibold"
+                                                style={{
+                                                    borderColor: `color-mix(in oklab, ${semanticAccents[i % semanticAccents.length]} 32%, var(--border))`,
+                                                    background: `color-mix(in oklab, ${semanticAccents[i % semanticAccents.length]} 10%, transparent)`,
+                                                    color: `color-mix(in oklab, ${semanticAccents[i % semanticAccents.length]} 90%, var(--foreground))`,
+                                                }}
                                             >
                                                 {b}
                                             </span>
@@ -425,9 +444,16 @@ export default function SoftwareDetail() {
                                                 t: 'Modelo',
                                                 d: 'Código fuente (todo o por periodos) o precio mensual, según plan.',
                                             },
-                                        ].map((x) => (
+                                        ].map((x, i) => (
                                             <SoftwareDetailGlassCard key={x.t}>
-                                                <p className="text-sm font-bold text-[var(--foreground)]">{x.t}</p>
+                                                <p
+                                                    className="text-sm font-bold"
+                                                    style={{
+                                                        color: `color-mix(in oklab, ${semanticAccents[i % semanticAccents.length]} 82%, var(--foreground))`,
+                                                    }}
+                                                >
+                                                    {x.t}
+                                                </p>
                                                 <p className="mt-2 text-xs text-[var(--muted-foreground)] leading-relaxed">
                                                     {x.d}
                                                 </p>
@@ -470,6 +496,7 @@ export default function SoftwareDetail() {
                             </SoftwareDetailSection>
                         </ScrollReveal>
                     )}
+                    <div className="landing-section-flair mx-4 px-4" aria-hidden />
 
                     <ScrollReveal direction="up">
                         <SoftwareDetailSection
@@ -486,15 +513,26 @@ export default function SoftwareDetail() {
                                             { title: 'Lenguajes', items: languages },
                                             { title: 'Frameworks', items: frameworks },
                                             { title: 'Base de datos', items: databases },
-                                        ].map((x) => (
+                                        ].map((x, i) => (
                                             <SoftwareDetailGlassCard key={x.title}>
-                                                <p className="text-sm font-bold text-[var(--foreground)]">{x.title}</p>
+                                                <p
+                                                    className="text-sm font-bold"
+                                                    style={{
+                                                        color: `color-mix(in oklab, ${semanticAccents[i % semanticAccents.length]} 82%, var(--foreground))`,
+                                                    }}
+                                                >
+                                                    {x.title}
+                                                </p>
                                                 <div className="mt-3 flex flex-wrap gap-2">
                                                     {(x.items ?? []).length > 0 ? (
-                                                        (x.items ?? []).map((it) => (
+                                                        (x.items ?? []).map((it, ii) => (
                                                             <span
                                                                 key={it}
-                                                                className="rounded-full border border-[var(--border)] bg-background/70 px-3 py-1 text-xs font-semibold text-[var(--foreground)]"
+                                                                className="rounded-full border bg-background/70 px-3 py-1 text-xs font-semibold"
+                                                                style={{
+                                                                    borderColor: `color-mix(in oklab, ${semanticAccents[(i + ii) % semanticAccents.length]} 28%, var(--border))`,
+                                                                    color: `color-mix(in oklab, ${semanticAccents[(i + ii) % semanticAccents.length]} 82%, var(--foreground))`,
+                                                                }}
                                                             >
                                                                 {it}
                                                             </span>
@@ -512,6 +550,7 @@ export default function SoftwareDetail() {
                             </div>
                         </SoftwareDetailSection>
                     </ScrollReveal>
+                    <div className="landing-section-flair mx-4 px-4" aria-hidden />
 
                     <ScrollReveal direction="up">
                         <SoftwareDetailSection
@@ -525,9 +564,14 @@ export default function SoftwareDetail() {
                                 <div className="relative z-10">
                                     {system.modules.length > 0 ? (
                                         <div className="grid gap-4 sm:grid-cols-2">
-                                            {system.modules.map((m) => (
+                                            {system.modules.map((m, i) => (
                                                 <SoftwareDetailGlassCard key={m.name}>
-                                                    <p className="text-sm font-semibold text-[var(--foreground)]">
+                                                    <p
+                                                        className="text-sm font-semibold"
+                                                        style={{
+                                                            color: `color-mix(in oklab, ${semanticAccents[i % semanticAccents.length]} 82%, var(--foreground))`,
+                                                        }}
+                                                    >
                                                         {m.name}
                                                     </p>
                                                     <p className="mt-2 text-xs leading-relaxed text-[var(--muted-foreground)]">
@@ -538,8 +582,8 @@ export default function SoftwareDetail() {
                                             ))}
                                         </div>
                                     ) : (
-                                        <div className="rounded-2xl border border-dashed border-[var(--border)] bg-[color-mix(in_oklab,var(--muted)_25%,transparent)] px-6 py-10 text-center">
-                                            <p className="text-sm font-medium text-[var(--foreground)]">
+                                        <div className="rounded-2xl border border-dashed border-[color-mix(in_oklab,var(--state-alert)_34%,var(--border))] bg-[color-mix(in_oklab,var(--state-alert)_10%,transparent)] px-6 py-10 text-center">
+                                            <p className="text-sm font-medium text-[color-mix(in_oklab,var(--state-alert)_78%,var(--foreground))]">
                                                 Módulos según plan
                                             </p>
                                             <p className="mt-2 text-sm text-[var(--muted-foreground)]">
@@ -551,6 +595,7 @@ export default function SoftwareDetail() {
                             </div>
                         </SoftwareDetailSection>
                     </ScrollReveal>
+                    <div className="landing-section-flair mx-4 px-4" aria-hidden />
 
                     <ScrollReveal direction="up">
                         <SoftwareDetailSection
@@ -563,17 +608,20 @@ export default function SoftwareDetail() {
                                 <GeometricBackground variant="rings" opacity={0.05} />
                                 <div className="relative z-10">
                                     <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-                                        {system.pricingPlans.map((p) => {
+                                        {system.pricingPlans.map((p, i) => {
                                             const isActive = (selectedPlan?.id ?? p.id) === p.id;
                                             const planPriceBefore = getPlanPriceBefore(p);
                                             const planPriceNow = getPlanPriceNow(p);
                                             const saleModelLabel = inferSaleModelLabel(p);
+                                            const accent =
+                                                semanticAccents[i % semanticAccents.length];
 
                                             return (
                                                 <SoftwareDetailPlanCard
                                                     key={p.id}
                                                     plan={p}
                                                     isActive={isActive}
+                                                    accent={accent}
                                                     saleModelLabel={saleModelLabel}
                                                     planPriceBefore={planPriceBefore}
                                                     planPriceNow={planPriceNow}
@@ -607,6 +655,7 @@ export default function SoftwareDetail() {
                             </div>
                         </SoftwareDetailSection>
                     </ScrollReveal>
+                    <div className="landing-section-flair mx-4 px-4" aria-hidden />
 
                     <ScrollReveal direction="up">
                         <SoftwareDetailSection
@@ -623,9 +672,16 @@ export default function SoftwareDetail() {
                                             { t: 'Setup en días o semanas', d: 'Checklist de adopción con trazabilidad.' },
                                             { t: 'SLA documentado', d: 'Compromiso por escrito: respuesta y calidad.' },
                                             { t: 'Integración a tu operación', d: 'Ajustes por roles, flujos y permisos.' },
-                                        ].map((x) => (
+                                        ].map((x, i) => (
                                     <SoftwareDetailGlassCard key={x.t}>
-                                                <p className="text-sm font-bold text-[var(--foreground)]">{x.t}</p>
+                                                <p
+                                                    className="text-sm font-bold"
+                                                    style={{
+                                                        color: `color-mix(in oklab, ${semanticAccents[i % semanticAccents.length]} 82%, var(--foreground))`,
+                                                    }}
+                                                >
+                                                    {x.t}
+                                                </p>
                                                 <p className="mt-2 text-xs text-[var(--muted-foreground)] leading-relaxed">
                                                     {x.d}
                                                 </p>
@@ -636,10 +692,8 @@ export default function SoftwareDetail() {
                             </div>
                         </SoftwareDetailSection>
                     </ScrollReveal>
+                    <div className="landing-section-flair mx-4 px-4" aria-hidden />
 
-                    <ScrollReveal direction="up">
-                        <CTASection />
-                    </ScrollReveal>
                 </div>
 
                 {/* CTA sticky en móvil: reduce fricción al comprar */}

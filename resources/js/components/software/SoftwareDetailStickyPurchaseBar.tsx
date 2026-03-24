@@ -35,20 +35,24 @@ export default function SoftwareDetailStickyPurchaseBar({
                 )}
             >
                 <div
-                    className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[color-mix(in_oklab,var(--primary)_45%,transparent)] to-transparent opacity-80"
+                    className="pointer-events-none absolute inset-x-0 top-0 h-px opacity-80"
+                    style={{
+                        background:
+                            'linear-gradient(90deg, transparent, color-mix(in oklab, var(--state-info) 52%, transparent), color-mix(in oklab, var(--state-success) 52%, transparent), color-mix(in oklab, var(--state-alert) 48%, transparent), transparent)',
+                    }}
                     aria-hidden
                 />
                 <div className="relative flex flex-col gap-3 py-3">
                     <div className="min-w-0">
-                        <p className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-[var(--muted-foreground)]">
+                        <p className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-[color-mix(in_oklab,var(--state-alert)_78%,var(--muted-foreground))]">
                             Selección actual
                         </p>
-                        <p className="mt-0.5 truncate text-sm font-semibold text-[var(--foreground)]">
+                        <p className="mt-0.5 truncate text-sm font-semibold text-[color-mix(in_oklab,var(--state-info)_42%,var(--foreground))]">
                             {selectedPlanLabel}
                         </p>
                         {hasPrice ? (
                             <p
-                                className="mt-1 font-[family-name:var(--font-display)] text-lg font-bold tabular-nums text-[color-mix(in_oklab,var(--primary)_90%,var(--foreground))]"
+                                className="mt-1 font-[family-name:var(--font-display)] text-lg font-bold tabular-nums text-[color-mix(in_oklab,var(--state-success)_70%,var(--foreground))]"
                                 style={{ fontFeatureSettings: '"tnum" 1' }}
                             >
                                 {priceLine}
@@ -65,12 +69,14 @@ export default function SoftwareDetailStickyPurchaseBar({
                                 'border-[color-mix(in_oklab,var(--border)_80%,transparent)]',
                                 'bg-[color-mix(in_oklab,var(--background)_65%,transparent)] text-[var(--foreground)]',
                                 'transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]',
-                                'hover:border-[color-mix(in_oklab,var(--primary)_40%,var(--border))]',
-                                'hover:bg-[color-mix(in_oklab,var(--primary)_10%,transparent)]',
+                                'hover:bg-[color-mix(in_oklab,var(--state-info)_10%,transparent)]',
                                 'active:scale-[0.98]',
                                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-background',
                                 !planReady && 'pointer-events-none opacity-45',
                             )}
+                            style={{
+                                borderColor: 'color-mix(in oklab, var(--state-info) 34%, var(--border))',
+                            }}
                             onClick={onPay}
                         >
                             <CreditCard className="size-3.5 shrink-0 opacity-90" aria-hidden />
@@ -81,14 +87,18 @@ export default function SoftwareDetailStickyPurchaseBar({
                             disabled={!planReady}
                             className={cn(
                                 'inline-flex flex-[1.15] cursor-pointer items-center justify-center gap-1.5 rounded-xl px-3 py-2.5 text-sm font-semibold',
-                                'bg-[var(--primary)] text-[var(--primary-foreground)]',
-                                'shadow-[0_4px_22px_-6px_color-mix(in_oklab,var(--primary)_50%,transparent)]',
+                                'text-[var(--primary-foreground)]',
+                                'shadow-[0_4px_22px_-6px_color-mix(in_oklab,var(--state-success)_50%,transparent)]',
                                 'transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]',
                                 'hover:brightness-[1.07]',
                                 'active:scale-[0.98]',
                                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-background',
                                 !planReady && 'pointer-events-none opacity-45',
                             )}
+                            style={{
+                                background:
+                                    'linear-gradient(135deg, color-mix(in oklab, var(--state-success) 92%, var(--state-info)), color-mix(in oklab, var(--state-info) 72%, var(--state-success)))',
+                            }}
                             onClick={onAdd}
                         >
                             Agregar

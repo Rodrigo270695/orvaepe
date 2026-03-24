@@ -15,6 +15,13 @@ type Props = {
 };
 
 export default function SoftwareCategories({ catalogSections }: Props) {
+    const semanticAccents = [
+        'var(--state-info)',
+        'var(--state-success)',
+        'var(--state-alert)',
+        'var(--state-danger)',
+    ] as const;
+
     const sections: MarketingSoftwareCategorySection[] =
         catalogSections && catalogSections.length > 0
             ? catalogSections
@@ -29,6 +36,7 @@ export default function SoftwareCategories({ catalogSections }: Props) {
         <>
             {sections.map((cat, idx) => {
                 const systems = cat.systems;
+                const accent = semanticAccents[idx % semanticAccents.length];
                 const bgVariant: 'grid-hex' | 'circles-blur' | 'diagonal-lines' =
                     idx % 3 === 0
                         ? 'grid-hex'
@@ -40,14 +48,14 @@ export default function SoftwareCategories({ catalogSections }: Props) {
                     <ScrollReveal key={cat.slug} direction="up">
                         <section
                             id={cat.slug}
-                            className="relative overflow-hidden scroll-mt-28 border-t border-border bg-background/30 py-16 md:py-24"
+                            className="relative overflow-hidden scroll-mt-28 border-t border-border bg-[color-mix(in_oklab,var(--landing-surface-2)_88%,transparent)] py-16 backdrop-blur-[1px] md:py-24 dark:bg-[color-mix(in_oklab,var(--landing-surface-2)_78%,transparent)]"
                         >
                             {/* Capas geométricas detrás de la categoría */}
                             <div
                                 className="pointer-events-none absolute inset-0 opacity-[0.06]"
                                 style={{
                                     background:
-                                        'radial-gradient(circle at 10% 0%, color-mix(in oklab, var(--o-amber) 20%, transparent) 0%, transparent 55%), radial-gradient(circle at 80% 30%, color-mix(in oklab, var(--o-warm) 18%, transparent) 0%, transparent 50%)',
+                                        `radial-gradient(circle at 10% 0%, color-mix(in oklab, ${accent} 18%, transparent) 0%, transparent 55%), radial-gradient(circle at 80% 30%, color-mix(in oklab, var(--o-warm) 18%, transparent) 0%, transparent 50%)`,
                                 }}
                                 aria-hidden
                             />
@@ -56,7 +64,10 @@ export default function SoftwareCategories({ catalogSections }: Props) {
 
                             <div className="relative z-10 mx-auto w-full max-w-6xl px-4">
                                 <header className="mb-12 text-center md:mb-16">
-                                    <p className="font-mono text-xs font-semibold uppercase tracking-[0.4em] text-[var(--o-amber)]">
+                                    <p
+                                        className="font-mono text-xs font-semibold uppercase tracking-[0.4em]"
+                                        style={{ color: accent }}
+                                    >
                                         Categoría
                                     </p>
                                     <h2 className="mt-3 font-display text-3xl font-bold tracking-tight text-foreground md:text-4xl">
@@ -69,7 +80,11 @@ export default function SoftwareCategories({ catalogSections }: Props) {
 
                                 <div className="grid gap-5 md:grid-cols-2">
                                     {systems.map((sys) => (
-                                        <SoftwareSystemCard key={sys.slug} system={sys} />
+                                        <SoftwareSystemCard
+                                            key={sys.slug}
+                                            system={sys}
+                                            accent={accent}
+                                        />
                                     ))}
                                 </div>
                             </div>

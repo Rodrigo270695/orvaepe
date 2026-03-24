@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 type Props = {
     children: ReactNode;
@@ -52,6 +52,29 @@ export default function ScrollReveal({
         if (prefersReducedMotion) setIsVisible(true);
     }, [prefersReducedMotion]);
 
+    /**
+     * Si el nodo ya solapa el viewport (p. ej. llegada con #ancla o scroll restaurado),
+     * el IntersectionObserver puede no disparar en el primer frame por rootMargin o timing.
+     * Sin esto el contenido queda en opacity 0 hasta que el usuario mueve el scroll.
+     */
+    const markVisibleIfOverlapsViewport = useCallback(() => {
+        if (prefersReducedMotion) return;
+        const el = ref.current;
+        if (!el) return;
+        const rect = el.getBoundingClientRect();
+        const h = window.innerHeight;
+        const w = window.innerWidth;
+        const overlaps =
+            rect.top < h && rect.bottom > 0 && rect.left < w && rect.right > 0;
+        if (overlaps) {
+            setIsVisible(true);
+        }
+    }, [prefersReducedMotion]);
+
+    useLayoutEffect(() => {
+        markVisibleIfOverlapsViewport();
+    }, [markVisibleIfOverlapsViewport]);
+
     useEffect(() => {
         const el = ref.current;
         if (!el) return;
@@ -64,8 +87,22 @@ export default function ScrollReveal({
         );
 
         observer.observe(el);
-        return () => observer.disconnect();
-    }, [rootMargin, threshold]);
+
+        // Refuerzo tras paint y tras navegación por hash (mismo documento / SPA)
+        const t0 = window.setTimeout(markVisibleIfOverlapsViewport, 0);
+        const t1 = window.setTimeout(markVisibleIfOverlapsViewport, 120);
+        const onHash = () => markVisibleIfOverlapsViewport();
+        window.addEventListener('hashchange', onHash);
+        window.addEventListener('popstate', onHash);
+
+        return () => {
+            window.clearTimeout(t0);
+            window.clearTimeout(t1);
+            window.removeEventListener('hashchange', onHash);
+            window.removeEventListener('popstate', onHash);
+            observer.disconnect();
+        };
+    }, [rootMargin, threshold, markVisibleIfOverlapsViewport]);
 
     const initialTransform =
         translateByDirection[direction] === 'none'

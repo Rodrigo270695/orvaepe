@@ -15,8 +15,9 @@ import {
 } from 'lucide-react';
 import { type ComponentType, useEffect, useState } from 'react';
 
-import MarketingLayout from '@/components/marketing/MarketingLayout';
-import { marketingSeo } from '@/marketing/seoCopy';
+import MarketingUnifiedNavbar from '@/components/marketing/MarketingUnifiedNavbar';
+import PageHero from '@/components/marketing/PageHero';
+import SeoHead from '@/components/seo/SeoHead';
 import InputError from '@/components/input-error';
 import {
     Select,
@@ -25,9 +26,14 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import AppearanceFloatingRailToggle from '@/components/welcome/AppearanceFloatingRailToggle';
 import GeometricBackground from '@/components/welcome/GeometricBackground';
+import ScrollReveal from '@/components/welcome/ScrollReveal';
+import ScrollToTopButton from '@/components/welcome/ScrollToTopButton';
+import WelcomeFooter from '@/components/welcome/WelcomeFooter';
 import { inertiaFormProps } from '@/lib/inertia-form-props';
 import { cn } from '@/lib/utils';
+import { marketingSeo } from '@/marketing/seoCopy';
 
 type ProductOption = { value: string; label: string };
 
@@ -84,9 +90,15 @@ const selectItemClassName = cn(
 );
 
 export default function Contact() {
-    const { productOptions = [], flash } = usePage<PageProps>().props;
+    const { productOptions = [], flash, canRegister = true } = usePage<PageProps>().props;
     const status = flash?.status;
     const [productInterest, setProductInterest] = useState('');
+    const semanticAccents = [
+        'var(--state-info)',
+        'var(--state-success)',
+        'var(--state-alert)',
+        'var(--state-danger)',
+    ] as const;
 
     useEffect(() => {
         if (status) {
@@ -95,36 +107,79 @@ export default function Contact() {
     }, [status]);
 
     return (
-        <MarketingLayout
-            title={marketingSeo.contacto.title}
-            description={marketingSeo.contacto.description}
-            canonicalPath="/contacto"
-            breadcrumbs={[
-                { name: 'Inicio', path: '/' },
-                { name: 'Contacto', path: '/contacto' },
-            ]}
-        >
-            <div className="relative overflow-hidden border-b border-[color-mix(in_oklab,var(--border)_50%,transparent)]">
-                <GeometricBackground variant="grid-dots" opacity={0.06} />
-                <div className="relative z-10 mx-auto max-w-3xl px-4 py-14 sm:px-6 sm:py-20">
-                    <p className="font-mono text-[0.65rem] font-bold uppercase tracking-[0.25em] text-[var(--muted-foreground)]">
-                        Contacto
-                    </p>
-                    <h1 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-bold tracking-tight text-[var(--foreground)] sm:text-4xl">
-                        Cuéntanos qué necesitas
-                    </h1>
-                    <p className="mt-4 text-base leading-relaxed text-[var(--muted-foreground)]">
-                        Deja tu mensaje, el producto o servicio que te interesa y datos de contacto. Te
-                        responderemos por correo lo antes posible.
-                    </p>
+        <>
+            <SeoHead
+                title={marketingSeo.contacto.title}
+                description={marketingSeo.contacto.description}
+                canonicalPath="/contacto"
+                breadcrumbs={[
+                    { name: 'Inicio', path: '/' },
+                    { name: 'Contacto', path: '/contacto' },
+                ]}
+            />
+            <div className="landing-page relative min-h-screen text-foreground">
+                <div className="landing-grain absolute inset-0 z-0" aria-hidden />
+                <div className="landing-ambient-orbs" aria-hidden>
+                    <div className="landing-orb landing-orb--a" />
+                    <div className="landing-orb landing-orb--b" />
                 </div>
-            </div>
+                <div className="relative z-[1]">
+                    <MarketingUnifiedNavbar canRegister={canRegister} />
+                    <div className="h-16 shrink-0" aria-hidden />
+                    <AppearanceFloatingRailToggle />
 
-            <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
+                    <main>
+                        <ScrollReveal direction="up">
+                            <PageHero
+                                id="inicio"
+                                eyebrow="Contacto"
+                                title={
+                                    <>
+                                        Cuentanos que{' '}
+                                        <span className="bg-gradient-to-br from-foreground via-[var(--state-alert)] to-[var(--state-info)] bg-clip-text text-transparent dark:from-[var(--o-cream2)]">
+                                            necesitas
+                                        </span>
+                                    </>
+                                }
+                                description="Deja tu mensaje, el producto o servicio que te interesa y datos de contacto. Te responderemos por correo lo antes posible."
+                                ctas={[
+                                    { href: '#contacto-form', label: 'Enviar consulta', variant: 'primary' },
+                                    { href: '/software', label: 'Ver software', variant: 'outline' },
+                                ]}
+                            />
+                        </ScrollReveal>
+                        <div className="landing-section-flair mx-4 px-4" aria-hidden />
+
+                        <section id="contacto-form" className="relative py-12 sm:py-16">
+                            <GeometricBackground variant="grid-dots" opacity={0.05} />
+                            <div className="relative mx-auto max-w-3xl px-4 sm:px-6">
+                <div
+                    className="relative overflow-hidden rounded-[1.35rem] border p-5 shadow-[0_20px_55px_-20px_color-mix(in_oklab,var(--foreground)_18%,transparent)] backdrop-blur-xl sm:p-7"
+                    style={{
+                        borderColor:
+                            'color-mix(in oklab, var(--state-info) 24%, var(--border))',
+                        background:
+                            'linear-gradient(165deg, color-mix(in oklab, var(--state-info) 7%, var(--card)) 0%, color-mix(in oklab, var(--state-success) 6%, var(--card)) 55%, color-mix(in oklab, var(--state-alert) 5%, var(--card)) 100%)',
+                    }}
+                >
+                    <div
+                        className="pointer-events-none absolute inset-x-0 top-0 h-px"
+                        style={{
+                            background:
+                                'linear-gradient(90deg, transparent, color-mix(in oklab, var(--state-info) 55%, transparent), color-mix(in oklab, var(--state-success) 45%, transparent), color-mix(in oklab, var(--state-alert) 45%, transparent), transparent)',
+                        }}
+                        aria-hidden
+                    />
                 {status ? (
                     <div
                         role="status"
-                        className="mb-8 rounded-xl border border-[color-mix(in_oklab,var(--primary)_35%,var(--border))] bg-[color-mix(in_oklab,var(--primary)_12%,transparent)] px-4 py-3 text-sm text-[var(--foreground)]"
+                        className="mb-8 rounded-xl border px-4 py-3 text-sm text-[var(--foreground)]"
+                        style={{
+                            borderColor:
+                                'color-mix(in oklab, var(--state-success) 38%, var(--border))',
+                            background:
+                                'color-mix(in oklab, var(--state-success) 12%, transparent)',
+                        }}
                     >
                         {status}
                     </div>
@@ -157,7 +212,7 @@ export default function Contact() {
                                         htmlFor="name"
                                         className="mb-2 flex items-center gap-2 text-xs font-semibold text-[var(--foreground)]"
                                     >
-                                        <User className="size-3.5 text-[var(--muted-foreground)]" />
+                                        <User className="size-3.5" style={{ color: semanticAccents[0] }} />
                                         Nombre y apellido
                                     </label>
                                     <input
@@ -176,7 +231,7 @@ export default function Contact() {
                                         htmlFor="email"
                                         className="mb-2 flex items-center gap-2 text-xs font-semibold text-[var(--foreground)]"
                                     >
-                                        <Mail className="size-3.5 text-[var(--muted-foreground)]" />
+                                        <Mail className="size-3.5" style={{ color: semanticAccents[1] }} />
                                         Correo electrónico
                                     </label>
                                     <input
@@ -198,7 +253,7 @@ export default function Contact() {
                                         htmlFor="phone"
                                         className="mb-2 flex items-center gap-2 text-xs font-semibold text-[var(--foreground)]"
                                     >
-                                        <Phone className="size-3.5 text-[var(--muted-foreground)]" />
+                                        <Phone className="size-3.5" style={{ color: semanticAccents[2] }} />
                                         Teléfono / WhatsApp
                                     </label>
                                     <input
@@ -216,7 +271,7 @@ export default function Contact() {
                                         htmlFor="company"
                                         className="mb-2 flex items-center gap-2 text-xs font-semibold text-[var(--foreground)]"
                                     >
-                                        <Building2 className="size-3.5 text-[var(--muted-foreground)]" />
+                                        <Building2 className="size-3.5" style={{ color: semanticAccents[3] }} />
                                         Empresa o RUC
                                     </label>
                                     <input
@@ -236,7 +291,7 @@ export default function Contact() {
                                     htmlFor="product_interest"
                                     className="mb-2 flex items-center gap-2 text-xs font-semibold text-[var(--foreground)]"
                                 >
-                                    <Package className="size-3.5 text-[var(--muted-foreground)]" />
+                                    <Package className="size-3.5" style={{ color: semanticAccents[0] }} />
                                     ¿Qué producto o servicio te interesa?
                                 </label>
                                 <input type="hidden" name="product_interest" value={productInterest} />
@@ -318,7 +373,7 @@ export default function Contact() {
                                     htmlFor="message"
                                     className="mb-2 flex items-center gap-2 text-xs font-semibold text-[var(--foreground)]"
                                 >
-                                    <MessageSquare className="size-3.5 text-[var(--muted-foreground)]" />
+                                    <MessageSquare className="size-3.5" style={{ color: semanticAccents[1] }} />
                                     Mensaje
                                 </label>
                                 <textarea
@@ -338,12 +393,16 @@ export default function Contact() {
                                     disabled={processing || !productInterest}
                                     className={cn(
                                         'inline-flex cursor-pointer items-center justify-center rounded-xl px-6 py-3 text-sm font-semibold',
-                                        'bg-[var(--primary)] text-[var(--primary-foreground)]',
-                                        'shadow-[0_6px_24px_-8px_color-mix(in_oklab,var(--primary)_55%,transparent)]',
+                                        'text-[var(--primary-foreground)]',
+                                        'shadow-[0_8px_28px_-8px_color-mix(in_oklab,var(--state-success)_55%,transparent)]',
                                         'transition-[transform,filter] duration-200 hover:brightness-105 active:scale-[0.99]',
                                         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-background',
                                         'disabled:pointer-events-none disabled:opacity-60',
                                     )}
+                                    style={{
+                                        background:
+                                            'linear-gradient(135deg, color-mix(in oklab, var(--state-success) 92%, var(--state-info)), color-mix(in oklab, var(--state-info) 72%, var(--state-success)))',
+                                    }}
                                 >
                                     {processing ? 'Enviando…' : 'Enviar mensaje'}
                                 </button>
@@ -351,7 +410,18 @@ export default function Contact() {
                         </>
                     )}
                 </Form>
+                </div>
+                            </div>
+                        </section>
+                    </main>
+
+                    <div className="landing-section-flair mx-4 px-4" aria-hidden />
+                    <ScrollReveal direction="up">
+                        <WelcomeFooter />
+                    </ScrollReveal>
+                    <ScrollToTopButton />
+                </div>
             </div>
-        </MarketingLayout>
+        </>
     );
 }

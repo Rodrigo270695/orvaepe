@@ -5,6 +5,7 @@ type Props = {
     eyebrow?: string;
     title: string;
     description?: string;
+    accent?: string;
     children?: ReactNode;
 };
 
@@ -13,6 +14,7 @@ export default function Section({
     eyebrow,
     title,
     description,
+    accent = 'var(--o-amber)',
     children,
 }: Props) {
     return (
@@ -20,9 +22,26 @@ export default function Section({
             <div className="mx-auto w-full max-w-6xl px-4">
                 <div className="max-w-3xl">
                     {eyebrow && (
-                        <p className="font-[family-name:var(--font-mono)] text-xs uppercase tracking-[0.35em] text-[var(--o-amber)] opacity-90">
-                            {eyebrow}
-                        </p>
+                        <div className="mb-4 flex max-w-xl items-center gap-3">
+                            <span
+                                className="h-px flex-1 max-w-16 bg-gradient-to-r from-transparent"
+                                style={{
+                                    backgroundImage: `linear-gradient(90deg, transparent, color-mix(in oklab, ${accent} 52%, transparent))`,
+                                }}
+                            />
+                            <p
+                                className="font-[family-name:var(--font-mono)] text-xs uppercase tracking-[0.35em] opacity-90"
+                                style={{ color: accent }}
+                            >
+                                {eyebrow}
+                            </p>
+                            <span
+                                className="h-px flex-1 max-w-16 bg-gradient-to-l from-transparent"
+                                style={{
+                                    backgroundImage: `linear-gradient(270deg, transparent, color-mix(in oklab, ${accent} 52%, transparent))`,
+                                }}
+                            />
+                        </div>
                     )}
                     <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl font-bold leading-tight text-[var(--foreground)]">
                         {title}

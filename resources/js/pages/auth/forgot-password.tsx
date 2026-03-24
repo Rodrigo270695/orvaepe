@@ -1,6 +1,6 @@
 // Components
 import { Form, Head } from '@inertiajs/react';
-import { LoaderCircle, Mail, MailQuestion } from 'lucide-react';
+import { LoaderCircle, Mail } from 'lucide-react';
 import InputError from '@/components/input-error';
 import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
@@ -23,8 +23,24 @@ export default function ForgotPassword({ status }: { status?: string }) {
 
             <div className="flex flex-col gap-8">
                 <div className="flex flex-col gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--o-amber)]/15">
-                        <MailQuestion className="size-6 text-[var(--o-amber)]" />
+                    <div
+                        className="flex h-12 w-12 items-center justify-center rounded-xl border"
+                        style={{
+                            borderColor:
+                                'color-mix(in oklab, var(--state-info) 70%, var(--border))',
+                            background:
+                                'linear-gradient(135deg, color-mix(in oklab, var(--state-info) 46%, var(--auth-header-icon-bg)), color-mix(in oklab, var(--state-success) 34%, var(--auth-header-icon-bg)))',
+                            boxShadow:
+                                '0 0 24px -4px color-mix(in oklab, var(--state-info) 65%, transparent)',
+                        }}
+                    >
+                        <Mail
+                            className="size-6"
+                            style={{
+                                color: 'var(--state-info)',
+                                filter: 'drop-shadow(0 0 6px color-mix(in oklab, var(--state-info) 60%, transparent))',
+                            }}
+                        />
                     </div>
                     <div>
                         <h1 className="font-[family-name:var(--font-display)] text-xl font-bold text-[var(--foreground)]">
@@ -37,7 +53,7 @@ export default function ForgotPassword({ status }: { status?: string }) {
                 </div>
 
                 {status && (
-                    <div className="rounded-sm border border-[var(--o-success)]/20 bg-[var(--o-success)]/10 px-4 py-3 font-[family-name:var(--font-mono)] text-xs tracking-wide text-green-400">
+                    <div className="rounded-sm border border-[color-mix(in_oklab,var(--state-success)_35%,transparent)] bg-[color-mix(in_oklab,var(--state-success)_12%,transparent)] px-4 py-3 font-[family-name:var(--font-mono)] text-xs tracking-wide text-[var(--state-success)]">
                         {status}
                     </div>
                 )}
@@ -53,7 +69,10 @@ export default function ForgotPassword({ status }: { status?: string }) {
                                     Correo electrónico
                                 </Label>
                                 <div className="relative">
-                                    <Mail className="absolute left-0 top-1/2 size-4 -translate-y-1/2 text-[var(--muted-foreground)]" />
+                                    <Mail
+                                        className="absolute left-0 top-1/2 size-4 -translate-y-1/2"
+                                        style={{ color: 'var(--state-info)' }}
+                                    />
                                     <Input
                                         id="email"
                                         type="email"

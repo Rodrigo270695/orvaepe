@@ -33,8 +33,24 @@ export default function ResetPassword({ token, email }: Props) {
 
             <div className="flex flex-col gap-8">
                 <div className="flex flex-col gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--auth-header-icon-bg)]">
-                        <Lock className="size-6 text-[var(--auth-cta-from)]" />
+                    <div
+                        className="flex h-12 w-12 items-center justify-center rounded-xl border"
+                        style={{
+                            borderColor:
+                                'color-mix(in oklab, var(--state-info) 70%, var(--border))',
+                            background:
+                                'linear-gradient(135deg, color-mix(in oklab, var(--state-info) 46%, var(--auth-header-icon-bg)), color-mix(in oklab, var(--state-success) 34%, var(--auth-header-icon-bg)))',
+                            boxShadow:
+                                '0 0 24px -4px color-mix(in oklab, var(--state-info) 65%, transparent)',
+                        }}
+                    >
+                        <Mail
+                            className="size-6"
+                            style={{
+                                color: 'var(--state-info)',
+                                filter: 'drop-shadow(0 0 6px color-mix(in oklab, var(--state-info) 60%, transparent))',
+                            }}
+                        />
                     </div>
                     <div>
                         <h1 className="font-[family-name:var(--font-display)] text-xl font-bold text-[var(--foreground)]">
@@ -65,7 +81,10 @@ export default function ResetPassword({ token, email }: Props) {
                                     Correo electrónico
                                 </Label>
                                 <div className="relative">
-                                    <Mail className="absolute left-0 top-1/2 size-4 -translate-y-1/2 text-[var(--muted-foreground)]" />
+                                    <Mail
+                                        className="absolute left-0 top-1/2 size-4 -translate-y-1/2"
+                                        style={{ color: 'var(--state-info)' }}
+                                    />
                                     <Input
                                         id="email"
                                         type="email"
@@ -90,7 +109,10 @@ export default function ResetPassword({ token, email }: Props) {
                                     Contraseña
                                 </Label>
                                 <div className="relative">
-                                    <Lock className="absolute left-0 top-1/2 size-4 -translate-y-1/2 text-[var(--auth-icon)]" />
+                                    <Lock
+                                        className="absolute left-0 top-1/2 size-4 -translate-y-1/2"
+                                        style={{ color: 'var(--state-alert)' }}
+                                    />
                                     <PasswordInput
                                         id="password"
                                         name="password"
@@ -114,7 +136,10 @@ export default function ResetPassword({ token, email }: Props) {
                                     Confirmar contraseña
                                 </Label>
                                 <div className="relative">
-                                    <Lock className="absolute left-0 top-1/2 size-4 -translate-y-1/2 text-[var(--auth-icon)]" />
+                                    <Lock
+                                        className="absolute left-0 top-1/2 size-4 -translate-y-1/2"
+                                        style={{ color: 'var(--state-success)' }}
+                                    />
                                     <PasswordInput
                                         id="password_confirmation"
                                         name="password_confirmation"

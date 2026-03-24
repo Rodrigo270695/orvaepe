@@ -52,16 +52,16 @@ export default function ClientePagos({ orders, paymentGatewayEnabled }: Props) {
                 <ClientPageTitleCard title="Pagos y pedidos" />
 
                 {!paymentGatewayEnabled ? (
-                    <div className="flex gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+                    <div className="flex gap-3 rounded-xl border border-[color-mix(in_oklab,var(--state-alert)_35%,var(--border))] bg-[color-mix(in_oklab,var(--state-alert)_10%,transparent)] px-4 py-3 text-sm text-[color-mix(in_oklab,var(--state-alert)_72%,var(--foreground))]">
                         <Info
-                            className="size-5 shrink-0 text-amber-700"
+                            className="size-5 shrink-0 text-[color-mix(in_oklab,var(--state-alert)_75%,var(--foreground))]"
                             aria-hidden
                         />
                         <div>
-                            <p className="font-medium text-amber-950">
+                            <p className="font-medium text-[color-mix(in_oklab,var(--state-alert)_82%,var(--foreground))]">
                                 Pago en línea aún no activo
                             </p>
-                            <p className="mt-1 leading-relaxed text-amber-900/90">
+                            <p className="mt-1 leading-relaxed text-[color-mix(in_oklab,var(--state-alert)_66%,var(--foreground))]">
                                 Aquí verás el estado de tus pedidos. Cuando
                                 conectemos la pasarela (por ejemplo PayPal),
                                 podrás pagar pendientes desde esta misma
@@ -71,9 +71,9 @@ export default function ClientePagos({ orders, paymentGatewayEnabled }: Props) {
                         </div>
                     </div>
                 ) : (
-                    <div className="flex gap-3 rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-950">
+                    <div className="flex gap-3 rounded-xl border border-[color-mix(in_oklab,var(--state-info)_30%,var(--border))] bg-[color-mix(in_oklab,var(--state-info)_10%,transparent)] px-4 py-3 text-sm text-[color-mix(in_oklab,var(--state-info)_72%,var(--foreground))]">
                         <Info
-                            className="size-5 shrink-0 text-violet-700"
+                            className="size-5 shrink-0 text-[color-mix(in_oklab,var(--state-info)_75%,var(--foreground))]"
                             aria-hidden
                         />
                         <p className="leading-relaxed">
@@ -84,15 +84,15 @@ export default function ClientePagos({ orders, paymentGatewayEnabled }: Props) {
                     </div>
                 )}
 
-                <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
+                <div className="overflow-hidden rounded-xl border border-[color-mix(in_oklab,var(--state-info)_20%,var(--border))] bg-[color-mix(in_oklab,var(--card)_94%,var(--background))] shadow-sm">
                     {orders.length === 0 ? (
                         <div className="px-5 py-12 text-center">
-                            <p className="text-sm text-zinc-600">
+                            <p className="text-sm text-muted-foreground">
                                 No tienes pedidos todavía.
                             </p>
                             <Link
                                 href="/software"
-                                className="mt-3 inline-block text-sm font-medium text-violet-700 hover:underline"
+                                className="mt-3 inline-block text-sm font-medium text-[color-mix(in_oklab,var(--state-info)_70%,var(--foreground))] hover:underline"
                             >
                                 Ver catálogo de software
                             </Link>
@@ -102,7 +102,7 @@ export default function ClientePagos({ orders, paymentGatewayEnabled }: Props) {
                             <div className="hidden md:block">
                                 <table className="w-full text-left text-sm">
                                     <thead>
-                                        <tr className="border-b border-zinc-100 bg-zinc-50/80 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                                        <tr className="border-b border-[color-mix(in_oklab,var(--state-info)_14%,var(--border))] bg-[color-mix(in_oklab,var(--state-info)_7%,transparent)] text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                                             <th className="px-4 py-3">
                                                 Pedido
                                             </th>
@@ -124,12 +124,12 @@ export default function ClientePagos({ orders, paymentGatewayEnabled }: Props) {
                                         {orders.map((row) => (
                                             <tr
                                                 key={row.id}
-                                                className="border-b border-zinc-100 last:border-0"
+                                                className="border-b border-[color-mix(in_oklab,var(--state-info)_12%,var(--border))] last:border-0"
                                             >
-                                                <td className="px-4 py-3 font-mono text-sm font-medium text-zinc-900">
+                                                <td className="px-4 py-3 font-mono text-sm font-medium text-foreground">
                                                     {row.order_number}
                                                 </td>
-                                                <td className="px-4 py-3 text-zinc-600">
+                                                <td className="px-4 py-3 text-muted-foreground">
                                                     {formatDate(
                                                         row.created_at,
                                                     )}
@@ -143,7 +143,7 @@ export default function ClientePagos({ orders, paymentGatewayEnabled }: Props) {
                                                         )}
                                                     </span>
                                                 </td>
-                                                <td className="px-4 py-3 text-right font-mono text-zinc-900">
+                                                <td className="px-4 py-3 text-right font-mono text-foreground">
                                                     {formatOrderMoney(
                                                         row.grand_total,
                                                         row.currency,
@@ -162,7 +162,7 @@ export default function ClientePagos({ orders, paymentGatewayEnabled }: Props) {
                                     </tbody>
                                 </table>
                             </div>
-                            <ul className="divide-y divide-zinc-100 md:hidden">
+                            <ul className="divide-y divide-[color-mix(in_oklab,var(--state-info)_12%,var(--border))] md:hidden">
                                 {orders.map((row) => (
                                     <li
                                         key={row.id}
@@ -170,10 +170,10 @@ export default function ClientePagos({ orders, paymentGatewayEnabled }: Props) {
                                     >
                                         <div className="flex items-start justify-between gap-3">
                                             <div>
-                                                <p className="font-mono text-sm font-semibold text-zinc-900">
+                                                <p className="font-mono text-sm font-semibold text-foreground">
                                                     {row.order_number}
                                                 </p>
-                                                <p className="mt-0.5 text-xs text-zinc-500">
+                                                <p className="mt-0.5 text-xs text-muted-foreground">
                                                     {formatDate(
                                                         row.created_at,
                                                     )}
@@ -185,7 +185,7 @@ export default function ClientePagos({ orders, paymentGatewayEnabled }: Props) {
                                                 {orderStatusLabel(row.status)}
                                             </span>
                                         </div>
-                                        <p className="mt-2 font-mono text-sm text-zinc-900">
+                                        <p className="mt-2 font-mono text-sm text-foreground">
                                             {formatOrderMoney(
                                                 row.grand_total,
                                                 row.currency,
@@ -219,7 +219,7 @@ function PaymentAction({
 }) {
     if (status !== 'pending_payment') {
         return (
-            <span className="text-xs text-zinc-400">
+            <span className="text-xs text-muted-foreground">
                 {status === 'paid' ? 'Cobrado' : '—'}
             </span>
         );
@@ -227,7 +227,7 @@ function PaymentAction({
 
     if (!gatewayEnabled) {
         return (
-            <span className="text-xs text-zinc-500">
+            <span className="text-xs text-muted-foreground">
                 Pago online próximamente
             </span>
         );
@@ -238,7 +238,7 @@ function PaymentAction({
             type="button"
             size="sm"
             disabled
-            className="bg-violet-600 text-white opacity-70"
+            className="bg-[linear-gradient(120deg,var(--state-info),var(--state-success))] text-white opacity-70"
         >
             Pagar
         </Button>

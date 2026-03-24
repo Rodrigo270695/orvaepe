@@ -7,6 +7,7 @@ import type { SoftwarePricingPlan } from '@/marketplace/softwareCatalog';
 export default function SoftwareDetailPlanCard({
     plan,
     isActive,
+    accent = 'var(--state-info)',
     saleModelLabel,
     planPriceBefore,
     planPriceNow,
@@ -14,6 +15,7 @@ export default function SoftwareDetailPlanCard({
 }: {
     plan: SoftwarePricingPlan;
     isActive: boolean;
+    accent?: string;
     saleModelLabel: string;
     planPriceBefore?: string;
     planPriceNow?: string;
@@ -27,12 +29,15 @@ export default function SoftwareDetailPlanCard({
                     ? 'border-[color-mix(in_oklab,var(--primary)_42%,var(--border))] bg-background/85 shadow-[0_8px_32px_-8px_color-mix(in_oklab,var(--foreground)_12%,transparent)]'
                     : 'border-[var(--border)] bg-background/60 hover:border-[color-mix(in_oklab,var(--primary)_28%,var(--border))] hover:shadow-[0_10px_36px_-10px_color-mix(in_oklab,var(--foreground)_14%,transparent)]',
             ].join(' ')}
+            style={{
+                borderLeft: `3px solid color-mix(in oklab, ${accent} 55%, var(--border))`,
+            }}
         >
             <div
                 className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
                 style={{
                     background:
-                        'radial-gradient(ellipse at 50% 0%, color-mix(in oklab, var(--primary) 12%, transparent) 0%, transparent 52%)',
+                        `radial-gradient(ellipse at 50% 0%, color-mix(in oklab, ${accent} 15%, transparent) 0%, transparent 52%)`,
                 }}
                 aria-hidden
             />
@@ -42,7 +47,7 @@ export default function SoftwareDetailPlanCard({
                     className="pointer-events-none absolute -inset-px opacity-[0.18] blur-xl"
                     style={{
                         background:
-                            'conic-gradient(from 190deg at 50% 0%, color-mix(in oklab, var(--primary) 35%, transparent), transparent 40%, color-mix(in oklab, var(--primary) 15%, transparent), transparent 72%)',
+                            `conic-gradient(from 190deg at 50% 0%, color-mix(in oklab, ${accent} 36%, transparent), transparent 40%, color-mix(in oklab, ${accent} 16%, transparent), transparent 72%)`,
                     }}
                     aria-hidden
                 />
@@ -61,6 +66,16 @@ export default function SoftwareDetailPlanCard({
                                 ? 'bg-[var(--primary)] text-[var(--primary-foreground)] cursor-default opacity-95'
                                 : 'bg-background text-[var(--muted-foreground)] border border-[var(--border)] hover:text-[var(--foreground)] hover:border-[color-mix(in_oklab,var(--primary)_32%,var(--border))] hover:bg-[color-mix(in_oklab,var(--primary)_6%,transparent)]',
                         ].join(' ')}
+                        style={
+                            isActive
+                                ? {
+                                      background: accent,
+                                      color: 'color-mix(in oklab, white 94%, var(--foreground))',
+                                  }
+                                : {
+                                      borderColor: `color-mix(in oklab, ${accent} 32%, var(--border))`,
+                                  }
+                        }
                         onClick={onChoose}
                     >
                         {isActive ? (

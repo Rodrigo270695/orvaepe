@@ -6,9 +6,10 @@ import type { SoftwareSystem } from '@/marketplace/softwareCatalog';
 
 type Props = {
     system: SoftwareSystem;
+    accent?: string;
 };
 
-export default function SoftwareSystemCard({ system }: Props) {
+export default function SoftwareSystemCard({ system, accent = 'var(--state-info)' }: Props) {
     const primaryPlan = system.pricingPlans?.[0] ?? null;
     const planAny = primaryPlan as
         | (typeof primaryPlan & {
@@ -53,13 +54,14 @@ export default function SoftwareSystemCard({ system }: Props) {
             style={{
                 boxShadow:
                     '0 0 0 1px var(--hero-card-inset) inset, 0 10px 40px rgba(0,0,0,0.04)',
+                borderLeft: `3px solid color-mix(in oklab, ${accent} 48%, var(--border))`,
             }}
         >
             <div
                 className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
                 style={{
                     background:
-                        'radial-gradient(ellipse at 12% 0%, color-mix(in oklab, var(--primary) 12%, transparent) 0%, transparent 55%)',
+                        `radial-gradient(ellipse at 12% 0%, color-mix(in oklab, ${accent} 12%, transparent) 0%, transparent 55%)`,
                 }}
                 aria-hidden
             />
@@ -79,7 +81,12 @@ export default function SoftwareSystemCard({ system }: Props) {
                 {system.badges.map((b) => (
                     <span
                         key={b}
-                        className="rounded-full border border-[color-mix(in_oklab,var(--primary)_28%,var(--border))] bg-[color-mix(in_oklab,var(--primary)_9%,transparent)] px-3 py-1 text-xs font-semibold text-[color-mix(in_oklab,var(--primary)_92%,var(--foreground))]"
+                        className="rounded-full border px-3 py-1 text-xs font-semibold"
+                        style={{
+                            borderColor: `color-mix(in oklab, ${accent} 35%, var(--border))`,
+                            background: `color-mix(in oklab, ${accent} 9%, transparent)`,
+                            color: `color-mix(in oklab, ${accent} 90%, var(--foreground))`,
+                        }}
                     >
                         {b}
                     </span>
@@ -114,6 +121,9 @@ export default function SoftwareSystemCard({ system }: Props) {
                 <a
                     href={`/software/${system.slug}`}
                     className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[color-mix(in_oklab,var(--primary)_32%,var(--border))] bg-background/80 px-4 py-3 text-sm font-semibold text-[var(--foreground)] transition-colors hover:border-[color-mix(in_oklab,var(--primary)_45%,var(--border))] hover:bg-[color-mix(in_oklab,var(--primary)_8%,transparent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:w-auto"
+                    style={{
+                        borderColor: `color-mix(in oklab, ${accent} 34%, var(--border))`,
+                    }}
                 >
                     Ver detalles y planes
                     <ArrowRight className="size-4 opacity-80" aria-hidden />

@@ -9,6 +9,8 @@ import {
 } from 'lucide-react';
 
 import GeometricBackground from '@/components/welcome/GeometricBackground';
+import LandingSectionHeader from '@/components/welcome/LandingSectionHeader';
+import { cn } from '@/lib/utils';
 
 type Offering = {
     title: string;
@@ -56,66 +58,141 @@ const offerings: Offering[] = [
     },
 ];
 
+const semanticCycle = [
+    'var(--state-info)',
+    'var(--state-success)',
+    'var(--state-alert)',
+    'var(--state-danger)',
+] as const;
+
 export default function OfferingsSummary() {
     return (
         <section
             id="que-ofrecemos"
-            className="relative scroll-mt-28 border-t border-border bg-background/80 py-20 md:py-28"
+            className="relative scroll-mt-28 border-t border-border bg-[color-mix(in_oklab,var(--landing-surface-2)_92%,transparent)] py-20 backdrop-blur-[2px] md:py-28 dark:bg-[color-mix(in_oklab,var(--landing-surface-2)_88%,transparent)]"
         >
+            {/* Ambiente: viñeta + capa */}
+            <div
+                className="pointer-events-none absolute inset-0 opacity-40 dark:opacity-30"
+                style={{
+                    background: `radial-gradient(ellipse 90% 60% at 50% -20%, color-mix(in oklab, var(--o-amber) 12%, transparent), transparent 55%)`,
+                }}
+                aria-hidden
+            />
             <GeometricBackground variant="grid-hex" opacity={0.06} />
             <GeometricBackground variant="circles-blur" opacity={0.1} />
 
-            <div className="relative mx-auto w-full max-w-6xl px-4">
-                <header className="mb-14 text-center md:mb-20">
-                    <p className="font-mono text-xs font-semibold uppercase tracking-[0.4em] text-[var(--o-amber)]">
-                        Resumen
-                    </p>
-                    <h2 className="mt-3 font-display text-3xl font-bold tracking-tight text-foreground md:text-4xl lg:text-[2.75rem]">
-                        Todo lo que ofrecemos
-                    </h2>
-                    <p className="mx-auto mt-4 max-w-2xl font-body text-muted-foreground">
-                        Software desarrollado, licencias flexibles, servicios de implementación y más.
-                        Elige lo que necesitas y escala por módulos.
-                    </p>
-                </header>
+            <div className="relative mx-auto w-full max-w-6xl px-4 sm:px-6">
+                <LandingSectionHeader
+                    className="mb-14 md:mb-20"
+                    eyebrow="Resumen"
+                    title="Todo lo que ofrecemos"
+                    description="Software desarrollado, licencias flexibles, servicios de implementación y más. Elige lo que necesitas y escala por módulos."
+                    layout="wide"
+                    titleSize="hero"
+                />
 
-                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                    {offerings.map((item) => {
+                {/* Bento: fila 1 ancha + dos filas de 3 */}
+                <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-12">
+                    {offerings.map((item, index) => {
                         const Icon = item.icon;
+                        const isFeatured = index === 0;
+                        const accent = semanticCycle[index % semanticCycle.length];
+                        const colSpan =
+                            isFeatured
+                                ? 'sm:col-span-2 lg:col-span-12'
+                                : index >= 1 && index <= 3
+                                  ? 'lg:col-span-4'
+                                  : 'lg:col-span-6';
+
                         return (
                             <Link
                                 key={item.href}
                                 href={item.href}
-                                className="group relative flex flex-col rounded-2xl border border-border bg-card/90 p-6 shadow-sm backdrop-blur-sm transition-all duration-300 hover:-translate-y-1.5 hover:border-primary/40 hover:shadow-[0_20px_50px_var(--hero-glow-soft),0_0_0_1px_var(--hero-card-inset)] md:p-8"
+                                className={cn(
+                                    'landing-offer-shine group relative flex flex-col rounded-3xl border border-border/80 bg-card/90 p-6 shadow-sm ring-1 ring-border/40 backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_56px_-12px_var(--hero-glow-soft),0_0_0_1px_var(--hero-card-inset)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background md:p-8',
+                                    index % 2 === 1 &&
+                                        'border-l-[3px]',
+                                    index % 2 === 0 &&
+                                        !isFeatured &&
+                                        'border-l-[3px]',
+                                    colSpan,
+                                    isFeatured &&
+                                        'border-l-[3px] lg:flex-row lg:items-center lg:gap-10 lg:p-10',
+                                )}
+                                style={{
+                                    borderLeftColor: `color-mix(in oklab, ${accent} 55%, var(--border))`,
+                                }}
                             >
-                                {/* Esquina geométrica decorativa */}
+                                <span
+                                    className="absolute right-5 top-5 font-mono text-[10px] font-bold tabular-nums text-muted-foreground/50 transition-colors"
+                                    style={{ color: `color-mix(in oklab, ${accent} 70%, var(--muted-foreground))` }}
+                                    aria-hidden
+                                >
+                                    {String(index + 1).padStart(2, '0')}
+                                </span>
                                 <div
-                                    className="absolute right-0 top-0 h-20 w-20 overflow-hidden rounded-tr-2xl"
+                                    className="absolute right-0 top-0 h-20 w-20 overflow-hidden rounded-tr-3xl"
                                     aria-hidden
                                 >
                                     <div
-                                        className="absolute -right-10 -top-10 h-20 w-20 rotate-45 border border-[var(--o-amber)] opacity-0 transition-opacity duration-300 group-hover:opacity-25"
+                                        className="absolute -right-10 -top-10 h-20 w-20 rotate-45 border opacity-0 transition-opacity duration-300 group-hover:opacity-25"
+                                        style={{ borderColor: accent }}
                                     />
                                 </div>
                                 <div
-                                    className="absolute left-0 right-0 top-0 h-[2px] rounded-t-2xl bg-gradient-to-r from-transparent via-[var(--o-amber)] to-transparent opacity-0 transition-opacity group-hover:opacity-100"
+                                    className="absolute left-0 right-0 top-0 h-[2px] rounded-t-3xl bg-gradient-to-r from-transparent via-[var(--o-amber)] to-transparent opacity-0 transition-opacity group-hover:opacity-100"
                                     aria-hidden
+                                    style={{
+                                        background: `linear-gradient(90deg, transparent, ${accent}, transparent)`,
+                                    }}
                                 />
-                                <div className="flex items-start gap-4">
-                                    <div className="flex size-12 shrink-0 items-center justify-center rounded-xl border border-border bg-background/80 text-[var(--o-amber)] shadow-sm transition-all duration-300 group-hover:scale-105 group-hover:border-primary/50 group-hover:bg-primary/10 group-hover:shadow-[0_0_20px_var(--hero-glow-soft)]">
-                                        <Icon className="size-6" strokeWidth={1.5} />
+                                <div
+                                    className={cn(
+                                        'flex items-start gap-4',
+                                        isFeatured && 'lg:items-center',
+                                    )}
+                                >
+                                    <div
+                                        className={cn(
+                                            'flex shrink-0 items-center justify-center rounded-2xl border border-border bg-background/80 shadow-sm transition-all duration-300 group-hover:scale-105 group-hover:shadow-[0_0_24px_var(--hero-glow-soft)]',
+                                            isFeatured ? 'size-16 md:size-20' : 'size-12',
+                                        )}
+                                        style={{
+                                            color: accent,
+                                        }}
+                                    >
+                                        <Icon
+                                            className={cn(
+                                                isFeatured ? 'size-9 md:size-10' : 'size-6',
+                                            )}
+                                            strokeWidth={1.5}
+                                        />
                                     </div>
                                     <div className="min-w-0 flex-1">
-                                        <h3 className="font-display text-lg font-bold text-foreground transition-colors group-hover:text-[var(--o-amber)]">
+                                        <h3
+                                            className={cn(
+                                                'font-display font-bold text-foreground transition-colors',
+                                                isFeatured ? 'text-xl md:text-2xl' : 'text-lg',
+                                            )}
+                                        >
                                             {item.title}
                                         </h3>
-                                        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                                        <p
+                                            className={cn(
+                                                'mt-2 leading-relaxed text-muted-foreground',
+                                                isFeatured ? 'text-base md:max-w-2xl' : 'text-sm',
+                                            )}
+                                        >
                                             {item.description}
                                         </p>
                                     </div>
                                 </div>
-                                <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[var(--o-amber)] opacity-0 transition-opacity group-hover:opacity-100">
-                                    Ver más
+                                <span
+                                    className="mt-5 inline-flex items-center gap-2 text-sm font-semibold opacity-0 transition-opacity group-hover:opacity-100"
+                                    style={{ color: accent }}
+                                >
+                                    Explorar
                                     <span className="transition-transform group-hover:translate-x-0.5">→</span>
                                 </span>
                             </Link>

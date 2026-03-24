@@ -3,6 +3,12 @@ import { Rocket, ShieldCheck, Layers } from 'lucide-react';
 import PageHero from '@/components/marketing/PageHero';
 
 export default function SoftwareDevelopmentHero() {
+    const accents = [
+        'var(--state-info)',
+        'var(--state-success)',
+        'var(--state-alert)',
+    ] as const;
+
     return (
         <PageHero
             id="inicio"
@@ -10,7 +16,10 @@ export default function SoftwareDevelopmentHero() {
             title={
                 <>
                     Software pensado para
-                    <span className="text-[var(--o-amber)]"> operar</span>
+                    <span className="bg-gradient-to-br from-foreground via-[var(--state-alert)] to-[var(--state-info)] bg-clip-text text-transparent dark:from-[var(--o-cream2)]">
+                        {' '}
+                        operar
+                    </span>
                 </>
             }
             description="Elige el sistema por categorías, ajusta tu plan (SaaS, licencia o módulos sueltos) y recibe entregables con documentación y trazabilidad. Todo orientado a implementación en días o semanas."
@@ -21,8 +30,11 @@ export default function SoftwareDevelopmentHero() {
         >
             <div className="mt-8 flex flex-wrap gap-4">
                 <div className="flex items-center gap-3 rounded-2xl border border-[var(--border)] bg-background/60 px-4 py-3">
-                    <span className="flex size-8 items-center justify-center rounded-xl bg-[color-mix(in_oklab,var(--o-amber)_18%,transparent)]">
-                        <Rocket className="size-4 text-[var(--o-amber)]" />
+                    <span
+                        className="flex size-8 items-center justify-center rounded-xl"
+                        style={{ background: `color-mix(in oklab, ${accents[0]} 18%, transparent)` }}
+                    >
+                        <Rocket className="size-4" style={{ color: accents[0] }} />
                     </span>
                     <div>
                         <p className="text-sm font-semibold text-[var(--foreground)]">
@@ -35,8 +47,11 @@ export default function SoftwareDevelopmentHero() {
                 </div>
 
                 <div className="flex items-center gap-3 rounded-2xl border border-[var(--border)] bg-background/60 px-4 py-3">
-                    <span className="flex size-8 items-center justify-center rounded-xl bg-[color-mix(in_oklab,var(--o-amber)_18%,transparent)]">
-                        <Layers className="size-4 text-[var(--o-amber)]" />
+                    <span
+                        className="flex size-8 items-center justify-center rounded-xl"
+                        style={{ background: `color-mix(in oklab, ${accents[1]} 18%, transparent)` }}
+                    >
+                        <Layers className="size-4" style={{ color: accents[1] }} />
                     </span>
                     <div>
                         <p className="text-sm font-semibold text-[var(--foreground)]">
@@ -49,8 +64,11 @@ export default function SoftwareDevelopmentHero() {
                 </div>
 
                 <div className="flex items-center gap-3 rounded-2xl border border-[var(--border)] bg-background/60 px-4 py-3">
-                    <span className="flex size-8 items-center justify-center rounded-xl bg-[color-mix(in_oklab,var(--o-amber)_18%,transparent)]">
-                        <ShieldCheck className="size-4 text-[var(--o-amber)]" />
+                    <span
+                        className="flex size-8 items-center justify-center rounded-xl"
+                        style={{ background: `color-mix(in oklab, ${accents[2]} 18%, transparent)` }}
+                    >
+                        <ShieldCheck className="size-4" style={{ color: accents[2] }} />
                     </span>
                     <div>
                         <p className="text-sm font-semibold text-[var(--foreground)]">

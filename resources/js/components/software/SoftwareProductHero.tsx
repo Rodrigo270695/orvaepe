@@ -37,6 +37,12 @@ export default function SoftwareProductHero({
     categorySlug,
     modules,
 }: Props) {
+    const semanticAccents = [
+        'var(--state-info)',
+        'var(--state-success)',
+        'var(--state-alert)',
+        'var(--state-danger)',
+    ] as const;
     const categoryLabel = formatCategoryLabel(categorySlug);
     const highlightBullets =
         modules.length > 0
@@ -57,7 +63,7 @@ export default function SoftwareProductHero({
                 className="pointer-events-none absolute inset-0 opacity-[0.45]"
                 style={{
                     background:
-                        'radial-gradient(ellipse 90% 55% at 50% -15%, color-mix(in oklab, var(--primary) 12%, transparent), transparent 55%)',
+                        'radial-gradient(ellipse 90% 55% at 50% -15%, color-mix(in oklab, var(--state-info) 10%, transparent), transparent 55%)',
                 }}
                 aria-hidden
             />
@@ -84,7 +90,7 @@ export default function SoftwareProductHero({
                 <div className="mt-8 grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:gap-14 xl:gap-16">
                     <div>
                         <div className="inline-flex items-center gap-3 rounded-full border border-[var(--border)] bg-[color-mix(in_oklab,var(--background)_92%,transparent)] px-4 py-2 shadow-sm backdrop-blur-sm">
-                            <AppLogoIcon className="size-5 shrink-0 fill-[color-mix(in_oklab,var(--primary)_75%,var(--foreground))]" />
+                            <AppLogoIcon className="size-5 shrink-0 fill-[color-mix(in_oklab,var(--state-info)_75%,var(--foreground))]" />
                             <span className="font-[family-name:var(--font-mono)] text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--muted-foreground)]">
                                 Producto
                             </span>
@@ -94,7 +100,9 @@ export default function SoftwareProductHero({
                             id="software-product-title"
                             className="mt-6 font-[family-name:var(--font-display)] text-[2rem] font-bold leading-[1.08] tracking-tight text-[var(--foreground)] sm:text-4xl md:text-[2.65rem] md:leading-[1.06]"
                         >
-                            {name}
+                            <span className="bg-gradient-to-br from-foreground via-[var(--state-alert)] to-[var(--state-info)] bg-clip-text text-transparent dark:from-[var(--o-cream2)]">
+                                {name}
+                            </span>
                         </h1>
 
                         <p className="mt-5 max-w-xl font-[family-name:var(--font-body)] text-base leading-relaxed text-[var(--muted-foreground)] md:text-[17px]">
@@ -149,10 +157,15 @@ export default function SoftwareProductHero({
 
                         {badges.length > 0 && (
                             <div className="mt-4 flex flex-wrap gap-2">
-                                {badges.slice(0, 6).map((b) => (
+                                {badges.slice(0, 6).map((b, idx) => (
                                     <span
                                         key={b}
-                                        className="inline-flex items-center rounded-full border border-[color-mix(in_oklab,var(--primary)_28%,var(--border))] bg-[color-mix(in_oklab,var(--primary)_9%,transparent)] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-[color-mix(in_oklab,var(--primary)_95%,var(--foreground))]"
+                                        className="inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide"
+                                        style={{
+                                            borderColor: `color-mix(in oklab, ${semanticAccents[idx % semanticAccents.length]} 30%, var(--border))`,
+                                            background: `color-mix(in oklab, ${semanticAccents[idx % semanticAccents.length]} 10%, transparent)`,
+                                            color: `color-mix(in oklab, ${semanticAccents[idx % semanticAccents.length]} 90%, var(--foreground))`,
+                                        }}
                                     >
                                         {b}
                                     </span>
@@ -161,10 +174,11 @@ export default function SoftwareProductHero({
                         )}
 
                         <ul className="mt-5 space-y-3 border-t border-[color-mix(in_oklab,var(--border)_70%,transparent)] pt-5 text-sm text-[var(--muted-foreground)]">
-                            {highlightBullets.map((t) => (
+                            {highlightBullets.map((t, idx) => (
                                 <li key={t} className="flex gap-3">
                                     <span
-                                        className="mt-1.5 size-1.5 shrink-0 rounded-full bg-[var(--primary)]"
+                                        className="mt-1.5 size-1.5 shrink-0 rounded-full"
+                                        style={{ background: semanticAccents[idx % semanticAccents.length] }}
                                         aria-hidden
                                     />
                                     <span className="leading-snug text-[var(--foreground)]/90">{t}</span>

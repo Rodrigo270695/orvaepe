@@ -40,9 +40,13 @@ export default function SoftwareDetailSection({
         >
             <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
                 <header className="max-w-3xl">
-                    <p className="font-[family-name:var(--font-mono)] text-[11px] font-semibold uppercase tracking-[0.28em] text-[color-mix(in_oklab,var(--primary)_88%,var(--muted-foreground))]">
-                        {eyebrow}
-                    </p>
+                    <div className="mb-4 flex max-w-xl items-center gap-3">
+                        <span className="h-px flex-1 max-w-16 bg-gradient-to-r from-transparent to-[color-mix(in_oklab,var(--state-alert)_52%,transparent)]" />
+                        <p className="shrink-0 font-[family-name:var(--font-mono)] text-[11px] font-semibold uppercase tracking-[0.28em] text-[color-mix(in_oklab,var(--state-alert)_88%,var(--muted-foreground))]">
+                            {eyebrow}
+                        </p>
+                        <span className="h-px flex-1 max-w-16 bg-gradient-to-l from-transparent to-[color-mix(in_oklab,var(--state-info)_42%,transparent)]" />
+                    </div>
                     <h2 className="mt-3 text-balance font-[family-name:var(--font-display)] text-[1.65rem] font-bold leading-[1.15] tracking-tight text-[var(--foreground)] sm:text-3xl md:text-[2rem]">
                         {title}
                     </h2>

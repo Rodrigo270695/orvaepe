@@ -42,14 +42,18 @@ export default function SoftwareDetailPlanSelectionPanel({
             )}
         >
             <div
-                className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[color-mix(in_oklab,var(--primary)_50%,transparent)] to-transparent opacity-90"
+                className="pointer-events-none absolute inset-x-0 top-0 h-px opacity-90"
+                style={{
+                    background:
+                        'linear-gradient(90deg, transparent 0%, color-mix(in oklab, var(--state-info) 60%, transparent) 20%, color-mix(in oklab, var(--state-success) 58%, transparent) 40%, color-mix(in oklab, var(--state-alert) 58%, transparent) 62%, color-mix(in oklab, var(--state-danger) 56%, transparent) 80%, transparent 100%)',
+                }}
                 aria-hidden
             />
             <div
                 className="pointer-events-none absolute inset-x-0 -top-24 h-48 opacity-70 blur-3xl"
                 style={{
                     background:
-                        'radial-gradient(ellipse 70% 60% at 50% 0%, color-mix(in oklab, var(--primary) 26%, transparent), transparent 72%)',
+                        'radial-gradient(ellipse 70% 60% at 50% 0%, color-mix(in oklab, var(--state-info) 24%, transparent), transparent 72%)',
                 }}
                 aria-hidden
             />
@@ -68,17 +72,17 @@ export default function SoftwareDetailPlanSelectionPanel({
 
             <div className="relative z-10 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between lg:gap-10">
                 <div className="min-w-0 flex-1 space-y-3">
-                    <p className="text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-[var(--muted-foreground)]">
+                    <p className="text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-[color-mix(in_oklab,var(--state-alert)_78%,var(--muted-foreground))]">
                         {eyebrow}
                     </p>
-                    <p className="text-pretty text-base font-semibold leading-snug text-[var(--foreground)] md:text-lg">
+                    <p className="text-pretty text-base font-semibold leading-snug text-[color-mix(in_oklab,var(--state-info)_40%,var(--foreground))] md:text-lg">
                         {selectionTitle}
                     </p>
 
                     {hasPrice ? (
                         <div className="pt-1">
                             <p
-                                className="font-[family-name:var(--font-display)] text-2xl font-bold tracking-tight text-[var(--foreground)] tabular-nums sm:text-3xl"
+                                className="font-[family-name:var(--font-display)] text-2xl font-bold tracking-tight text-[color-mix(in_oklab,var(--state-success)_40%,var(--foreground))] tabular-nums sm:text-3xl"
                                 style={{ fontFeatureSettings: '"tnum" 1' }}
                             >
                                 {priceLine}
@@ -110,13 +114,14 @@ export default function SoftwareDetailPlanSelectionPanel({
                             'border-[color-mix(in_oklab,var(--border)_75%,transparent)]',
                             'bg-[color-mix(in_oklab,var(--background)_55%,transparent)] text-[var(--foreground)] backdrop-blur-md',
                             'transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]',
-                            'hover:border-[color-mix(in_oklab,var(--primary)_42%,var(--border))]',
-                            'hover:bg-[color-mix(in_oklab,var(--primary)_9%,transparent)]',
-                            'hover:shadow-[0_0_28px_-6px_color-mix(in_oklab,var(--primary)_32%,transparent)]',
+                            'hover:shadow-[0_0_28px_-6px_color-mix(in_oklab,var(--state-info)_32%,transparent)]',
                             'active:scale-[0.98]',
                             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-background',
                             !planSelected && 'pointer-events-none opacity-45',
                         )}
+                        style={{
+                            borderColor: 'color-mix(in oklab, var(--state-info) 35%, var(--border))',
+                        }}
                         onClick={onPay}
                     >
                         <CreditCard className="size-4 opacity-90" aria-hidden />
@@ -127,17 +132,21 @@ export default function SoftwareDetailPlanSelectionPanel({
                         disabled={!planSelected}
                         className={cn(
                             'inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl px-5 py-3.5 text-sm font-semibold',
-                            'bg-[var(--primary)] text-[var(--primary-foreground)]',
-                            'shadow-[0_6px_28px_-6px_color-mix(in_oklab,var(--primary)_58%,transparent),inset_0_1px_0_0_color-mix(in_oklab,var(--primary-foreground)_16%,transparent)]',
+                            'text-[var(--primary-foreground)]',
+                            'shadow-[0_6px_28px_-6px_color-mix(in_oklab,var(--state-success)_55%,transparent),inset_0_1px_0_0_color-mix(in_oklab,var(--primary-foreground)_16%,transparent)]',
                             'transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]',
                             'hover:brightness-[1.08]',
-                            'hover:shadow-[0_10px_40px_-8px_color-mix(in_oklab,var(--primary)_52%,transparent)]',
+                            'hover:shadow-[0_10px_40px_-8px_color-mix(in_oklab,var(--state-success)_52%,transparent)]',
                             'active:scale-[0.98]',
                             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-background',
                             addedCount > 0 &&
                                 'ring-2 ring-[color-mix(in_oklab,var(--primary)_38%,transparent)] ring-offset-2 ring-offset-[color-mix(in_oklab,var(--background)_80%,transparent)]',
                             !planSelected && 'pointer-events-none opacity-45',
                         )}
+                        style={{
+                            background:
+                                'linear-gradient(135deg, color-mix(in oklab, var(--state-success) 92%, var(--state-info)), color-mix(in oklab, var(--state-info) 72%, var(--state-success)))',
+                        }}
                         onClick={onAdd}
                     >
                         Agregar al carrito
@@ -155,9 +164,9 @@ export default function SoftwareDetailPlanSelectionPanel({
                         <span
                             className={cn(
                                 'inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold',
-                                'border-[color-mix(in_oklab,var(--primary)_38%,transparent)]',
-                                'bg-[color-mix(in_oklab,var(--primary)_11%,transparent)]',
-                                'text-[color-mix(in_oklab,var(--primary)_94%,var(--foreground))]',
+                                'border-[color-mix(in_oklab,var(--state-success)_38%,transparent)]',
+                                'bg-[color-mix(in_oklab,var(--state-success)_11%,transparent)]',
+                                'text-[color-mix(in_oklab,var(--state-success)_94%,var(--foreground))]',
                                 'shadow-[inset_0_1px_0_0_color-mix(in_oklab,var(--primary-foreground)_10%,transparent)]',
                                 'animate-in fade-in slide-in-from-bottom-2 fill-mode-both duration-500',
                             )}

@@ -239,9 +239,9 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
     }, [openDropdown, openMobile]);
 
     const topLinkClass =
-        'relative inline-flex cursor-pointer items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold transition-all hover:bg-[color-mix(in_oklab,var(--o-amber)_10%,transparent)]';
+        'relative inline-flex cursor-pointer items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold transition-all duration-200 hover:bg-[color-mix(in_oklab,var(--state-info)_14%,transparent)] hover:text-[color-mix(in_oklab,var(--state-info)_68%,var(--foreground))]';
     const activeUnderline =
-        'absolute left-2 right-2 bottom-0 z-10 h-[3px] rounded-full bg-[var(--o-amber)] origin-left scale-x-0 transition-transform duration-300 pointer-events-none';
+        'absolute left-2 right-2 -bottom-0.5 z-10 h-[3px] rounded-full bg-[linear-gradient(90deg,var(--state-info),var(--state-success),var(--state-alert))] origin-left scale-x-0 transition-transform duration-300 pointer-events-none';
 
     const authActions = auth.user ? (
         <>
@@ -263,14 +263,18 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
         <>
             <Link
                 href="/login"
-                className="rounded-md border border-transparent px-4 py-2 text-sm font-semibold text-[var(--foreground)] hover:border-[color-mix(in_oklab,var(--o-amber)_55%,transparent)] hover:bg-[color-mix(in_oklab,var(--o-amber)_10%,transparent)]"
+                className="rounded-md border border-transparent px-4 py-2 text-sm font-semibold text-[var(--foreground)] hover:border-[color-mix(in_oklab,var(--state-info)_50%,transparent)] hover:bg-[color-mix(in_oklab,var(--state-info)_10%,transparent)]"
             >
                 Iniciar sesión
             </Link>
             {finalCanRegister && (
                 <Link
                     href="/register"
-                    className="rounded-md bg-[linear-gradient(135deg,color-mix(in_oklab,var(--o-amber)_55%,transparent),var(--primary))] px-4 py-2 text-sm font-semibold text-[var(--primary-foreground)] shadow-none hover:opacity-95"
+                    className="rounded-md px-4 py-2 text-sm font-semibold text-[var(--primary-foreground)] shadow-[0_8px_24px_-10px_color-mix(in_oklab,var(--state-success)_68%,transparent)] transition-[filter,transform] duration-200 hover:brightness-105 hover:-translate-y-[1px]"
+                    style={{
+                        background:
+                            'linear-gradient(135deg, color-mix(in oklab, var(--state-info) 88%, var(--state-success)), color-mix(in oklab, var(--state-success) 72%, var(--state-info)))',
+                    }}
                 >
                     Registrarse
                 </Link>
@@ -341,7 +345,14 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
         const [first, ...rest] = links;
         return (
             <div
-                className="absolute left-0 top-full z-20 mt-3 w-72 rounded-2xl border border-[var(--border)] bg-card p-2 shadow-[0_18px_50px_rgba(0,0,0,0.25)]"
+                className="absolute left-0 top-full z-20 mt-3 w-72 rounded-2xl border p-2 backdrop-blur-xl"
+                style={{
+                    borderColor: 'color-mix(in oklab, var(--state-info) 20%, var(--border))',
+                    background:
+                        'linear-gradient(165deg, color-mix(in oklab, var(--card) 92%, transparent), color-mix(in oklab, var(--state-info) 5%, var(--card)))',
+                    boxShadow:
+                        '0 18px 50px -20px color-mix(in oklab, var(--foreground) 30%, transparent), 0 0 0 1px color-mix(in oklab, var(--state-info) 10%, transparent) inset',
+                }}
                 role="menu"
                 aria-label="Menú desplegable"
             >
@@ -366,8 +377,8 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                     'fixed inset-x-0 top-0 z-40 w-full transition-[box-shadow,background-color,border-color] duration-300 ease-out',
                     'border-b',
                     scrolled
-                        ? 'border-[var(--border)] bg-background/95 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.12),0_1px_0_0_rgba(0,0,0,0.04)] backdrop-blur-md'
-                        : 'border-[var(--border)]/80 bg-background/88 shadow-[0_1px_0_0_rgba(0,0,0,0.03)]',
+                        ? 'border-[color-mix(in_oklab,var(--state-info)_22%,var(--border))] bg-background/95 shadow-[0_8px_30px_-12px_color-mix(in_oklab,var(--foreground)_24%,transparent),0_1px_0_0_color-mix(in_oklab,var(--state-info)_18%,transparent)] backdrop-blur-md'
+                        : 'border-[color-mix(in_oklab,var(--state-info)_14%,var(--border))] bg-background/88 shadow-[0_1px_0_0_color-mix(in_oklab,var(--state-info)_10%,transparent)]',
                 ].join(' ')}
             >
                 <div
@@ -376,6 +387,15 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                         scrolled ? 'py-2.5' : 'py-4',
                     ].join(' ')}
                 >
+                    <div
+                        className="pointer-events-none absolute inset-x-0 top-0 h-px"
+                        style={{
+                            background:
+                                'linear-gradient(90deg, transparent, color-mix(in oklab, var(--state-info) 40%, transparent), color-mix(in oklab, var(--state-success) 35%, transparent), transparent)',
+                        }}
+                        aria-hidden
+                    />
+
                     <Link href="/" className="flex items-center gap-3" onClick={closeAll}>
                         <img
                             src="/logo/orvae-logo-h-transparent-light.png"
@@ -505,7 +525,7 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                                 title="Ir al carrito. Mayús+clic: vaciar. Pasa el mouse para ver el resumen."
                                 className={[
                                     'relative z-[60] inline-flex items-center gap-2 rounded-md border border-transparent px-3 py-2 text-sm font-semibold text-[var(--foreground)]',
-                                    'transition-colors hover:border-[color-mix(in_oklab,var(--o-amber)_55%,transparent)] hover:bg-[color-mix(in_oklab,var(--o-amber)_10%,transparent)]',
+                                    'transition-colors hover:border-[color-mix(in_oklab,var(--state-info)_48%,transparent)] hover:bg-[color-mix(in_oklab,var(--state-info)_10%,transparent)]',
                                     'transform-gpu',
                                     cartBump ? 'animate-pulse scale-105' : '',
                                 ].join(' ')}
@@ -518,9 +538,14 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                                     }
                                 }}
                             >
-                                <ShoppingCart className="size-4 text-[var(--o-amber)]" />
+                                <ShoppingCart className="size-4 text-[var(--state-info)]" />
                                 {cartCount > 0 && (
-                                    <span className="min-w-6 rounded-full bg-[var(--primary)] px-2 py-0.5 text-center text-xs font-bold text-[var(--primary-foreground)]">
+                                    <span className="min-w-6 rounded-full px-2 py-0.5 text-center text-xs font-bold text-[var(--primary-foreground)]"
+                                        style={{
+                                            background:
+                                                'linear-gradient(135deg, color-mix(in oklab, var(--state-success) 88%, var(--state-info)), color-mix(in oklab, var(--state-info) 72%, var(--state-success)))',
+                                        }}
+                                    >
                                         {cartCount}
                                     </span>
                                 )}

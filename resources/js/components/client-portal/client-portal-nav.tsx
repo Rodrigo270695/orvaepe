@@ -82,16 +82,16 @@ function NavRow({
             className={cn(
                 'flex items-center gap-3 rounded-lg px-3 py-2.5 text-[15px] font-medium transition-colors',
                 active
-                    ? 'bg-violet-100 text-violet-900'
-                    : 'text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900',
+                    ? 'border border-[color-mix(in_oklab,var(--state-info)_40%,var(--border))] bg-[linear-gradient(135deg,color-mix(in_oklab,var(--state-info)_18%,transparent),color-mix(in_oklab,var(--state-success)_14%,transparent))] text-[color-mix(in_oklab,var(--state-info)_65%,var(--foreground))]'
+                    : 'text-foreground/80 hover:bg-[color-mix(in_oklab,var(--state-info)_10%,transparent)] hover:text-foreground',
             )}
         >
             <Icon
                 className={cn(
                     'size-5 shrink-0',
                     active
-                        ? 'text-[var(--o-void)]'
-                        : 'text-[var(--o-dark2)]',
+                        ? 'text-(--state-info)'
+                        : 'text-[color-mix(in_oklab,var(--state-info)_55%,var(--foreground))]',
                 )}
             />
             {item.label}
@@ -125,11 +125,11 @@ function NavRow({
             </Link>
             <div
                 className={cn(
-                    'pointer-events-none invisible absolute left-full top-0 z-50 ml-1 min-w-[13.5rem] rounded-xl border border-zinc-200 bg-white py-2 opacity-0 shadow-xl transition-all duration-150 max-lg:hidden',
+                    'pointer-events-none invisible absolute left-full top-0 z-50 ml-1 min-w-54 rounded-xl border border-[color-mix(in_oklab,var(--state-info)_26%,var(--border))] bg-[color-mix(in_oklab,var(--card)_92%,var(--background))] py-2 opacity-0 shadow-xl transition-all duration-150 max-lg:hidden',
                     'group-hover:pointer-events-auto group-hover:visible group-hover:opacity-100',
                 )}
             >
-                <p className="border-b border-zinc-100 px-3 pb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                <p className="border-b border-[color-mix(in_oklab,var(--state-info)_16%,var(--border))] px-3 pb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     {item.label}
                 </p>
                 <ul className="pt-1">
@@ -138,7 +138,7 @@ function NavRow({
                             <Link
                                 href={sub.href}
                                 prefetch
-                                className="block px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900"
+                                className="block px-3 py-2 text-sm text-foreground/80 hover:bg-[color-mix(in_oklab,var(--state-info)_10%,transparent)] hover:text-foreground"
                                 onClick={onNavigate}
                             >
                                 {sub.label}
@@ -148,7 +148,7 @@ function NavRow({
                 </ul>
             </div>
             <ul
-                className="mt-1 space-y-0.5 border-l-2 border-zinc-200 pl-3 lg:hidden"
+                className="mt-1 space-y-0.5 border-l-2 border-[color-mix(in_oklab,var(--state-info)_26%,var(--border))] pl-3 lg:hidden"
                 aria-label={`${item.label}: submenú`}
             >
                 {item.flyout.map((sub) => (
@@ -156,7 +156,7 @@ function NavRow({
                         <Link
                             href={sub.href}
                             prefetch
-                            className="block rounded-md px-2 py-1.5 text-sm text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
+                            className="block rounded-md px-2 py-1.5 text-sm text-foreground/75 hover:bg-[color-mix(in_oklab,var(--state-info)_10%,transparent)] hover:text-foreground"
                             onClick={onNavigate}
                         >
                             {sub.label}

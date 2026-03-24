@@ -47,7 +47,7 @@ export default function HeroTechLogosCarousel() {
                     aria-hidden
                 />
                 <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.3em] text-[var(--o-amber)]/90">
-                    Desarrollado con
+                    Desarrollamos con
                 </p>
             </div>
             <div

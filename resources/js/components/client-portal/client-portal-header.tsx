@@ -29,7 +29,7 @@ export function ClientPortalHeader({
     const user = auth.user as User | null;
 
     return (
-        <header className="sticky top-0 z-40 border-b border-zinc-200 bg-white/95 backdrop-blur">
+        <header className="sticky top-0 z-40 border-b border-[color-mix(in_oklab,var(--state-info)_24%,var(--border))] bg-[color-mix(in_oklab,var(--card)_88%,var(--background))]/95 backdrop-blur-xl">
             <div className="px-4 py-4 sm:px-6 lg:px-8">
                 <div className="flex items-start justify-between gap-3">
                     <div className="flex min-w-0 flex-1 items-start gap-3">
@@ -38,7 +38,7 @@ export function ClientPortalHeader({
                                 type="button"
                                 variant="outline"
                                 size="icon"
-                                className="mt-0.5 h-9 w-9 shrink-0 border-zinc-200 bg-white text-zinc-800 lg:hidden"
+                                className="mt-0.5 h-9 w-9 shrink-0 border-[color-mix(in_oklab,var(--state-info)_28%,var(--border))] bg-[color-mix(in_oklab,var(--state-info)_10%,transparent)] text-foreground lg:hidden"
                                 onClick={onOpenMobileNav}
                                 aria-label="Abrir menú de navegación"
                             >
@@ -52,11 +52,11 @@ export function ClientPortalHeader({
                             )}
                         >
                         <nav aria-label="Migas de pan">
-                            <ol className="flex flex-wrap items-center gap-x-1 text-[13px] leading-snug text-zinc-500 sm:text-sm">
+                            <ol className="flex flex-wrap items-center gap-x-1 text-[13px] leading-snug text-muted-foreground sm:text-sm">
                                 <li className="inline-flex items-center">
                                     <Link
                                         href="/cliente"
-                                        className="font-medium text-zinc-500 transition-colors hover:text-zinc-800"
+                                        className="font-medium text-muted-foreground transition-colors hover:text-[color-mix(in_oklab,var(--state-info)_72%,var(--foreground))]"
                                     >
                                         Portal
                                     </Link>
@@ -67,19 +67,19 @@ export function ClientPortalHeader({
                                         className="inline-flex max-w-full items-center gap-x-1"
                                     >
                                         <ChevronRight
-                                            className="size-3.5 shrink-0 text-zinc-400"
+                                            className="size-3.5 shrink-0 text-muted-foreground"
                                             aria-hidden
                                         />
                                         {b.href ? (
                                             <Link
                                                 href={b.href}
-                                                className="truncate font-medium text-zinc-600 underline-offset-2 hover:text-zinc-900 hover:underline"
+                                                className="truncate font-medium text-foreground/80 underline-offset-2 hover:text-[color-mix(in_oklab,var(--state-info)_72%,var(--foreground))] hover:underline"
                                             >
                                                 {b.label}
                                             </Link>
                                         ) : (
                                             <span
-                                                className="truncate font-medium text-zinc-600"
+                                                className="truncate font-medium text-foreground/80"
                                                 aria-current="page"
                                             >
                                                 {b.label}
@@ -90,7 +90,7 @@ export function ClientPortalHeader({
                             </ol>
                         </nav>
                         {showTitle ? (
-                            <h1 className="truncate text-xl font-semibold tracking-tight text-zinc-900 md:text-2xl">
+                            <h1 className="truncate text-xl font-semibold tracking-tight text-foreground md:text-2xl">
                                 {title}
                             </h1>
                         ) : null}
@@ -102,7 +102,7 @@ export function ClientPortalHeader({
                             <DropdownMenuTrigger asChild>
                                 <Button
                                     variant="outline"
-                                    className="max-w-44 border-zinc-200 bg-white text-left text-xs font-normal text-zinc-800 sm:max-w-56 sm:text-sm"
+                                    className="max-w-44 border-[color-mix(in_oklab,var(--state-info)_25%,var(--border))] bg-[color-mix(in_oklab,var(--card)_88%,transparent)] text-left text-xs font-normal text-foreground shadow-[0_8px_20px_-14px_color-mix(in_oklab,var(--foreground)_30%,transparent)] sm:max-w-56 sm:text-sm"
                                 >
                                     <span className="truncate">
                                         {user.name}

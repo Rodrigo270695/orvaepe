@@ -185,15 +185,37 @@
      * CTA modo claro: grafito (void→dark) + texto crema (alto contraste sobre fondo claro de página).
      * No usar --o-amber/--o-amber2 como gradiente + --o-void como texto (mismo rango de luminancia).
      */
-    --auth-cta-from: var(--o-void);
-    --auth-cta-to: var(--o-dark);
-    --auth-cta-fg: var(--o-cream2);
-    --auth-ring: color-mix(in oklab, var(--o-tech) 40%, transparent);
-    --auth-link: var(--o-void);
-    --auth-link-hover: var(--o-dark2);
-    --auth-icon: var(--o-dark2);
-    --auth-header-icon-bg: color-mix(in oklab, var(--o-tech) 16%, transparent);
-    --auth-focus-border: color-mix(in oklab, var(--o-tech) 55%, var(--o-void) 45%);
+    --auth-cta-from: color-mix(in oklab, var(--state-info) 72%, var(--o-dark));
+    --auth-cta-to: color-mix(in oklab, var(--state-success) 78%, var(--o-dark2));
+    --auth-cta-fg: #f4f9fb;
+    --auth-ring: color-mix(in oklab, var(--state-info) 45%, transparent);
+    --auth-link: color-mix(in oklab, var(--state-alert) 86%, var(--o-dark));
+    --auth-link-hover: color-mix(in oklab, var(--state-info) 72%, var(--o-dark2));
+    --auth-icon: color-mix(in oklab, var(--state-info) 58%, var(--o-dark2));
+    --auth-header-icon-bg: color-mix(in oklab, var(--state-info) 18%, transparent);
+    --auth-focus-border: color-mix(in oklab, var(--state-info) 62%, var(--o-dark) 38%);
+
+    /* Landing (modo claro): malla suave, grano ligero, brillos contenidos */
+    --landing-bg-mesh: linear-gradient(
+        165deg,
+        var(--background) 0%,
+        color-mix(in oklab, var(--o-cream) 52%, var(--background)) 38%,
+        color-mix(in oklab, var(--background) 96%, var(--o-warm)) 100%
+    );
+    --landing-grain-opacity: 0.034;
+    --landing-orb-a-opacity: 0.3;
+    --landing-orb-b-opacity: 0.24;
+    --landing-flair-shadow: 0 0 22px color-mix(in oklab, var(--o-amber) 18%, transparent);
+    --landing-flair-dot-glow: 0 0 18px color-mix(in oklab, var(--o-amber) 35%, transparent);
+    --landing-flair-dot-ring: color-mix(in oklab, var(--background) 90%, white);
+    --landing-offer-shine-mid: color-mix(in oklab, var(--o-amber) 14%, transparent);
+    --landing-surface-1: color-mix(in oklab, var(--background) 92%, white);
+    --landing-surface-2: color-mix(in oklab, var(--card) 94%, var(--o-cream));
+    /* Estados UI (alineado al panel administrativo) */
+    --state-success: #4A9A72;
+    --state-alert: #C09040;
+    --state-danger: #C05050;
+    --state-info: #4A9EB8;
 }
 
 .dark {
@@ -302,15 +324,37 @@
         inset -3px -3px 8px var(--inset-dark);
 
     /* CTA modo oscuro: mismo criterio que --primary (tech + texto void) */
-    --auth-cta-from: var(--o-tech);
-    --auth-cta-to: var(--o-tech2);
-    --auth-cta-fg: var(--o-void);
-    --auth-ring: color-mix(in oklab, var(--o-tech) 48%, transparent);
-    --auth-link: var(--o-tech2);
-    --auth-link-hover: var(--o-cream2);
-    --auth-icon: var(--o-warm);
-    --auth-header-icon-bg: color-mix(in oklab, var(--o-tech) 20%, transparent);
-    --auth-focus-border: color-mix(in oklab, var(--o-tech2) 58%, white 8%);
+    --auth-cta-from: color-mix(in oklab, var(--state-info) 74%, var(--o-dark2));
+    --auth-cta-to: color-mix(in oklab, var(--state-success) 70%, var(--o-tech2));
+    --auth-cta-fg: #0f1d21;
+    --auth-ring: color-mix(in oklab, var(--state-info) 55%, transparent);
+    --auth-link: color-mix(in oklab, var(--state-alert) 85%, var(--o-tech2));
+    --auth-link-hover: color-mix(in oklab, var(--state-info) 70%, var(--o-cream2));
+    --auth-icon: color-mix(in oklab, var(--state-info) 56%, var(--o-warm));
+    --auth-header-icon-bg: color-mix(in oklab, var(--state-info) 24%, transparent);
+    --auth-focus-border: color-mix(in oklab, var(--state-info) 62%, white 12%);
+
+    /* Landing (modo oscuro): más profundidad, brillos tech, grano visible */
+    --landing-bg-mesh: linear-gradient(
+        165deg,
+        var(--background) 0%,
+        color-mix(in oklab, var(--o-dark) 42%, var(--background)) 42%,
+        color-mix(in oklab, var(--o-void) 88%, black) 100%
+    );
+    --landing-grain-opacity: 0.06;
+    --landing-orb-a-opacity: 0.5;
+    --landing-orb-b-opacity: 0.42;
+    --landing-flair-shadow: 0 0 38px color-mix(in oklab, var(--o-tech) 26%, transparent);
+    --landing-flair-dot-glow: 0 0 26px color-mix(in oklab, var(--o-amber) 38%, transparent);
+    --landing-flair-dot-ring: color-mix(in oklab, var(--background) 82%, black);
+    --landing-offer-shine-mid: color-mix(in oklab, var(--o-amber) 24%, transparent);
+    --landing-surface-1: color-mix(in oklab, var(--background) 96%, black);
+    --landing-surface-2: color-mix(in oklab, var(--card) 90%, var(--o-void));
+    /* Estados UI (modo oscuro, misma familia del admin) */
+    --state-success: #5FB487;
+    --state-alert: #D7A25A;
+    --state-danger: #D26A6A;
+    --state-info: #69B4CB;
 }
 
 /* Botón principal en pantallas auth (login, registro, recuperar) */
@@ -709,5 +753,192 @@
     }
     .sd-geo-layer {
         transform: none !important;
+    }
+}
+
+/* Fondo base landing: malla definida por tema (--landing-bg-mesh) */
+.landing-page {
+    background-color: var(--background);
+    background-image: var(--landing-bg-mesh);
+}
+
+/* Landing: textura sutil (tendencia “grain”) — opacidad por tema */
+.landing-grain {
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    opacity: var(--landing-grain-opacity);
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    mix-blend-mode: overlay;
+}
+
+.dark .landing-grain {
+    mix-blend-mode: soft-light;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .landing-grain {
+        opacity: calc(var(--landing-grain-opacity) * 0.55);
+    }
+}
+
+/* Separador suave entre bloques (landing) */
+.landing-section-glow {
+    height: 1px;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        color-mix(in oklab, var(--o-amber) 35%, transparent),
+        transparent
+    );
+}
+
+/* Puente visual entre secciones (home) */
+.landing-section-flair {
+    position: relative;
+    height: 3px;
+    max-width: 56rem;
+    margin-left: auto;
+    margin-right: auto;
+    border-radius: 9999px;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        color-mix(in oklab, var(--o-amber) 55%, transparent) 35%,
+        color-mix(in oklab, var(--o-tech) 40%, transparent) 65%,
+        transparent
+    );
+    opacity: 0.78;
+    box-shadow: var(--landing-flair-shadow);
+}
+
+.landing-section-flair::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 8px;
+    height: 8px;
+    translate: -50% -50%;
+    border-radius: 9999px;
+    background: color-mix(in oklab, var(--o-amber) 70%, var(--o-tech));
+    box-shadow:
+        0 0 0 3px var(--landing-flair-dot-ring),
+        var(--landing-flair-dot-glow);
+}
+
+/* Orbes grandes (home): profundidad sin DOM pesado */
+.landing-ambient-orbs {
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+}
+
+.landing-orb {
+    position: absolute;
+    border-radius: 9999px;
+    filter: blur(88px);
+    will-change: transform;
+    animation: landing-orb-drift 24s ease-in-out infinite alternate;
+}
+
+.landing-orb--a {
+    opacity: var(--landing-orb-a-opacity);
+    width: min(44rem, 120vw);
+    height: min(44rem, 120vw);
+    top: -12%;
+    right: -18%;
+    background: radial-gradient(
+        circle,
+        color-mix(in oklab, var(--o-amber) 42%, transparent) 0%,
+        transparent 68%
+    );
+}
+
+.landing-orb--b {
+    opacity: var(--landing-orb-b-opacity);
+    width: min(38rem, 100vw);
+    height: min(38rem, 100vw);
+    bottom: 0;
+    left: -22%;
+    animation-delay: -9s;
+    animation-duration: 32s;
+    background: radial-gradient(
+        circle,
+        color-mix(in oklab, var(--o-tech) 38%, transparent) 0%,
+        transparent 70%
+    );
+}
+
+@keyframes landing-orb-drift {
+    0% {
+        transform: translate(0, 0) scale(1);
+    }
+    100% {
+        transform: translate(-3%, 4%) scale(1.06);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .landing-orb {
+        animation: none;
+    }
+}
+
+/* Tarjetas ofertas: brillo al hover */
+.landing-offer-shine {
+    position: relative;
+    overflow: hidden;
+}
+
+.landing-offer-shine::after {
+    content: '';
+    pointer-events: none;
+    position: absolute;
+    inset: -40% -60%;
+    background: linear-gradient(
+        105deg,
+        transparent 40%,
+        var(--landing-offer-shine-mid) 50%,
+        transparent 60%
+    );
+    opacity: 0;
+    transform: translateX(-30%) rotate(8deg);
+    transition: opacity 0.45s ease, transform 0.6s ease;
+}
+
+.landing-offer-shine:hover::after {
+    opacity: 1;
+    transform: translateX(20%) rotate(8deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .landing-offer-shine::after {
+        display: none;
+    }
+}
+
+/* Marco carrusel clientes: pulso de borde */
+@keyframes landing-frame-glow {
+    0%,
+    100% {
+        opacity: 0.55;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+
+.landing-carousel-glow {
+    animation: landing-frame-glow 5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .landing-carousel-glow {
+        animation: none;
+        opacity: 0.75;
     }
 }
