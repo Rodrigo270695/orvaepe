@@ -112,6 +112,19 @@ export default function CatalogSkuFormFields({
     const [selectedCategoryId, setSelectedCategoryId] = React.useState('');
     const [selectedProductId, setSelectedProductId] = React.useState('');
 
+    const fallbackProductId = item?.catalog_product_id
+        ? String(item.catalog_product_id)
+        : item?.product?.id
+            ? String(item.product.id)
+            : '';
+
+    const fallbackCategoryId = item?.product?.category?.id
+        ? String(item.product.category.id)
+        : '';
+
+    const effectiveCategoryId = selectedCategoryId || fallbackCategoryId;
+    const effectiveProductId = selectedProductId || fallbackProductId;
+
     React.useEffect(() => {
         setIsActive(item?.is_active ?? true);
         setTaxIncluded(item?.tax_included ?? false);
@@ -119,11 +132,27 @@ export default function CatalogSkuFormFields({
         setCodeValue(item?.code ?? '');
         setNameValue(item?.name ?? '');
         setSortOrderValue(mode === 'create' ? String(nextSortOrder) : String(item?.sort_order ?? ''));
-        setSelectedProductId(item?.catalog_product_id ?? '');
+        setSelectedProductId(
+            item?.catalog_product_id
+                ? String(item.catalog_product_id)
+                : item?.product?.id
+                    ? String(item.product.id)
+                    : '',
+        );
 
-        const currentProductId = item?.catalog_product_id ?? '';
-        const matchedProduct = productsForSelect.find((p) => p.id === currentProductId);
-        setSelectedCategoryId(matchedProduct?.category?.id ?? '');
+        const currentProductId = item?.catalog_product_id
+            ? String(item.catalog_product_id)
+            : item?.product?.id
+                ? String(item.product.id)
+                : '';
+        const matchedProduct = productsForSelect.find((p) => String(p.id) === currentProductId);
+        setSelectedCategoryId(
+            matchedProduct?.category?.id
+                ? String(matchedProduct.category.id)
+                : item?.product?.category?.id
+                    ? String(item.product.category.id)
+                    : '',
+        );
     }, [
         item?.id,
         item?.is_active,
@@ -151,9 +180,10 @@ export default function CatalogSkuFormFields({
         productsForSelect.forEach((product) => {
             const cat = product.category;
             if (!cat) return;
-            if (!map.has(cat.id)) {
-                map.set(cat.id, {
-                    id: cat.id,
+            const categoryId = String(cat.id);
+            if (!map.has(categoryId)) {
+                map.set(categoryId, {
+                    id: categoryId,
                     name: cat.name,
                     revenue_line: cat.revenue_line,
                 });
@@ -164,9 +194,40 @@ export default function CatalogSkuFormFields({
     }, [productsForSelect]);
 
     const filteredProducts = React.useMemo(() => {
-        if (!selectedCategoryId) return [];
-        return productsForSelect.filter((p) => p.category?.id === selectedCategoryId);
-    }, [productsForSelect, selectedCategoryId]);
+        if (!effectiveCategoryId) return [];
+
+        const base = productsForSelect.filter(
+            (p) => String(p.category?.id ?? '') === effectiveCategoryId,
+        );
+
+        // Fallback para edición: si el producto actual no vino en productsForSelect,
+        // lo inyectamos desde el item para que el select se precargue.
+        const currentProductId = effectiveProductId;
+
+        const hasCurrent = currentProductId !== '' && base.some((p) => String(p.id) === currentProductId);
+        if (hasCurrent || !item?.product || !item?.product?.category) {
+            return base;
+        }
+
+        if (String(item.product.category.id) !== effectiveCategoryId) {
+            return base;
+        }
+
+        return [
+            ...base,
+            {
+                id: String(item.product.id),
+                name: item.product.name,
+                slug: item.product.slug,
+                is_active: true,
+                category: {
+                    id: String(item.product.category.id),
+                    name: item.product.category.name,
+                    revenue_line: item.product.category.revenue_line,
+                },
+            } satisfies CatalogSkuProductOption,
+        ];
+    }, [productsForSelect, effectiveCategoryId, effectiveProductId, item]);
 
     return (
         <div className="space-y-6">
@@ -178,13 +239,13 @@ export default function CatalogSkuFormFields({
                     <AdminUnderlineSelect
                         id="catalog_category_id"
                         name="catalog_category_id"
-                        value={selectedCategoryId}
+                        value={effectiveCategoryId}
                         onValueChange={(next) => {
                             setSelectedCategoryId(next);
                             setSelectedProductId('');
                         }}
                         options={categoriesForSelect.map((c) => ({
-                            value: c.id,
+                            value: String(c.id),
                             label: c.name,
                         }))}
                         placeholder="Selecciona una categoría"
@@ -198,13 +259,13 @@ export default function CatalogSkuFormFields({
                     <AdminUnderlineSelect
                         id="catalog_product_id"
                         name="catalog_product_id"
-                        value={selectedProductId}
+                        value={effectiveProductId}
                         onValueChange={(next) => setSelectedProductId(next)}
                         options={filteredProducts.map((p) => ({
-                            value: p.id,
+                            value: String(p.id),
                             label: productLabel(p),
                         }))}
-                        disabled={!selectedCategoryId}
+                        disabled={!effectiveCategoryId}
                         placeholder="Selecciona un producto"
                     />
                     <InputError message={errors.catalog_product_id} />

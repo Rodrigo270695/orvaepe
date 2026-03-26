@@ -74,11 +74,23 @@ class CatalogSkusController extends Controller
         }
 
         $skus = $skusQuery->paginate($perPage)->appends($append);
+        $currentSkuProductIds = $skus->getCollection()
+            ->pluck('catalog_product_id')
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
 
         $productsForSelect = CatalogProduct::query()
             ->with('category:id,name,revenue_line')
             ->select(['id', 'name', 'slug', 'category_id', 'is_active'])
-            ->where('is_active', true)
+            ->where(function ($query) use ($currentSkuProductIds) {
+                $query->where('is_active', true);
+
+                if ($currentSkuProductIds !== []) {
+                    $query->orWhereIn('id', $currentSkuProductIds);
+                }
+            })
             ->orderBy('name')
             ->get();
 
