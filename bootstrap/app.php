@@ -34,6 +34,11 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (\Throwable $e, Request $request) {
+            // En modo debug dejamos que Laravel renderice la excepción completa.
+            if (config('app.debug')) {
+                return null;
+            }
+
             if ($request->expectsJson()) {
                 return null;
             }
