@@ -69,11 +69,11 @@ export default function CatalogProductFormFields({
 
     const normalizeSlug = (value: string) =>
         value
-            .toLocaleLowerCase('es')
+            .toLocaleUpperCase('es')
             .trim()
             .replace(/\s+/g, '-')
             .replace(/_/g, '-')
-            .replace(/[^a-z0-9-]/g, '')
+            .replace(/[^A-Z0-9-]/g, '')
             .replace(/-+/g, '-')
             .replace(/^-|-$/g, '');
 
@@ -112,7 +112,7 @@ export default function CatalogProductFormFields({
                             setSlugValue(normalizeSlug(event.target.value))
                         }
                         required
-                        placeholder="ej: oem-mas-vendidos"
+                        placeholder="Ej: OEM-MAS-VENDIDOS"
                     />
                     <InputError message={errors.slug} />
                 </div>
