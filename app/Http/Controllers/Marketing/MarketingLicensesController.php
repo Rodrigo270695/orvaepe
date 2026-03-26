@@ -25,7 +25,6 @@ class MarketingLicensesController extends Controller
                         ->orderBy('name');
                 },
             ])
-            ->orderBy('sort_order')
             ->orderBy('name')
             ->get();
 
