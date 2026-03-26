@@ -67,6 +67,16 @@ export default function CatalogProductFormFields({
                 `${sep}${letter.toLocaleUpperCase('es')}`,
             );
 
+    const normalizeSlug = (value: string) =>
+        value
+            .toLocaleLowerCase('es')
+            .trim()
+            .replace(/\s+/g, '-')
+            .replace(/_/g, '-')
+            .replace(/[^a-z0-9-]/g, '')
+            .replace(/-+/g, '-')
+            .replace(/^-|-$/g, '');
+
     return (
         <div className="space-y-6">
             <div className="space-y-2">
@@ -99,10 +109,10 @@ export default function CatalogProductFormFields({
                         name="slug"
                         value={slugValue}
                         onChange={(event) =>
-                            setSlugValue(event.target.value.toLocaleUpperCase('es'))
+                            setSlugValue(normalizeSlug(event.target.value))
                         }
                         required
-                        placeholder="Ej: ERP-CONTABILIDAD"
+                        placeholder="ej: oem-mas-vendidos"
                     />
                     <InputError message={errors.slug} />
                 </div>
