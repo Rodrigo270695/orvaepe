@@ -74,8 +74,7 @@ export default function CatalogProductFormFields({
             .replace(/\s+/g, '-')
             .replace(/_/g, '-')
             .replace(/[^A-Z0-9-]/g, '')
-            .replace(/-+/g, '-')
-            .replace(/^-|-$/g, '');
+            .replace(/-+/g, '-');
 
     return (
         <div className="space-y-6">
