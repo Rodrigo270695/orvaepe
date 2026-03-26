@@ -108,9 +108,12 @@ export default function CatalogProductFormFields({
                         id="slug"
                         name="slug"
                         value={slugValue}
-                        onChange={(event) =>
-                            setSlugValue(normalizeSlug(event.target.value))
-                        }
+                        onChange={(event) => {
+                            const normalized = normalizeSlug(event.target.value);
+                            event.currentTarget.value = normalized;
+                            setSlugValue(normalized);
+                        }}
+                        style={{ textTransform: 'uppercase' }}
                         required
                         placeholder="Ej: OEM-MAS-VENDIDOS"
                     />
