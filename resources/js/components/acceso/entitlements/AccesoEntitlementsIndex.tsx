@@ -1,3 +1,6 @@
+import { router, usePage } from '@inertiajs/react';
+import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
+
 import AdminCrudIndex from '@/components/admin/crud/AdminCrudIndex';
 import type { AdminCrudTableColumn } from '@/components/admin/crud/AdminCrudTable';
 import AccesoEntitlementsFilters from '@/components/acceso/entitlements/AccesoEntitlementsFilters';
@@ -18,6 +21,8 @@ type Props = {
     initialStatus: string;
     initialDateFrom: string;
     initialDateTo: string;
+    initialSortBy: string;
+    initialSortDir: 'asc' | 'desc';
 };
 
 export default function AccesoEntitlementsIndex({
@@ -26,13 +31,50 @@ export default function AccesoEntitlementsIndex({
     initialStatus,
     initialDateFrom,
     initialDateTo,
+    initialSortBy,
+    initialSortDir,
 }: Props) {
+    const page = usePage();
     const rows: EntitlementRow[] = (entitlements?.data ?? []) as EntitlementRow[];
     const total = entitlements?.total ?? rows.length;
+    const handleSort = (sortBy: string) => {
+        const currentUrl = new URL(page.url, window.location.origin);
+        const currentSortBy = currentUrl.searchParams.get('sort_by') ?? initialSortBy ?? '';
+        const currentSortDir =
+            (currentUrl.searchParams.get('sort_dir') as 'asc' | 'desc' | null) ?? initialSortDir;
+        const nextDir: 'asc' | 'desc' =
+            currentSortBy === sortBy && currentSortDir === 'asc' ? 'desc' : 'asc';
+        currentUrl.searchParams.set('sort_by', sortBy);
+        currentUrl.searchParams.set('sort_dir', nextDir);
+        currentUrl.searchParams.set('page', '1');
+        router.get(currentUrl.pathname + currentUrl.search, {}, {
+            preserveScroll: true,
+            preserveState: true,
+            replace: true,
+        });
+    };
+    const sortIcon = (key: string) => {
+        if (initialSortBy !== key) return <ArrowUpDown className="size-3.5 opacity-70" />;
+        return initialSortDir === 'asc' ? (
+            <ArrowUp className="size-3.5 text-[#4A80B8]" />
+        ) : (
+            <ArrowDown className="size-3.5 text-[#4A80B8]" />
+        );
+    };
+    const sortableHeader = (label: string, key: string) => (
+        <button
+            type="button"
+            className="inline-flex cursor-pointer items-center gap-1.5 hover:text-foreground"
+            onClick={() => handleSort(key)}
+        >
+            <span>{label}</span>
+            {sortIcon(key)}
+        </button>
+    );
 
     const columns: AdminCrudTableColumn<EntitlementRow>[] = [
         {
-            header: 'Estado',
+            header: sortableHeader('Estado', 'status'),
             cellClassName: 'px-3 py-2 align-middle',
             render: (r) => (
                 <span
@@ -77,7 +119,7 @@ export default function AccesoEntitlementsIndex({
                     : '—',
         },
         {
-            header: 'Inicio — Fin',
+            header: sortableHeader('Inicio — Fin', 'starts_at'),
             cellClassName:
                 'px-3 py-2 align-middle text-xs text-muted-foreground max-w-[12rem]',
             render: (r) => (
@@ -89,12 +131,12 @@ export default function AccesoEntitlementsIndex({
             ),
         },
         {
-            header: 'Secretos',
+            header: sortableHeader('Secretos', 'secrets_count'),
             cellClassName: 'px-3 py-2 align-middle text-sm tabular-nums',
             render: (r) => r.secrets_count ?? 0,
         },
         {
-            header: 'Alta',
+            header: sortableHeader('Alta', 'created_at'),
             cellClassName:
                 'px-3 py-2 align-middle text-xs text-muted-foreground',
             render: (r) => formatDateTime(r.created_at),

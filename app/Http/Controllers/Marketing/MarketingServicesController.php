@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Marketing;
 use App\Http\Controllers\Controller;
 use App\Models\CatalogProduct;
 use App\Support\MarketingOemLicensesPresenter;
+use App\Support\MarketingSoftwareCatalogPresenter;
 use Inertia\Inertia;
 use Inertia\Response;
 use Laravel\Fortify\Features;
@@ -33,7 +34,10 @@ class MarketingServicesController extends Controller
             })
             ->with([
                 'skus' => function ($q) {
+                    // Mismo criterio que MarketingServiceDetailController / productToServiceSystem:
+                    // si no filtramos, un SKU con otro sale_model aparece en tarjetas pero no en el detalle.
                     $q->where('is_active', true)
+                        ->whereIn('sale_model', MarketingSoftwareCatalogPresenter::SERVICE_SALE_MODELS)
                         ->orderBy('sort_order')
                         ->orderBy('name');
                 },

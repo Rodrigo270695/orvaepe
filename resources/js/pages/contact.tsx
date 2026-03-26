@@ -17,6 +17,7 @@ import { type ComponentType, useEffect, useState } from 'react';
 
 import MarketingUnifiedNavbar from '@/components/marketing/MarketingUnifiedNavbar';
 import PageHero from '@/components/marketing/PageHero';
+import { getMarketingHeroNavCtas } from '@/marketing/marketingHeroNavCtas';
 import SeoHead from '@/components/seo/SeoHead';
 import InputError from '@/components/input-error';
 import {
@@ -142,10 +143,7 @@ export default function Contact() {
                                     </>
                                 }
                                 description="Deja tu mensaje, el producto o servicio que te interesa y datos de contacto. Te responderemos por correo lo antes posible."
-                                ctas={[
-                                    { href: '#contacto-form', label: 'Enviar consulta', variant: 'primary' },
-                                    { href: '/software', label: 'Ver software', variant: 'outline' },
-                                ]}
+                                ctas={getMarketingHeroNavCtas('contacto')}
                             />
                         </ScrollReveal>
                         <div className="landing-section-flair mx-4 px-4" aria-hidden />

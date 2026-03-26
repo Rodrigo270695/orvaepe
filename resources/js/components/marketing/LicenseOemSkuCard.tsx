@@ -1,5 +1,6 @@
 'use client';
 
+import { Link } from '@inertiajs/react';
 import { Check, Package, ShoppingCart } from 'lucide-react';
 import { useCallback, useState } from 'react';
 
@@ -27,6 +28,7 @@ export default function LicenseOemSkuCard({
     productSlug,
     sectionTitle,
     cartCategoryLabel = 'Licencias',
+    detailHref,
     accent = 'var(--state-info)',
 }: {
     item: LicenseSkuItem;
@@ -36,6 +38,8 @@ export default function LicenseOemSkuCard({
     sectionTitle: string;
     /** Prefijo de línea en el carrito (Licencias vs Servicios). */
     cartCategoryLabel?: MarketingCartCategoryLabel;
+    /** Enlace opcional a página de detalle (ej. `/servicios/{slug}`). */
+    detailHref?: string;
     accent?: string;
 }) {
     const [justAdded, setJustAdded] = useState(false);
@@ -120,7 +124,25 @@ export default function LicenseOemSkuCard({
                             })}
                         </p>
                     </div>
-                    <div className="mt-4">
+                    <div className="mt-4 flex flex-col gap-2">
+                        {detailHref ? (
+                            <Link
+                                href={detailHref}
+                                className={cn(
+                                    'inline-flex w-full items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold tracking-tight',
+                                    'border-2 border-[color-mix(in_oklab,var(--foreground)_14%,var(--border))]',
+                                    'bg-[color-mix(in_oklab,var(--background)_90%,var(--card))] text-[var(--foreground)]',
+                                    'shadow-sm shadow-[color-mix(in_oklab,var(--foreground)_8%,transparent)]',
+                                    'dark:border-[color-mix(in_oklab,var(--foreground)_26%,var(--border))]',
+                                    'dark:bg-[color-mix(in_oklab,var(--card)_50%,var(--background))]',
+                                    'dark:shadow-[color-mix(in_oklab,var(--foreground)_12%,transparent)]',
+                                    'transition-colors hover:border-[color-mix(in_oklab,var(--primary)_42%,var(--border))] hover:bg-[color-mix(in_oklab,var(--primary)_7%,var(--background))]',
+                                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_oklab,var(--state-info)_55%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color-mix(in_oklab,var(--background)_90%,transparent)]',
+                                )}
+                            >
+                                Ver detalle
+                            </Link>
+                        ) : null}
                         <button
                             type="button"
                             className={cn(

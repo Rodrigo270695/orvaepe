@@ -20,6 +20,12 @@ export type CatalogSkuProductOption = {
     } | null;
 };
 
+type CatalogSkuCategoryOption = {
+    id: string;
+    name: string;
+    revenue_line: RevenueLine;
+};
+
 export type CatalogSku = {
     id: string;
     catalog_product_id: string;
@@ -83,6 +89,11 @@ const fulfillmentOptions = [
     { value: 'external_vendor', label: 'Proveedor externo' },
 ] as const;
 
+const currencyOptions = [
+    { value: 'PEN', label: 'Soles (PEN)' },
+    { value: 'USD', label: 'Dólar (USD)' },
+] as const;
+
 export default function CatalogSkuFormFields({
     mode,
     item,
@@ -98,6 +109,8 @@ export default function CatalogSkuFormFields({
     const [sortOrderValue, setSortOrderValue] = React.useState(
         mode === 'create' ? String(nextSortOrder) : String(item?.sort_order ?? ''),
     );
+    const [selectedCategoryId, setSelectedCategoryId] = React.useState('');
+    const [selectedProductId, setSelectedProductId] = React.useState('');
 
     React.useEffect(() => {
         setIsActive(item?.is_active ?? true);
@@ -106,6 +119,11 @@ export default function CatalogSkuFormFields({
         setCodeValue(item?.code ?? '');
         setNameValue(item?.name ?? '');
         setSortOrderValue(mode === 'create' ? String(nextSortOrder) : String(item?.sort_order ?? ''));
+        setSelectedProductId(item?.catalog_product_id ?? '');
+
+        const currentProductId = item?.catalog_product_id ?? '';
+        const matchedProduct = productsForSelect.find((p) => p.id === currentProductId);
+        setSelectedCategoryId(matchedProduct?.category?.id ?? '');
     }, [
         item?.id,
         item?.is_active,
@@ -114,8 +132,10 @@ export default function CatalogSkuFormFields({
         item?.code,
         item?.name,
         item?.sort_order,
+        item?.catalog_product_id,
         mode,
         nextSortOrder,
+        productsForSelect,
     ]);
 
     const toTitleCaseWords = (value: string) =>
@@ -126,22 +146,69 @@ export default function CatalogSkuFormFields({
     const productLabel = (p: CatalogSkuProductOption) =>
         `${p.name} (${p.category?.name ?? 'Sin categoría'})`;
 
+    const categoriesForSelect = React.useMemo<CatalogSkuCategoryOption[]>(() => {
+        const map = new Map<string, CatalogSkuCategoryOption>();
+        productsForSelect.forEach((product) => {
+            const cat = product.category;
+            if (!cat) return;
+            if (!map.has(cat.id)) {
+                map.set(cat.id, {
+                    id: cat.id,
+                    name: cat.name,
+                    revenue_line: cat.revenue_line,
+                });
+            }
+        });
+
+        return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name, 'es'));
+    }, [productsForSelect]);
+
+    const filteredProducts = React.useMemo(() => {
+        if (!selectedCategoryId) return [];
+        return productsForSelect.filter((p) => p.category?.id === selectedCategoryId);
+    }, [productsForSelect, selectedCategoryId]);
+
     return (
         <div className="space-y-6">
-            <div className="space-y-2">
-                <AdminUnderlineLabel htmlFor="catalog_product_id" required>
-                    Producto
-                </AdminUnderlineLabel>
-                <AdminUnderlineSelect
-                    id="catalog_product_id"
-                    name="catalog_product_id"
-                    defaultValue={item?.catalog_product_id ?? ''}
-                    options={productsForSelect.map((p) => ({
-                        value: p.id,
-                        label: productLabel(p),
-                    }))}
-                />
-                <InputError message={errors.catalog_product_id} />
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                    <AdminUnderlineLabel htmlFor="catalog_category_id" required>
+                        Categoría
+                    </AdminUnderlineLabel>
+                    <AdminUnderlineSelect
+                        id="catalog_category_id"
+                        name="catalog_category_id"
+                        value={selectedCategoryId}
+                        onValueChange={(next) => {
+                            setSelectedCategoryId(next);
+                            setSelectedProductId('');
+                        }}
+                        options={categoriesForSelect.map((c) => ({
+                            value: c.id,
+                            label: c.name,
+                        }))}
+                        placeholder="Selecciona una categoría"
+                    />
+                </div>
+
+                <div className="space-y-2">
+                    <AdminUnderlineLabel htmlFor="catalog_product_id" required>
+                        Producto
+                    </AdminUnderlineLabel>
+                    <AdminUnderlineSelect
+                        id="catalog_product_id"
+                        name="catalog_product_id"
+                        value={selectedProductId}
+                        onValueChange={(next) => setSelectedProductId(next)}
+                        options={filteredProducts.map((p) => ({
+                            value: p.id,
+                            label: productLabel(p),
+                        }))}
+                        disabled={!selectedCategoryId}
+                        placeholder="Selecciona un producto"
+                    />
+                    <InputError message={errors.catalog_product_id} />
+                </div>
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -227,13 +294,11 @@ export default function CatalogSkuFormFields({
                     <AdminUnderlineLabel htmlFor="currency" required>
                         Moneda
                     </AdminUnderlineLabel>
-                    <AdminUnderlineInput
+                    <AdminUnderlineSelect
                         id="currency"
                         name="currency"
                         defaultValue={item?.currency ?? 'PEN'}
-                        maxLength={3}
-                        required
-                        placeholder="PEN"
+                        options={currencyOptions as unknown as { value: string; label: string }[]}
                     />
                     <InputError message={errors.currency} />
                 </div>

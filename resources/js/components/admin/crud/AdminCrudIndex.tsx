@@ -37,6 +37,10 @@ type UpsertConfig<T> = {
         processing: boolean;
     }) => React.ReactNode;
     successToastTitle?: string;
+    /** Para subida de archivos con Inertia Form. */
+    encType?: React.HTMLAttributes<HTMLFormElement>['encType'];
+    /** Si se define, solo estos `name` deben estar rellenos para habilitar el botón (crear). */
+    requiredFieldNames?: string[];
 };
 
 type DeleteConfig<T> = {
@@ -200,6 +204,8 @@ export default function AdminCrudIndex<T>({
                             : upsert.submitLabelEdit
                     }
                     successToastTitle={upsert.successToastTitle}
+                    encType={upsert.encType}
+                    requiredFieldNames={upsert.requiredFieldNames}
                 >
                     {({ errors, processing }) =>
                         upsert.renderFormFields({

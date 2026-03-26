@@ -1,6 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
 import { ChevronRight, Menu } from 'lucide-react';
 
+import { ClientGlobalSearch } from '@/components/client-portal/client-global-search';
 import { ClientUserMenuContent } from '@/components/client-portal/client-user-menu-content';
 import {
     DropdownMenu,
@@ -97,7 +98,8 @@ export function ClientPortalHeader({
                         </div>
                     </div>
                     {user ? (
-                        <div className="flex shrink-0 justify-end">
+                        <div className="flex shrink-0 items-center justify-end gap-2">
+                        <ClientGlobalSearch />
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button

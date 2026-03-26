@@ -28,6 +28,8 @@ export const panelSectionLabels: Record<string, string> = {
     'sunat-secuencias': 'Secuencias',
     'sunat-logs': 'Logs',
     'sunat-boleta-resumen': 'Resumen boletas',
+    // Marketing — sitio público
+    'marketing-vitrina': 'Vitrina de clientes',
     // Acceso — usuarios
     'acceso-clientes': 'Usuarios cliente',
     // Derechos

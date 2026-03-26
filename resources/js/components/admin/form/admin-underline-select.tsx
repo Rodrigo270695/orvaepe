@@ -26,6 +26,7 @@ type Props = {
     options: Option[];
     required?: boolean;
     disabled?: boolean;
+    placeholder?: string;
     onValueChange?: (next: string) => void;
 };
 
@@ -36,6 +37,7 @@ export default function AdminUnderlineSelect({
     defaultValue,
     options,
     disabled,
+    placeholder,
     onValueChange,
 }: Props) {
     const [uncontrolledValue, setUncontrolledValue] =
@@ -66,9 +68,9 @@ export default function AdminUnderlineSelect({
                     className="neumorph-inset w-full rounded-xl border border-border/60"
                     style={
                         {
-                            // Gris oscuro (sobreescribe --neu-bg del neumorph para que gane al .dark)
-                            '--neu-bg':
-                                'color-mix(in oklab, var(--o-dark2) 70%, black 30%)',
+                            // En modo claro el neumorph debe usar el fondo normal; en oscuro
+                            // también mantiene el estilo del tema con `--background`.
+                            '--neu-bg': 'var(--background)',
                         } as React.CSSProperties
                     }
                 >
@@ -84,7 +86,7 @@ export default function AdminUnderlineSelect({
                             '[&_svg]:shrink-0 [&_svg]:text-muted-foreground',
                         )}
                     >
-                        <SelectValue />
+                        <SelectValue placeholder={placeholder ?? 'Selecciona una opción'} />
                     </SelectTrigger>
                 </div>
 

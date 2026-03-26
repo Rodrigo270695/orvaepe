@@ -20,6 +20,11 @@ class ClientUsersController extends Controller
         }
 
         $q = trim((string) $request->query('q', ''));
+        $sortBy = trim((string) $request->query('sort_by', ''));
+        $sortDir = strtolower((string) $request->query('sort_dir', 'desc'));
+        if (! in_array($sortDir, ['asc', 'desc'], true)) {
+            $sortDir = 'desc';
+        }
 
         $dateFrom = trim((string) $request->query('date_from', ''));
         $dateTo = trim((string) $request->query('date_to', ''));
@@ -64,7 +69,21 @@ class ClientUsersController extends Controller
         $query->whereDate('created_at', '>=', $dateFrom);
         $query->whereDate('created_at', '<=', $dateTo);
 
+        $allowedSortBy = [
+            'name',
+            'email',
+            'document_number',
+            'username',
+            'email_verified_at',
+            'created_at',
+        ];
+        if (! in_array($sortBy, $allowedSortBy, true)) {
+            $sortBy = 'created_at';
+            $sortDir = 'desc';
+        }
+
         $users = $query
+            ->orderBy($sortBy, $sortDir)
             ->orderByDesc('created_at')
             ->paginate($perPage)
             ->withQueryString();
@@ -75,6 +94,8 @@ class ClientUsersController extends Controller
                 'q' => $q,
                 'date_from' => $dateFrom,
                 'date_to' => $dateTo,
+                'sort_by' => $sortBy,
+                'sort_dir' => $sortDir,
             ],
         ]);
     }

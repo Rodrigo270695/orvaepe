@@ -1,6 +1,7 @@
 import { usePage } from '@inertiajs/react';
 
 import PageHero from '@/components/marketing/PageHero';
+import { getMarketingHeroNavCtas } from '@/marketing/marketingHeroNavCtas';
 import MarketingUnifiedNavbar from '@/components/marketing/MarketingUnifiedNavbar';
 import SeoHead from '@/components/seo/SeoHead';
 import { marketingSeo } from '@/marketing/seoCopy';
@@ -73,14 +74,7 @@ export default function Services() {
                                     </>
                                 }
                                 description="Orvae no solo vende software: entregamos servicios y acompañamiento para que tu sistema funcione desde el primer día. Elige paquetes con precio de referencia, añade al carrito y coordina el alcance al cerrar la compra."
-                                ctas={[
-                                    { href: '/carrito', label: 'Ir al carrito', variant: 'primary' },
-                                    {
-                                        href: '/contacto',
-                                        label: 'Solicitar asesoría',
-                                        variant: 'outline',
-                                    },
-                                ]}
+                                ctas={getMarketingHeroNavCtas('servicios')}
                             />
                         </ScrollReveal>
                         <div className="landing-section-flair mx-4 px-4" aria-hidden />
@@ -146,6 +140,7 @@ export default function Services() {
                                                                         productSlug={section.slug}
                                                                         sectionTitle={section.title}
                                                                         cartCategoryLabel="Servicios"
+                                                                        detailHref={`/servicios/${section.slug}?sku=${item.id}`}
                                                                         accent={accent}
                                                                     />
                                                                 ))}

@@ -45,6 +45,7 @@ final class MarketingOemLicensesPresenter
     private static function skuToItem(CatalogSku $sku): array
     {
         $meta = is_array($sku->metadata) ? $sku->metadata : [];
+        $imageUrl = self::firstMetaString($meta, ['imagen_item', 'imagen_url', 'image_item', 'image_url']);
 
         $price = (float) $sku->list_price;
         $currency = strtoupper((string) $sku->currency);
@@ -56,12 +57,71 @@ final class MarketingOemLicensesPresenter
             'list_price' => $price,
             'currency' => $currency,
             'price_text' => number_format($price, 2, '.', ',').' '.$currency,
-            'detail' => isset($meta['detail']) ? (string) $meta['detail'] : null,
-            'list_number' => isset($meta['list_number']) ? (int) $meta['list_number'] : null,
-            'image_url' => isset($meta['image_url']) && is_string($meta['image_url']) && $meta['image_url'] !== ''
-                ? $meta['image_url']
-                : null,
-            'icon_key' => isset($meta['icon_key']) && is_string($meta['icon_key']) ? $meta['icon_key'] : 'generic',
+            'detail' => self::firstMetaString($meta, ['detalle', 'detail']),
+            'list_number' => self::firstMetaInt($meta, ['numero_lista', 'list_number']),
+            'image_url' => $imageUrl,
+            'icon_key' => self::firstMetaString($meta, ['clave_icono', 'icon_key']) ?? 'generic',
         ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $meta
+     * @param  list<string>  $keys
+     */
+    private static function firstMetaString(array $meta, array $keys): ?string
+    {
+        foreach ($keys as $key) {
+            if (!array_key_exists($key, $meta)) {
+                continue;
+            }
+            $value = $meta[$key];
+            if (is_array($value)) {
+                foreach ($value as $v) {
+                    if (!is_scalar($v)) {
+                        continue;
+                    }
+                    $text = trim((string) $v);
+                    if ($text !== '') {
+                        return $text;
+                    }
+                }
+
+                continue;
+            }
+            if (!is_scalar($value)) {
+                continue;
+            }
+            $text = trim((string) $value);
+            if ($text !== '') {
+                return $text;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  array<string, mixed>  $meta
+     * @param  list<string>  $keys
+     */
+    private static function firstMetaInt(array $meta, array $keys): ?int
+    {
+        foreach ($keys as $key) {
+            if (!array_key_exists($key, $meta)) {
+                continue;
+            }
+            $value = $meta[$key];
+            if (is_int($value)) {
+                return $value;
+            }
+            if (is_string($value) && preg_match('/^\d+$/', trim($value)) === 1) {
+                return (int) trim($value);
+            }
+            if (is_float($value)) {
+                return (int) $value;
+            }
+        }
+
+        return null;
     }
 }

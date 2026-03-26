@@ -1,9 +1,23 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { ArrowLeft, Plus, Save, TableProperties, Trash2, X } from 'lucide-react';
+import {
+    ArrowLeft,
+    Plus,
+    Save,
+    TableProperties,
+    Trash2,
+    Upload,
+    X,
+} from 'lucide-react';
 import { useState } from 'react';
 
 import AdminModalShell from '@/components/ui/admin-modal-shell';
-import { DialogFooter } from '@/components/ui/dialog';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { NeuButtonInset } from '@/components/ui/neu-button-inset';
 import { NeuButtonRaised } from '@/components/ui/neu-button-raised';
 import { NeuCardRaised } from '@/components/ui/neu-card-raised';
@@ -13,6 +27,11 @@ import { dashboard } from '@/routes';
 import panel from '@/routes/panel';
 import type { BreadcrumbItem } from '@/types';
 import { cn } from '@/lib/utils';
+import { getCsrfToken } from '@/lib/csrf';
+import {
+    isSoftwareSpecsImagesKey,
+    SOFTWARE_SPECS_IMAGES_CANONICAL,
+} from '@/constants/softwareSpecsTemplate';
 
 export type ValueKind = 'text' | 'list';
 
@@ -66,6 +85,19 @@ const emptyRow = (): SpecPair => ({
     values: [''],
 });
 
+function deriveImageUrlsFromPair(pair: SpecPair): string[] {
+    if (pair.value_kind === 'list') {
+        return (pair.values ?? []).map((v) => v.trim()).filter(Boolean);
+    }
+
+    // Si está en modo texto, intentamos interpretar la cadena como múltiples URLs.
+    const raw = pair.value ?? '';
+    return raw
+        .split(/[\n\r,]+/)
+        .map((v) => v.trim())
+        .filter(Boolean);
+}
+
 export default function CatalogProductSpecsPage({ product, pairs: initialPairs }: Props) {
     const specsUrl = panel.catalogoProductos.specs.index.url(product.id);
     const updateUrl = panel.catalogoProductos.specs.update.url(product.id);
@@ -80,6 +112,9 @@ export default function CatalogProductSpecsPage({ product, pairs: initialPairs }
     const { data, setData, errors, processing, patch } = form;
 
     const [pendingDeleteIndex, setPendingDeleteIndex] = useState<number | null>(null);
+    const [specImagePreview, setSpecImagePreview] = useState<{
+        url: string;
+    } | null>(null);
 
     const addPair = () => {
         setData('pairs', [...data.pairs, emptyRow()]);
@@ -141,6 +176,78 @@ export default function CatalogProductSpecsPage({ product, pairs: initialPairs }
         updateRow(pairIndex, {
             values: row.values.filter((_, i) => i !== valueIndex),
         });
+    };
+
+    const specsImagesUploadUrl = `/panel/catalogo-productos/${product.id}/medios/specs-images`;
+    const [imagesUploading, setImagesUploading] = useState(false);
+    const [imagesUploadError, setImagesUploadError] = useState<string | null>(
+        null,
+    );
+
+    const uploadImagesForPair = async (
+        pairIndex: number,
+        files: File[],
+    ): Promise<void> => {
+        const row = data.pairs[pairIndex];
+        if (!row || files.length === 0) {
+            return;
+        }
+
+        setImagesUploading(true);
+        setImagesUploadError(null);
+
+        try {
+            const fd = new FormData();
+            files.forEach((f) => fd.append('files[]', f));
+
+            const res = await fetch(specsImagesUploadUrl, {
+                method: 'POST',
+                body: fd,
+                headers: {
+                    'X-CSRF-TOKEN': getCsrfToken(),
+                },
+            });
+
+            if (!res.ok) {
+                const j = await res
+                    .json()
+                    .catch(() => ({ message: 'Error al subir imágenes' }));
+                throw new Error(
+                    typeof j?.message === 'string'
+                        ? j.message
+                        : 'Error al subir imágenes',
+                );
+            }
+
+            const json = (await res.json()) as {
+                urls?: string[];
+            };
+
+            const newUrls = (json.urls ?? [])
+                .map((u) => (typeof u === 'string' ? u.trim() : ''))
+                .filter(Boolean);
+
+            if (newUrls.length === 0) {
+                throw new Error(
+                    'No se recibieron URLs de imágenes (respuesta vacía).',
+                );
+            }
+
+            const currentUrls = deriveImageUrlsFromPair(row);
+            const nextUrls = [...currentUrls, ...newUrls];
+
+            updateRow(pairIndex, {
+                value_kind: 'list',
+                value: '',
+                values: nextUrls.length > 0 ? nextUrls : [''],
+            });
+        } catch (err) {
+            const msg =
+                err instanceof Error ? err.message : 'Error al subir imágenes';
+            setImagesUploadError(msg);
+        } finally {
+            setImagesUploading(false);
+        }
     };
 
     const breadcrumbs: BreadcrumbItem[] = [
@@ -295,7 +402,117 @@ export default function CatalogProductSpecsPage({ product, pairs: initialPairs }
                                         </div>
                                     </div>
 
-                                    {row.value_kind === 'text' ? (
+                                    {isSoftwareSpecsImagesKey(row.code) ? (
+                                        <div className="space-y-2">
+                                            <div className="flex items-center justify-between gap-2">
+                                                <span className="text-[10px] font-medium text-muted-foreground">
+                                                    Imágenes
+                                                </span>
+                                                <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1 text-[10px] font-semibold text-[#4A80B8] transition-colors hover:bg-[#4A80B8]/12">
+                                                    <Upload className="size-3.5" />
+                                                    Subir
+                                                    <input
+                                                        type="file"
+                                                        accept="image/*"
+                                                        multiple
+                                                        className="sr-only"
+                                                        onChange={(e) => {
+                                                            const files = Array.from(
+                                                                e.target.files ?? [],
+                                                            );
+                                                            if (files.length > 0) {
+                                                                void uploadImagesForPair(
+                                                                    index,
+                                                                    files,
+                                                                );
+                                                            }
+                                                            e.target.value = '';
+                                                        }}
+                                                    />
+                                                </label>
+                                            </div>
+
+                                            {imagesUploading ? (
+                                                <p className="text-xs text-muted-foreground">
+                                                    Subiendo…
+                                                </p>
+                                            ) : null}
+                                            {imagesUploadError ? (
+                                                <p className="text-xs text-[#C05050]">
+                                                    {imagesUploadError}
+                                                </p>
+                                            ) : null}
+
+                                            {(() => {
+                                                const urls =
+                                                    deriveImageUrlsFromPair(row);
+                                                if (urls.length === 0) {
+                                                    return (
+                                                        <p className="text-xs text-muted-foreground">
+                                                            Aún no hay imágenes.
+                                                        </p>
+                                                    );
+                                                }
+
+                                                return (
+                                                    <ul className="m-0 grid list-none grid-cols-2 gap-2 p-0 sm:grid-cols-4">
+                                                        {urls.map((url, vi) => (
+                                                            <li
+                                                                key={`${url}-${vi}`}
+                                                                className="relative list-none"
+                                                            >
+                                                                <button
+                                                                    type="button"
+                                                                    className="block w-full cursor-pointer overflow-hidden rounded-md border border-border/60 bg-black/5 text-left transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4A80B8]/30"
+                                                                    onClick={() =>
+                                                                        setSpecImagePreview({
+                                                                            url,
+                                                                        })
+                                                                    }
+                                                                >
+                                                                    <img
+                                                                        src={url}
+                                                                        alt=""
+                                                                        className="aspect-square w-full object-cover"
+                                                                        loading="lazy"
+                                                                        decoding="async"
+                                                                    />
+                                                                </button>
+                                                                <NeuButtonInset
+                                                                    type="button"
+                                                                    className="absolute right-1 top-1 z-10 inline-flex h-7 w-7 cursor-pointer items-center justify-center p-0 shadow-sm"
+                                                                    onClick={() => {
+                                                                        const currentUrls =
+                                                                            deriveImageUrlsFromPair(
+                                                                                row,
+                                                                            );
+                                                                        const nextUrls =
+                                                                            currentUrls.filter(
+                                                                                (_, i) =>
+                                                                                    i !== vi,
+                                                                            );
+                                                                        updateRow(index, {
+                                                                            value_kind:
+                                                                                'list',
+                                                                            value: '',
+                                                                            values:
+                                                                                nextUrls.length >
+                                                                                0
+                                                                                    ? nextUrls
+                                                                                    : [''],
+                                                                        });
+                                                                    }}
+                                                                    aria-label="Quitar imagen"
+                                                                >
+                                                                    <X className="size-3.5 text-muted-foreground" />
+                                                                </NeuButtonInset>
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                );
+                                            })()}
+                                        </div>
+                                    ) : row.value_kind === 'text' ? (
                                         <div className="space-y-1">
                                             <label
                                                 htmlFor={`spec-value-${index}`}
@@ -381,6 +598,29 @@ export default function CatalogProductSpecsPage({ product, pairs: initialPairs }
                     </div>
                 </form>
             </div>
+
+            <Dialog
+                open={specImagePreview !== null}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setSpecImagePreview(null);
+                    }
+                }}
+            >
+                <DialogContent className="max-h-[92vh] max-w-[min(96vw,56rem)] border-border/60 bg-background p-3 sm:p-4">
+                    <DialogTitle className="sr-only">Vista previa de imagen</DialogTitle>
+                    <DialogDescription className="sr-only">
+                        Vista previa ampliada de la imagen de especificación.
+                    </DialogDescription>
+                    {specImagePreview ? (
+                        <img
+                            src={specImagePreview.url}
+                            alt=""
+                            className="mx-auto max-h-[85vh] w-auto max-w-full object-contain"
+                        />
+                    ) : null}
+                </DialogContent>
+            </Dialog>
 
             {pendingDeleteIndex !== null ? (
                 <AdminModalShell

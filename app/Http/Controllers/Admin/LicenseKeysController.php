@@ -19,6 +19,11 @@ class LicenseKeysController extends Controller
     {
         $q = trim((string) $request->query('q', ''));
         $status = trim((string) $request->query('status', ''));
+        $sortBy = trim((string) $request->query('sort_by', ''));
+        $sortDir = strtolower((string) $request->query('sort_dir', 'desc'));
+        if (! in_array($sortDir, ['asc', 'desc'], true)) {
+            $sortDir = 'desc';
+        }
 
         $perPage = (int) $request->query('per_page', 25);
         $allowedPerPage = [10, 15, 20, 25, 30, 40, 50];
@@ -81,7 +86,21 @@ class LicenseKeysController extends Controller
             $query->where('status', $status);
         }
 
+        $allowedSortBy = [
+            'status',
+            'key',
+            'max_activations',
+            'activation_count',
+            'expires_at',
+            'created_at',
+        ];
+        if (! in_array($sortBy, $allowedSortBy, true)) {
+            $sortBy = 'created_at';
+            $sortDir = 'desc';
+        }
+
         $licenseKeys = $query
+            ->orderBy($sortBy, $sortDir)
             ->orderByDesc('created_at')
             ->paginate($perPage)
             ->withQueryString();
@@ -95,6 +114,8 @@ class LicenseKeysController extends Controller
                 'status' => $status,
                 'date_from' => $dateFrom,
                 'date_to' => $dateTo,
+                'sort_by' => $sortBy,
+                'sort_dir' => $sortDir,
             ],
         ]);
     }
@@ -108,7 +129,7 @@ class LicenseKeysController extends Controller
      */
     private function licenseListRetainQuery(Request $request): array
     {
-        $keys = ['q', 'status', 'date_from', 'date_to', 'per_page', 'page'];
+        $keys = ['q', 'status', 'date_from', 'date_to', 'sort_by', 'sort_dir', 'per_page', 'page'];
         $out = [];
 
         foreach ($keys as $key) {

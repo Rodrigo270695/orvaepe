@@ -1,3 +1,6 @@
+import { router, usePage } from '@inertiajs/react';
+import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
+
 import * as React from 'react';
 
 import AdminCrudIndex from '@/components/admin/crud/AdminCrudIndex';
@@ -29,6 +32,8 @@ type Props = {
     initialActive: string;
     initialDateFrom: string;
     initialDateTo: string;
+    initialSortBy: string;
+    initialSortDir: 'asc' | 'desc';
 };
 
 export default function AccesoActivacionesIndex({
@@ -37,10 +42,47 @@ export default function AccesoActivacionesIndex({
     initialActive,
     initialDateFrom,
     initialDateTo,
+    initialSortBy,
+    initialSortDir,
 }: Props) {
+    const page = usePage();
     const rows: LicenseActivationRow[] = (licenseActivations?.data ??
         []) as LicenseActivationRow[];
     const total = licenseActivations?.total ?? rows.length;
+    const handleSort = (sortBy: string) => {
+        const currentUrl = new URL(page.url, window.location.origin);
+        const currentSortBy = currentUrl.searchParams.get('sort_by') ?? initialSortBy ?? '';
+        const currentSortDir =
+            (currentUrl.searchParams.get('sort_dir') as 'asc' | 'desc' | null) ?? initialSortDir;
+        const nextDir: 'asc' | 'desc' =
+            currentSortBy === sortBy && currentSortDir === 'asc' ? 'desc' : 'asc';
+        currentUrl.searchParams.set('sort_by', sortBy);
+        currentUrl.searchParams.set('sort_dir', nextDir);
+        currentUrl.searchParams.set('page', '1');
+        router.get(currentUrl.pathname + currentUrl.search, {}, {
+            preserveScroll: true,
+            preserveState: true,
+            replace: true,
+        });
+    };
+    const sortIcon = (key: string) => {
+        if (initialSortBy !== key) return <ArrowUpDown className="size-3.5 opacity-70" />;
+        return initialSortDir === 'asc' ? (
+            <ArrowUp className="size-3.5 text-[#4A80B8]" />
+        ) : (
+            <ArrowDown className="size-3.5 text-[#4A80B8]" />
+        );
+    };
+    const sortableHeader = (label: string, key: string) => (
+        <button
+            type="button"
+            className="inline-flex cursor-pointer items-center gap-1.5 hover:text-foreground"
+            onClick={() => handleSort(key)}
+        >
+            <span>{label}</span>
+            {sortIcon(key)}
+        </button>
+    );
 
     const statusOnPage = React.useMemo(
         () => ({
@@ -52,7 +94,7 @@ export default function AccesoActivacionesIndex({
 
     const columns: AdminCrudTableColumn<LicenseActivationRow>[] = [
         {
-            header: 'Estado',
+            header: sortableHeader('Estado', 'is_active'),
             cellClassName: 'px-3 py-2 align-middle',
             render: (r) => (
                 <span
@@ -66,14 +108,14 @@ export default function AccesoActivacionesIndex({
             ),
         },
         {
-            header: 'Dominio',
+            header: sortableHeader('Dominio', 'domain'),
             cellClassName: 'px-3 py-2 align-middle text-sm max-w-[12rem]',
             render: (r) => (
                 <span className="line-clamp-2 font-medium">{r.domain}</span>
             ),
         },
         {
-            header: 'IP',
+            header: sortableHeader('IP', 'ip_address'),
             cellClassName:
                 'px-3 py-2 align-middle font-mono text-[11px] text-muted-foreground',
             render: (r) => r.ip_address,
@@ -107,13 +149,13 @@ export default function AccesoActivacionesIndex({
             },
         },
         {
-            header: 'Último ping',
+            header: sortableHeader('Último ping', 'last_ping_at'),
             cellClassName:
                 'px-3 py-2 align-middle text-xs text-muted-foreground',
             render: (r) => formatDateTime(r.last_ping_at),
         },
         {
-            header: 'Alta',
+            header: sortableHeader('Alta', 'created_at'),
             cellClassName:
                 'px-3 py-2 align-middle text-xs text-muted-foreground',
             render: (r) => formatDateTime(r.created_at),

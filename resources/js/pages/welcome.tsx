@@ -2,6 +2,7 @@ import SeoHead from '@/components/seo/SeoHead';
 import MarketingUnifiedNavbar from '@/components/marketing/MarketingUnifiedNavbar';
 import { marketingSeo } from '@/marketing/seoCopy';
 import PageHero from '@/components/marketing/PageHero';
+import { getMarketingHeroNavCtas } from '@/marketing/marketingHeroNavCtas';
 import AppearanceFloatingRailToggle from '@/components/welcome/AppearanceFloatingRailToggle';
 import ClientsCarousel from '@/components/welcome/ClientsCarousel';
 import MissionVision from '@/components/welcome/MissionVision';
@@ -10,11 +11,14 @@ import ScrollReveal from '@/components/welcome/ScrollReveal';
 import ScrollToTopButton from '@/components/welcome/ScrollToTopButton';
 import TestimonialsSection from '@/components/welcome/TestimonialsSection';
 import WelcomeFooter from '@/components/welcome/WelcomeFooter';
+import type { ShowcaseClientPublic } from '@/types/showcase-client';
 
 export default function Welcome({
     canRegister = true,
+    showcaseClients = [],
 }: {
     canRegister?: boolean;
+    showcaseClients?: ShowcaseClientPublic[];
 }) {
     return (
         <>
@@ -49,11 +53,7 @@ export default function Welcome({
                             </>
                         }
                         description="Software ya construido y listo para usar: contabilidad, ventas, inventario y más. Elige SaaS, licencia o módulos sueltos con implementación en días o semanas."
-                        ctas={[
-                            { href: '/software', label: 'Ver catálogo', variant: 'primary' },
-                            { href: '#contacto', label: 'Solicitar demo', variant: 'outline' },
-                            { href: '/licencias', label: 'Licencias OEM', variant: 'outline' },
-                        ]}
+                        ctas={getMarketingHeroNavCtas('home')}
                     />
                     <div className="landing-section-flair mx-4 px-4" aria-hidden />
                     <ScrollReveal direction="up">
@@ -65,7 +65,7 @@ export default function Welcome({
                     </ScrollReveal>
                     <div className="landing-section-flair mx-4 px-4" aria-hidden />
                     <ScrollReveal direction="up">
-                        <ClientsCarousel />
+                        <ClientsCarousel clients={showcaseClients} />
                     </ScrollReveal>
                     <div className="landing-section-flair mx-4 px-4" aria-hidden />
                     <ScrollReveal direction="up">

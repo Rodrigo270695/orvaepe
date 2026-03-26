@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { usePage } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 
 import AdminCrudIndex from '@/components/admin/crud/AdminCrudIndex';
 import type { AdminCrudTableColumn } from '@/components/admin/crud/AdminCrudTable';
@@ -25,7 +25,7 @@ import {
 import type { ClienteUserOption } from '@/components/admin/form/admin-cliente-select';
 import type { SkuOption } from '@/components/acceso/licencias/AccesoLicenciaFormFields';
 import panel from '@/routes/panel';
-import { Pencil, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpDown, Pencil, Trash2 } from 'lucide-react';
 
 type Props = {
     licenseKeys: any;
@@ -33,6 +33,8 @@ type Props = {
     initialStatus: string;
     initialDateFrom: string;
     initialDateTo: string;
+    initialSortBy: string;
+    initialSortDir: 'asc' | 'desc';
     usersForSelect: ClienteUserOption[];
     skusForSelect: SkuOption[];
 };
@@ -43,6 +45,8 @@ export default function AccesoLicenciasIndex({
     initialStatus,
     initialDateFrom,
     initialDateTo,
+    initialSortBy,
+    initialSortDir,
     usersForSelect,
     skusForSelect,
 }: Props) {
@@ -56,6 +60,42 @@ export default function AccesoLicenciasIndex({
 
     const rows: LicenseKeyRow[] = (licenseKeys?.data ?? []) as LicenseKeyRow[];
     const total = licenseKeys?.total ?? rows.length;
+    const handleSort = (sortBy: string) => {
+        const currentUrl = new URL(page.url, window.location.origin);
+        const currentSortBy = currentUrl.searchParams.get('sort_by') ?? initialSortBy ?? '';
+        const currentSortDir =
+            (currentUrl.searchParams.get('sort_dir') as 'asc' | 'desc' | null) ?? initialSortDir;
+        const nextDir: 'asc' | 'desc' =
+            currentSortBy === sortBy && currentSortDir === 'asc' ? 'desc' : 'asc';
+
+        currentUrl.searchParams.set('sort_by', sortBy);
+        currentUrl.searchParams.set('sort_dir', nextDir);
+        currentUrl.searchParams.set('page', '1');
+
+        router.get(currentUrl.pathname + currentUrl.search, {}, {
+            preserveScroll: true,
+            preserveState: true,
+            replace: true,
+        });
+    };
+    const sortIcon = (key: string) => {
+        if (initialSortBy !== key) return <ArrowUpDown className="size-3.5 opacity-70" />;
+        return initialSortDir === 'asc' ? (
+            <ArrowUp className="size-3.5 text-[#4A80B8]" />
+        ) : (
+            <ArrowDown className="size-3.5 text-[#4A80B8]" />
+        );
+    };
+    const sortableHeader = (label: string, key: string) => (
+        <button
+            type="button"
+            className="inline-flex cursor-pointer items-center gap-1.5 hover:text-foreground"
+            onClick={() => handleSort(key)}
+        >
+            <span>{label}</span>
+            {sortIcon(key)}
+        </button>
+    );
 
     const statusOnPage = React.useMemo(
         () => ({
@@ -69,12 +109,12 @@ export default function AccesoLicenciasIndex({
 
     const columns: AdminCrudTableColumn<LicenseKeyRow>[] = [
         {
-            header: 'Estado',
+            header: sortableHeader('Estado', 'status'),
             cellClassName: 'px-3 py-2 align-middle',
             render: (r) => <LicenseKeyStatusBadge status={r.status} />,
         },
         {
-            header: 'Clave',
+            header: sortableHeader('Clave', 'key'),
             cellClassName:
                 'px-3 py-2 align-middle font-mono text-[11px] max-w-[14rem]',
             render: (r) => (
@@ -120,7 +160,7 @@ export default function AccesoLicenciasIndex({
             render: (r) => r.order?.order_number ?? '—',
         },
         {
-            header: 'Activaciones',
+            header: sortableHeader('Activaciones', 'activation_count'),
             cellClassName:
                 'px-3 py-2 align-middle text-sm tabular-nums text-center',
             render: (r) => (
@@ -134,13 +174,13 @@ export default function AccesoLicenciasIndex({
             ),
         },
         {
-            header: 'Caduca',
+            header: sortableHeader('Caduca', 'expires_at'),
             cellClassName:
                 'px-3 py-2 align-middle text-xs text-muted-foreground',
             render: (r) => formatDateShort(r.expires_at),
         },
         {
-            header: 'Alta',
+            header: sortableHeader('Alta', 'created_at'),
             cellClassName:
                 'px-3 py-2 align-middle text-xs text-muted-foreground',
             render: (r) => formatDateTime(r.created_at),

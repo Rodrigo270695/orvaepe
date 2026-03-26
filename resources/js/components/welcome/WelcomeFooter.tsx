@@ -1,5 +1,7 @@
 import { Link } from '@inertiajs/react';
 
+import { whatsAppHref } from '@/lib/whatsapp';
+
 export default function WelcomeFooter() {
     return (
         <footer
@@ -63,22 +65,38 @@ export default function WelcomeFooter() {
                         >
                             Inicio
                         </Link>
+                        <a
+                            href={whatsAppHref()}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="transition-colors hover:text-[var(--o-amber)] dark:hover:text-[var(--o-tech2)]"
+                        >
+                            WhatsApp
+                        </a>
                     </div>
                 </div>
 
-                <div className="mt-8 flex flex-col gap-2 border-t border-border/50 pt-6 text-sm text-muted-foreground md:flex-row md:items-center md:justify-between">
-                    <span>© {new Date().getFullYear()} Orvae. Todos los derechos reservados.</span>
-                    <span className="text-muted-foreground/90">
-                        SLA • Uptime • Changelog en {` `}
-                        <a
-                            href="https://status.orvae.com"
-                            target="_blank"
-                            rel="noreferrer"
-                            className="transition-colors hover:text-[var(--o-amber)] hover:underline dark:hover:text-[var(--o-tech2)]"
-                        >
-                            status.orvae.com
-                        </a>
-                    </span>
+                <div className="mt-8 border-t border-border/50 pt-6">
+                    <div className="flex flex-col gap-2 text-sm text-muted-foreground md:flex-row md:items-center md:justify-between">
+                        <span>© {new Date().getFullYear()} Orvae. Todos los derechos reservados.</span>
+                        <span className="text-muted-foreground/90">
+                            SLA • Uptime • Changelog en {` `}
+                            <a
+                                href="https://status.orvae.com"
+                                target="_blank"
+                                rel="noreferrer"
+                                className="transition-colors hover:text-[var(--o-amber)] hover:underline dark:hover:text-[var(--o-tech2)]"
+                            >
+                                status.orvae.com
+                            </a>
+                        </span>
+                    </div>
+                    <p className="mt-3 text-xs text-muted-foreground/70">
+                        Powered by{' '}
+                        <span className="font-medium text-muted-foreground/90">
+                            Cloud Byte SAC
+                        </span>
+                    </p>
                 </div>
             </div>
         </footer>

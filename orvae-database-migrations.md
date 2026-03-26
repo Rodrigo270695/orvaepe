@@ -779,8 +779,30 @@ Si ya existe en Laravel con `tokenable_id` bigint, respétalo; si creas propia c
 - `payments (order_id, status)`, `payments (gateway, gateway_payment_id)` único parcial.  
 - `entitlements (user_id, status)`, `entitlements (ends_at)` donde `status = active`.  
 - `webhook_events (processed, created_at)` parcial donde `processed = false`.  
+- `showcase_clients (is_published, sort_order)`, `showcase_clients (sector)`.  
 
 ---
+
+## Marketing — vitrina de clientes (`showcase_clients`)
+
+Empresas autorizadas para mostrar en la web (logos, enlace opcional). Consulta pública típica: `is_published = true` ordenado por `sort_order`.
+
+| Campo | Tipo | Notas |
+|-------|------|--------|
+| `id` | uuid | PK |
+| `legal_name` | string | Razón social |
+| `display_name` | string | Nullable; nombre corto en UI si difiere de la razón social |
+| `slug` | string | Nullable, único; por si más adelante hay ficha `/clientes/{slug}` |
+| `logo_path` | string | Nullable; ruta bajo `storage` o convención `public` |
+| `website_url` | string | Nullable; URL pública del cliente |
+| `sector` | string | Nullable; filtro vitrina (ej. retail, logistics) |
+| `is_published` | boolean | Si entra en la vitrina |
+| `sort_order` | unsigned int | Orden manual |
+| `admin_notes` | text | Nullable; solo backoffice |
+| `authorized_at` | timestamp | Nullable; referencia de autorización de uso de marca |
+| `created_at`, `updated_at` | timestamp | |
+
+Índices: `(is_published, sort_order)`, `sector`.
 
 ---
 

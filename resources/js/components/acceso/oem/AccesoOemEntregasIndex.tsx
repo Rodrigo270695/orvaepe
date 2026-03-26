@@ -1,3 +1,6 @@
+import { router, usePage } from '@inertiajs/react';
+import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
+
 import * as React from 'react';
 
 import AdminCrudIndex from '@/components/admin/crud/AdminCrudIndex';
@@ -24,6 +27,8 @@ type Props = {
     initialStatus: string;
     initialDateFrom: string;
     initialDateTo: string;
+    initialSortBy: string;
+    initialSortDir: 'asc' | 'desc';
 };
 
 export default function AccesoOemEntregasIndex({
@@ -32,10 +37,47 @@ export default function AccesoOemEntregasIndex({
     initialStatus,
     initialDateFrom,
     initialDateTo,
+    initialSortBy,
+    initialSortDir,
 }: Props) {
+    const page = usePage();
     const rows: OemLicenseDeliveryRow[] = (oemLicenseDeliveries?.data ??
         []) as OemLicenseDeliveryRow[];
     const total = oemLicenseDeliveries?.total ?? rows.length;
+    const handleSort = (sortBy: string) => {
+        const currentUrl = new URL(page.url, window.location.origin);
+        const currentSortBy = currentUrl.searchParams.get('sort_by') ?? initialSortBy ?? '';
+        const currentSortDir =
+            (currentUrl.searchParams.get('sort_dir') as 'asc' | 'desc' | null) ?? initialSortDir;
+        const nextDir: 'asc' | 'desc' =
+            currentSortBy === sortBy && currentSortDir === 'asc' ? 'desc' : 'asc';
+        currentUrl.searchParams.set('sort_by', sortBy);
+        currentUrl.searchParams.set('sort_dir', nextDir);
+        currentUrl.searchParams.set('page', '1');
+        router.get(currentUrl.pathname + currentUrl.search, {}, {
+            preserveScroll: true,
+            preserveState: true,
+            replace: true,
+        });
+    };
+    const sortIcon = (key: string) => {
+        if (initialSortBy !== key) return <ArrowUpDown className="size-3.5 opacity-70" />;
+        return initialSortDir === 'asc' ? (
+            <ArrowUp className="size-3.5 text-[#4A80B8]" />
+        ) : (
+            <ArrowDown className="size-3.5 text-[#4A80B8]" />
+        );
+    };
+    const sortableHeader = (label: string, key: string) => (
+        <button
+            type="button"
+            className="inline-flex cursor-pointer items-center gap-1.5 hover:text-foreground"
+            onClick={() => handleSort(key)}
+        >
+            <span>{label}</span>
+            {sortIcon(key)}
+        </button>
+    );
 
     const statusOnPage = React.useMemo(
         () => ({
@@ -48,7 +90,7 @@ export default function AccesoOemEntregasIndex({
 
     const columns: AdminCrudTableColumn<OemLicenseDeliveryRow>[] = [
         {
-            header: 'Estado',
+            header: sortableHeader('Estado', 'status'),
             cellClassName: 'px-3 py-2 align-middle',
             render: (r) => (
                 <span
@@ -62,7 +104,7 @@ export default function AccesoOemEntregasIndex({
             ),
         },
         {
-            header: 'Proveedor',
+            header: sortableHeader('Proveedor', 'vendor'),
             cellClassName: 'px-3 py-2 align-middle text-sm max-w-[10rem]',
             render: (r) => (
                 <span className="line-clamp-2 font-medium">{r.vendor}</span>
@@ -137,19 +179,19 @@ export default function AccesoOemEntregasIndex({
             ),
         },
         {
-            header: 'Entrega',
+            header: sortableHeader('Entrega', 'delivered_at'),
             cellClassName:
                 'px-3 py-2 align-middle text-xs text-muted-foreground',
             render: (r) => formatDateTime(r.delivered_at),
         },
         {
-            header: 'Caduca',
+            header: sortableHeader('Caduca', 'expires_at'),
             cellClassName:
                 'px-3 py-2 align-middle text-xs text-muted-foreground',
             render: (r) => formatDateShort(r.expires_at),
         },
         {
-            header: 'Alta',
+            header: sortableHeader('Alta', 'created_at'),
             cellClassName:
                 'px-3 py-2 align-middle text-xs text-muted-foreground',
             render: (r) => formatDateTime(r.created_at),

@@ -1,6 +1,7 @@
 import { usePage } from '@inertiajs/react';
 
 import PageHero from '@/components/marketing/PageHero';
+import { getMarketingHeroNavCtas } from '@/marketing/marketingHeroNavCtas';
 import MarketingUnifiedNavbar from '@/components/marketing/MarketingUnifiedNavbar';
 import SeoHead from '@/components/seo/SeoHead';
 import { marketingSeo } from '@/marketing/seoCopy';
@@ -73,14 +74,7 @@ export default function Licenses() {
                                     </>
                                 }
                                 description="Elige licencias de Windows, Office, antivirus, Canva y más. Añade al carrito y revisa el total en PEN; la entrega se confirma al pagar."
-                                ctas={[
-                                    { href: '/carrito', label: 'Ir al carrito', variant: 'primary' },
-                                    {
-                                        href: '/software',
-                                        label: 'Ver software propio',
-                                        variant: 'outline',
-                                    },
-                                ]}
+                                ctas={getMarketingHeroNavCtas('licencias')}
                             />
                         </ScrollReveal>
                         <div className="landing-section-flair mx-4 px-4" aria-hidden />

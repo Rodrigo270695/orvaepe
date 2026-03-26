@@ -81,9 +81,6 @@ return [
         '/servicios' => ['priority' => '0.9', 'changefreq' => 'monthly'],
         '/contacto' => ['priority' => '0.85', 'changefreq' => 'monthly'],
         '/licencias' => ['priority' => '0.85', 'changefreq' => 'monthly'],
-        '/software-a-medida' => ['priority' => '0.8', 'changefreq' => 'monthly'],
-        '/correos-corporativos' => ['priority' => '0.7', 'changefreq' => 'monthly'],
-        '/otros-servicios' => ['priority' => '0.7', 'changefreq' => 'monthly'],
     ],
 
 ];

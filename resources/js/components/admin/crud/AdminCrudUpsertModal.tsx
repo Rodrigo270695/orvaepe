@@ -36,6 +36,13 @@ type Props = {
      * Texto del toast success.
      */
     successToastTitle?: string;
+    /** Ej. `multipart/form-data` si el formulario incluye `<input type="file" />`. */
+    encType?: React.HTMLAttributes<HTMLFormElement>['encType'];
+    /**
+     * Nombres `name="..."` que deben estar rellenos para habilitar enviar.
+     * Si se omite, se usa la heurística por formulario (slug, name, code…).
+     */
+    requiredFieldNames?: string[];
 };
 
 export default function AdminCrudUpsertModal({
@@ -50,6 +57,8 @@ export default function AdminCrudUpsertModal({
     submitLabel,
     children,
     successToastTitle = 'Se ha guardado la configuración',
+    encType,
+    requiredFieldNames,
 }: Props) {
     const handleClose = () => onOpenChange(false);
     const [hasRequiredFields, setHasRequiredFields] = React.useState(
@@ -58,10 +67,9 @@ export default function AdminCrudUpsertModal({
 
     const syncRequiredFieldsState = React.useCallback(
         (form: HTMLFormElement) => {
-            // Validación flexible por formulario:
+            // Heurística por formulario (si no pasas `requiredFieldNames`):
             // - Categorías: slug, name, revenue_line
-            // - Productos: slug, name
-            // - SKUs: code, name, catalog_product_id, sale_model, list_price, currency, fulfillment_type
+            // - Vitrina clientes: solo legal_name (slug es opcional; no usar heurística global)
             const requiredCandidates = [
                 'slug',
                 'name',
@@ -84,9 +92,14 @@ export default function AdminCrudUpsertModal({
                 'status',
             ];
 
-            const requiredPresent = requiredCandidates.filter((field) =>
-                Boolean(form.querySelector(`[name="${field}"]`)),
-            );
+            const requiredPresent =
+                requiredFieldNames && requiredFieldNames.length > 0
+                    ? requiredFieldNames.filter((field) =>
+                          Boolean(form.querySelector(`[name="${field}"]`)),
+                      )
+                    : requiredCandidates.filter((field) =>
+                          Boolean(form.querySelector(`[name="${field}"]`)),
+                      );
 
             if (requiredPresent.length === 0) {
                 setHasRequiredFields(true);
@@ -96,6 +109,9 @@ export default function AdminCrudUpsertModal({
             const allFilled = requiredPresent.every((field) => {
                 const el = form.querySelector<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(`[name="${field}"]`);
                 if (!el) return true;
+                if (el instanceof HTMLInputElement && el.type === 'file') {
+                    return true;
+                }
                 const v = el.value.trim();
                 if (v === '') {
                     return false;
@@ -108,7 +124,7 @@ export default function AdminCrudUpsertModal({
 
             setHasRequiredFields(allFilled);
         },
-        [],
+        [requiredFieldNames],
     );
 
     React.useEffect(() => {
@@ -125,7 +141,7 @@ export default function AdminCrudUpsertModal({
             if (form) syncRequiredFieldsState(form);
         });
         return () => window.cancelAnimationFrame(frame);
-    }, [open, action, syncRequiredFieldsState]);
+    }, [open, action, syncRequiredFieldsState, requiredFieldNames]);
 
     return (
         <AdminModalShell
@@ -139,6 +155,7 @@ export default function AdminCrudUpsertModal({
                 <Form
                     action={action}
                     method={method}
+                    encType={encType}
                     options={{ preserveScroll: true }}
                     onSuccess={() => onOpenChange(false)}
                     className="space-y-6"

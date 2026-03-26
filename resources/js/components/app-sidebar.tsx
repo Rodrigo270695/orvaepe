@@ -17,6 +17,7 @@ import {
     RefreshCcw,
     ShieldCheck,
     ShoppingCart,
+    Sparkles,
     Tags,
     Ticket,
     TicketPercent,
@@ -58,6 +59,23 @@ const adminSections: NavSidebarSection[] = [
             },
         ],
         groups: [],
+    },
+    {
+        label: 'Marketing',
+        groups: [
+            {
+                id: 'nav-marketing',
+                title: 'Sitio web',
+                icon: Sparkles,
+                items: [
+                    {
+                        title: 'Vitrina clientes',
+                        href: panelPath('marketing-vitrina'),
+                        icon: Sparkles,
+                    },
+                ],
+            },
+        ],
     },
     {
         label: 'Catálogo',

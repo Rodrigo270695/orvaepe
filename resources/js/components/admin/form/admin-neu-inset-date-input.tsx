@@ -33,8 +33,9 @@ export default function AdminNeuInsetDateInput({
                 className="relative w-full rounded-xl border border-border/60 px-1 neumorph-inset"
                 style={
                     {
-                        '--neu-bg':
-                            'color-mix(in oklab, var(--o-dark2) 70%, black 30%)',
+                        // Alineado al select: en claro usa fondo base del panel,
+                        // en oscuro se adapta por variables del tema.
+                        '--neu-bg': 'var(--background)',
                     } as React.CSSProperties
                 }
             >
@@ -46,7 +47,7 @@ export default function AdminNeuInsetDateInput({
                     value={value}
                     disabled={disabled}
                     onChange={(e) => onChange(e.target.value)}
-                    className="h-10 cursor-pointer border-0 bg-transparent pl-9 pr-2 shadow-none [color-scheme:dark] focus-visible:ring-0"
+                    className="h-10 cursor-pointer border-0 bg-transparent pl-9 pr-2 text-foreground shadow-none [color-scheme:light] dark:[color-scheme:dark] focus-visible:ring-0"
                 />
             </div>
         </div>

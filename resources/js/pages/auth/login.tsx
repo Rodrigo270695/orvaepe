@@ -198,10 +198,10 @@ export default function Login({
                             </div>
                             {/* Overlay de carga tipo glass cuando se procesa el login */}
                             {processing && (
-                                <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-[color-mix(in_oklab,var(--o-dark2)_88%,transparent)] backdrop-blur-xl">
-                                    <div className="flex flex-col items-center gap-3">
+                                <div className="absolute inset-0 flex items-center justify-center rounded-2xl border border-[color-mix(in_oklab,var(--state-info)_24%,var(--border))] bg-[color-mix(in_oklab,var(--card)_56%,transparent)] backdrop-blur-xl">
+                                    <div className="flex flex-col items-center gap-3 rounded-xl bg-[color-mix(in_oklab,var(--background)_48%,transparent)] px-6 py-5">
                                         <span className="size-8 animate-spin rounded-full border-2 border-[var(--auth-cta-from)] border-t-transparent" />
-                                        <p className="font-mono text-xs text-[var(--foreground)]/85">
+                                        <p className="font-mono text-xs text-[var(--foreground)]/80">
                                             Iniciando sesión...
                                         </p>
                                     </div>

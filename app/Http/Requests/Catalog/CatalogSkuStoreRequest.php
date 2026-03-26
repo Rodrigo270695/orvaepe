@@ -73,7 +73,7 @@ class CatalogSkuStoreRequest extends FormRequest
             'billing_interval' => ['nullable', 'string', Rule::in($billingAllowed)],
             'rental_days' => ['nullable', 'integer', 'min:1', 'max:3650'],
             'list_price' => ['required', 'numeric', 'min:0'],
-            'currency' => ['required', 'string', 'size:3'],
+            'currency' => ['required', 'string', Rule::in(['PEN', 'USD'])],
             'tax_included' => ['nullable', 'boolean'],
             'igv_applies' => ['nullable', 'boolean'],
             'fulfillment_type' => ['required', 'string', Rule::in($fulfillmentAllowed)],

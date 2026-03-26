@@ -7,6 +7,9 @@ export type SoftwarePricingPlan = {
     id: string;
     label: string;
     priceText: string;
+    /** Precio numérico (catálogo admin) para carrito marketing */
+    listPrice?: number;
+    currency?: string;
     // Opcionales para mostrar descuentos (admin los puede controlar)
     priceBeforeText?: string;
     priceNowText?: string;
@@ -24,11 +27,33 @@ export type SoftwareSystem = {
     name: string;
     shortDescription: string;
     description: string;
+    /** Origen del detalle: sistemas propios vs servicios */
+    revenueLine?: 'software_system' | 'service';
+    /** Solo servicios: texto largo de alcance */
+    alcance?: string | null;
+    /** Solo servicios: SLA u oferta comercial */
+    sla?: string | null;
     badges: string[];
     modules: SoftwareModule[];
     pricingPlans: SoftwarePricingPlan[];
     /** Presente cuando el sistema viene del catálogo admin */
     catalogProductId?: string;
+    /** URL para la demo (viene de `specs.demo|specs.link|specs.url`). */
+    demoUrl?: string | null;
+    /** Usuario para la demo (viene de `specs.demo_user|specs.demo_username|specs.usuario|...`). */
+    demoUser?: string | null;
+    /** Contraseña para la demo (viene de `specs.demo_password|specs.demo_pass|specs.contraseña|...`). */
+    demoPassword?: string | null;
+    /** Lista de URLs para imágenes (viene de `specs.imagenes|image|img`). */
+    images?: string[] | null;
+    /**
+     * Especificaciones adicionales agregadas por administración
+     * (todas las keys de `specs` que no pertenecen al stack conocido).
+     */
+    extraSpecs?: Array<
+        | { code: string; value: string }
+        | { code: string; values: string[] }
+    >;
     // Información opcional (se espera que venga desde administración/catálogo)
     howItWorksSteps?: string[];
     languages?: string[];

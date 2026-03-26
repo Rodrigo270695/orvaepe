@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\InformesController;
 use App\Http\Controllers\Admin\LicenseActivationsController;
 use App\Http\Controllers\Admin\LicenseKeysController;
 use App\Http\Controllers\Admin\OemLicenseDeliveriesController;
+use App\Http\Controllers\Admin\ShowcaseClientsController;
 use App\Http\Controllers\Admin\SubscriptionsController;
 use App\Http\Controllers\Admin\VentasPagosController;
 use App\Http\Controllers\Admin\WebhookEventsController;
@@ -27,6 +28,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Marketing\MarketingCartController;
 use App\Http\Controllers\Marketing\MarketingContactController;
 use App\Http\Controllers\Marketing\MarketingLicensesController;
+use App\Http\Controllers\Marketing\MarketingServiceDetailController;
 use App\Http\Controllers\Marketing\MarketingServicesController;
 use App\Http\Controllers\Marketing\MarketingSoftwareController;
 use App\Http\Controllers\Marketing\MarketingSoftwareDetailController;
@@ -40,6 +42,7 @@ use App\Http\Controllers\Sunat\DigitalCertificatesController;
 use App\Http\Controllers\Sunat\InvoiceDocumentSequencesController;
 use App\Http\Controllers\Sunat\SunatEmitterSettingsController;
 use App\Http\Middleware\RedirectClientUsersFromStaffArea;
+use App\Models\ShowcaseClient;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -49,9 +52,25 @@ $canRegister = Features::enabled(Features::registration());
 Route::get('/sitemap.xml', SitemapController::class)->name('seo.sitemap');
 Route::get('/robots.txt', RobotsController::class)->name('seo.robots');
 
-Route::inertia('/', 'welcome', [
-    'canRegister' => $canRegister,
-])->name('home');
+Route::get('/', function () use ($canRegister) {
+    $showcaseClients = ShowcaseClient::query()
+        ->published()
+        ->get()
+        ->map(fn (ShowcaseClient $c) => [
+            'id' => $c->id,
+            'name' => $c->publicName(),
+            'logo' => $c->logo_public_url,
+            'website_url' => $c->website_url,
+            'sector' => $c->sector,
+        ])
+        ->values()
+        ->all();
+
+    return Inertia::render('welcome', [
+        'canRegister' => $canRegister,
+        'showcaseClients' => $showcaseClients,
+    ]);
+})->name('home');
 
 Route::get('/software', MarketingSoftwareController::class)->name('marketing-software');
 Route::get('/carrito', MarketingCartController::class)->name('marketing-cart');
@@ -62,19 +81,13 @@ Route::post('/carrito/precios-skus', ResolveCartSkuPricesController::class)
 Route::get('/software/{system}', [MarketingSoftwareDetailController::class, 'show'])
     ->where('system', '[A-Za-z0-9-]+')
     ->name('software-detail');
-Route::inertia('/software-a-medida', 'custom-software', [
-    'canRegister' => $canRegister,
-])->name('marketing-custom-software');
 Route::get('/servicios', MarketingServicesController::class)->name('marketing-services');
+Route::get('/servicios/{service}', [MarketingServiceDetailController::class, 'show'])
+    ->where('service', '[A-Za-z0-9-]+')
+    ->name('marketing-service-detail');
 Route::get('/contacto', [MarketingContactController::class, 'show'])->name('marketing-contact');
 Route::post('/contacto', [MarketingContactController::class, 'store'])->name('marketing-contact.store');
 Route::get('/licencias', MarketingLicensesController::class)->name('marketing-licenses');
-Route::inertia('/correos-corporativos', 'corporateEmail', [
-    'canRegister' => $canRegister,
-])->name('marketing-corporate-email');
-Route::inertia('/otros-servicios', 'moreServices', [
-    'canRegister' => $canRegister,
-])->name('marketing-more-services');
 
 Route::match(['GET', 'POST'], '/webhooks/mercadopago', [CheckoutMercadoPagoController::class, 'webhook'])
     ->name('webhooks.mercadopago');
@@ -174,6 +187,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('panel/catalogo-productos/{catalog_product}/medios', [CatalogProductMediaController::class, 'store'])
             ->name('panel.catalogo-productos.medios.store');
 
+        // Subida de imágenes desde el panel de "Especificaciones" (specs -> imágenes)
+        Route::post(
+            'panel/catalogo-productos/{catalog_product}/medios/specs-images',
+            [CatalogProductMediaController::class, 'storeManyForSpecs']
+        );
+
         Route::delete('panel/catalogo-productos/{catalog_product}/medios/{catalog_media}', [CatalogProductMediaController::class, 'destroy'])
             ->name('panel.catalogo-productos.medios.destroy');
 
@@ -203,6 +222,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::patch('panel/catalogo-skus/{catalog_sku}/extras', [CatalogSkuExtrasController::class, 'update'])
             ->name('panel.catalogo-skus.extras.update');
+
+        Route::post(
+            'panel/catalogo-skus/{catalog_sku}/extras/imagenes',
+            [CatalogSkuExtrasController::class, 'storeManyForExtrasImages']
+        );
 
         // Catálogo — Cupones (coupons)
         Route::get('panel/catalogo-cupones', [CouponsController::class, 'index'])
@@ -284,6 +308,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Acceso — Entitlements y secretos (derechos de uso / credenciales técnicas)
         Route::get('panel/acceso-clientes', [ClientUsersController::class, 'index'])
             ->name('panel.acceso-clientes.index');
+
+        Route::get('panel/marketing-vitrina', [ShowcaseClientsController::class, 'index'])
+            ->name('panel.marketing-vitrina.index');
+        Route::post('panel/marketing-vitrina', [ShowcaseClientsController::class, 'store'])
+            ->name('panel.marketing-vitrina.store');
+        Route::patch('panel/marketing-vitrina/{showcase_client}', [ShowcaseClientsController::class, 'update'])
+            ->name('panel.marketing-vitrina.update');
+        Route::delete('panel/marketing-vitrina/{showcase_client}', [ShowcaseClientsController::class, 'destroy'])
+            ->name('panel.marketing-vitrina.destroy');
 
         Route::get('panel/acceso-entitlements', [EntitlementsController::class, 'index'])
             ->name('panel.acceso-entitlements.index');

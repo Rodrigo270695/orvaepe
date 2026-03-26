@@ -5,6 +5,11 @@ import { ChevronDown, Menu, ShoppingCart, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 import {
+    marketingPreciosLinks,
+    marketingServiciosSectionLinks,
+} from '@/constants/marketingNavLinks';
+import MarketingGlobalSearch from '@/components/marketing/MarketingGlobalSearch';
+import {
     clearSoftwareCart,
     getSoftwareCartTotalQty,
     readSoftwareCart,
@@ -21,6 +26,18 @@ function cx(...classes: (string | false | undefined)[]) {
     return classes.filter(Boolean).join(' ');
 }
 
+function getUserDisplayName(name?: string | null) {
+    if (!name) return { short: 'Cuenta', full: 'Cuenta' };
+
+    const clean = name.trim().replace(/\s+/g, ' ');
+    if (!clean) return { short: 'Cuenta', full: 'Cuenta' };
+
+    const parts = clean.split(' ');
+    const short = parts.slice(0, 2).join(' ');
+
+    return { short, full: clean };
+}
+
 export default function MarketingUnifiedNavbar({ canRegister }: Props) {
     const { auth, canRegister: canRegisterFromPage, softwareNavLinks } =
         usePage().props as {
@@ -34,6 +51,7 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
     const [openDropdown, setOpenDropdown] = useState<DropdownKey>(null);
     const [openMobile, setOpenMobile] = useState(false);
     const [openMobileSection, setOpenMobileSection] = useState<'software' | 'precios' | 'servicios' | null>(null);
+    const [openUserMenu, setOpenUserMenu] = useState(false);
     const [scrolled, setScrolled] = useState(false);
 
     const rootRef = useRef<HTMLDivElement | null>(null);
@@ -84,7 +102,7 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
         if (pathname.startsWith('/contacto')) {
             return null;
         }
-        if (pathname.startsWith('/software-a-medida') || pathname.startsWith('/software')) {
+        if (pathname.startsWith('/software')) {
             return 'software';
         }
         if (pathname.startsWith('/licencias')) {
@@ -151,22 +169,27 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
         return () => window.removeEventListener('scroll', onScroll);
     }, []);
 
+    const closeAll = () => {
+        setOpenDropdown(null);
+        setOpenMobile(false);
+        setOpenMobileSection(null);
+        setOpenUserMenu(false);
+    };
+
     // Si el dropdown está abierto y el usuario SÍ hace scroll, lo cerramos
     // para evitar desalineación.
     useEffect(() => {
-        if (!openDropdown && !openMobile) {
+        if (!openDropdown && !openMobile && !openUserMenu) {
             return;
         }
 
         const onScroll = () => {
-            setOpenDropdown(null);
-            setOpenMobile(false);
-            setOpenMobileSection(null);
+            closeAll();
         };
 
         window.addEventListener('scroll', onScroll, { passive: true });
         return () => window.removeEventListener('scroll', onScroll);
-    }, [openDropdown, openMobile]);
+    }, [openDropdown, openMobile, openUserMenu]);
 
     useEffect(() => {
         if (pathname !== '/') {
@@ -213,7 +236,7 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
     }, [pathname]);
 
     useEffect(() => {
-        if (!openDropdown && !openMobile) {
+        if (!openDropdown && !openMobile && !openUserMenu) {
             return;
         }
 
@@ -224,9 +247,7 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
             }
 
             if (rootRef.current && !rootRef.current.contains(target)) {
-                setOpenDropdown(null);
-                setOpenMobile(false);
-                setOpenMobileSection(null);
+                closeAll();
             }
         };
 
@@ -236,29 +257,94 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
         return () => {
             document.removeEventListener('click', onDocumentClick);
         };
-    }, [openDropdown, openMobile]);
+    }, [openDropdown, openMobile, openUserMenu]);
 
     const topLinkClass =
         'relative inline-flex cursor-pointer items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold transition-all duration-200 hover:bg-[color-mix(in_oklab,var(--state-info)_14%,transparent)] hover:text-[color-mix(in_oklab,var(--state-info)_68%,var(--foreground))]';
     const activeUnderline =
         'absolute left-2 right-2 -bottom-0.5 z-10 h-[3px] rounded-full bg-[linear-gradient(90deg,var(--state-info),var(--state-success),var(--state-alert))] origin-left scale-x-0 transition-transform duration-300 pointer-events-none';
 
-    const authActions = auth.user ? (
-        <>
-            <Link
-                href="/dashboard"
-                className="rounded-md border border-transparent px-4 py-2 text-sm font-semibold text-[var(--foreground)] hover:border-[color-mix(in_oklab,var(--o-amber)_55%,transparent)] hover:bg-[color-mix(in_oklab,var(--o-amber)_10%,transparent)]"
-            >
-                Panel
-            </Link>
-            <Link
-                href="/logout"
-                as="button"
-                className="rounded-md border border-transparent px-4 py-2 text-sm font-semibold text-[var(--foreground)] hover:border-[color-mix(in_oklab,var(--o-amber)_55%,transparent)] hover:bg-[color-mix(in_oklab,var(--o-amber)_10%,transparent)]"
-            >
-                Salir
-            </Link>
-        </>
+    const authActionsDesktop = auth.user ? (
+        (() => {
+            const userDisplay = getUserDisplayName(auth.user.name);
+
+            return (
+                <div className="relative">
+                    <button
+                        type="button"
+                        className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-transparent px-3 py-2 text-sm font-semibold text-[var(--foreground)] transition-colors hover:border-[color-mix(in_oklab,var(--state-info)_48%,transparent)] hover:bg-[color-mix(in_oklab,var(--state-info)_10%,transparent)]"
+                        aria-label={`Cuenta de ${userDisplay.full}`}
+                        aria-haspopup="menu"
+                        aria-expanded={openUserMenu}
+                        onClick={() => {
+                            setOpenDropdown(null);
+                            setOpenMobile(false);
+                            setOpenMobileSection(null);
+                            setOpenUserMenu((v) => !v);
+                        }}
+                    >
+                        <span className="inline-flex size-7 items-center justify-center rounded-full bg-[color-mix(in_oklab,var(--state-info)_18%,transparent)] text-xs font-bold text-[var(--state-info)]">
+                            {userDisplay.short
+                                .split(' ')
+                                .map((p) => p.charAt(0).toUpperCase())
+                                .join('')
+                                .slice(0, 2)}
+                        </span>
+                        <span className="max-w-[10rem] truncate">{userDisplay.short}</span>
+                        <ChevronDown className="size-4 text-[var(--state-info)]" />
+                    </button>
+
+                    {openUserMenu && (
+                        <div
+                            className="absolute right-0 top-full z-[70] w-64 pt-2"
+                            role="menu"
+                            aria-label="Menú de usuario"
+                        >
+                            <div className="rounded-2xl border border-[var(--border)] bg-card/95 p-2 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.35)] backdrop-blur-md">
+                                <div
+                                    className="rounded-2xl border p-2 shadow-[0_24px_60px_-20px_color-mix(in_oklab,var(--state-info)_35%,transparent)] backdrop-blur-md"
+                                    style={{
+                                        borderColor: 'color-mix(in oklab, var(--state-info) 28%, var(--border))',
+                                        background:
+                                            'linear-gradient(165deg, color-mix(in oklab, var(--card) 96%, transparent), color-mix(in oklab, var(--state-info) 8%, var(--card)), color-mix(in oklab, var(--state-success) 6%, var(--card)))',
+                                    }}
+                                >
+                                <div
+                                    className="rounded-xl border px-3 py-2.5"
+                                    style={{
+                                        borderColor: 'color-mix(in oklab, var(--state-info) 22%, var(--border))',
+                                        background:
+                                            'linear-gradient(135deg, color-mix(in oklab, var(--state-info) 14%, transparent), color-mix(in oklab, var(--state-success) 8%, transparent))',
+                                    }}
+                                >
+                                    <p className="truncate text-sm font-semibold text-[var(--foreground)]">{userDisplay.short}</p>
+                                    <p className="truncate text-xs text-[var(--muted-foreground)]">Sesión activa</p>
+                                </div>
+                                <div className="mt-2 space-y-1">
+                                    <Link
+                                        href="/dashboard"
+                                        className="block rounded-lg px-3 py-2 text-sm font-semibold text-[var(--foreground)] transition-colors hover:bg-[color-mix(in_oklab,var(--state-info)_14%,transparent)] hover:text-[color-mix(in_oklab,var(--state-info)_75%,var(--foreground))]"
+                                        onClick={closeAll}
+                                    >
+                                        Ir al panel
+                                    </Link>
+                                    <Link
+                                        href="/logout"
+                                        as="button"
+                                        method="post"
+                                        className="block w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-[var(--foreground)] transition-colors hover:bg-[color-mix(in_oklab,var(--state-danger)_12%,transparent)] hover:text-[color-mix(in_oklab,var(--state-danger)_78%,var(--foreground))]"
+                                        onClick={closeAll}
+                                    >
+                                        Cerrar sesión
+                                    </Link>
+                                </div>
+                            </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        })()
     ) : (
         <>
             <Link
@@ -282,11 +368,34 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
         </>
     );
 
-    const closeAll = () => {
-        setOpenDropdown(null);
-        setOpenMobile(false);
-        setOpenMobileSection(null);
-    };
+    const authActionsMobile = auth.user ? (
+        <>
+            <div className="rounded-xl border border-[color-mix(in_oklab,var(--border)_85%,transparent)] bg-[color-mix(in_oklab,var(--muted)_30%,transparent)] px-3 py-2.5">
+                <p className="truncate text-sm font-semibold text-[var(--foreground)]">
+                    {getUserDisplayName(auth.user.name).short}
+                </p>
+                <p className="truncate text-xs text-[var(--muted-foreground)]">Sesión activa</p>
+            </div>
+            <Link
+                href="/dashboard"
+                className="rounded-md border border-transparent px-4 py-2 text-sm font-semibold text-[var(--foreground)] hover:border-[color-mix(in_oklab,var(--state-info)_48%,transparent)] hover:bg-[color-mix(in_oklab,var(--state-info)_10%,transparent)]"
+                onClick={closeAll}
+            >
+                Ir al panel
+            </Link>
+            <Link
+                href="/logout"
+                as="button"
+                method="post"
+                className="rounded-md border border-transparent px-4 py-2 text-left text-sm font-semibold text-[var(--foreground)] hover:border-[color-mix(in_oklab,var(--state-danger)_48%,transparent)] hover:bg-[color-mix(in_oklab,var(--state-danger)_10%,transparent)]"
+                onClick={closeAll}
+            >
+                Cerrar sesión
+            </Link>
+        </>
+    ) : (
+        authActionsDesktop
+    );
 
     const softwareLinks =
         softwareNavLinks && softwareNavLinks.length > 0
@@ -304,20 +413,11 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                   { label: 'Mensajería', href: '/software#mensajeria' },
               ];
 
-    const preciosLinks = [
-        { label: 'Más vendidos', href: '/licencias#oem-mas-vendidos' },
-        { label: 'Antivirus', href: '/licencias#oem-antivirus-principales' },
-        { label: 'Otros antivirus', href: '/licencias#oem-antivirus-otros' },
-        { label: 'Visio / Project / más', href: '/licencias#oem-otros-productos' },
-        { label: 'Office para Mac', href: '/licencias#oem-office-mac' },
-        { label: 'Nuevos ingresos', href: '/licencias#oem-nuevos-ingresos' },
-    ];
+    const preciosLinks = [...marketingPreciosLinks];
 
     const serviciosLinks = [
         { label: 'Servicios', href: '/servicios' },
-        { label: 'Software a medida', href: '/software-a-medida' },
-        { label: 'Correos corporativos', href: '/correos-corporativos' },
-        { label: 'Otros servicios', href: '/otros-servicios' },
+        ...marketingServiciosSectionLinks,
     ];
 
     const renderLink = (l: { label: string; href: string }, style: 'primary' | 'secondary') => {
@@ -415,7 +515,7 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                             className={cx(
                                 topLinkClass,
                                 isInicioActive
-                                    ? 'text-[var(--o-amber)]'
+                                    ? 'text-[var(--state-info)]'
                                     : 'text-[var(--foreground)]',
                             )}
                             onClick={closeAll}
@@ -440,12 +540,13 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                                 className={cx(
                                     topLinkClass,
                                     activeTop === 'software'
-                                        ? 'text-[var(--o-amber)]'
+                                        ? 'text-[var(--state-info)]'
                                         : 'text-[var(--foreground)]',
                                 )}
-                                onClick={() =>
-                                    setOpenDropdown((v) => (v === 'software' ? null : 'software'))
-                                }
+                                onClick={() => {
+                                    setOpenUserMenu(false);
+                                    setOpenDropdown((v) => (v === 'software' ? null : 'software'));
+                                }}
                                 aria-expanded={openDropdown === 'software'}
                             >
                                 Software
@@ -461,12 +562,13 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                                 className={cx(
                                     topLinkClass,
                                     activeTop === 'precios'
-                                        ? 'text-[var(--o-amber)]'
+                                        ? 'text-[var(--state-info)]'
                                         : 'text-[var(--foreground)]',
                                 )}
-                                onClick={() =>
-                                    setOpenDropdown((v) => (v === 'precios' ? null : 'precios'))
-                                }
+                                onClick={() => {
+                                    setOpenUserMenu(false);
+                                    setOpenDropdown((v) => (v === 'precios' ? null : 'precios'));
+                                }}
                                 aria-expanded={openDropdown === 'precios'}
                             >
                                 Licencias
@@ -482,12 +584,13 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                                 className={cx(
                                     topLinkClass,
                                     activeTop === 'servicios'
-                                        ? 'text-[var(--o-amber)]'
+                                        ? 'text-[var(--state-info)]'
                                         : 'text-[var(--foreground)]',
                                 )}
-                                onClick={() =>
-                                    setOpenDropdown((v) => (v === 'servicios' ? null : 'servicios'))
-                                }
+                                onClick={() => {
+                                    setOpenUserMenu(false);
+                                    setOpenDropdown((v) => (v === 'servicios' ? null : 'servicios'));
+                                }}
                                 aria-expanded={openDropdown === 'servicios'}
                             >
                                 Servicios
@@ -502,7 +605,7 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                             className={cx(
                                 topLinkClass,
                                 isContactoActive
-                                    ? 'text-[var(--o-amber)]'
+                                    ? 'text-[var(--state-info)]'
                                     : 'text-[var(--foreground)]',
                             )}
                             onClick={closeAll}
@@ -518,6 +621,11 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                     </nav>
 
                     <div className="hidden items-center gap-2 md:flex">
+                        <MarketingGlobalSearch
+                            softwareLinks={softwareLinks}
+                            isLoggedIn={Boolean(auth.user)}
+                            canRegister={finalCanRegister}
+                        />
                         <div className="group/cart relative">
                             <Link
                                 href="/carrito"
@@ -598,17 +706,61 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                             </div>
                         </div>
 
-                        {authActions}
+                        {authActionsDesktop}
                     </div>
 
-                    <button
-                        type="button"
-                        className="inline-flex items-center justify-center rounded-md p-2 text-[var(--foreground)] hover:bg-[color-mix(in_oklab,var(--o-amber)_10%,transparent)] md:hidden"
-                        aria-label="Abrir menú"
-                        onClick={() => setOpenMobile((v) => !v)}
-                    >
-                        {openMobile ? <X className="size-5" /> : <Menu className="size-5" />}
-                    </button>
+                    <div className="flex items-center gap-1.5 md:hidden">
+                        <MarketingGlobalSearch
+                            softwareLinks={softwareLinks}
+                            isLoggedIn={Boolean(auth.user)}
+                            canRegister={finalCanRegister}
+                        />
+                        <Link
+                            href="/carrito"
+                            aria-label="Ir al carrito de compras"
+                            title="Ir al carrito. Mantén pulsado Mayús y toca para vaciar."
+                            className={[
+                                'relative inline-flex items-center gap-1 rounded-md border border-transparent px-2.5 py-2 text-[var(--foreground)]',
+                                'transition-colors hover:border-[color-mix(in_oklab,var(--state-info)_48%,transparent)] hover:bg-[color-mix(in_oklab,var(--state-info)_10%,transparent)]',
+                                'transform-gpu',
+                                cartBump ? 'animate-pulse scale-105' : '',
+                            ].join(' ')}
+                            onClick={(e) => {
+                                if (e.shiftKey) {
+                                    e.preventDefault();
+                                    clearSoftwareCart();
+                                    setCartCount(0);
+                                    setCartLines([]);
+                                }
+                            }}
+                        >
+                            <ShoppingCart className="size-[1.35rem] text-[var(--state-info)]" />
+                            {cartCount > 0 && (
+                                <span
+                                    className="absolute -right-0.5 -top-0.5 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full px-1 text-[0.65rem] font-bold leading-none text-[var(--primary-foreground)]"
+                                    style={{
+                                        background:
+                                            'linear-gradient(135deg, color-mix(in oklab, var(--state-success) 88%, var(--state-info)), color-mix(in oklab, var(--state-info) 72%, var(--state-success)))',
+                                    }}
+                                >
+                                    {cartCount > 99 ? '99+' : cartCount}
+                                </span>
+                            )}
+                        </Link>
+                        <button
+                            type="button"
+                            className="relative z-10 inline-flex min-h-11 min-w-11 items-center justify-center rounded-md p-2 text-[var(--foreground)] hover:bg-[color-mix(in_oklab,var(--o-amber)_10%,transparent)] touch-manipulation"
+                            aria-label="Abrir menú"
+                            aria-expanded={openMobile}
+                            onClick={() => setOpenMobile((v) => !v)}
+                        >
+                            {openMobile ? (
+                                <X className="pointer-events-none size-5 shrink-0" aria-hidden />
+                            ) : (
+                                <Menu className="pointer-events-none size-5 shrink-0" aria-hidden />
+                            )}
+                        </button>
+                    </div>
                 </div>
 
                 {openMobile && (
@@ -617,7 +769,10 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                             <div className="flex flex-col gap-1">
                                 <Link
                                     href="/"
-                                    className="cursor-pointer rounded-xl px-3 py-2 text-sm font-semibold text-[var(--foreground)] hover:bg-[color-mix(in_oklab,var(--o-amber)_10%,transparent)]"
+                                    className={cx(
+                                        'cursor-pointer rounded-xl px-3 py-2 text-sm font-semibold hover:bg-[color-mix(in_oklab,var(--o-amber)_10%,transparent)]',
+                                        isInicioActive ? 'text-[var(--state-info)]' : 'text-[var(--foreground)]',
+                                    )}
                                     onClick={closeAll}
                                 >
                                     Inicio
@@ -625,13 +780,19 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
 
                                 <button
                                     type="button"
-                                    className="flex cursor-pointer items-center justify-between rounded-xl px-3 py-2 text-left text-sm font-semibold text-[var(--foreground)] hover:bg-[color-mix(in_oklab,var(--o-amber)_10%,transparent)]"
+                                    className={cx(
+                                        'flex w-full cursor-pointer items-center justify-between gap-2 rounded-xl px-3 py-3 text-left text-sm font-semibold hover:bg-[color-mix(in_oklab,var(--o-amber)_10%,transparent)] touch-manipulation',
+                                        activeTop === 'software' ? 'text-[var(--state-info)]' : 'text-[var(--foreground)]',
+                                    )}
                                     onClick={() =>
                                         setOpenMobileSection((v) => (v === 'software' ? null : 'software'))
                                     }
                                 >
-                                    <span>Software desarrollado</span>
-                                    <ChevronDown className="size-4 text-[var(--o-amber)]" />
+                                    <span className="min-w-0 flex-1">Software desarrollado</span>
+                                    <ChevronDown
+                                        className="size-4 shrink-0 pointer-events-none text-[var(--o-amber)]"
+                                        aria-hidden
+                                    />
                                 </button>
                                 {openMobileSection === 'software' && (
                                     <div className="grid gap-1 px-1 pb-2">
@@ -663,13 +824,19 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
 
                                 <button
                                     type="button"
-                                    className="flex cursor-pointer items-center justify-between rounded-xl px-3 py-2 text-left text-sm font-semibold text-[var(--foreground)] hover:bg-[color-mix(in_oklab,var(--o-amber)_10%,transparent)]"
+                                    className={cx(
+                                        'flex w-full cursor-pointer items-center justify-between gap-2 rounded-xl px-3 py-3 text-left text-sm font-semibold hover:bg-[color-mix(in_oklab,var(--o-amber)_10%,transparent)] touch-manipulation',
+                                        activeTop === 'precios' ? 'text-[var(--state-info)]' : 'text-[var(--foreground)]',
+                                    )}
                                     onClick={() =>
                                         setOpenMobileSection((v) => (v === 'precios' ? null : 'precios'))
                                     }
                                 >
-                                    <span>Licencias</span>
-                                    <ChevronDown className="size-4 text-[var(--o-amber)]" />
+                                    <span className="min-w-0 flex-1">Licencias</span>
+                                    <ChevronDown
+                                        className="size-4 shrink-0 pointer-events-none text-[var(--o-amber)]"
+                                        aria-hidden
+                                    />
                                 </button>
                                 {openMobileSection === 'precios' && (
                                     <div className="grid gap-1 px-1 pb-2">
@@ -694,13 +861,19 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
 
                                 <button
                                     type="button"
-                                    className="flex cursor-pointer items-center justify-between rounded-xl px-3 py-2 text-left text-sm font-semibold text-[var(--foreground)] hover:bg-[color-mix(in_oklab,var(--o-amber)_10%,transparent)]"
+                                    className={cx(
+                                        'flex w-full cursor-pointer items-center justify-between gap-2 rounded-xl px-3 py-3 text-left text-sm font-semibold hover:bg-[color-mix(in_oklab,var(--o-amber)_10%,transparent)] touch-manipulation',
+                                        activeTop === 'servicios' ? 'text-[var(--state-info)]' : 'text-[var(--foreground)]',
+                                    )}
                                     onClick={() =>
                                         setOpenMobileSection((v) => (v === 'servicios' ? null : 'servicios'))
                                     }
                                 >
-                                    <span>Servicios</span>
-                                    <ChevronDown className="size-4 text-[var(--o-amber)]" />
+                                    <span className="min-w-0 flex-1">Servicios</span>
+                                    <ChevronDown
+                                        className="size-4 shrink-0 pointer-events-none text-[var(--o-amber)]"
+                                        aria-hidden
+                                    />
                                 </button>
                                 {openMobileSection === 'servicios' && (
                                     <div className="grid gap-1 px-1 pb-2">
@@ -725,30 +898,17 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
 
                                 <Link
                                     href="/contacto"
-                                    className="cursor-pointer rounded-xl px-3 py-2 text-sm font-semibold text-[var(--foreground)] hover:bg-[color-mix(in_oklab,var(--o-amber)_10%,transparent)]"
+                                    className={cx(
+                                        'cursor-pointer rounded-xl px-3 py-2 text-sm font-semibold hover:bg-[color-mix(in_oklab,var(--o-amber)_10%,transparent)]',
+                                        isContactoActive ? 'text-[var(--state-info)]' : 'text-[var(--foreground)]',
+                                    )}
                                     onClick={closeAll}
                                 >
                                     Contacto
                                 </Link>
-
-                                <Link
-                                    href="/carrito"
-                                    className="flex cursor-pointer items-center justify-between rounded-xl px-3 py-2 text-sm font-semibold text-[var(--foreground)] hover:bg-[color-mix(in_oklab,var(--o-amber)_10%,transparent)]"
-                                    onClick={closeAll}
-                                >
-                                    <span className="inline-flex items-center gap-2">
-                                        <ShoppingCart className="size-4 text-[var(--o-amber)]" />
-                                        Carrito
-                                    </span>
-                                    {cartCount > 0 && (
-                                        <span className="min-w-6 rounded-full bg-[var(--primary)] px-2 py-0.5 text-center text-xs font-bold text-[var(--primary-foreground)]">
-                                            {cartCount}
-                                        </span>
-                                    )}
-                                </Link>
                             </div>
 
-                            <div className="mt-4 grid gap-2">{authActions}</div>
+                            <div className="mt-4 grid gap-2">{authActionsMobile}</div>
                         </div>
                     </div>
                 )}

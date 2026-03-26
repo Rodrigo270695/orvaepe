@@ -8,12 +8,20 @@ export default function AppearanceDarkLightToggle({
     className,
     variant = 'two',
     orientation = 'horizontal',
+    onAfterSelect,
     ...props
 }: HTMLAttributes<HTMLDivElement> & {
     variant?: 'two' | 'three';
     orientation?: 'horizontal' | 'vertical';
+    /** Tras elegir un modo (p. ej. cerrar el panel flotante). */
+    onAfterSelect?: () => void;
 }) {
     const { appearance, resolvedAppearance, updateAppearance } = useAppearance();
+
+    const pick = (mode: 'light' | 'dark' | 'system') => {
+        updateAppearance(mode);
+        onAfterSelect?.();
+    };
 
     const isLight = appearance === 'light' || (variant === 'two' && resolvedAppearance === 'light');
     const isDark = appearance === 'dark' || (variant === 'two' && resolvedAppearance === 'dark');
@@ -33,7 +41,7 @@ export default function AppearanceDarkLightToggle({
                 >
                     <button
                         type="button"
-                        onClick={() => updateAppearance('light')}
+                        onClick={() => pick('light')}
                         aria-pressed={appearance === 'light'}
                         className={cn(
                             'relative z-10 flex h-1/3 w-full cursor-pointer items-center justify-center rounded-none transition-all',
@@ -48,7 +56,7 @@ export default function AppearanceDarkLightToggle({
 
                     <button
                         type="button"
-                        onClick={() => updateAppearance('system')}
+                        onClick={() => pick('system')}
                         aria-pressed={appearance === 'system'}
                         className={cn(
                             'relative z-10 flex h-1/3 w-full cursor-pointer items-center justify-center rounded-none transition-all border-t border-[color-mix(in_oklab,var(--o-amber)_18%,transparent)]',
@@ -63,7 +71,7 @@ export default function AppearanceDarkLightToggle({
 
                     <button
                         type="button"
-                        onClick={() => updateAppearance('dark')}
+                        onClick={() => pick('dark')}
                         aria-pressed={appearance === 'dark'}
                         className={cn(
                             'relative z-10 flex h-1/3 w-full cursor-pointer items-center justify-center rounded-none transition-all border-t border-[color-mix(in_oklab,var(--o-amber)_18%,transparent)]',
@@ -97,7 +105,7 @@ export default function AppearanceDarkLightToggle({
 
                 <button
                     type="button"
-                    onClick={() => updateAppearance('light')}
+                    onClick={() => pick('light')}
                     aria-pressed={appearance === 'light'}
                     className={cn(
                         'relative z-10 inline-flex h-full w-1/3 cursor-pointer items-center justify-center rounded-md transition-all',
@@ -112,7 +120,7 @@ export default function AppearanceDarkLightToggle({
 
                 <button
                     type="button"
-                    onClick={() => updateAppearance('system')}
+                    onClick={() => pick('system')}
                     aria-pressed={appearance === 'system'}
                     className={cn(
                         'relative z-10 inline-flex h-full w-1/3 cursor-pointer items-center justify-center rounded-md transition-all',
@@ -127,7 +135,7 @@ export default function AppearanceDarkLightToggle({
 
                 <button
                     type="button"
-                    onClick={() => updateAppearance('dark')}
+                    onClick={() => pick('dark')}
                     aria-pressed={appearance === 'dark'}
                     className={cn(
                         'relative z-10 inline-flex h-full w-1/3 cursor-pointer items-center justify-center rounded-md transition-all',

@@ -15,7 +15,14 @@ import GeometricBackground from '@/components/welcome/GeometricBackground';
 import ScrollReveal from '@/components/welcome/ScrollReveal';
 import ScrollToTopButton from '@/components/welcome/ScrollToTopButton';
 import { parsePenUnitFromPriceText } from '@/lib/cartPricing';
+import { normalizeModuleDisplayName } from '@/lib/normalizeModuleDisplayName';
 import { readSoftwareCart, writeSoftwareCart } from '@/lib/softwareCartStorage';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import {
     getSoftwareSystemBySlug,
     type SoftwarePricingPlan,
@@ -78,6 +85,8 @@ export default function SoftwareDetail() {
 
     const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
     const [addedCount, setAddedCount] = useState(0);
+    const [showDemoPassword, setShowDemoPassword] = useState(false);
+    const [specImagePreviewUrl, setSpecImagePreviewUrl] = useState<string | null>(null);
 
     useEffect(() => {
         setSelectedPlanId(null);
@@ -213,6 +222,16 @@ export default function SoftwareDetail() {
             };
         }
 
+        if (system.demoUrl) {
+            base.video = [
+                {
+                    '@type': 'VideoObject',
+                    name: `${system.name} — demo`,
+                    contentUrl: system.demoUrl,
+                },
+            ];
+        }
+
         return base;
     }, [system, seo.siteUrl]);
 
@@ -275,11 +294,14 @@ export default function SoftwareDetail() {
         system.frameworks ?? system.tecnologias?.frameworks ?? undefined;
     const databases =
         system.databases ?? system.tecnologias?.databases ?? undefined;
+    const specImages = system.images ?? [];
 
     const howSteps =
         system.howItWorksSteps ??
         (system.modules?.length
-            ? system.modules.map((m) => m.name).slice(0, 6)
+            ? system.modules
+                  .map((m) => normalizeModuleDisplayName(m.name))
+                  .slice(0, 6)
             : []);
 
     const inferSaleModelLabel = (p: SoftwarePricingPlan): string => {
@@ -465,6 +487,123 @@ export default function SoftwareDetail() {
                         </SoftwareDetailSection>
                     </ScrollReveal>
 
+                    {specImages.length > 0 ? (
+                        <ScrollReveal direction="up">
+                            <Dialog
+                                open={specImagePreviewUrl !== null}
+                                onOpenChange={(open) => {
+                                    if (!open) {
+                                        setSpecImagePreviewUrl(null);
+                                    }
+                                }}
+                            >
+                                <DialogContent className="max-h-[92vh] max-w-[min(96vw,56rem)] border-border/60 bg-background p-3 sm:p-4">
+                                    <DialogTitle className="sr-only">
+                                        Imagen en tamaño original
+                                    </DialogTitle>
+                                    <DialogDescription className="sr-only">
+                                        Visualización ampliada para evaluar el sistema.
+                                    </DialogDescription>
+                                    {specImagePreviewUrl ? (
+                                        <img
+                                            src={specImagePreviewUrl}
+                                            alt=""
+                                            className="mx-auto max-h-[85vh] w-auto max-w-full object-contain"
+                                            loading="lazy"
+                                            decoding="async"
+                                        />
+                                    ) : null}
+                                </DialogContent>
+                            </Dialog>
+
+                            <SoftwareDetailSection
+                                id="imagenes"
+                                eyebrow="Imágenes"
+                                title="Vistas del sistema"
+                                description="Una mirada rápida a cómo se ve el sistema por dentro, para que puedas evaluarlo con confianza."
+                            >
+                                <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                                    {specImages.map((src, i) => (
+                                        <button
+                                            key={`${src}-${i}`}
+                                            type="button"
+                                            onClick={() => setSpecImagePreviewUrl(src)}
+                                            className="group cursor-pointer overflow-hidden rounded-2xl border border-border/60 bg-[color-mix(in_oklab,var(--primary)_10%,var(--background))] p-2 shadow-sm transition-colors hover:border-[color-mix(in_oklab,var(--primary)_35%,var(--border))] hover:bg-[color-mix(in_oklab,var(--primary)_6%,var(--background))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4A80B8]/30"
+                                        >
+                                            <img
+                                                src={src}
+                                                alt=""
+                                                className="h-44 w-full rounded-xl object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                                                loading="lazy"
+                                                decoding="async"
+                                            />
+                                        </button>
+                                    ))}
+                                </div>
+                            </SoftwareDetailSection>
+                        </ScrollReveal>
+                    ) : null}
+
+                    {(system.demoUser || system.demoPassword) && (
+                        <ScrollReveal direction="up">
+                            <SoftwareDetailSection
+                                id="credenciales-demo"
+                                eyebrow="Demo"
+                                title="Credenciales demo"
+                                description="Acceso de prueba: copia las credenciales y abre el entorno demo para explorar."
+                            >
+                                <div className="space-y-6">
+                                    <div className="space-y-2">
+                                        <p className="text-[10px] font-medium text-muted-foreground">
+                                            Usuario
+                                        </p>
+                                        <code className="block break-all rounded-lg border border-border/60 bg-background px-3 py-2 text-xs font-mono text-[var(--foreground)]">
+                                            {system.demoUser ?? '—'}
+                                        </code>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <p className="text-[10px] font-medium text-muted-foreground">
+                                            Contraseña
+                                        </p>
+                                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                                            <input
+                                                readOnly
+                                                type={
+                                                    showDemoPassword ? 'text' : 'password'
+                                                }
+                                                value={system.demoPassword ?? ''}
+                                                className="neumorph-inset w-full rounded-lg border border-border/60 bg-background px-2.5 py-1.5 text-xs outline-none font-mono"
+                                            />
+                                            <button
+                                                type="button"
+                                                className="cursor-pointer rounded-lg px-3 py-2 text-[10px] font-semibold text-[#4A80B8] transition-colors hover:bg-[#4A80B8]/12 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4A80B8]/30"
+                                                onClick={() =>
+                                                    setShowDemoPassword((s) => !s)
+                                                }
+                                            >
+                                                {showDemoPassword
+                                                    ? 'Ocultar'
+                                                    : 'Ver'}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {system.demoUrl ? (
+                                        <a
+                                            href={system.demoUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex w-full items-center justify-center rounded-xl border border-[color-mix(in_oklab,var(--primary)_30%,var(--border))] bg-[color-mix(in_oklab,var(--primary)_10%,var(--background))] px-4 py-3 text-sm font-semibold text-[var(--foreground)] transition-colors hover:border-[color-mix(in_oklab,var(--primary)_50%,var(--border))] hover:bg-[color-mix(in_oklab,var(--primary)_6%,var(--background))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4A80B8]/30"
+                                        >
+                                            Ver demo
+                                        </a>
+                                    ) : null}
+                                </div>
+                            </SoftwareDetailSection>
+                        </ScrollReveal>
+                    )}
+
                     {howSteps.length > 0 && (
                         <ScrollReveal direction="up">
                             <SoftwareDetailSection
@@ -550,6 +689,46 @@ export default function SoftwareDetail() {
                             </div>
                         </SoftwareDetailSection>
                     </ScrollReveal>
+
+                    {system.extraSpecs && system.extraSpecs.length > 0 ? (
+                        <ScrollReveal direction="up">
+                            <SoftwareDetailSection
+                                id="especificaciones-adicionales"
+                                eyebrow="Extras"
+                                title="Especificaciones adicionales"
+                                description="Estas especificaciones fueron agregadas en administración y no forman parte del stack principal."
+                            >
+                                <div className="grid gap-4 md:grid-cols-2">
+                                    {system.extraSpecs.map((s, idx) => (
+                                        <SoftwareDetailGlassCard
+                                            key={`${s.code}-${idx}`}
+                                        >
+                                            <p className="text-xs font-semibold uppercase tracking-wide text-[var(--primary)]">
+                                                {s.code}
+                                            </p>
+
+                                            {'value' in s ? (
+                                                <p className="mt-3 text-sm leading-relaxed text-[var(--muted-foreground)]">
+                                                    {s.value}
+                                                </p>
+                                            ) : (
+                                                <div className="mt-3 space-y-2">
+                                                    <ul className="list-disc pl-5 text-sm leading-relaxed text-[var(--muted-foreground)]">
+                                                        {s.values.map((v, vi) => (
+                                                            <li key={`${s.code}-${vi}`}>
+                                                                {v}
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            )}
+                                        </SoftwareDetailGlassCard>
+                                    ))}
+                                </div>
+                            </SoftwareDetailSection>
+                        </ScrollReveal>
+                    ) : null}
+
                     <div className="landing-section-flair mx-4 px-4" aria-hidden />
 
                     <ScrollReveal direction="up">
@@ -565,14 +744,16 @@ export default function SoftwareDetail() {
                                     {system.modules.length > 0 ? (
                                         <div className="grid gap-4 sm:grid-cols-2">
                                             {system.modules.map((m, i) => (
-                                                <SoftwareDetailGlassCard key={m.name}>
+                                                <SoftwareDetailGlassCard
+                                                    key={`${normalizeModuleDisplayName(m.name)}-${i}`}
+                                                >
                                                     <p
                                                         className="text-sm font-semibold"
                                                         style={{
                                                             color: `color-mix(in oklab, ${semanticAccents[i % semanticAccents.length]} 82%, var(--foreground))`,
                                                         }}
                                                     >
-                                                        {m.name}
+                                                        {normalizeModuleDisplayName(m.name)}
                                                     </p>
                                                     <p className="mt-2 text-xs leading-relaxed text-[var(--muted-foreground)]">
                                                         {m.description ??
@@ -709,7 +890,13 @@ export default function SoftwareDetail() {
                     />
                 )}
 
-                <ScrollToTopButton className={selectedPlan ? 'bottom-24 md:bottom-8' : ''} />
+                <ScrollToTopButton
+                    className={
+                        selectedPlan
+                            ? 'bottom-[calc(1.5rem+3.5rem+0.75rem+5.5rem)] md:bottom-[calc(1.5rem+3.5rem+0.75rem)]'
+                            : ''
+                    }
+                />
             </div>
         </MarketingLayout>
     );

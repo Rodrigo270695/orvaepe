@@ -11,6 +11,7 @@ type Props = {
     productsForSelect: any[];
     filters?: {
         q?: string;
+        category_id?: string;
         sort_by?: string;
         sort_dir?: 'asc' | 'desc';
     };
@@ -36,6 +37,7 @@ export default function CatalogSkusPage({
                     skus={skus}
                     productsForSelect={productsForSelect}
                     initialQuery={filters?.q ?? ''}
+                    initialCategoryId={filters?.category_id ?? ''}
                     initialSortBy={filters?.sort_by ?? ''}
                     initialSortDir={filters?.sort_dir ?? 'asc'}
                 />

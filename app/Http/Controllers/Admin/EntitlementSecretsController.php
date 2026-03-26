@@ -17,6 +17,11 @@ class EntitlementSecretsController extends Controller
         $q = trim((string) $request->query('q', ''));
         $kind = trim((string) $request->query('kind', ''));
         $entitlementStatus = trim((string) $request->query('entitlement_status', ''));
+        $sortBy = trim((string) $request->query('sort_by', ''));
+        $sortDir = strtolower((string) $request->query('sort_dir', 'desc'));
+        if (! in_array($sortDir, ['asc', 'desc'], true)) {
+            $sortDir = 'desc';
+        }
 
         $perPage = (int) $request->query('per_page', 25);
         $allowedPerPage = [10, 15, 20, 25, 30, 40, 50];
@@ -89,7 +94,14 @@ class EntitlementSecretsController extends Controller
             });
         }
 
+        $allowedSortBy = ['kind', 'label', 'expires_at', 'revoked_at', 'created_at'];
+        if (! in_array($sortBy, $allowedSortBy, true)) {
+            $sortBy = 'created_at';
+            $sortDir = 'desc';
+        }
+
         $secrets = $secretsQuery
+            ->orderBy($sortBy, $sortDir)
             ->orderByDesc('created_at')
             ->paginate($perPage)
             ->withQueryString();
@@ -102,6 +114,8 @@ class EntitlementSecretsController extends Controller
                 'entitlement_status' => $entitlementStatus,
                 'date_from' => $dateFrom,
                 'date_to' => $dateTo,
+                'sort_by' => $sortBy,
+                'sort_dir' => $sortDir,
             ],
         ]);
     }

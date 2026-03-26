@@ -9,6 +9,8 @@ use App\Models\CatalogProduct;
 use App\Support\AdminFlashToast;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\UploadedFile;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -78,6 +80,87 @@ class CatalogProductMediaController extends Controller
         return redirect()
             ->route('panel.catalogo-productos.medios.index', $catalog_product)
             ->with('toast', AdminFlashToast::success('Archivo subido'));
+    }
+
+    /**
+     * Sube imágenes desde el panel de "Especificaciones" y devuelve las URLs
+     * para que el formulario pueda persistirlas en `catalog_products.specs`.
+     *
+     * Se espera `files[]` (multipart/form-data).
+     */
+    public function storeManyForSpecs(
+        Request $request,
+        CatalogProduct $catalog_product,
+    ): JsonResponse {
+        $filesRaw = $request->file('files');
+        if ($filesRaw === null) {
+            $filesRaw = $request->file('files[]');
+        }
+
+        if ($filesRaw instanceof UploadedFile) {
+            $files = [$filesRaw];
+        } elseif (is_array($filesRaw)) {
+            $files = $filesRaw;
+        } else {
+            $files = [];
+        }
+
+        if ($files === []) {
+            return response()->json(['message' => 'No se recibieron archivos.'], 422);
+        }
+
+        $maxSortOrder = (int) $catalog_product->media()->max('sort_order');
+        $nextSortOrder = $maxSortOrder + 1;
+
+        $urls = [];
+
+        foreach ($files as $uploaded) {
+            if (! $uploaded) {
+                continue;
+            }
+
+            $mime = $uploaded->getMimeType() ?? '';
+            if (! str_starts_with($mime, 'image/')) {
+                return response()->json(
+                    ['message' => 'Solo se permiten imágenes (image/*).'],
+                    422,
+                );
+            }
+
+            // Laravel `max:51200` son 51200KB (~50MB)
+            $maxBytes = 51200 * 1024;
+            $size = $uploaded->getSize() ?: 0;
+            if ($size > $maxBytes) {
+                return response()->json(
+                    ['message' => 'El archivo excede el tamaño máximo (50MB).'],
+                    422,
+                );
+            }
+
+            $path = $uploaded->store(
+                "catalog_media/{$catalog_product->id}",
+                'public',
+            );
+
+            CatalogMedia::create([
+                'catalog_product_id' => $catalog_product->id,
+                'kind' => 'image',
+                'storage_path' => $path,
+                'original_filename' => $uploaded->getClientOriginalName(),
+                'mime_type' => $mime !== '' ? $mime : null,
+                'size_bytes' => $uploaded->getSize() ?: null,
+                'sort_order' => $nextSortOrder,
+            ]);
+
+            $urls[] = '/storage/' . ltrim(str_replace('\\', '/', $path), '/');
+            $nextSortOrder += 1;
+        }
+
+        if ($urls === []) {
+            return response()->json(['message' => 'No se subieron imágenes.'], 422);
+        }
+
+        return response()->json(['urls' => $urls]);
     }
 
     public function destroy(

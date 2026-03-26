@@ -13,6 +13,8 @@ type Props = {
         status?: string;
         date_from?: string;
         date_to?: string;
+        sort_by?: string;
+        sort_dir?: 'asc' | 'desc';
     };
 };
 
@@ -37,6 +39,8 @@ export default function AccesoOemEntregasPage({
                     initialStatus={filters?.status ?? ''}
                     initialDateFrom={filters?.date_from ?? ''}
                     initialDateTo={filters?.date_to ?? ''}
+                    initialSortBy={filters?.sort_by ?? 'created_at'}
+                    initialSortDir={filters?.sort_dir ?? 'desc'}
                 />
             </div>
         </AppLayout>

@@ -14,6 +14,7 @@ import {
     Tags,
     Trash2,
 } from 'lucide-react';
+import * as React from 'react';
 
 import AdminCrudIndex from '@/components/admin/crud/AdminCrudIndex';
 import type { AdminCrudTableColumn } from '@/components/admin/crud/AdminCrudTable';
@@ -31,6 +32,7 @@ type Props = {
     skus: any;
     productsForSelect: CatalogSkuProductOption[];
     initialQuery: string;
+    initialCategoryId: string;
     initialSortBy: string;
     initialSortDir: 'asc' | 'desc';
 };
@@ -50,6 +52,7 @@ export default function CatalogSkusIndex({
     skus,
     productsForSelect,
     initialQuery,
+    initialCategoryId,
     initialSortBy,
     initialSortDir,
 }: Props) {
@@ -60,6 +63,21 @@ export default function CatalogSkusIndex({
     const totalActive = rows.filter((r) => r.is_active).length;
     const totalInactive = rows.filter((r) => !r.is_active).length;
     const nextSortOrder = Math.max(0, ...rows.map((r) => Number(r.sort_order ?? 0))) + 1;
+    const categoryFilterOptions = React.useMemo(() => {
+        const map = new Map<string, string>();
+        productsForSelect.forEach((p) => {
+            const id = p.category?.id;
+            const name = p.category?.name;
+            if (!id || !name || map.has(id)) return;
+            map.set(id, name);
+        });
+
+        const sorted = Array.from(map.entries())
+            .sort((a, b) => a[1].localeCompare(b[1], 'es'))
+            .map(([value, label]) => ({ value, label }));
+
+        return [{ value: '__all__', label: 'Todas las categorías' }, ...sorted];
+    }, [productsForSelect]);
 
     const handleSort = (sortBy: string) => {
         const currentUrl = new URL(page.url, window.location.origin);
@@ -207,7 +225,12 @@ export default function CatalogSkusIndex({
                 </NeuCardRaised>
             )}
             renderAboveTable={() => (
-                <CatalogSkusSearch initialQuery={initialQuery} className="mt-1" />
+                <CatalogSkusSearch
+                    initialQuery={initialQuery}
+                    initialCategoryId={initialCategoryId}
+                    categoryOptions={categoryFilterOptions}
+                    className="mt-1"
+                />
             )}
             renderRowActions={({ row, onEdit, onDelete }) => (
                 <div className="flex items-center gap-2">

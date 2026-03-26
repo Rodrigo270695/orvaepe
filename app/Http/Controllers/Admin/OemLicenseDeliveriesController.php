@@ -15,6 +15,11 @@ class OemLicenseDeliveriesController extends Controller
     {
         $q = trim((string) $request->query('q', ''));
         $status = trim((string) $request->query('status', ''));
+        $sortBy = trim((string) $request->query('sort_by', ''));
+        $sortDir = strtolower((string) $request->query('sort_dir', 'desc'));
+        if (! in_array($sortDir, ['asc', 'desc'], true)) {
+            $sortDir = 'desc';
+        }
 
         $perPage = (int) $request->query('per_page', 25);
         $allowedPerPage = [10, 15, 20, 25, 30, 40, 50];
@@ -73,7 +78,14 @@ class OemLicenseDeliveriesController extends Controller
             $query->where('status', $status);
         }
 
+        $allowedSortBy = ['status', 'vendor', 'delivered_at', 'expires_at', 'created_at'];
+        if (! in_array($sortBy, $allowedSortBy, true)) {
+            $sortBy = 'created_at';
+            $sortDir = 'desc';
+        }
+
         $deliveries = $query
+            ->orderBy($sortBy, $sortDir)
             ->orderByDesc('created_at')
             ->paginate($perPage)
             ->withQueryString();
@@ -85,6 +97,8 @@ class OemLicenseDeliveriesController extends Controller
                 'status' => $status,
                 'date_from' => $dateFrom,
                 'date_to' => $dateTo,
+                'sort_by' => $sortBy,
+                'sort_dir' => $sortDir,
             ],
         ]);
     }

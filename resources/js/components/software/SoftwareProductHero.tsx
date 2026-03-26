@@ -5,6 +5,7 @@ import { ChevronRight, Layers, Sparkles } from 'lucide-react';
 
 import AppLogoIcon from '@/components/app-logo-icon';
 
+import { normalizeModuleDisplayName } from '@/lib/normalizeModuleDisplayName';
 import { cn } from '@/lib/utils';
 
 function formatCategoryLabel(slug: string): string {
@@ -27,6 +28,8 @@ type Props = {
     badges: string[];
     categorySlug: string;
     modules: Module[];
+    /** Catálogo marketing: software vs servicios (textos y migas de pan). */
+    variant?: 'software' | 'service';
 };
 
 export default function SoftwareProductHero({
@@ -36,6 +39,7 @@ export default function SoftwareProductHero({
     badges,
     categorySlug,
     modules,
+    variant = 'software',
 }: Props) {
     const semanticAccents = [
         'var(--state-info)',
@@ -44,20 +48,29 @@ export default function SoftwareProductHero({
         'var(--state-danger)',
     ] as const;
     const categoryLabel = formatCategoryLabel(categorySlug);
+    const isService = variant === 'service';
     const highlightBullets =
         modules.length > 0
-            ? modules.slice(0, 3).map((m) => m.name)
-            : [
-                  'Entrega documentada y trazable',
-                  'Planes según tu operación',
-                  'Soporte en la implementación',
-              ];
+            ? modules
+                  .slice(0, 3)
+                  .map((m) => normalizeModuleDisplayName(m.name))
+            : isService
+              ? [
+                    'Alcance y entregables acordados',
+                    'Precio de referencia por paquete',
+                    'Coordinación al cerrar la compra',
+                ]
+              : [
+                    'Entrega documentada y trazable',
+                    'Planes según tu operación',
+                    'Soporte en la implementación',
+                ];
 
     return (
         <section
             id="inicio"
             className="relative scroll-mt-28 overflow-hidden border-b border-[color-mix(in_oklab,var(--border)_80%,transparent)]"
-            aria-labelledby="software-product-title"
+            aria-labelledby="product-hero-title"
         >
             <div
                 className="pointer-events-none absolute inset-0 opacity-[0.45]"
@@ -74,10 +87,10 @@ export default function SoftwareProductHero({
                     aria-label="Ubicación en el sitio"
                 >
                     <Link
-                        href="/software"
+                        href={isService ? '/servicios' : '/software'}
                         className="rounded-md font-medium text-[var(--foreground)] underline-offset-4 transition-colors hover:text-[var(--primary)] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                     >
-                        Software
+                        {isService ? 'Servicios' : 'Software'}
                     </Link>
                     <ChevronRight className="size-3.5 shrink-0 opacity-45" aria-hidden />
                     <span className="font-medium text-[var(--foreground)]/85">{categoryLabel}</span>
@@ -97,7 +110,7 @@ export default function SoftwareProductHero({
                         </div>
 
                         <h1
-                            id="software-product-title"
+                            id="product-hero-title"
                             className="mt-6 font-[family-name:var(--font-display)] text-[2rem] font-bold leading-[1.08] tracking-tight text-[var(--foreground)] sm:text-4xl md:text-[2.65rem] md:leading-[1.06]"
                         >
                             <span className="bg-gradient-to-br from-foreground via-[var(--state-alert)] to-[var(--state-info)] bg-clip-text text-transparent dark:from-[var(--o-cream2)]">
@@ -143,7 +156,7 @@ export default function SoftwareProductHero({
 
                     <aside
                         className="relative rounded-2xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--card)_88%,transparent)] p-6 shadow-[0_20px_50px_-24px_color-mix(in_oklab,var(--foreground)_35%,transparent)] backdrop-blur-md md:p-7"
-                        aria-label="Resumen del producto"
+                        aria-label={isService ? 'Resumen del servicio' : 'Resumen del producto'}
                     >
                         <div className="flex items-center gap-2 text-[var(--foreground)]">
                             <Layers className="size-5 text-[var(--primary)]" aria-hidden />

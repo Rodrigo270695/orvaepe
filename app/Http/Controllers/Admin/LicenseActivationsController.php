@@ -15,6 +15,11 @@ class LicenseActivationsController extends Controller
     {
         $q = trim((string) $request->query('q', ''));
         $active = trim((string) $request->query('active', ''));
+        $sortBy = trim((string) $request->query('sort_by', ''));
+        $sortDir = strtolower((string) $request->query('sort_dir', 'desc'));
+        if (! in_array($sortDir, ['asc', 'desc'], true)) {
+            $sortDir = 'desc';
+        }
 
         $perPage = (int) $request->query('per_page', 25);
         $allowedPerPage = [10, 15, 20, 25, 30, 40, 50];
@@ -63,8 +68,14 @@ class LicenseActivationsController extends Controller
             $query->where('is_active', false);
         }
 
+        $allowedSortBy = ['is_active', 'domain', 'ip_address', 'last_ping_at', 'created_at'];
+        if (! in_array($sortBy, $allowedSortBy, true)) {
+            $sortBy = 'last_ping_at';
+            $sortDir = 'desc';
+        }
+
         $activations = $query
-            ->orderByDesc('last_ping_at')
+            ->orderBy($sortBy, $sortDir)
             ->orderByDesc('created_at')
             ->paginate($perPage)
             ->withQueryString();
@@ -76,6 +87,8 @@ class LicenseActivationsController extends Controller
                 'active' => $active,
                 'date_from' => $dateFrom,
                 'date_to' => $dateTo,
+                'sort_by' => $sortBy,
+                'sort_dir' => $sortDir,
             ],
         ]);
     }

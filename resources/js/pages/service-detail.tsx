@@ -1,0 +1,913 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
+
+import { usePage } from '@inertiajs/react';
+
+import type { SeoDefaults } from '@/components/seo/SeoHead';
+import MarketingLayout from '@/components/marketing/MarketingLayout';
+import { marketingSeo } from '@/marketing/seoCopy';
+import SoftwareDetailGlassCard from '@/components/software/SoftwareDetailGlassCard';
+import SoftwareDetailPlanCard from '@/components/software/SoftwareDetailPlanCard';
+import SoftwareDetailSection from '@/components/software/SoftwareDetailSection';
+import SoftwareDetailPlanSelectionPanel from '@/components/software/SoftwareDetailPlanSelectionPanel';
+import SoftwareDetailStickyPurchaseBar from '@/components/software/SoftwareDetailStickyPurchaseBar';
+import SoftwareProductHero from '@/components/software/SoftwareProductHero';
+import GeometricBackground from '@/components/welcome/GeometricBackground';
+import ScrollReveal from '@/components/welcome/ScrollReveal';
+import ScrollToTopButton from '@/components/welcome/ScrollToTopButton';
+import { parsePenUnitFromPriceText } from '@/lib/cartPricing';
+import { normalizeModuleDisplayName } from '@/lib/normalizeModuleDisplayName';
+import { addMarketingCatalogSkuToCart } from '@/lib/oemCart';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { type SoftwarePricingPlan, type SoftwareSystem } from '@/marketplace/softwareCatalog';
+
+type ServiceDetailPageProps = {
+    canRegister?: boolean;
+    system?: SoftwareSystem | null;
+};
+
+export default function ServiceDetail() {
+    const semanticAccents = [
+        'var(--state-info)',
+        'var(--state-success)',
+        'var(--state-alert)',
+        'var(--state-danger)',
+    ] as const;
+
+    const page = usePage<ServiceDetailPageProps & { seo: SeoDefaults }>();
+    const { system: systemFromServer, seo } = page.props;
+    const { url } = page;
+
+    /** Slug del servicio en `/servicios/{slug}`. */
+    const systemSlug = useMemo(() => {
+        const path = (url.split('?')[0] ?? '').split('#')[0] ?? '';
+        const parts = path.split('/').filter(Boolean);
+
+        if (parts[0] !== 'servicios' || parts.length < 2) {
+            return '';
+        }
+
+        return parts[1] ?? '';
+    }, [url]);
+
+    /** SKU opcional en querystring (`/servicios/{slug}?sku={skuId}`). */
+    const requestedSkuId = useMemo(() => {
+        const queryPart = url.split('?')[1] ?? '';
+        if (!queryPart) {
+            return '';
+        }
+
+        const query = queryPart.split('#')[0] ?? '';
+        return new URLSearchParams(query).get('sku') ?? '';
+    }, [url]);
+
+    /**
+     * Solo usar props del servidor (catálogo admin). No hay fallback estático para servicios.
+     */
+    const system = useMemo((): SoftwareSystem | null => {
+        const server = systemFromServer ?? null;
+
+        if (server && server.slug === systemSlug) {
+            return server;
+        }
+
+        return null;
+    }, [systemFromServer, systemSlug]);
+
+    const isStaleInertiaProps = Boolean(
+        systemFromServer &&
+            systemSlug &&
+            systemFromServer.slug !== systemSlug,
+    );
+
+    const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
+    const [addedCount, setAddedCount] = useState(0);
+    const [showDemoPassword, setShowDemoPassword] = useState(false);
+    const [specImagePreviewUrl, setSpecImagePreviewUrl] = useState<string | null>(null);
+
+    useEffect(() => {
+        setSelectedPlanId(null);
+    }, [systemSlug]);
+
+    const visiblePlans = useMemo((): SoftwarePricingPlan[] => {
+        if (!system) {
+            return [];
+        }
+
+        if (!requestedSkuId) {
+            return system.pricingPlans;
+        }
+
+        const filtered = system.pricingPlans.filter((p) => p.id === requestedSkuId);
+        return filtered.length > 0 ? filtered : system.pricingPlans;
+    }, [system, requestedSkuId]);
+
+    const selectedPlan: SoftwarePricingPlan | null = useMemo(() => {
+        if (visiblePlans.length === 0) {
+            return null;
+        }
+
+        const planId = selectedPlanId ?? visiblePlans[0]?.id ?? null;
+
+        return visiblePlans.find((p) => p.id === planId) ?? null;
+    }, [visiblePlans, selectedPlanId]);
+
+    const rootRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const root = rootRef.current;
+
+        if (!root) {
+            return;
+        }
+
+        let rafId = 0;
+
+        const update = () => {
+            const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+            const raw = maxScroll > 0 ? window.scrollY / maxScroll : 0;
+            const progress = Math.max(0, Math.min(1, raw));
+
+            root.style.setProperty('--sd-progress', String(progress));
+            root.style.setProperty('--sd-slow-x', `${progress * -6}px`);
+            root.style.setProperty('--sd-slow-y', `${progress * 10}px`);
+            root.style.setProperty('--sd-fast-x', `${progress * -14}px`);
+            root.style.setProperty('--sd-fast-y', `${progress * 22}px`);
+        };
+
+        const onScroll = () => {
+            if (rafId) {
+                return;
+            }
+
+            rafId = window.requestAnimationFrame(() => {
+                rafId = 0;
+                update();
+            });
+        };
+
+        update();
+        window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('resize', onScroll);
+
+        return () => {
+            window.removeEventListener('scroll', onScroll);
+            window.removeEventListener('resize', onScroll);
+
+            if (rafId) {
+                window.cancelAnimationFrame(rafId);
+            }
+        };
+    }, []);
+
+    const onAddToCart = () => {
+        if (!system || !selectedPlan) {
+            return;
+        }
+
+        const price =
+            selectedPlan.listPrice ??
+            parsePenUnitFromPriceText(selectedPlan.priceText) ??
+            0;
+
+        addMarketingCatalogSkuToCart(
+            system.slug,
+            system.name,
+            {
+                id: selectedPlan.id,
+                name: selectedPlan.label,
+                list_price: price,
+                currency: selectedPlan.currency ?? 'PEN',
+            },
+            { categoryLabel: 'Servicios' },
+        );
+
+        setAddedCount((c) => c + 1);
+        window.setTimeout(() => setAddedCount(0), 2000);
+    };
+
+    const serviceJsonLd = useMemo((): Record<string, unknown> | undefined => {
+        if (!system) {
+            return undefined;
+        }
+
+        const productUrl = `${seo.siteUrl}/servicios/${system.slug}`;
+        const orgId = `${seo.siteUrl}#organization`;
+        const webpageId = `${productUrl}#webpage`;
+
+        const base: Record<string, unknown> = {
+            '@type': 'Service',
+            '@id': `${productUrl}#service`,
+            name: system.name,
+            description: system.shortDescription,
+            serviceType: 'BusinessService',
+            url: productUrl,
+            mainEntityOfPage: { '@id': webpageId },
+            brand: { '@id': orgId },
+            provider: { '@id': orgId },
+        };
+
+        const first = visiblePlans[0];
+        if (first) {
+            base.offers = {
+                '@type': 'Offer',
+                url: productUrl,
+                priceCurrency: 'PEN',
+                availability: 'https://schema.org/InStock',
+                name: first.label,
+            };
+        }
+
+        if (system.demoUrl) {
+            base.video = [
+                {
+                    '@type': 'VideoObject',
+                    name: `${system.name} — demo`,
+                    contentUrl: system.demoUrl,
+                },
+            ];
+        }
+
+        return base;
+    }, [system, seo.siteUrl, visiblePlans]);
+
+    if (!system) {
+        return (
+            <MarketingLayout
+                title={isStaleInertiaProps ? 'Cargando servicio…' : 'Servicio no disponible'}
+                description={
+                    isStaleInertiaProps
+                        ? marketingSeo.servicios.description
+                        : 'Este servicio no está publicado en el catálogo ORVAE o el enlace ha cambiado.'
+                }
+                canonicalPath={isStaleInertiaProps ? undefined : '/servicios'}
+                noindex={!isStaleInertiaProps}
+                structuredData={isStaleInertiaProps ? 'minimal' : 'none'}
+                breadcrumbs={[
+                    { name: 'Inicio', path: '/' },
+                    { name: 'Servicios', path: '/servicios' },
+                ]}
+            >
+                {isStaleInertiaProps ? (
+                    <div className="mx-auto max-w-6xl px-4 py-24 sm:px-6">
+                        <div className="animate-pulse space-y-4">
+                            <div className="h-3 w-24 rounded bg-[var(--muted)]" />
+                            <div className="h-10 max-w-md rounded-lg bg-[var(--muted)]" />
+                            <div className="h-4 max-w-2xl rounded bg-[var(--muted)]" />
+                            <div className="h-4 max-w-xl rounded bg-[var(--muted)]" />
+                        </div>
+                        <p className="mt-8 text-sm text-[var(--muted-foreground)]">
+                            Cargando detalle del servicio…
+                        </p>
+                    </div>
+                ) : (
+                    <>
+                        <SoftwareDetailSection
+                            id="no-encontrado"
+                            eyebrow="Catálogo"
+                            title="Este servicio no está disponible"
+                            description="No encontramos un servicio activo con ese enlace. Puede haberse movido o no estar publicado en el catálogo."
+                            noDivider
+                        >
+                            <div className="flex flex-wrap gap-3">
+                                <a
+                                    href="/servicios"
+                                    className="inline-flex items-center justify-center rounded-xl bg-[var(--primary)] px-5 py-3 text-sm font-semibold text-[var(--primary-foreground)] transition-colors hover:brightness-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                                >
+                                    Volver al catálogo
+                                </a>
+                            </div>
+                        </SoftwareDetailSection>
+                    </>
+                )}
+            </MarketingLayout>
+        );
+    }
+
+    const languages =
+        system.languages ?? system.tecnologias?.languages ?? undefined;
+    const frameworks =
+        system.frameworks ?? system.tecnologias?.frameworks ?? undefined;
+    const databases =
+        system.databases ?? system.tecnologias?.databases ?? undefined;
+    const specImages = system.images ?? [];
+
+    const howSteps =
+        system.howItWorksSteps ??
+        (system.modules?.length
+            ? system.modules
+                  .map((m) => normalizeModuleDisplayName(m.name))
+                  .slice(0, 6)
+            : []);
+
+    const inferSaleModelLabel = (p: SoftwarePricingPlan): string => {
+        if (p.saleModelLabel) {
+            return p.saleModelLabel;
+        }
+
+        const text = `${p.saleModel ?? ''} ${p.priceText ?? ''} ${p.priceNowText ?? ''} ${p.priceBeforeText ?? ''}`.toLowerCase();
+
+        if (text.includes('código') || text.includes('codigo') || text.includes('fuente')) {
+            return 'Código fuente (todo el código o por periodos)';
+        }
+
+        if (text.includes('period')) {
+            return 'Por periodos';
+        }
+
+        if (text.includes('implement') || text.includes('implementación')) {
+            return 'Código fuente (todo el código o por periodos)';
+        }
+
+        if (text.includes('mensual') || text.includes('/mes') || text.includes('mes')) {
+            return 'Precio mensual';
+        }
+
+        return 'Modelo de venta definido por administración';
+    };
+
+    const getPlanPriceBefore = (p: SoftwarePricingPlan): string | undefined => {
+        const anyPlan = p as SoftwarePricingPlan & {
+            oldPriceText?: string;
+            price_before?: string | number;
+            precio_antes?: string | number;
+            precioAntes?: string | number;
+        };
+
+        return (
+            p.priceBeforeText ??
+            (p.priceBefore !== undefined ? String(p.priceBefore) : undefined) ??
+            anyPlan.oldPriceText ??
+            (anyPlan.price_before !== undefined ? String(anyPlan.price_before) : undefined) ??
+            (anyPlan.precio_antes !== undefined
+                ? String(anyPlan.precio_antes)
+                : anyPlan.precioAntes !== undefined
+                  ? String(anyPlan.precioAntes)
+                  : undefined)
+        );
+    };
+
+    const getPlanPriceNow = (p: SoftwarePricingPlan): string | undefined => {
+        const anyPlan = p as SoftwarePricingPlan & {
+            newPriceText?: string;
+            price_now?: string | number;
+            precio_ahora?: string | number;
+            precioAhora?: string | number;
+        };
+
+        return (
+            p.priceNowText ??
+            (p.priceNow !== undefined ? String(p.priceNow) : undefined) ??
+            anyPlan.newPriceText ??
+            (anyPlan.price_now !== undefined ? String(anyPlan.price_now) : undefined) ??
+            (anyPlan.precio_ahora !== undefined
+                ? String(anyPlan.precio_ahora)
+                : anyPlan.precioAhora !== undefined
+                  ? String(anyPlan.precioAhora)
+                  : undefined)
+        );
+    };
+
+    const selectionPriceLine = useMemo(() => {
+        if (!selectedPlan) {
+            return undefined;
+        }
+
+        return getPlanPriceNow(selectedPlan) ?? selectedPlan.priceText;
+    }, [selectedPlan]);
+
+    return (
+        <MarketingLayout
+            title={`${system.name} — Servicios ORVAE`}
+            description={system.shortDescription}
+            canonicalPath={`/servicios/${system.slug}`}
+            ogType="product"
+            ogImageAlt={`${system.name} — servicio ORVAE`}
+            breadcrumbs={[
+                { name: 'Inicio', path: '/' },
+                { name: 'Servicios', path: '/servicios' },
+                { name: system.name, path: `/servicios/${system.slug}` },
+            ]}
+            jsonLd={serviceJsonLd ? [serviceJsonLd] : undefined}
+        >
+            <div
+                ref={rootRef}
+                className="software-detail-root landing-page relative overflow-hidden pb-24 md:pb-0"
+            >
+                <div className="landing-grain absolute inset-0 z-0" aria-hidden />
+                <div className="landing-ambient-orbs" aria-hidden>
+                    <div className="landing-orb landing-orb--a" />
+                    <div className="landing-orb landing-orb--b" />
+                </div>
+                <div className="sd-scroll-progress" aria-hidden />
+
+                {/* Capas geométricas con parallax sutil según scroll */}
+                <GeometricBackground
+                    variant="floating-shapes"
+                    opacity={0.08}
+                    className="sd-geo-layer sd-geo-parallax--slow"
+                />
+                <GeometricBackground
+                    variant="grid-dots"
+                    opacity={0.045}
+                    className="sd-geo-layer sd-geo-parallax--fast"
+                />
+
+                <div className="relative z-10">
+                    <SoftwareProductHero
+                        name={system.name}
+                        description={system.description}
+                        shortDescription={system.shortDescription}
+                        badges={system.badges}
+                        categorySlug={system.categorySlug}
+                        modules={system.modules}
+                        variant="service"
+                    />
+                    <div className="landing-section-flair mx-4 px-4" aria-hidden />
+
+                    <ScrollReveal direction="up">
+                        <SoftwareDetailSection
+                            id="resumen"
+                            eyebrow="Servicio"
+                            title="¿Qué incluye este servicio?"
+                            description={system.description}
+                            noDivider
+                        >
+                            <div className="relative">
+                                <GeometricBackground variant="circles-blur" opacity={0.06} />
+                                <div className="relative z-10">
+                                    <div className="mt-2 flex flex-wrap gap-2">
+                                        {system.badges.map((b, i) => (
+                                            <span
+                                                key={b}
+                                                className="rounded-full border px-3 py-1 text-xs font-semibold"
+                                                style={{
+                                                    borderColor: `color-mix(in oklab, ${semanticAccents[i % semanticAccents.length]} 32%, var(--border))`,
+                                                    background: `color-mix(in oklab, ${semanticAccents[i % semanticAccents.length]} 10%, transparent)`,
+                                                    color: `color-mix(in oklab, ${semanticAccents[i % semanticAccents.length]} 90%, var(--foreground))`,
+                                                }}
+                                            >
+                                                {b}
+                                            </span>
+                                        ))}
+                                    </div>
+
+                                    <div className="mt-8 grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+                                        {[
+                                            { t: 'Resumen', d: system.shortDescription },
+                                            {
+                                                t: 'Alcance',
+                                                d:
+                                                    system.alcance?.trim() ||
+                                                    'El alcance exacto se define con tu equipo según el paquete y el entorno.',
+                                            },
+                                            {
+                                                t: 'Compromiso',
+                                                d:
+                                                    system.sla?.trim() ||
+                                                    'Plazos y SLA se confirman por escrito al cerrar la contratación.',
+                                            },
+                                        ].map((x, i) => (
+                                            <SoftwareDetailGlassCard key={x.t}>
+                                                <p
+                                                    className="text-sm font-bold"
+                                                    style={{
+                                                        color: `color-mix(in oklab, ${semanticAccents[i % semanticAccents.length]} 82%, var(--foreground))`,
+                                                    }}
+                                                >
+                                                    {x.t}
+                                                </p>
+                                                <p className="mt-2 text-xs text-[var(--muted-foreground)] leading-relaxed">
+                                                    {x.d}
+                                                </p>
+                                            </SoftwareDetailGlassCard>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </SoftwareDetailSection>
+                    </ScrollReveal>
+
+                    {specImages.length > 0 ? (
+                        <ScrollReveal direction="up">
+                            <Dialog
+                                open={specImagePreviewUrl !== null}
+                                onOpenChange={(open) => {
+                                    if (!open) {
+                                        setSpecImagePreviewUrl(null);
+                                    }
+                                }}
+                            >
+                                <DialogContent className="max-h-[92vh] max-w-[min(96vw,56rem)] border-border/60 bg-background p-3 sm:p-4">
+                                    <DialogTitle className="sr-only">
+                                        Imagen en tamaño original
+                                    </DialogTitle>
+                                    <DialogDescription className="sr-only">
+                                        Visualización ampliada del material del servicio.
+                                    </DialogDescription>
+                                    {specImagePreviewUrl ? (
+                                        <img
+                                            src={specImagePreviewUrl}
+                                            alt=""
+                                            className="mx-auto max-h-[85vh] w-auto max-w-full object-contain"
+                                            loading="lazy"
+                                            decoding="async"
+                                        />
+                                    ) : null}
+                                </DialogContent>
+                            </Dialog>
+
+                            <SoftwareDetailSection
+                                id="imagenes"
+                                eyebrow="Imágenes"
+                                title="Referencia visual"
+                                description="Material publicado en catálogo para que tengas contexto del alcance y la entrega."
+                            >
+                                <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                                    {specImages.map((src, i) => (
+                                        <button
+                                            key={`${src}-${i}`}
+                                            type="button"
+                                            onClick={() => setSpecImagePreviewUrl(src)}
+                                            className="group cursor-pointer overflow-hidden rounded-2xl border border-border/60 bg-[color-mix(in_oklab,var(--primary)_10%,var(--background))] p-2 shadow-sm transition-colors hover:border-[color-mix(in_oklab,var(--primary)_35%,var(--border))] hover:bg-[color-mix(in_oklab,var(--primary)_6%,var(--background))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4A80B8]/30"
+                                        >
+                                            <img
+                                                src={src}
+                                                alt=""
+                                                className="h-44 w-full rounded-xl object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                                                loading="lazy"
+                                                decoding="async"
+                                            />
+                                        </button>
+                                    ))}
+                                </div>
+                            </SoftwareDetailSection>
+                        </ScrollReveal>
+                    ) : null}
+
+                    {(system.demoUser || system.demoPassword) && (
+                        <ScrollReveal direction="up">
+                            <SoftwareDetailSection
+                                id="credenciales-demo"
+                                eyebrow="Demo"
+                                title="Credenciales demo"
+                                description="Acceso de prueba: copia las credenciales y abre el entorno demo para explorar."
+                            >
+                                <div className="space-y-6">
+                                    <div className="space-y-2">
+                                        <p className="text-[10px] font-medium text-muted-foreground">
+                                            Usuario
+                                        </p>
+                                        <code className="block break-all rounded-lg border border-border/60 bg-background px-3 py-2 text-xs font-mono text-[var(--foreground)]">
+                                            {system.demoUser ?? '—'}
+                                        </code>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <p className="text-[10px] font-medium text-muted-foreground">
+                                            Contraseña
+                                        </p>
+                                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                                            <input
+                                                readOnly
+                                                type={
+                                                    showDemoPassword ? 'text' : 'password'
+                                                }
+                                                value={system.demoPassword ?? ''}
+                                                className="neumorph-inset w-full rounded-lg border border-border/60 bg-background px-2.5 py-1.5 text-xs outline-none font-mono"
+                                            />
+                                            <button
+                                                type="button"
+                                                className="cursor-pointer rounded-lg px-3 py-2 text-[10px] font-semibold text-[#4A80B8] transition-colors hover:bg-[#4A80B8]/12 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4A80B8]/30"
+                                                onClick={() =>
+                                                    setShowDemoPassword((s) => !s)
+                                                }
+                                            >
+                                                {showDemoPassword
+                                                    ? 'Ocultar'
+                                                    : 'Ver'}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {system.demoUrl ? (
+                                        <a
+                                            href={system.demoUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex w-full items-center justify-center rounded-xl border border-[color-mix(in_oklab,var(--primary)_30%,var(--border))] bg-[color-mix(in_oklab,var(--primary)_10%,var(--background))] px-4 py-3 text-sm font-semibold text-[var(--foreground)] transition-colors hover:border-[color-mix(in_oklab,var(--primary)_50%,var(--border))] hover:bg-[color-mix(in_oklab,var(--primary)_6%,var(--background))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4A80B8]/30"
+                                        >
+                                            Ver demo
+                                        </a>
+                                    ) : null}
+                                </div>
+                            </SoftwareDetailSection>
+                        </ScrollReveal>
+                    )}
+
+                    {howSteps.length > 0 && (
+                        <ScrollReveal direction="up">
+                            <SoftwareDetailSection
+                                id="como-funciona"
+                                eyebrow="Flujo"
+                                title="Cómo se pone en marcha"
+                                description="Pasos orientativos de la entrega. El alcance exacto depende del plan."
+                            >
+                                <div className="relative">
+                                    <GeometricBackground variant="diagonal-lines" opacity={0.04} />
+                                    <div className="relative z-10">
+                                        <div className="grid gap-4 md:grid-cols-3">
+                                            {howSteps.map((step, i) => (
+                                                <SoftwareDetailGlassCard
+                                                    key={`${step}-${i}`}
+                                                    stepIndex={i + 1}
+                                                >
+                                                    <p className="text-sm font-bold leading-snug text-[var(--foreground)]">
+                                                        {step}
+                                                    </p>
+                                                    <p className="mt-2 text-xs leading-relaxed text-[var(--muted-foreground)]">
+                                                        Punto de contacto y entregables según el paquete contratado.
+                                                    </p>
+                                                </SoftwareDetailGlassCard>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </SoftwareDetailSection>
+                        </ScrollReveal>
+                    )}
+                    <div className="landing-section-flair mx-4 px-4" aria-hidden />
+
+                    <ScrollReveal direction="up">
+                        <SoftwareDetailSection
+                            id="tecnologias"
+                            eyebrow="Especificaciones"
+                            title="Requisitos, entregables y capacidad"
+                            description="Resumen publicado en catálogo a partir de las especificaciones del producto y del SKU."
+                        >
+                            <div className="relative">
+                                <GeometricBackground variant="grid-dots" opacity={0.04} />
+                                <div className="relative z-10">
+                                    <div className="mt-8 grid gap-4 md:grid-cols-3">
+                                        {[
+                                            { title: 'Requisitos', items: languages },
+                                            { title: 'Entregables', items: frameworks },
+                                            { title: 'Capacidad', items: databases },
+                                        ].map((x, i) => (
+                                            <SoftwareDetailGlassCard key={x.title}>
+                                                <p
+                                                    className="text-sm font-bold"
+                                                    style={{
+                                                        color: `color-mix(in oklab, ${semanticAccents[i % semanticAccents.length]} 82%, var(--foreground))`,
+                                                    }}
+                                                >
+                                                    {x.title}
+                                                </p>
+                                                <div className="mt-3 flex flex-wrap gap-2">
+                                                    {(x.items ?? []).length > 0 ? (
+                                                        (x.items ?? []).map((it, ii) => (
+                                                            <span
+                                                                key={it}
+                                                                className="rounded-full border bg-background/70 px-3 py-1 text-xs font-semibold"
+                                                                style={{
+                                                                    borderColor: `color-mix(in oklab, ${semanticAccents[(i + ii) % semanticAccents.length]} 28%, var(--border))`,
+                                                                    color: `color-mix(in oklab, ${semanticAccents[(i + ii) % semanticAccents.length]} 82%, var(--foreground))`,
+                                                                }}
+                                                            >
+                                                                {it}
+                                                            </span>
+                                                        ))
+                                                    ) : (
+                                                        <p className="text-xs text-[var(--muted-foreground)]">
+                                                            Sin datos en esta categoría en el catálogo actual.
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </SoftwareDetailGlassCard>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </SoftwareDetailSection>
+                    </ScrollReveal>
+
+                    {system.extraSpecs && system.extraSpecs.length > 0 ? (
+                        <ScrollReveal direction="up">
+                            <SoftwareDetailSection
+                                id="especificaciones-adicionales"
+                                eyebrow="Extras"
+                                title="Especificaciones adicionales"
+                                description="Campos extra definidos en administración para complementar la ficha del servicio."
+                            >
+                                <div className="grid gap-4 md:grid-cols-2">
+                                    {system.extraSpecs.map((s, idx) => (
+                                        <SoftwareDetailGlassCard
+                                            key={`${s.code}-${idx}`}
+                                        >
+                                            <p className="text-xs font-semibold uppercase tracking-wide text-[var(--primary)]">
+                                                {s.code}
+                                            </p>
+
+                                            {'value' in s ? (
+                                                <p className="mt-3 text-sm leading-relaxed text-[var(--muted-foreground)]">
+                                                    {s.value}
+                                                </p>
+                                            ) : (
+                                                <div className="mt-3 space-y-2">
+                                                    <ul className="list-disc pl-5 text-sm leading-relaxed text-[var(--muted-foreground)]">
+                                                        {s.values.map((v, vi) => (
+                                                            <li key={`${s.code}-${vi}`}>
+                                                                {v}
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            )}
+                                        </SoftwareDetailGlassCard>
+                                    ))}
+                                </div>
+                            </SoftwareDetailSection>
+                        </ScrollReveal>
+                    ) : null}
+
+                    <div className="landing-section-flair mx-4 px-4" aria-hidden />
+
+                    <ScrollReveal direction="up">
+                        <SoftwareDetailSection
+                            id="modulos"
+                            eyebrow="Incluye"
+                            title="Qué trae el servicio"
+                            description="Puntos cubiertos según catálogo. El detalle exacto se confirma con el paquete elegido."
+                        >
+                            <div className="relative">
+                                <GeometricBackground variant="grid-hex" opacity={0.05} />
+                                <div className="relative z-10">
+                                    {system.modules.length > 0 ? (
+                                        <SoftwareDetailGlassCard>
+                                            <p className="text-sm font-semibold text-[var(--foreground)]">
+                                                Incluye
+                                            </p>
+                                            <div className="mt-3 space-y-2">
+                                                {system.modules.map((m, i) => (
+                                                    <p
+                                                        key={`${normalizeModuleDisplayName(m.name)}-${i}`}
+                                                        className="text-sm leading-relaxed text-[var(--muted-foreground)]"
+                                                    >
+                                                        - {normalizeModuleDisplayName(m.name)}
+                                                    </p>
+                                                ))}
+                                            </div>
+                                        </SoftwareDetailGlassCard>
+                                    ) : (
+                                        <div className="rounded-2xl border border-dashed border-[color-mix(in_oklab,var(--state-alert)_34%,var(--border))] bg-[color-mix(in_oklab,var(--state-alert)_10%,transparent)] px-6 py-10 text-center">
+                                            <p className="text-sm font-medium text-[color-mix(in_oklab,var(--state-alert)_78%,var(--foreground))]">
+                                                Incluye según plan
+                                            </p>
+                                            <p className="mt-2 text-sm text-[var(--muted-foreground)]">
+                                                El listado detallado se confirma al contratar. Consulta con tu asesor.
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </SoftwareDetailSection>
+                    </ScrollReveal>
+                    <div className="landing-section-flair mx-4 px-4" aria-hidden />
+
+                    <ScrollReveal direction="up">
+                        <SoftwareDetailSection
+                            id="planes"
+                            eyebrow="Planes"
+                            title="Paquetes y precios de referencia"
+                            description="Elige el SKU que encaje con tu necesidad. El alcance final se coordina al cerrar la compra."
+                        >
+                            <div className="relative">
+                                <GeometricBackground variant="rings" opacity={0.05} />
+                                <div className="relative z-10">
+                                    <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+                                        {visiblePlans.map((p, i) => {
+                                            const isActive = (selectedPlan?.id ?? p.id) === p.id;
+                                            const planPriceBefore = getPlanPriceBefore(p);
+                                            const planPriceNow = getPlanPriceNow(p);
+                                            const saleModelLabel = inferSaleModelLabel(p);
+                                            const accent =
+                                                semanticAccents[i % semanticAccents.length];
+
+                                            return (
+                                                <SoftwareDetailPlanCard
+                                                    key={p.id}
+                                                    plan={p}
+                                                    isActive={isActive}
+                                                    accent={accent}
+                                                    saleModelLabel={saleModelLabel}
+                                                    planPriceBefore={planPriceBefore}
+                                                    planPriceNow={planPriceNow}
+                                                    onChoose={() => setSelectedPlanId(p.id)}
+                                                />
+                                            );
+                                        })}
+                                    </div>
+
+                                    <div className="mt-10">
+                                        <SoftwareDetailPlanSelectionPanel
+                                            eyebrow={
+                                                selectedPlan ? 'Selección actual' : 'Siguiente paso'
+                                            }
+                                            planSelected={Boolean(selectedPlan)}
+                                            selectionTitle={
+                                                selectedPlan
+                                                    ? `${selectedPlan.label} · ${inferSaleModelLabel(selectedPlan)}`
+                                                    : 'Elige un plan para continuar con el carrito o el checkout.'
+                                            }
+                                            priceLine={selectionPriceLine}
+                                            priceCaption="Precio de lista · impuestos al confirmar en la pasarela"
+                                            onPay={() => {
+                                                alert('Checkout pendiente: integra pasarela de pagos');
+                                            }}
+                                            onAdd={onAddToCart}
+                                            addedCount={addedCount}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </SoftwareDetailSection>
+                    </ScrollReveal>
+                    <div className="landing-section-flair mx-4 px-4" aria-hidden />
+
+                    <ScrollReveal direction="up">
+                        <SoftwareDetailSection
+                            id="entrega"
+                            eyebrow="Entrega"
+                            title="Puesta en marcha y seguimiento"
+                            description="Entregables y coordinación para que el servicio quede operativo en tu entorno."
+                        >
+                            <div className="relative">
+                                <GeometricBackground variant="triangles" opacity={0.04} />
+                                <div className="relative z-10">
+                                    <div className="mt-8 grid gap-4 md:grid-cols-3">
+                                        {[
+                                            {
+                                                t: 'Kickoff y plan de trabajo',
+                                                d: 'Reunión inicial y calendario orientativo según el paquete.',
+                                            },
+                                            {
+                                                t: 'Compromisos por escrito',
+                                                d: 'SLA y plazos se formalizan al cerrar alcance y contrato.',
+                                            },
+                                            {
+                                                t: 'Alineación con tu operación',
+                                                d: 'Ajustes por entorno, políticas y equipos involucrados.',
+                                            },
+                                        ].map((x, i) => (
+                                    <SoftwareDetailGlassCard key={x.t}>
+                                                <p
+                                                    className="text-sm font-bold"
+                                                    style={{
+                                                        color: `color-mix(in oklab, ${semanticAccents[i % semanticAccents.length]} 82%, var(--foreground))`,
+                                                    }}
+                                                >
+                                                    {x.t}
+                                                </p>
+                                                <p className="mt-2 text-xs text-[var(--muted-foreground)] leading-relaxed">
+                                                    {x.d}
+                                                </p>
+                                    </SoftwareDetailGlassCard>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </SoftwareDetailSection>
+                    </ScrollReveal>
+                    <div className="landing-section-flair mx-4 px-4" aria-hidden />
+
+                </div>
+
+                {/* CTA sticky en móvil: reduce fricción al comprar */}
+                {selectedPlan && (
+                    <SoftwareDetailStickyPurchaseBar
+                        selectedPlanLabel={`${selectedPlan.label} · ${inferSaleModelLabel(selectedPlan)}`}
+                        priceLine={selectionPriceLine}
+                        planReady
+                        onPay={() => {
+                            alert('Checkout pendiente: integra pasarela de pagos');
+                        }}
+                        onAdd={onAddToCart}
+                    />
+                )}
+
+                <ScrollToTopButton
+                    className={
+                        selectedPlan
+                            ? 'bottom-[calc(1.5rem+3.5rem+0.75rem+5.5rem)] md:bottom-[calc(1.5rem+3.5rem+0.75rem)]'
+                            : ''
+                    }
+                />
+            </div>
+        </MarketingLayout>
+    );
+}
+

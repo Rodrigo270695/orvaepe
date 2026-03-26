@@ -197,8 +197,19 @@ export default function PageHero({
 
                                 <div className="pl-4 md:pl-5">
                                     {eyebrow && (
-                                        <div className="inline-flex items-center gap-3 rounded-full border border-[color-mix(in_oklab,var(--o-amber)_22%,var(--border))] bg-[color-mix(in_oklab,var(--o-amber)_08%,var(--background))] px-4 py-2 font-mono text-xs font-semibold uppercase tracking-[0.4em] text-[var(--o-amber)]">
-                                            <AppLogoIcon className="size-4 fill-[var(--o-amber)]" />
+                                        <div
+                                            className={[
+                                                'inline-flex select-none items-center gap-3 rounded-full border border-dashed px-3.5 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.35em]',
+                                                'border-[color-mix(in_oklab,var(--foreground)_20%,var(--border))] bg-[color-mix(in_oklab,var(--muted)_55%,var(--background))] text-[var(--o-amber)]',
+                                                'ring-1 ring-[color-mix(in_oklab,var(--foreground)_8%,var(--border))]',
+                                                'shadow-none',
+                                                'dark:border-[color-mix(in_oklab,var(--state-info)_50%,var(--border))]',
+                                                'dark:bg-[color-mix(in_oklab,var(--state-info)_10%,var(--card))]',
+                                                'dark:text-[color-mix(in_oklab,var(--o-cream2)_82%,var(--state-info))]',
+                                                'dark:ring-[color-mix(in_oklab,var(--state-info)_22%,transparent)]',
+                                            ].join(' ')}
+                                        >
+                                            <AppLogoIcon className="size-3.5 shrink-0 fill-[var(--o-amber)] dark:fill-[var(--state-info)]" />
                                             {eyebrow}
                                         </div>
                                     )}
@@ -213,7 +224,7 @@ export default function PageHero({
                                         </p>
                                     )}
 
-                                    {/* Chips de valor (escaneo rápido) */}
+                                    {/* Chips informativos (no son controles; distintos de los CTAs) */}
                                     <ul className="mt-8 flex flex-wrap gap-2" aria-label="Ventajas destacadas">
                                         {[
                                             'SaaS u on‑prem',
@@ -222,11 +233,17 @@ export default function PageHero({
                                         ].map((chip, index) => (
                                             <li
                                                 key={chip}
-                                                className="rounded-full border border-border/80 px-3 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-wider dark:bg-[color-mix(in_oklab,var(--card)_72%,transparent)]"
+                                                className={[
+                                                    'cursor-default select-none rounded-md px-2.5 py-1 font-mono text-[10px] font-medium uppercase tracking-wider',
+                                                    'border border-solid border-[color-mix(in_oklab,var(--foreground)_14%,var(--border))] bg-[color-mix(in_oklab,var(--muted)_52%,var(--background))] text-[var(--muted-foreground)]',
+                                                    'ring-1 ring-inset ring-[color-mix(in_oklab,var(--foreground)_6%,var(--border))]',
+                                                    'dark:border-0 dark:border-y dark:border-r dark:border-dashed dark:border-[color-mix(in_oklab,var(--border)_78%,transparent)]',
+                                                    'dark:bg-[color-mix(in_oklab,var(--card)_40%,transparent)] dark:ring-0',
+                                                ].join(' ')}
                                                 style={{
-                                                    borderColor: `color-mix(in oklab, ${heroSemanticAccents[index % heroSemanticAccents.length]} 48%, var(--border))`,
-                                                    background: `color-mix(in oklab, var(--card) 86%, ${heroSemanticAccents[index % heroSemanticAccents.length]} 14%)`,
-                                                    color: `color-mix(in oklab, ${heroSemanticAccents[index % heroSemanticAccents.length]} 66%, var(--foreground))`,
+                                                    borderLeftWidth: '3px',
+                                                    borderLeftStyle: 'solid',
+                                                    borderLeftColor: `color-mix(in oklab, ${heroSemanticAccents[index % heroSemanticAccents.length]} 62%, var(--border))`,
                                                 }}
                                             >
                                                 {chip}
@@ -242,8 +259,29 @@ export default function PageHero({
                                                     href={cta.href}
                                                     className={
                                                         cta.variant === 'outline'
-                                                            ? 'inline-flex min-h-11 min-w-[10rem] flex-1 items-center justify-center rounded-xl border-2 border-border bg-background/90 px-5 py-3 text-sm font-semibold text-foreground transition-all hover:border-primary/50 hover:bg-accent/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:flex-initial sm:min-w-0'
-                                                            : 'inline-flex min-h-11 min-w-[10rem] flex-1 items-center justify-center rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground shadow-[0_4px_20px_var(--o-glow)] transition-all hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background dark:shadow-[0_4px_24px_var(--hero-glow-mid)] sm:flex-initial sm:min-w-0'
+                                                            ? [
+                                                                  'inline-flex min-h-12 min-w-[10rem] flex-1 cursor-pointer items-center justify-center rounded-xl border-2 border-solid px-6 py-3.5 text-sm font-semibold',
+                                                                  'border-[color-mix(in_oklab,var(--foreground)_22%,var(--border))] bg-background text-foreground',
+                                                                  'shadow-[0_2px_12px_-4px_color-mix(in_oklab,var(--foreground)_18%,transparent)]',
+                                                                  'transition-[transform,box-shadow,border-color,background-color] duration-200',
+                                                                  'hover:-translate-y-0.5 hover:border-[color-mix(in_oklab,var(--primary)_55%,var(--border))] hover:bg-[color-mix(in_oklab,var(--primary)_10%,var(--background))] hover:shadow-[0_8px_28px_-8px_color-mix(in_oklab,var(--foreground)_22%,transparent)]',
+                                                                  'active:translate-y-0',
+                                                                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+                                                                  'dark:border-[color-mix(in_oklab,var(--o-tech)_55%,var(--border))] dark:bg-[color-mix(in_oklab,var(--o-dark2)_88%,var(--background))]',
+                                                                  'dark:hover:border-[color-mix(in_oklab,var(--state-info)_65%,var(--border))] dark:hover:bg-[color-mix(in_oklab,var(--state-info)_14%,var(--card))]',
+                                                                  'sm:flex-initial sm:min-w-0',
+                                                              ].join(' ')
+                                                            : [
+                                                                  'inline-flex min-h-12 min-w-[10rem] flex-1 cursor-pointer items-center justify-center rounded-xl border-2 border-transparent px-6 py-3.5 text-sm font-semibold',
+                                                                  'bg-primary text-primary-foreground',
+                                                                  'shadow-[0_6px_24px_-6px_color-mix(in_oklab,var(--primary)_45%,transparent)]',
+                                                                  'transition-[transform,box-shadow,filter] duration-200',
+                                                                  'hover:-translate-y-0.5 hover:brightness-[1.05] hover:shadow-[0_10px_32px_-8px_color-mix(in_oklab,var(--primary)_55%,transparent)]',
+                                                                  'active:translate-y-0 active:brightness-[0.98]',
+                                                                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+                                                                  'dark:shadow-[0_8px_28px_-6px_color-mix(in_oklab,var(--state-info)_42%,transparent)] dark:hover:shadow-[0_12px_36px_-8px_color-mix(in_oklab,var(--state-info)_48%,transparent)]',
+                                                                  'sm:flex-initial sm:min-w-0',
+                                                              ].join(' ')
                                                     }
                                                 >
                                                     {cta.label}

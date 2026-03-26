@@ -18,6 +18,7 @@ class CatalogSkusController extends Controller
     public function index(Request $request): Response
     {
         $q = trim((string) $request->query('q', ''));
+        $categoryId = trim((string) $request->query('category_id', ''));
         $sortBy = (string) $request->query('sort_by', '');
         $sortDir = strtolower((string) $request->query('sort_dir', 'asc'));
         if (!in_array($sortDir, ['asc', 'desc'], true)) {
@@ -46,6 +47,12 @@ class CatalogSkusController extends Controller
             });
         }
 
+        if ($categoryId !== '') {
+            $skusQuery->whereHas('product', function ($productQuery) use ($categoryId) {
+                $productQuery->where('category_id', $categoryId);
+            });
+        }
+
         $allowedSortBy = ['is_active', 'code', 'name', 'list_price', 'sale_model', 'sort_order'];
         if (in_array($sortBy, $allowedSortBy, true)) {
             $skusQuery->orderBy($sortBy, $sortDir)->orderBy('created_at');
@@ -57,6 +64,9 @@ class CatalogSkusController extends Controller
         $append = ['per_page' => $perPage];
         if ($q !== '') {
             $append['q'] = $q;
+        }
+        if ($categoryId !== '') {
+            $append['category_id'] = $categoryId;
         }
         if ($sortBy !== '') {
             $append['sort_by'] = $sortBy;
@@ -77,6 +87,7 @@ class CatalogSkusController extends Controller
             'productsForSelect' => $productsForSelect,
             'filters' => [
                 'q' => $q,
+                'category_id' => $categoryId,
                 'sort_by' => $sortBy,
                 'sort_dir' => $sortDir,
             ],

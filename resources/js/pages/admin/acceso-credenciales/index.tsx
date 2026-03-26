@@ -14,6 +14,8 @@ type Props = {
         entitlement_status?: string;
         date_from?: string;
         date_to?: string;
+        sort_by?: string;
+        sort_dir?: 'asc' | 'desc';
     };
 };
 
@@ -39,6 +41,8 @@ export default function AccesoCredencialesPage({
                     initialEntitlementStatus={filters?.entitlement_status ?? ''}
                     initialDateFrom={filters?.date_from ?? ''}
                     initialDateTo={filters?.date_to ?? ''}
+                    initialSortBy={filters?.sort_by ?? 'created_at'}
+                    initialSortDir={filters?.sort_dir ?? 'desc'}
                 />
             </div>
         </AppLayout>
