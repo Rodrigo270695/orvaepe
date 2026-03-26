@@ -1,6 +1,7 @@
 import { Link } from '@inertiajs/react';
 import {
     BarChart3,
+    Bell,
     Barcode,
     Building2,
     CreditCard,
@@ -227,6 +228,11 @@ const adminSections: NavSidebarSection[] = [
                 icon: LifeBuoy,
                 items: [
                     { title: 'Tickets', href: panelPath('operacion-tickets'), icon: Ticket },
+                    {
+                        title: 'Notificaciones',
+                        href: panelPath('acceso-notificaciones'),
+                        icon: Bell,
+                    },
                     {
                         title: 'Webhooks',
                         href: panelPath('operacion-webhooks'),

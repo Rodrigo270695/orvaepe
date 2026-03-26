@@ -744,11 +744,16 @@ Soporte posventa: conversación **asíncrona** (ticket + mensajes; no exige chat
 | Campo | Tipo | Notas |
 |-------|------|--------|
 | `id` | uuid | PK |
-| `user_id` | uuid o bigint | FK |
-| `type` | string | |
-| `channel` | string | `email`, `in_app` |
-| `data` | jsonb | |
-| `read_at` | timestamp | Nullable |
+| `user_id` | uuid / bigint | FK → `users` (usuario destino) |
+| `type` | string | Código interno, ej. `license_purchase_created`, `license_key_active` |
+| `channel` | string | `in_app`, `email`, `whatsapp`, `push` |
+| `subject` | string | Asunto/título |
+| `message` | text | Cuerpo principal legible |
+| `data` | jsonb | Metadata (ej. `order_id`, `license_key_id`, `sku_code`, etc.) |
+| `status` | string | `pending`, `sent`, `failed` |
+| `error` | text | Mensaje de error del proveedor (si `failed`) |
+| `read_at` | timestamp | Cuándo el usuario la marcó como leída (in-app) |
+| `sent_at` | timestamp | Cuándo se envió (email/whatsapp/push) |
 | `created_at`, `updated_at` | timestamp | |
 
 ### `personal_access_tokens` (API)

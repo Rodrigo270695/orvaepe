@@ -9,6 +9,7 @@ use App\Models\Payment;
 use App\Models\User;
 use App\Services\Checkout\OrderFromCartLinesBuilder;
 use App\Services\Payments\PayPalClient;
+use App\Services\Notifications\OrderPaidNotifier;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -182,6 +183,7 @@ class CheckoutPayPalController extends Controller
                 'simulated' => true,
                 'environment' => app()->environment(),
             ],
+            app(OrderPaidNotifier::class),
         );
 
         return redirect()
@@ -257,6 +259,7 @@ class CheckoutPayPalController extends Controller
             $captureId,
             'paypal',
             $capture,
+            app(OrderPaidNotifier::class),
         );
 
         return redirect()
@@ -306,8 +309,9 @@ class CheckoutPayPalController extends Controller
         string $gatewayPaymentId,
         string $gateway,
         array $rawResponse,
+        OrderPaidNotifier $notifier,
     ): void {
-        DB::transaction(function () use ($order, $user, $gatewayPaymentId, $gateway, $rawResponse) {
+        DB::transaction(function () use ($order, $user, $gatewayPaymentId, $gateway, $rawResponse, $notifier) {
             $order->update([
                 'status' => Order::STATUS_PAID,
                 'placed_at' => now(),
@@ -327,6 +331,9 @@ class CheckoutPayPalController extends Controller
 
             $order->refresh();
             $order->coupon?->increment('used_count');
+
+            $notifier->notifyCustomer($order, $user);
+            $notifier->notifyAdmin($order, $user);
         });
     }
 

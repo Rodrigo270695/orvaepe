@@ -38,6 +38,7 @@ export const panelSectionLabels: Record<string, string> = {
     'acceso-licencias': 'Licencias',
     'acceso-activaciones': 'Activaciones',
     'acceso-entregas-oem': 'Entregas OEM',
+    'acceso-notificaciones': 'Notificaciones',
     // Operación
     'operacion-tickets': 'Tickets de soporte',
     'operacion-webhooks': 'Webhooks de pasarelas',

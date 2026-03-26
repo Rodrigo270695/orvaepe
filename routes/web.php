@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\InformesController;
 use App\Http\Controllers\Admin\LicenseActivationsController;
 use App\Http\Controllers\Admin\LicenseKeysController;
 use App\Http\Controllers\Admin\OemLicenseDeliveriesController;
+use App\Http\Controllers\Admin\NotificationsController;
 use App\Http\Controllers\Admin\ShowcaseClientsController;
 use App\Http\Controllers\Admin\SubscriptionsController;
 use App\Http\Controllers\Admin\VentasPagosController;
@@ -341,6 +342,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::get('panel/acceso-entregas-oem', [OemLicenseDeliveriesController::class, 'index'])
             ->name('panel.acceso-entregas-oem.index');
+
+        Route::get('panel/acceso-notificaciones', [NotificationsController::class, 'index'])
+            ->name('panel.acceso-notificaciones.index');
 
         Route::get('panel/operacion-webhooks', [WebhookEventsController::class, 'index'])
             ->name('panel.operacion-webhooks.index');

@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Models\WebhookEvent;
 use App\Services\Checkout\OrderFromCartLinesBuilder;
 use App\Services\Payments\MercadoPagoClient;
+use App\Services\Notifications\OrderPaidNotifier;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -169,6 +170,7 @@ class CheckoutMercadoPagoController extends Controller
             $paymentId,
             'mercadopago',
             $payment,
+            app(OrderPaidNotifier::class),
         );
 
         return redirect()
@@ -269,6 +271,7 @@ class CheckoutMercadoPagoController extends Controller
                     (string) ($payment['id'] ?? $paymentId),
                     'mercadopago',
                     $payment,
+                    app(OrderPaidNotifier::class),
                 );
             }
 
@@ -296,17 +299,26 @@ class CheckoutMercadoPagoController extends Controller
         string $gatewayPaymentId,
         string $gateway,
         array $rawResponse,
+        OrderPaidNotifier $notifier,
     ): void {
-        DB::transaction(function () use ($order, $user, $gatewayPaymentId, $gateway, $rawResponse) {
+        DB::transaction(function () use ($order, $user, $gatewayPaymentId, $gateway, $rawResponse, $notifier) {
             $existing = Payment::query()->where('gateway_payment_id', $gatewayPaymentId)->first();
 
             if ($existing !== null) {
-                if ($order->status !== Order::STATUS_PAID) {
-                    $order->update([
-                        'status' => Order::STATUS_PAID,
-                        'placed_at' => now(),
-                    ]);
+                if ($order->status === Order::STATUS_PAID) {
+                    return;
                 }
+
+                $order->update([
+                    'status' => Order::STATUS_PAID,
+                    'placed_at' => now(),
+                ]);
+
+                $order->refresh();
+                $order->coupon?->increment('used_count');
+
+                $notifier->notifyCustomer($order, $user);
+                $notifier->notifyAdmin($order, $user);
 
                 return;
             }
@@ -330,6 +342,9 @@ class CheckoutMercadoPagoController extends Controller
 
             $order->refresh();
             $order->coupon?->increment('used_count');
+
+            $notifier->notifyCustomer($order, $user);
+            $notifier->notifyAdmin($order, $user);
         });
     }
 

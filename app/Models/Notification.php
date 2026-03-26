@@ -12,6 +12,8 @@ class Notification extends Model
 {
     use HasFactory, HasUuids;
 
+    protected $table = 'notifications';
+
     protected $keyType = 'string';
 
     public $incrementing = false;
@@ -20,15 +22,25 @@ class Notification extends Model
         'user_id',
         'type',
         'channel',
+        'subject',
+        'message',
         'data',
+        'status',
+        'error',
         'read_at',
+        'sent_at',
     ])]
     protected $fillable = [
         'user_id',
         'type',
         'channel',
+        'subject',
+        'message',
         'data',
+        'status',
+        'error',
         'read_at',
+        'sent_at',
     ];
 
     protected function casts(): array
@@ -36,6 +48,7 @@ class Notification extends Model
         return [
             'data' => 'array',
             'read_at' => 'datetime',
+            'sent_at' => 'datetime',
         ];
     }
 
