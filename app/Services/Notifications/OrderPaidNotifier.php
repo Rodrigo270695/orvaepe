@@ -5,6 +5,7 @@ namespace App\Services\Notifications;
 use App\Models\Notification;
 use App\Models\Order;
 use App\Models\User;
+use App\Support\WhatsAppPhoneNormalizer;
 
 final class OrderPaidNotifier
 {
@@ -63,6 +64,22 @@ final class OrderPaidNotifier
         return $fallback;
     }
 
+    private function resolveWhatsAppToFromUser(User $user): ?string
+    {
+        $user->loadMissing('profile');
+
+        if (is_string($user->phone) && trim($user->phone) !== '') {
+            return WhatsAppPhoneNormalizer::toUltraMsgTo($user->phone);
+        }
+
+        $profilePhone = $user->profile?->phone;
+        if (is_string($profilePhone) && trim($profilePhone) !== '') {
+            return WhatsAppPhoneNormalizer::toUltraMsgTo($profilePhone);
+        }
+
+        return null;
+    }
+
     public function notifyCustomer(Order $order, User $user): void
     {
         $customer = $this->resolveCustomerFromOrder($order, $user);
@@ -102,6 +119,7 @@ final class OrderPaidNotifier
                 'currency' => (string) $order->currency,
                 'lines_summary' => $linesSummary,
                 'phone_snapshot' => $customer->phone,
+                'whatsapp_to' => $this->resolveWhatsAppToFromUser($customer),
                 'customer_email' => (string) $customer->email,
             ],
             'status' => 'pending',
@@ -119,7 +137,8 @@ final class OrderPaidNotifier
 
         $adminUsers = User::query()
             ->role('superadmin')
-            ->get(['id']);
+            ->with('profile:id,user_id,phone')
+            ->get(['id', 'phone']);
 
         $data = [
             'order_id' => $order->id,
@@ -131,6 +150,9 @@ final class OrderPaidNotifier
         ];
 
         foreach ($adminUsers as $admin) {
+            $adminTo = $this->resolveWhatsAppToFromUser($admin)
+                ?: WhatsAppPhoneNormalizer::toUltraMsgTo((string) config('ultramsg.admin_number'));
+
             Notification::query()->create([
                 'user_id' => $admin->id,
                 'type' => 'order.paid.admin',
@@ -148,7 +170,9 @@ final class OrderPaidNotifier
                 'channel' => 'whatsapp',
                 'subject' => 'Pedido '.$order->order_number,
                 'message' => $body,
-                'data' => $data,
+                'data' => array_merge($data, [
+                    'whatsapp_to' => $adminTo,
+                ]),
                 'status' => 'pending',
             ]);
 

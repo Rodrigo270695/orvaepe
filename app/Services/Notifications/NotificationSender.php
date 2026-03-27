@@ -47,12 +47,19 @@ class NotificationSender
 
     private function sendWhatsApp(Notification $notification): void
     {
+        $data = is_array($notification->data) ? $notification->data : [];
+
+        $to = null;
+        $explicitTo = $data['whatsapp_to'] ?? null;
+        if (is_string($explicitTo) && trim($explicitTo) !== '') {
+            $to = WhatsAppPhoneNormalizer::toUltraMsgTo($explicitTo);
+        }
+
         $user = $notification->user()
             ->with('profile:id,user_id,phone')
             ->first(['id', 'phone']);
-        $to = null;
 
-        if ($user && $user->phone) {
+        if (! $to && $user && $user->phone) {
             $to = WhatsAppPhoneNormalizer::toUltraMsgTo($user->phone);
         }
 
@@ -69,9 +76,7 @@ class NotificationSender
 
         // Fallback para cliente: usar snapshot guardado al crear la notificación.
         if (! $to && $notification->type === 'order.paid.customer') {
-            $snapshotPhone = is_array($notification->data)
-                ? ($notification->data['phone_snapshot'] ?? null)
-                : null;
+            $snapshotPhone = $data['phone_snapshot'] ?? null;
             if (is_string($snapshotPhone) && $snapshotPhone !== '') {
                 $to = WhatsAppPhoneNormalizer::toUltraMsgTo($snapshotPhone);
             }
@@ -87,6 +92,13 @@ class NotificationSender
         if ($body === '') {
             $body = 'Notificación desde ORVAE.';
         }
+
+        Log::info('notification.whatsapp_target', [
+            'notification_id' => $notification->id,
+            'type' => $notification->type,
+            'user_id' => $notification->user_id,
+            'to' => $to,
+        ]);
 
         $this->whatsApp->sendText($to, $body);
     }
