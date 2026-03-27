@@ -51,15 +51,28 @@ final class OrderPaidNotifier
             .'⏳ Tu licencia se está procesando y se activará en breve en tu portal.';
     }
 
+    private function resolveCustomerFromOrder(Order $order, User $fallback): User
+    {
+        $order->loadMissing('user');
+        $orderUser = $order->user;
+
+        if ($orderUser instanceof User) {
+            return $orderUser;
+        }
+
+        return $fallback;
+    }
+
     public function notifyCustomer(Order $order, User $user): void
     {
-        $user->refresh();
+        $customer = $this->resolveCustomerFromOrder($order, $user);
+        $customer->refresh();
         $order->loadMissing(['lines.sku']);
         $linesSummary = $this->orderLinesSummary($order);
         $body = $this->customerPaidMessage($order, $linesSummary);
 
         Notification::query()->create([
-            'user_id' => $user->id,
+            'user_id' => $customer->id,
             'type' => 'order.paid.customer',
             'channel' => 'in_app',
             'subject' => 'Pago confirmado',
@@ -70,13 +83,14 @@ final class OrderPaidNotifier
                 'amount' => (string) $order->grand_total,
                 'currency' => (string) $order->currency,
                 'lines_summary' => $linesSummary,
+                'customer_email' => (string) $customer->email,
             ],
             'status' => 'sent',
             'sent_at' => now(),
         ]);
 
         $notification = Notification::query()->create([
-            'user_id' => $user->id,
+            'user_id' => $customer->id,
             'type' => 'order.paid.customer',
             'channel' => 'whatsapp',
             'subject' => 'Pago confirmado',
@@ -87,7 +101,8 @@ final class OrderPaidNotifier
                 'amount' => (string) $order->grand_total,
                 'currency' => (string) $order->currency,
                 'lines_summary' => $linesSummary,
-                'phone_snapshot' => $user->phone,
+                'phone_snapshot' => $customer->phone,
+                'customer_email' => (string) $customer->email,
             ],
             'status' => 'pending',
         ]);
@@ -97,9 +112,10 @@ final class OrderPaidNotifier
 
     public function notifyAdmin(Order $order, User $user): void
     {
+        $customer = $this->resolveCustomerFromOrder($order, $user);
         $order->loadMissing(['lines.sku']);
         $linesSummary = $this->orderLinesSummary($order);
-        $body = $this->adminPaidMessage($order, $user, $linesSummary);
+        $body = $this->adminPaidMessage($order, $customer, $linesSummary);
 
         $adminUsers = User::query()
             ->role('superadmin')
@@ -108,7 +124,7 @@ final class OrderPaidNotifier
         $data = [
             'order_id' => $order->id,
             'order_number' => $order->order_number,
-            'customer_email' => (string) $user->email,
+            'customer_email' => (string) $customer->email,
             'amount' => (string) $order->grand_total,
             'currency' => (string) $order->currency,
             'lines_summary' => $linesSummary,
