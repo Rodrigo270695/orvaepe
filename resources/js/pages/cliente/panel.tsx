@@ -152,7 +152,7 @@ export default function ClientePanel({ profile, licenseStats }: Props) {
                             </div>
                         </div>
 
-                        <div className="grid gap-6 md:grid-cols-2">
+                        <div className="grid gap-6">
                             <div className="rounded-xl border border-[color-mix(in_oklab,var(--state-info)_20%,var(--border))] bg-[color-mix(in_oklab,var(--card)_92%,var(--background))] p-6 shadow-sm transition-shadow hover:shadow-md">
                             <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
                                     Soporte reciente
@@ -160,20 +160,6 @@ export default function ClientePanel({ profile, licenseStats }: Props) {
                                 <p className="mt-3 text-sm text-muted-foreground">
                                     Sin tickets por ahora.
                                 </p>
-                            </div>
-                            <div className="rounded-xl border border-[color-mix(in_oklab,var(--state-info)_20%,var(--border))] bg-[color-mix(in_oklab,var(--card)_92%,var(--background))] p-6 shadow-sm transition-shadow hover:shadow-md">
-                                <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                                    Avisos
-                                </h2>
-                                <p className="mt-3 text-sm text-muted-foreground">
-                                    Consulta tus notificaciones en un solo lugar.
-                                </p>
-                                <Link
-                                    href="/cliente/notificaciones"
-                                    className="mt-3 inline-flex text-sm font-medium text-[color-mix(in_oklab,var(--state-info)_68%,var(--foreground))] hover:underline"
-                                >
-                                    Ver notificaciones
-                                </Link>
                             </div>
                         </div>
                     </div>

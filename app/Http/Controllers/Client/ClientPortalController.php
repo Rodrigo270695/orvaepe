@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Client\UserProfileUpdateRequest;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
 use App\Models\LicenseKey;
-use App\Models\Notification;
 use App\Models\Order;
 use App\Models\UserProfile;
 use App\Support\AdminFlashToast;
@@ -195,37 +194,4 @@ class ClientPortalController extends Controller
         return Inertia::render('cliente/seguridad');
     }
 
-    public function notifications(Request $request): Response
-    {
-        $user = $request->user();
-        $notifications = $user
-            ->userNotifications()
-            ->orderByDesc('created_at')
-            ->limit(100)
-            ->get();
-
-        return Inertia::render('cliente/notificaciones', [
-            'notifications' => $notifications->map(static function (Notification $n) {
-                return [
-                    'id' => $n->id,
-                    'type' => $n->type,
-                    'channel' => $n->channel,
-                    'data' => $n->data ?? [],
-                    'read_at' => $n->read_at?->toIso8601String(),
-                    'created_at' => $n->created_at?->toIso8601String(),
-                ];
-            }),
-        ]);
-    }
-
-    public function markNotificationRead(Request $request, Notification $notification): RedirectResponse
-    {
-        if ($notification->user_id !== $request->user()->id) {
-            abort(403);
-        }
-
-        $notification->markAsRead();
-
-        return back();
-    }
 }

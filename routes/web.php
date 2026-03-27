@@ -119,8 +119,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/perfil', [ClientPortalController::class, 'profile'])->name('profile');
         Route::patch('/perfil', [ClientPortalController::class, 'updateProfile'])->name('profile.update');
         Route::get('/seguridad', [ClientPortalController::class, 'security'])->name('security');
-        Route::get('/notificaciones', [ClientPortalController::class, 'notifications'])->name('notifications');
-        Route::patch('/notificaciones/{notification}', [ClientPortalController::class, 'markNotificationRead'])->name('notifications.mark-read');
     });
 
     // Panel interno (solo staff)
