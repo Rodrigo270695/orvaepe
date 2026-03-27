@@ -6,6 +6,13 @@ import { ClientPortalNav } from '@/components/client-portal/client-portal-nav';
 function SidebarFooter() {
     return (
         <div className="border-t border-[color-mix(in_oklab,var(--state-info)_20%,var(--border))] p-3">
+            <Link
+                href="/"
+                className="mb-2 inline-flex w-full items-center justify-center rounded-lg border border-[color-mix(in_oklab,var(--state-info)_30%,var(--border))] bg-[color-mix(in_oklab,var(--state-info)_10%,transparent)] px-2 py-2 text-xs font-medium text-[color-mix(in_oklab,var(--state-info)_74%,var(--foreground))] transition-colors hover:bg-[color-mix(in_oklab,var(--state-info)_16%,transparent)]"
+                prefetch
+            >
+                Ir a la vista principal
+            </Link>
             <div className="flex items-center gap-2 rounded-lg border border-[color-mix(in_oklab,var(--state-success)_34%,var(--border))] bg-[linear-gradient(135deg,color-mix(in_oklab,var(--state-success)_14%,transparent),color-mix(in_oklab,var(--state-info)_12%,transparent))] px-2 py-2 text-xs text-[color-mix(in_oklab,var(--state-success)_74%,var(--foreground))]">
                 <CreditCard className="size-4 text-(--state-success)" />
                 Pagos seguros
