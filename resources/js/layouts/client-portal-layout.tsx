@@ -38,7 +38,7 @@ export default function ClientPortalLayout({
     const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
     return (
-        <div className="relative min-h-screen overflow-x-hidden text-foreground antialiased">
+        <div className="relative h-screen overflow-hidden text-foreground antialiased">
             <Head title={headTitle ?? title} />
             <div
                 className="pointer-events-none absolute inset-0"
@@ -100,9 +100,9 @@ export default function ClientPortalLayout({
                     <ClientPortalSidebarFooter />
                 </SheetContent>
             </Sheet>
-            <div className="relative z-10 flex min-h-screen">
+            <div className="relative z-10 flex h-screen overflow-hidden">
                 <ClientPortalSidebar />
-                <div className="flex min-w-0 flex-1 flex-col">
+                <div className="flex h-screen min-w-0 flex-1 flex-col overflow-hidden">
                     <AdminFlashToast />
                     <ClientPortalHeader
                         title={title}
@@ -110,7 +110,7 @@ export default function ClientPortalLayout({
                         showTitle={titleInHeader}
                         onOpenMobileNav={() => setMobileNavOpen(true)}
                     />
-                    <main className="flex-1 px-6 py-6 lg:px-8">
+                    <main className="flex-1 overflow-y-auto px-6 py-6 lg:px-8">
                         {children}
                     </main>
                 </div>
