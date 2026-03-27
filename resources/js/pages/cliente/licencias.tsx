@@ -2,6 +2,7 @@ import { Copy, Info } from 'lucide-react';
 import { useState } from 'react';
 
 import { ClientPageTitleCard } from '@/components/client-portal/client-page-title-card';
+import AdminCrudPagination from '@/components/admin/crud/AdminCrudPagination';
 import {
     licenseKeyStatusBadgeClass,
     licenseKeyStatusLabel,
@@ -24,7 +25,16 @@ type LicenseRow = {
 };
 
 type Props = {
-    licenses: LicenseRow[];
+    licenses: {
+        data: LicenseRow[];
+        links?: { url: string | null; label: string; active: boolean }[];
+        from?: number;
+        to?: number;
+        total?: number;
+        per_page?: number;
+        current_page?: number;
+        last_page?: number;
+    };
 };
 
 function formatDate(iso: string | null): string {
@@ -74,7 +84,7 @@ function LicenseKeyCell({ row }: { row: LicenseRow }) {
                 size="sm"
                 variant="outline"
                 onClick={doCopy}
-                className="h-7 px-2 text-xs"
+                className="h-7 cursor-pointer px-2 text-xs"
             >
                 <Copy className="mr-1 size-3.5" />
                 {copied ? 'Copiado' : 'Copiar'}
@@ -84,6 +94,8 @@ function LicenseKeyCell({ row }: { row: LicenseRow }) {
 }
 
 export default function ClienteLicencias({ licenses }: Props) {
+    const rows = licenses?.data ?? [];
+
     return (
         <ClientPortalLayout
             title="Licencias"
@@ -110,7 +122,7 @@ export default function ClienteLicencias({ licenses }: Props) {
                 </div>
 
                 <div className="overflow-hidden rounded-xl border border-[color-mix(in_oklab,var(--state-info)_20%,var(--border))] bg-[color-mix(in_oklab,var(--card)_94%,var(--background))] shadow-sm">
-                    {licenses.length === 0 ? (
+                    {rows.length === 0 ? (
                         <div className="px-5 py-12 text-center text-sm text-muted-foreground">
                             Aún no tienes licencias registradas.
                         </div>
@@ -127,7 +139,7 @@ export default function ClienteLicencias({ licenses }: Props) {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {licenses.map((row) => (
+                                    {rows.map((row) => (
                                         <tr
                                             key={row.id}
                                             className="border-b border-[color-mix(in_oklab,var(--state-info)_12%,var(--border))] align-top last:border-0"
@@ -165,6 +177,7 @@ export default function ClienteLicencias({ licenses }: Props) {
                         </div>
                     )}
                 </div>
+                <AdminCrudPagination paginator={licenses} />
             </div>
         </ClientPortalLayout>
     );

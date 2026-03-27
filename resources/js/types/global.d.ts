@@ -10,6 +10,8 @@ declare module '@inertiajs/core' {
             flash: { toast?: unknown };
             /** Dropdown Software en navbar marketing (catálogo dinámico) */
             softwareNavLinks?: { label: string; href: string }[];
+            /** Dropdown Licencias agrupado por categoría -> productos */
+            licenseNavGroups?: { categoryLabel: string; items: { label: string; href: string }[] }[];
             /** Metadatos y URLs para SEO (manifest, OG, JSON-LD) */
             seo: SeoDefaults;
             /** Notificaciones sin leer (tabla `notifications`, rol superadmin) */

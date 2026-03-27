@@ -93,6 +93,7 @@ class ClientPortalController extends Controller
     public function licenses(Request $request): Response
     {
         $user = $request->user();
+        $perPage = max(10, min((int) $request->integer('per_page', 15), 50));
 
         $licenses = LicenseKey::query()
             ->where('user_id', $user->id)
@@ -102,8 +103,9 @@ class ClientPortalController extends Controller
                 'order:id,order_number',
             ])
             ->orderByDesc('created_at')
-            ->get()
-            ->map(static function (LicenseKey $row): array {
+            ->paginate($perPage)
+            ->withQueryString()
+            ->through(static function (LicenseKey $row): array {
                 return [
                     'id' => $row->id,
                     'key' => $row->key,
@@ -117,8 +119,7 @@ class ClientPortalController extends Controller
                     'sku_name' => $row->catalogSku?->name,
                     'product_name' => $row->catalogSku?->product?->name,
                 ];
-            })
-            ->values();
+            });
 
         return Inertia::render('cliente/licencias', [
             'licenses' => $licenses,

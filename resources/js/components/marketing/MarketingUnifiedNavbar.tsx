@@ -39,11 +39,12 @@ function getUserDisplayName(name?: string | null) {
 }
 
 export default function MarketingUnifiedNavbar({ canRegister }: Props) {
-    const { auth, canRegister: canRegisterFromPage, softwareNavLinks } =
+    const { auth, canRegister: canRegisterFromPage, softwareNavLinks, licenseNavGroups: licenseNavGroupsFromPage } =
         usePage().props as {
             auth: { user?: { name: string } | null };
             canRegister?: boolean;
             softwareNavLinks?: { label: string; href: string }[];
+            licenseNavGroups?: { categoryLabel: string; items: { label: string; href: string }[] }[];
         };
 
     const finalCanRegister = canRegister ?? canRegisterFromPage ?? true;
@@ -260,7 +261,7 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
     }, [openDropdown, openMobile, openUserMenu]);
 
     const topLinkClass =
-        'relative inline-flex cursor-pointer items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold transition-all duration-200 hover:bg-[color-mix(in_oklab,var(--state-info)_14%,transparent)] hover:text-[color-mix(in_oklab,var(--state-info)_68%,var(--foreground))]';
+        'relative inline-flex cursor-pointer items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold transition-all duration-200 hover:bg-[color-mix(in_oklab,var(--state-info)_26%,var(--background))] hover:text-[color-mix(in_oklab,var(--state-info)_86%,var(--foreground))] hover:shadow-[0_6px_18px_-10px_color-mix(in_oklab,var(--state-info)_55%,transparent)]';
     const activeUnderline =
         'absolute left-2 right-2 -bottom-0.5 z-10 h-[3px] rounded-full bg-[linear-gradient(90deg,var(--state-info),var(--state-success),var(--state-alert))] origin-left scale-x-0 transition-transform duration-300 pointer-events-none';
 
@@ -413,7 +414,16 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                   { label: 'Mensajería', href: '/software#mensajeria' },
               ];
 
-    const preciosLinks = [...marketingPreciosLinks];
+    const fallbackLicenseGroups = [
+        {
+            categoryLabel: 'Licencias',
+            items: [...marketingPreciosLinks],
+        },
+    ];
+    const licenseNavGroups =
+        licenseNavGroupsFromPage && licenseNavGroupsFromPage.length > 0
+            ? licenseNavGroupsFromPage
+            : fallbackLicenseGroups;
 
     const serviciosLinks = [
         { label: 'Servicios', href: '/servicios' },
@@ -425,7 +435,7 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
         const primaryClass =
             'text-sm font-semibold text-[var(--foreground)] hover:bg-[color-mix(in_oklab,var(--o-amber)_12%,transparent)]';
         const secondaryClass =
-            'text-xs font-medium text-[var(--foreground)]/75 hover:text-[var(--o-amber)] hover:bg-[color-mix(in_oklab,var(--o-amber)_8%,transparent)] py-1.5';
+            'text-xs font-medium text-[var(--foreground)]/75 hover:text-[var(--o-amber)] hover:bg-[color-mix(in_oklab,var(--o-amber)_8%,transparent)] dark:hover:bg-[color-mix(in_oklab,var(--state-info)_26%,var(--background))] dark:hover:text-[color-mix(in_oklab,var(--state-info)_88%,var(--foreground))] py-1.5';
         const className = `${base} ${style === 'primary' ? primaryClass : secondaryClass}`;
         if (l.href.startsWith('#')) {
             return (
@@ -466,6 +476,58 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                         {rest.map((l) => renderLink(l, 'secondary'))}
                     </>
                 )}
+            </div>
+        );
+    };
+
+    const renderLicensesDesktopDropdown = (
+        groups: { categoryLabel: string; items: { label: string; href: string }[] }[],
+    ) => {
+        return (
+            <div
+                className="absolute left-0 top-full z-20 mt-3 w-80 rounded-2xl border p-2 backdrop-blur-xl"
+                style={{
+                    borderColor: 'color-mix(in oklab, var(--state-info) 20%, var(--border))',
+                    background:
+                        'linear-gradient(165deg, color-mix(in oklab, var(--card) 92%, transparent), color-mix(in oklab, var(--state-info) 5%, var(--card)))',
+                    boxShadow:
+                        '0 18px 50px -20px color-mix(in oklab, var(--foreground) 30%, transparent), 0 0 0 1px color-mix(in oklab, var(--state-info) 10%, transparent) inset',
+                }}
+                role="menu"
+                aria-label="Menú desplegable de licencias"
+            >
+                {groups.map((group, groupIndex) => (
+                    <div key={`${group.categoryLabel}-${groupIndex}`}>
+                        {groupIndex > 0 && (
+                            <div
+                                className="my-2 border-t border-[color-mix(in_oklab,var(--o-amber)_25%,var(--border))]"
+                                aria-hidden
+                            />
+                        )}
+                        <Link
+                            href="/licencias"
+                            className="block cursor-pointer rounded-xl px-3 py-2 text-sm font-semibold text-[var(--foreground)] transition-colors hover:bg-[color-mix(in_oklab,var(--o-amber)_12%,transparent)] dark:hover:bg-[color-mix(in_oklab,var(--state-info)_26%,var(--background))] dark:hover:text-[color-mix(in_oklab,var(--state-info)_88%,var(--foreground))]"
+                            onClick={closeAll}
+                        >
+                            {group.categoryLabel}
+                        </Link>
+                        <div
+                            className="mb-1 border-t border-[color-mix(in_oklab,var(--state-info)_24%,var(--border))]"
+                            aria-hidden
+                        />
+                        <div className="grid gap-0.5 pb-1">
+                            {group.items.map((item) => (
+                                <Link
+                                    key={item.href}
+                                    href={item.href}
+                                    className="cursor-pointer rounded-xl px-3 py-1.5 text-xs font-medium text-[var(--foreground)]/75 transition-colors hover:bg-[color-mix(in_oklab,var(--o-amber)_8%,transparent)] hover:text-[var(--o-amber)] dark:hover:bg-[color-mix(in_oklab,var(--state-info)_26%,var(--background))] dark:hover:text-[color-mix(in_oklab,var(--state-info)_88%,var(--foreground))]"
+                                >
+                                    {item.label}
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
+                ))}
             </div>
         );
     };
@@ -575,7 +637,7 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                                 <ChevronDown className="size-4 text-[var(--o-amber)]" />
                                 <span className={activeUnderline} style={{ transform: activeTop === 'precios' ? 'scaleX(1)' : 'scaleX(0)' }} />
                             </button>
-                            {openDropdown === 'precios' && renderDesktopDropdown('precios', preciosLinks)}
+                            {openDropdown === 'precios' && renderLicensesDesktopDropdown(licenseNavGroups)}
                         </div>
 
                         <div className="relative">
@@ -804,7 +866,7 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                                                 {l.href.startsWith('#') ? (
                                                     <a
                                                         href={l.href}
-                                                        className={i === 0 ? 'cursor-pointer rounded-xl px-3 py-2 text-sm font-semibold text-[var(--foreground)] hover:bg-[color-mix(in_oklab,var(--o-amber)_12%,transparent)]' : 'cursor-pointer rounded-xl px-3 py-1.5 text-xs font-medium text-[var(--foreground)]/75 hover:text-[var(--o-amber)] hover:bg-[color-mix(in_oklab,var(--o-amber)_8%,transparent)]'}
+                                                        className={i === 0 ? 'cursor-pointer rounded-xl px-3 py-2 text-sm font-semibold text-[var(--foreground)] hover:bg-[color-mix(in_oklab,var(--o-amber)_12%,transparent)] dark:hover:bg-[color-mix(in_oklab,var(--state-info)_26%,var(--background))] dark:hover:text-[color-mix(in_oklab,var(--state-info)_88%,var(--foreground))]' : 'cursor-pointer rounded-xl px-3 py-1.5 text-xs font-medium text-[var(--foreground)]/75 hover:text-[var(--o-amber)] hover:bg-[color-mix(in_oklab,var(--o-amber)_8%,transparent)] dark:hover:bg-[color-mix(in_oklab,var(--state-info)_26%,var(--background))] dark:hover:text-[color-mix(in_oklab,var(--state-info)_88%,var(--foreground))]'}
                                                         onClick={closeAll}
                                                     >
                                                         {l.label}
@@ -812,7 +874,7 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                                                 ) : (
                                                     <Link
                                                         href={l.href}
-                                                        className={i === 0 ? 'cursor-pointer rounded-xl px-3 py-2 text-sm font-semibold text-[var(--foreground)] hover:bg-[color-mix(in_oklab,var(--o-amber)_12%,transparent)]' : 'cursor-pointer rounded-xl px-3 py-1.5 text-xs font-medium text-[var(--foreground)]/75 hover:text-[var(--o-amber)] hover:bg-[color-mix(in_oklab,var(--o-amber)_8%,transparent)]'}
+                                                        className={i === 0 ? 'cursor-pointer rounded-xl px-3 py-2 text-sm font-semibold text-[var(--foreground)] hover:bg-[color-mix(in_oklab,var(--o-amber)_12%,transparent)] dark:hover:bg-[color-mix(in_oklab,var(--state-info)_26%,var(--background))] dark:hover:text-[color-mix(in_oklab,var(--state-info)_88%,var(--foreground))]' : 'cursor-pointer rounded-xl px-3 py-1.5 text-xs font-medium text-[var(--foreground)]/75 hover:text-[var(--o-amber)] hover:bg-[color-mix(in_oklab,var(--o-amber)_8%,transparent)] dark:hover:bg-[color-mix(in_oklab,var(--state-info)_26%,var(--background))] dark:hover:text-[color-mix(in_oklab,var(--state-info)_88%,var(--foreground))]'}
                                                     >
                                                         {l.label}
                                                     </Link>
@@ -840,21 +902,32 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                                 </button>
                                 {openMobileSection === 'precios' && (
                                     <div className="grid gap-1 px-1 pb-2">
-                                        {preciosLinks.map((l, i) => (
-                                            <span key={l.href}>
-                                                {i === 1 && (
+                                        {licenseNavGroups.map((group, groupIndex) => (
+                                            <div key={`${group.categoryLabel}-${groupIndex}`} className="grid gap-1">
+                                                {groupIndex > 0 && (
                                                     <div className="my-1.5 border-t border-[color-mix(in_oklab,var(--o-amber)_25%,var(--border))]" aria-hidden />
                                                 )}
-                                                {l.href.startsWith('#') ? (
-                                                    <a href={l.href} className={i === 0 ? 'cursor-pointer rounded-xl px-3 py-2 text-sm font-semibold text-[var(--foreground)] hover:bg-[color-mix(in_oklab,var(--o-amber)_12%,transparent)]' : 'cursor-pointer rounded-xl px-3 py-1.5 text-xs font-medium text-[var(--foreground)]/75 hover:text-[var(--o-amber)] hover:bg-[color-mix(in_oklab,var(--o-amber)_8%,transparent)]'} onClick={closeAll}>
-                                                        {l.label}
-                                                    </a>
-                                                ) : (
-                                                    <Link href={l.href} className={i === 0 ? 'cursor-pointer rounded-xl px-3 py-2 text-sm font-semibold text-[var(--foreground)] hover:bg-[color-mix(in_oklab,var(--o-amber)_12%,transparent)]' : 'cursor-pointer rounded-xl px-3 py-1.5 text-xs font-medium text-[var(--foreground)]/75 hover:text-[var(--o-amber)] hover:bg-[color-mix(in_oklab,var(--o-amber)_8%,transparent)]'}>
-                                                        {l.label}
+                                                <Link
+                                                    href="/licencias"
+                                                    className="block cursor-pointer rounded-xl px-3 py-1 text-sm font-semibold text-[var(--foreground)] transition-colors hover:bg-[color-mix(in_oklab,var(--o-amber)_12%,transparent)] dark:hover:bg-[color-mix(in_oklab,var(--state-info)_26%,var(--background))] dark:hover:text-[color-mix(in_oklab,var(--state-info)_88%,var(--foreground))]"
+                                                    onClick={closeAll}
+                                                >
+                                                    {group.categoryLabel}
+                                                </Link>
+                                                <div
+                                                    className="mb-1 border-t border-[color-mix(in_oklab,var(--state-info)_24%,var(--border))]"
+                                                    aria-hidden
+                                                />
+                                                {group.items.map((item) => (
+                                                    <Link
+                                                        key={item.href}
+                                                        href={item.href}
+                                                        className="cursor-pointer rounded-xl px-3 py-1.5 text-xs font-medium text-[var(--foreground)]/75 hover:bg-[color-mix(in_oklab,var(--o-amber)_8%,transparent)] hover:text-[var(--o-amber)] dark:hover:bg-[color-mix(in_oklab,var(--state-info)_26%,var(--background))] dark:hover:text-[color-mix(in_oklab,var(--state-info)_88%,var(--foreground))]"
+                                                    >
+                                                        {item.label}
                                                     </Link>
-                                                )}
-                                            </span>
+                                                ))}
+                                            </div>
                                         ))}
                                     </div>
                                 )}
@@ -883,11 +956,11 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                                                     <div className="my-1.5 border-t border-[color-mix(in_oklab,var(--o-amber)_25%,var(--border))]" aria-hidden />
                                                 )}
                                                 {l.href.startsWith('#') ? (
-                                                    <a href={l.href} className={i === 0 ? 'cursor-pointer rounded-xl px-3 py-2 text-sm font-semibold text-[var(--foreground)] hover:bg-[color-mix(in_oklab,var(--o-amber)_12%,transparent)]' : 'cursor-pointer rounded-xl px-3 py-1.5 text-xs font-medium text-[var(--foreground)]/75 hover:text-[var(--o-amber)] hover:bg-[color-mix(in_oklab,var(--o-amber)_8%,transparent)]'} onClick={closeAll}>
+                                                    <a href={l.href} className={i === 0 ? 'cursor-pointer rounded-xl px-3 py-2 text-sm font-semibold text-[var(--foreground)] hover:bg-[color-mix(in_oklab,var(--o-amber)_12%,transparent)] dark:hover:bg-[color-mix(in_oklab,var(--state-info)_26%,var(--background))] dark:hover:text-[color-mix(in_oklab,var(--state-info)_88%,var(--foreground))]' : 'cursor-pointer rounded-xl px-3 py-1.5 text-xs font-medium text-[var(--foreground)]/75 hover:text-[var(--o-amber)] hover:bg-[color-mix(in_oklab,var(--o-amber)_8%,transparent)] dark:hover:bg-[color-mix(in_oklab,var(--state-info)_26%,var(--background))] dark:hover:text-[color-mix(in_oklab,var(--state-info)_88%,var(--foreground))]'} onClick={closeAll}>
                                                     {l.label}
                                                 </a>
                                                 ) : (
-                                                    <Link href={l.href} className={i === 0 ? 'cursor-pointer rounded-xl px-3 py-2 text-sm font-semibold text-[var(--foreground)] hover:bg-[color-mix(in_oklab,var(--o-amber)_12%,transparent)]' : 'cursor-pointer rounded-xl px-3 py-1.5 text-xs font-medium text-[var(--foreground)]/75 hover:text-[var(--o-amber)] hover:bg-[color-mix(in_oklab,var(--o-amber)_8%,transparent)]'}>
+                                                    <Link href={l.href} className={i === 0 ? 'cursor-pointer rounded-xl px-3 py-2 text-sm font-semibold text-[var(--foreground)] hover:bg-[color-mix(in_oklab,var(--o-amber)_12%,transparent)] dark:hover:bg-[color-mix(in_oklab,var(--state-info)_26%,var(--background))] dark:hover:text-[color-mix(in_oklab,var(--state-info)_88%,var(--foreground))]' : 'cursor-pointer rounded-xl px-3 py-1.5 text-xs font-medium text-[var(--foreground)]/75 hover:text-[var(--o-amber)] hover:bg-[color-mix(in_oklab,var(--o-amber)_8%,transparent)] dark:hover:bg-[color-mix(in_oklab,var(--state-info)_26%,var(--background))] dark:hover:text-[color-mix(in_oklab,var(--state-info)_88%,var(--foreground))]'}>
                                                         {l.label}
                                                     </Link>
                                                 )}

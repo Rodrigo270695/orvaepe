@@ -58,10 +58,61 @@ final class MarketingOemLicensesPresenter
             'currency' => $currency,
             'price_text' => number_format($price, 2, '.', ',').' '.$currency,
             'detail' => self::firstMetaString($meta, ['detalle', 'detail']),
+            'details' => self::collectDetails($meta),
             'list_number' => self::firstMetaInt($meta, ['numero_lista', 'list_number']),
             'image_url' => $imageUrl,
             'icon_key' => self::firstMetaString($meta, ['clave_icono', 'icon_key']) ?? 'generic',
         ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $meta
+     * @return list<string>
+     */
+    private static function collectDetails(array $meta): array
+    {
+        $out = [];
+        foreach ($meta as $key => $value) {
+            $normalizedKey = strtolower((string) $key);
+            if (
+                $normalizedKey !== 'detalle'
+                && $normalizedKey !== 'detail'
+                && ! str_starts_with($normalizedKey, 'detalle_')
+                && ! str_starts_with($normalizedKey, 'detail_')
+            ) {
+                continue;
+            }
+
+            if (is_array($value)) {
+                foreach ($value as $row) {
+                    if (! is_scalar($row)) {
+                        continue;
+                    }
+                    $text = trim((string) $row);
+                    if ($text !== '') {
+                        $out[] = $text;
+                    }
+                }
+                continue;
+            }
+
+            if (! is_scalar($value)) {
+                continue;
+            }
+
+            $text = trim((string) $value);
+            if ($text !== '') {
+                $out[] = $text;
+            }
+        }
+
+        $unique = array_values(array_unique($out));
+        if ($unique !== []) {
+            return $unique;
+        }
+
+        $fallback = self::firstMetaString($meta, ['detalle', 'detail']);
+        return $fallback ? [$fallback] : [];
     }
 
     /**
