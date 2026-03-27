@@ -1,6 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
-    Bell,
     FileText,
     Headphones,
     KeyRound,
@@ -45,11 +44,6 @@ export const clientPortalNavItems: NavItem[] = [
         href: '/cliente/pagos',
         label: 'Pagos',
         icon: Wallet,
-    },
-    {
-        href: '/cliente/notificaciones',
-        label: 'Notificaciones',
-        icon: Bell,
     },
     {
         href: '/cliente/facturas',

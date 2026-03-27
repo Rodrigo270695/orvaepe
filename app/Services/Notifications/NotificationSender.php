@@ -47,11 +47,17 @@ class NotificationSender
 
     private function sendWhatsApp(Notification $notification): void
     {
-        $user = $notification->user()->first(['id', 'phone']);
+        $user = $notification->user()
+            ->with('profile:id,user_id,phone')
+            ->first(['id', 'phone']);
         $to = null;
 
         if ($user && $user->phone) {
             $to = WhatsAppPhoneNormalizer::toUltraMsgTo($user->phone);
+        }
+
+        if (! $to && $user && $user->profile?->phone) {
+            $to = WhatsAppPhoneNormalizer::toUltraMsgTo($user->profile->phone);
         }
 
         if (! $to && $notification->type === 'order.paid.admin') {
