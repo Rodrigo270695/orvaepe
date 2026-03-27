@@ -38,7 +38,7 @@ export default function ClientPortalLayout({
     const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
     return (
-        <div className="relative min-h-screen text-foreground antialiased">
+        <div className="relative min-h-screen overflow-x-hidden text-foreground antialiased">
             <Head title={headTitle ?? title} />
             <div
                 className="pointer-events-none absolute inset-0"

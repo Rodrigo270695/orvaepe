@@ -48,7 +48,7 @@ export default function ClientePagos({ orders, paymentGatewayEnabled }: Props) {
                 { label: 'Pagos' },
             ]}
         >
-            <div className="mx-auto max-w-5xl space-y-5">
+            <div className="w-full space-y-5">
                 <ClientPageTitleCard title="Pagos y pedidos" />
 
                 {!paymentGatewayEnabled ? (

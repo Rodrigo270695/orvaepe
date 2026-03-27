@@ -37,7 +37,7 @@ export default function ClienteFacturacion({ profile }: Props) {
                 { label: 'Facturación' },
             ]}
         >
-            <div className="mx-auto max-w-3xl space-y-5">
+            <div className="w-full space-y-5">
                 <ClientPageTitleCard title="Datos de facturación" />
                 <div className="rounded-xl border border-[color-mix(in_oklab,var(--state-info)_20%,var(--border))] bg-[color-mix(in_oklab,var(--card)_92%,var(--background))] px-5 py-4 shadow-sm md:px-6">
                     <h2 className="text-lg font-semibold tracking-tight text-foreground">

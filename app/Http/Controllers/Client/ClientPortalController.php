@@ -20,10 +20,24 @@ class ClientPortalController extends Controller
 {
     public function home(Request $request): Response
     {
-        $request->user()?->load('profile');
+        $user = $request->user();
+        $user?->load('profile');
+
+        $licenseCountsByStatus = LicenseKey::query()
+            ->where('user_id', $user?->id)
+            ->selectRaw('status, COUNT(*) as total')
+            ->groupBy('status')
+            ->pluck('total', 'status');
+
+        $licenseStats = [
+            'total' => (int) $licenseCountsByStatus->sum(),
+            'active' => (int) ($licenseCountsByStatus->get(LicenseKey::STATUS_ACTIVE) ?? 0),
+            'pending' => (int) ($licenseCountsByStatus->get(LicenseKey::STATUS_PENDING) ?? 0),
+        ];
 
         return Inertia::render('cliente/panel', [
-            'profile' => $request->user()?->profile,
+            'profile' => $user?->profile,
+            'licenseStats' => $licenseStats,
         ]);
     }
 

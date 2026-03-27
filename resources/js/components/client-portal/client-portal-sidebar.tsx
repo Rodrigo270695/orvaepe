@@ -16,7 +16,7 @@ function SidebarFooter() {
 
 export function ClientPortalSidebar() {
     return (
-        <aside className="sticky top-0 hidden h-screen w-60 shrink-0 self-start flex-col border-r border-[color-mix(in_oklab,var(--state-info)_24%,var(--border))] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--card)_94%,transparent),color-mix(in_oklab,var(--card)_82%,var(--background)))] backdrop-blur-xl lg:flex">
+        <aside className="sticky top-0 hidden h-screen w-60 shrink-0 self-start overflow-x-hidden flex-col border-r border-[color-mix(in_oklab,var(--state-info)_24%,var(--border))] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--card)_94%,transparent),color-mix(in_oklab,var(--card)_82%,var(--background)))] backdrop-blur-xl lg:flex">
             <div className="flex h-16 items-center border-b border-[color-mix(in_oklab,var(--state-info)_20%,var(--border))] px-4">
                 <Link
                     href="/cliente"

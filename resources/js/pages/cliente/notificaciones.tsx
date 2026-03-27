@@ -97,7 +97,7 @@ export default function ClienteNotificaciones({
                 { label: 'Notificaciones' },
             ]}
         >
-            <div className="mx-auto max-w-3xl space-y-5">
+            <div className="w-full space-y-5">
                 <ClientPageTitleCard title="Notificaciones" />
 
                 {unreadCount > 0 ? (

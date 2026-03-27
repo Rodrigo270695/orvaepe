@@ -106,7 +106,7 @@ export default function ClienteLicencias({ licenses }: Props) {
                 { label: 'Licencias' },
             ]}
         >
-            <div className="mx-auto max-w-6xl space-y-5">
+            <div className="w-full space-y-5">
                 <ClientPageTitleCard title="Tus licencias" />
 
                 <div className="flex gap-3 rounded-xl border border-[color-mix(in_oklab,var(--state-info)_30%,var(--border))] bg-[color-mix(in_oklab,var(--state-info)_10%,transparent)] px-4 py-3 text-sm">

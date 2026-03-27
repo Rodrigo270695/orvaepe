@@ -7,9 +7,14 @@ import type { ClientUserProfile } from '@/types/client';
 
 type Props = {
     profile: ClientUserProfile | null;
+    licenseStats?: {
+        total: number;
+        active: number;
+        pending: number;
+    };
 };
 
-export default function ClientePanel({ profile }: Props) {
+export default function ClientePanel({ profile, licenseStats }: Props) {
     const { auth } = usePage().props;
     const user = auth.user;
 
@@ -32,7 +37,7 @@ export default function ClientePanel({ profile }: Props) {
             titleInHeader={false}
             breadcrumbs={[{ label: 'Área del cliente' }]}
         >
-            <div className="mx-auto max-w-6xl space-y-6">
+            <div className="w-full space-y-6">
                 <ClientPageTitleCard title="Mi panel" />
 
                 <div className="grid gap-6 lg:grid-cols-3">
@@ -103,9 +108,20 @@ export default function ClientePanel({ profile }: Props) {
                     </div>
 
                     <div className="space-y-6 lg:col-span-2">
-                        <div className="grid gap-4 sm:grid-cols-3">
+                        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
                             {[
-                                { label: 'Servicios activos', value: '0' },
+                                {
+                                    label: 'Licencias totales',
+                                    value: String(licenseStats?.total ?? 0),
+                                },
+                                {
+                                    label: 'Licencias activas',
+                                    value: String(licenseStats?.active ?? 0),
+                                },
+                                {
+                                    label: 'Licencias pendientes',
+                                    value: String(licenseStats?.pending ?? 0),
+                                },
                                 { label: 'Recibos pendientes', value: '0' },
                                 { label: 'Tickets', value: '0' },
                             ].map((stat) => (
