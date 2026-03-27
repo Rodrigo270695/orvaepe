@@ -23,6 +23,9 @@ return new class extends Migration
             /** email | in_app | … */
             $table->string('channel', 32);
 
+            $table->string('subject', 255)->nullable();
+            $table->text('message')->nullable();
+
             $table->json('data');
 
             $table->timestamp('read_at')->nullable();
