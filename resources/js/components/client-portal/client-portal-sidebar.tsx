@@ -35,7 +35,7 @@ export function ClientPortalSidebar() {
                     />
                 </Link>
             </div>
-            <ClientPortalNav className="flex-1 overflow-y-auto" />
+            <ClientPortalNav className="flex-1 overflow-y-auto overflow-x-hidden" />
             <SidebarFooter />
         </aside>
     );

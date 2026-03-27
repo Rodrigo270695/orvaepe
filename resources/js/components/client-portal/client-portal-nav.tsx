@@ -180,10 +180,10 @@ export function ClientPortalNav({
 
     return (
         <nav
-            className={cn('space-y-1 p-3', className)}
+            className={cn('space-y-1 overflow-x-hidden p-3', className)}
             aria-label="Área del cliente"
         >
-            <ul className="space-y-0.5">
+            <ul className="space-y-0.5 overflow-x-hidden">
                 {clientPortalNavItems.map((item) => (
                     <NavRow
                         key={item.href + item.label}
