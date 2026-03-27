@@ -51,15 +51,15 @@ export default function AppearanceFloatingRailToggle() {
             <div className="relative z-10">
                 <button
                     type="button"
-                    className="inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-[color-mix(in_oklab,var(--o-amber)_35%,transparent)] bg-[color-mix(in_oklab,var(--o-amber)_10%,transparent)] backdrop-blur shadow-[0_0_0_1px_rgba(0,0,0,0.08),0_18px_50px_rgba(0,0,0,0.25)] cursor-pointer transition-colors hover:bg-[color-mix(in_oklab,var(--o-amber)_18%,transparent)]"
+                    className="inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-[color-mix(in_oklab,var(--o-amber)_35%,transparent)] bg-[color-mix(in_oklab,var(--o-amber)_10%,transparent)] dark:border-[color-mix(in_oklab,var(--state-info)_45%,var(--o-amber))] dark:bg-[color-mix(in_oklab,var(--state-info)_32%,var(--background))] backdrop-blur shadow-[0_0_0_1px_rgba(0,0,0,0.08),0_18px_50px_rgba(0,0,0,0.25)] dark:shadow-[0_0_0_1px_color-mix(in_oklab,var(--state-info)_35%,transparent),0_18px_50px_color-mix(in_oklab,var(--state-info)_30%,transparent)] cursor-pointer transition-colors hover:bg-[color-mix(in_oklab,var(--o-amber)_18%,transparent)] dark:hover:bg-[color-mix(in_oklab,var(--state-info)_44%,var(--background))]"
                     onClick={() => setOpen((v) => !v)}
                     aria-expanded={open}
                     aria-label="Cambiar modo de apariencia"
                 >
                     {resolvedAppearance === 'dark' ? (
-                        <Sun className="size-5 text-[var(--o-amber)]" />
+                        <Sun className="size-5 text-[var(--o-amber)] dark:text-[color-mix(in_oklab,var(--state-info)_75%,white)]" />
                     ) : (
-                        <Moon className="size-5 text-[var(--o-amber)]" />
+                        <Moon className="size-5 text-[var(--o-amber)] dark:text-[color-mix(in_oklab,var(--state-info)_75%,white)]" />
                     )}
                 </button>
 
