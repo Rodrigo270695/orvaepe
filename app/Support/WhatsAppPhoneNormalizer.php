@@ -35,4 +35,17 @@ final class WhatsAppPhoneNormalizer
 
         return null;
     }
+
+    /**
+     * Formato que documenta UltraMsg para el campo `to`: + y dígitos E.164 (ej. +51987654321).
+     */
+    public static function toUltraMsgTo(?string $phone): ?string
+    {
+        $digits = self::toDigits($phone);
+        if ($digits === null) {
+            return null;
+        }
+
+        return '+'.$digits;
+    }
 }

@@ -60,24 +60,23 @@ final class OrderPaidNotifier
             'sent_at' => now(),
         ]);
 
-        if ($user->phone) {
-            $notification = Notification::query()->create([
-                'user_id' => $user->id,
-                'type' => 'order.paid.customer',
-                'channel' => 'whatsapp',
-                'subject' => 'Pago confirmado',
-                'message' => 'Tu pedido '.$order->order_number.' ha sido registrado como pagado. Las licencias se generarán en breve.',
-                'data' => [
-                    'order_id' => $order->id,
-                    'order_number' => $order->order_number,
-                    'amount' => (string) $order->grand_total,
-                    'currency' => (string) $order->currency,
-                ],
-                'status' => 'pending',
-            ]);
+        $notification = Notification::query()->create([
+            'user_id' => $user->id,
+            'type' => 'order.paid.customer',
+            'channel' => 'whatsapp',
+            'subject' => 'Pago confirmado',
+            'message' => 'Tu pedido '.$order->order_number.' ha sido registrado como pagado. Las licencias se generarán en breve.',
+            'data' => [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'amount' => (string) $order->grand_total,
+                'currency' => (string) $order->currency,
+                'phone_snapshot' => $user->phone,
+            ],
+            'status' => 'pending',
+        ]);
 
-            $this->sender->send($notification);
-        }
+        $this->sender->send($notification);
     }
 
     public function notifyAdmin(Order $order, User $user): void

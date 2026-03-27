@@ -47,16 +47,28 @@ class NotificationSender
 
     private function sendWhatsApp(Notification $notification): void
     {
-        $user = $notification->user;
+        $user = $notification->user()->first(['id', 'phone']);
         $to = null;
 
         if ($user && $user->phone) {
-            $to = WhatsAppPhoneNormalizer::toDigits($user->phone);
+            $to = WhatsAppPhoneNormalizer::toUltraMsgTo($user->phone);
         }
 
         if (! $to && $notification->type === 'order.paid.admin') {
-            $to = WhatsAppPhoneNormalizer::toDigits((string) config('ultramsg.admin_number'))
-                ?: preg_replace('/\D+/', '', (string) config('ultramsg.admin_number'));
+            $adminFromEnv = trim((string) config('ultramsg.admin_number'));
+            if ($adminFromEnv !== '') {
+                $to = WhatsAppPhoneNormalizer::toUltraMsgTo($adminFromEnv);
+            }
+        }
+
+        // Fallback para cliente: usar snapshot guardado al crear la notificación.
+        if (! $to && $notification->type === 'order.paid.customer') {
+            $snapshotPhone = is_array($notification->data)
+                ? ($notification->data['phone_snapshot'] ?? null)
+                : null;
+            if (is_string($snapshotPhone) && $snapshotPhone !== '') {
+                $to = WhatsAppPhoneNormalizer::toUltraMsgTo($snapshotPhone);
+            }
         }
 
         if (! $to) {
