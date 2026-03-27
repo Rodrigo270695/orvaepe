@@ -8,7 +8,10 @@ export type LicenseKeyRow = {
     revoked_at: string | null;
     revoke_reason: string | null;
     created_at: string;
-    metadata?: { created_via?: string } | null;
+    metadata?: {
+        created_via?: string;
+        awaiting_provider_key?: boolean;
+    } | null;
     user?: {
         name: string;
         lastname: string | null;

@@ -1,5 +1,6 @@
 import { router, usePage } from '@inertiajs/react';
 import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
+import * as React from 'react';
 
 import AdminCrudIndex from '@/components/admin/crud/AdminCrudIndex';
 import type { AdminCrudTableColumn } from '@/components/admin/crud/AdminCrudTable';
@@ -8,9 +9,18 @@ import {
     formatDateShort,
     formatDateTime,
 } from '@/components/acceso/entitlements/entitlementDisplay';
+import { cn } from '@/lib/utils';
+
+function csrfHeader(): Record<string, string> {
+    const token = document
+        .querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
+        ?.getAttribute('content');
+    return token ? { 'X-CSRF-TOKEN': token } : {};
+}
 
 type NotificationRow = {
     id: string;
+    user_id?: number | string;
     user: {
         id: number | string;
         name: string;
@@ -50,8 +60,101 @@ export default function AccesoNotificationsIndex({
     initialSortDir,
 }: Props) {
     const page = usePage();
+    const authUserId = page.props.auth?.user?.id;
+    const isSuperAdmin = (page.props.auth?.roles ?? []).includes('superadmin');
     const rows: NotificationRow[] = (notifications?.data ?? []) as NotificationRow[];
-    const total = notifications?.total ?? rows.length;
+    const [readOverride, setReadOverride] = React.useState<Record<string, string>>({});
+    const [markingId, setMarkingId] = React.useState<string | null>(null);
+
+    const effectiveReadAt = React.useCallback(
+        (r: NotificationRow) => readOverride[r.id] ?? r.read_at,
+        [readOverride],
+    );
+
+    const handleRowClick = React.useCallback(
+        async (r: NotificationRow) => {
+            const recipientId = r.user_id ?? r.user?.id;
+            const canMark =
+                isSuperAdmin ||
+                (authUserId !== undefined &&
+                    String(recipientId) === String(authUserId));
+            if (!canMark) {
+                return;
+            }
+            if (effectiveReadAt(r) || markingId === r.id) {
+                return;
+            }
+            setMarkingId(r.id);
+            try {
+                const res = await fetch(`/panel/acceso-notificaciones/${r.id}/read`, {
+                    method: 'PATCH',
+                    credentials: 'same-origin',
+                    headers: {
+                        Accept: 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        ...csrfHeader(),
+                    },
+                    body: JSON.stringify({}),
+                });
+                if (!res.ok) {
+                    return;
+                }
+                const data = (await res.json()) as { read_at?: string };
+                const readAt = data.read_at ?? new Date().toISOString();
+                setReadOverride((prev) => ({ ...prev, [r.id]: readAt }));
+
+                const countRes = await fetch('/panel/acceso-notificaciones/unread-count', {
+                    credentials: 'same-origin',
+                    headers: { Accept: 'application/json' },
+                });
+                if (countRes.ok) {
+                    const { count } = (await countRes.json()) as { count?: number };
+                    if (typeof count === 'number') {
+                        window.dispatchEvent(
+                            new CustomEvent('orvae:staff-notifications-count', {
+                                detail: { count },
+                            }),
+                        );
+                    }
+                }
+            } finally {
+                setMarkingId(null);
+            }
+        },
+        [effectiveReadAt, markingId, authUserId, isSuperAdmin],
+    );
+
+    const rowClassName = React.useCallback(
+        (r: NotificationRow) => {
+            const recipientId = r.user_id ?? r.user?.id;
+            const isMine =
+                authUserId !== undefined &&
+                String(recipientId) === String(authUserId);
+            const canMark =
+                isSuperAdmin ||
+                (authUserId !== undefined &&
+                    String(recipientId) === String(authUserId));
+            const read = Boolean(effectiveReadAt(r));
+            return cn(
+                'rounded-lg border border-transparent',
+                !canMark &&
+                    'cursor-default bg-[color-mix(in_oklab,var(--muted-foreground)_5%,transparent)] opacity-95',
+                canMark &&
+                    read &&
+                    'bg-[color-mix(in_oklab,var(--muted-foreground)_8%,transparent)] opacity-90',
+                canMark &&
+                    !read &&
+                    'cursor-pointer bg-[color-mix(in_oklab,var(--state-info)_10%,transparent)] shadow-[0_2px_10px_rgba(0,0,0,0.18)] hover:bg-[color-mix(in_oklab,var(--state-info)_14%,transparent)]',
+                !isMine &&
+                    isSuperAdmin &&
+                    !read &&
+                    'ring-1 ring-[color-mix(in_oklab,var(--state-alert)_35%,transparent)]',
+                markingId === r.id && 'pointer-events-none opacity-70',
+            );
+        },
+        [effectiveReadAt, markingId, authUserId, isSuperAdmin],
+    );
 
     const handleSort = (sortBy: string) => {
         const currentUrl = new URL(page.url, window.location.origin);
@@ -153,7 +256,7 @@ export default function AccesoNotificationsIndex({
         {
             header: sortableHeader('Leída', 'read_at'),
             cellClassName: 'px-3 py-2 align-middle text-xs text-muted-foreground',
-            render: (r) => (r.read_at ? formatDateShort(r.read_at) : '—'),
+            render: (r) => (effectiveReadAt(r) ? formatDateShort(effectiveReadAt(r)!) : '—'),
         },
         {
             header: sortableHeader('Enviada', 'sent_at'),
@@ -173,6 +276,8 @@ export default function AccesoNotificationsIndex({
             paginator={notifications ?? null}
             rowKey={(r) => r.id}
             columns={columns}
+            rowClassName={rowClassName}
+            onRowClick={handleRowClick}
             emptyState="No hay notificaciones registradas. Cuando existan filas en notifications, aparecerán aquí."
         />
     );

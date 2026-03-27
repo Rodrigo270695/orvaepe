@@ -16,6 +16,9 @@ class LicenseKey extends Model
     /** Alta manual: editable y eliminable hasta activar. */
     public const STATUS_DRAFT = 'draft';
 
+    /** Pago confirmado; clave real pendiente de cargar por el admin. */
+    public const STATUS_PENDING = 'pending';
+
     public const STATUS_ACTIVE = 'active';
 
     public const STATUS_EXPIRED = 'expired';
@@ -24,6 +27,9 @@ class LicenseKey extends Model
 
     /** metadata.created_via — licencia alta manual desde el panel admin. */
     public const CREATED_VIA_ADMIN_MANUAL = 'admin_manual';
+
+    /** metadata.created_via — generada al marcar el pedido como pagado (checkout). */
+    public const CREATED_VIA_ORDER_PAYMENT = 'order_payment';
 
     protected $table = 'license_keys';
 
@@ -123,5 +129,16 @@ class LicenseKey extends Model
 
         // Legacy: filas sin pedido y sin metadata (antes de guardar created_via).
         return $this->order_id === null && empty($this->metadata);
+    }
+
+    public function isPendingOrderFulfillment(): bool
+    {
+        return $this->status === self::STATUS_PENDING
+            && ($this->metadata['created_via'] ?? null) === self::CREATED_VIA_ORDER_PAYMENT;
+    }
+
+    public function isFromOrderPayment(): bool
+    {
+        return ($this->metadata['created_via'] ?? null) === self::CREATED_VIA_ORDER_PAYMENT;
     }
 }

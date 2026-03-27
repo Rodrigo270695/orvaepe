@@ -100,6 +100,7 @@ export default function AccesoLicenciasIndex({
     const statusOnPage = React.useMemo(
         () => ({
             draft: rows.filter((r) => r.status === 'draft').length,
+            pending: rows.filter((r) => r.status === 'pending').length,
             active: rows.filter((r) => r.status === 'active').length,
             expired: rows.filter((r) => r.status === 'expired').length,
             revoked: rows.filter((r) => r.status === 'revoked').length,
@@ -117,11 +118,16 @@ export default function AccesoLicenciasIndex({
             header: sortableHeader('Clave', 'key'),
             cellClassName:
                 'px-3 py-2 align-middle font-mono text-[11px] max-w-[14rem]',
-            render: (r) => (
-                <span className="break-all text-[#4A80B8]" title={r.key}>
-                    {formatLicenseKeyPreview(r.key)}
-                </span>
-            ),
+            render: (r) =>
+                r.status === 'pending' ? (
+                    <span className="text-[11px] italic text-muted-foreground">
+                        Pendiente (clave por proveedor)
+                    </span>
+                ) : (
+                    <span className="break-all text-[#4A80B8]" title={r.key}>
+                        {formatLicenseKeyPreview(r.key)}
+                    </span>
+                ),
         },
         {
             header: 'Cliente',

@@ -20,6 +20,10 @@ export type AdminCrudTableProps<T> = {
      * Texto cuando `rows` está vacío.
      */
     emptyState?: string;
+    /** Clases por fila (ej. sombreado si no leída). */
+    rowClassName?: (row: T) => string | undefined;
+    /** Clic en la fila (ej. marcar como leída). */
+    onRowClick?: (row: T) => void;
 };
 
 export default function AdminCrudTable<T>({
@@ -27,6 +31,8 @@ export default function AdminCrudTable<T>({
     rowKey,
     columns,
     emptyState = 'No hay registros todavía.',
+    rowClassName,
+    onRowClick,
 }: AdminCrudTableProps<T>) {
     return (
         <div className="neumorph-inset overflow-x-auto rounded-xl border border-border/60 p-1">
@@ -50,7 +56,23 @@ export default function AdminCrudTable<T>({
                     {rows.map((row) => (
                         <tr
                             key={rowKey(row)}
-                            className=""
+                            className={cn(
+                                onRowClick ? 'cursor-pointer transition-colors' : '',
+                                rowClassName?.(row),
+                            )}
+                            onClick={onRowClick ? () => onRowClick(row) : undefined}
+                            role={onRowClick ? 'button' : undefined}
+                            tabIndex={onRowClick ? 0 : undefined}
+                            onKeyDown={
+                                onRowClick
+                                    ? (e) => {
+                                          if (e.key === 'Enter' || e.key === ' ') {
+                                              e.preventDefault();
+                                              onRowClick(row);
+                                          }
+                                      }
+                                    : undefined
+                            }
                         >
                             {columns.map((col, idx) => (
                                 <td

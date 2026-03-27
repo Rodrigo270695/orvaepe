@@ -2,6 +2,8 @@ import type { LicenseKeyRow } from '@/components/acceso/licencias/licenseKeyType
 
 export const CREATED_VIA_ADMIN_MANUAL = 'admin_manual';
 
+export const CREATED_VIA_ORDER_PAYMENT = 'order_payment';
+
 function metadataIsEmpty(
     m: LicenseKeyRow['metadata'],
 ): m is null | undefined | Record<string, never> {
@@ -26,8 +28,18 @@ export function licenseActivationsUsed(row: LicenseKeyRow): number {
     return typeof n === 'number' ? n : 0;
 }
 
+export function isLicenseFromOrderPayment(row: LicenseKeyRow): boolean {
+    return row.metadata?.created_via === CREATED_VIA_ORDER_PAYMENT;
+}
+
 export function canEditLicense(row: LicenseKeyRow): boolean {
-    return isLicenseManualAdmin(row) && row.status !== 'revoked';
+    if (row.status === 'revoked') {
+        return false;
+    }
+    if (isLicenseManualAdmin(row)) {
+        return true;
+    }
+    return isLicenseFromOrderPayment(row);
 }
 
 /** Solo borrador, sin activaciones. */

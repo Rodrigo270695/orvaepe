@@ -7,8 +7,8 @@ use App\Http\Controllers\Admin\EntitlementSecretsController;
 use App\Http\Controllers\Admin\InformesController;
 use App\Http\Controllers\Admin\LicenseActivationsController;
 use App\Http\Controllers\Admin\LicenseKeysController;
-use App\Http\Controllers\Admin\OemLicenseDeliveriesController;
 use App\Http\Controllers\Admin\NotificationsController;
+use App\Http\Controllers\Admin\OemLicenseDeliveriesController;
 use App\Http\Controllers\Admin\ShowcaseClientsController;
 use App\Http\Controllers\Admin\SubscriptionsController;
 use App\Http\Controllers\Admin\VentasPagosController;
@@ -345,6 +345,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::get('panel/acceso-notificaciones', [NotificationsController::class, 'index'])
             ->name('panel.acceso-notificaciones.index');
+
+        Route::get('panel/acceso-notificaciones/unread-count', [NotificationsController::class, 'unreadCount'])
+            ->name('panel.acceso-notificaciones.unread-count');
+
+        Route::patch('panel/acceso-notificaciones/{notification}/read', [NotificationsController::class, 'markAsRead'])
+            ->name('panel.acceso-notificaciones.read');
 
         Route::get('panel/operacion-webhooks', [WebhookEventsController::class, 'index'])
             ->name('panel.operacion-webhooks.index');

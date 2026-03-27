@@ -48,10 +48,16 @@ export default function AccesoLicenciasMobileCards({
                     <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0 flex-1 space-y-1">
                             <p
-                                className="break-all font-mono text-[11px] font-semibold text-[#4A80B8]"
-                                title={row.key}
+                                className={
+                                    row.status === 'pending'
+                                        ? 'text-[11px] italic text-muted-foreground'
+                                        : 'break-all font-mono text-[11px] font-semibold text-[#4A80B8]'
+                                }
+                                title={row.status === 'pending' ? undefined : row.key}
                             >
-                                {formatLicenseKeyPreview(row.key)}
+                                {row.status === 'pending'
+                                    ? 'Pendiente (clave por proveedor)'
+                                    : formatLicenseKeyPreview(row.key)}
                             </p>
                             <p className="text-xs font-medium leading-snug">
                                 {formatClientFullName(row.user ?? null)}

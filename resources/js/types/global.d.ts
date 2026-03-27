@@ -12,6 +12,8 @@ declare module '@inertiajs/core' {
             softwareNavLinks?: { label: string; href: string }[];
             /** Metadatos y URLs para SEO (manifest, OG, JSON-LD) */
             seo: SeoDefaults;
+            /** Notificaciones sin leer (tabla `notifications`, rol superadmin) */
+            staffUnreadNotificationsCount?: number;
             [key: string]: unknown;
         };
     }

@@ -10,6 +10,8 @@ use App\Models\User;
 use App\Support\AdminFlashToast;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -78,6 +80,7 @@ class LicenseKeysController extends Controller
 
         $allowedStatuses = [
             LicenseKey::STATUS_DRAFT,
+            LicenseKey::STATUS_PENDING,
             LicenseKey::STATUS_ACTIVE,
             LicenseKey::STATUS_EXPIRED,
             LicenseKey::STATUS_REVOKED,
@@ -203,6 +206,10 @@ class LicenseKeysController extends Controller
 
     public function update(Request $request, LicenseKey $license_key): RedirectResponse
     {
+        if ($license_key->isFromOrderPayment()) {
+            return $this->updateOrderPaymentLicense($request, $license_key);
+        }
+
         if (! $license_key->isCreatedViaAdminManual()) {
             abort(403);
         }
@@ -241,6 +248,66 @@ class LicenseKeysController extends Controller
         }
 
         $license_key->update($payload);
+
+        return redirect()
+            ->route('panel.acceso-licencias.index', $this->licenseListRetainQuery($request))
+            ->with('toast', AdminFlashToast::success('Licencia actualizada.'));
+    }
+
+    private function updateOrderPaymentLicense(Request $request, LicenseKey $license_key): RedirectResponse
+    {
+        if ($license_key->isRevoked()) {
+            return redirect()
+                ->back()
+                ->with('toast', AdminFlashToast::error('No se puede editar una licencia revocada.'));
+        }
+
+        if ($license_key->status === LicenseKey::STATUS_PENDING) {
+            $validated = $request->validate([
+                'key' => ['required', 'string', 'max:255', Rule::unique('license_keys', 'key')->ignore($license_key->id)],
+                'max_activations' => ['required', 'integer', 'min:1', 'max:999'],
+                'expires_at' => ['nullable', 'date'],
+                'status' => ['required', 'in:'.LicenseKey::STATUS_PENDING.','.LicenseKey::STATUS_ACTIVE],
+            ]);
+
+            $expiresAt = $validated['expires_at'] ?? null;
+            if ($expiresAt === '') {
+                $expiresAt = null;
+            }
+
+            $metadata = $license_key->metadata ?? [];
+            if (($validated['status'] ?? '') === LicenseKey::STATUS_ACTIVE) {
+                $metadata['awaiting_provider_key'] = false;
+                $metadata['fulfilled_at'] = now()->toIso8601String();
+            }
+
+            $license_key->update([
+                'key' => trim($validated['key']),
+                'max_activations' => $validated['max_activations'],
+                'expires_at' => $expiresAt,
+                'status' => $validated['status'],
+                'metadata' => $metadata,
+            ]);
+
+            return redirect()
+                ->route('panel.acceso-licencias.index', $this->licenseListRetainQuery($request))
+                ->with('toast', AdminFlashToast::success('Licencia actualizada.'));
+        }
+
+        $validated = $request->validate([
+            'max_activations' => ['required', 'integer', 'min:1', 'max:999'],
+            'expires_at' => ['nullable', 'date'],
+        ]);
+
+        $expiresAt = $validated['expires_at'] ?? null;
+        if ($expiresAt === '') {
+            $expiresAt = null;
+        }
+
+        $license_key->update([
+            'max_activations' => $validated['max_activations'],
+            'expires_at' => $expiresAt,
+        ]);
 
         return redirect()
             ->route('panel.acceso-licencias.index', $this->licenseListRetainQuery($request))
@@ -286,7 +353,7 @@ class LicenseKeysController extends Controller
     }
 
     /**
-     * @return \Illuminate\Support\Collection<int, array{id: int, name: string, email: string}>
+     * @return Collection<int, array{id: int, name: string, email: string}>
      */
     private function usersForSelect()
     {
@@ -304,7 +371,7 @@ class LicenseKeysController extends Controller
     }
 
     /**
-     * @return \Illuminate\Support\Collection<int, array{id: string, code: string, name: string, product_name: string, currency: string, list_price: string}>
+     * @return Collection<int, array{id: string, code: string, name: string, product_name: string, currency: string, list_price: string}>
      */
     private function skusForSelect()
     {

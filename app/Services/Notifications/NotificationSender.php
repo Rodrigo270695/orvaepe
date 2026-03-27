@@ -4,14 +4,14 @@ namespace App\Services\Notifications;
 
 use App\Models\Notification;
 use App\Services\WhatsApp\UltraMsgClient;
+use App\Support\WhatsAppPhoneNormalizer;
 use Illuminate\Support\Facades\Log;
 
 class NotificationSender
 {
     public function __construct(
         private readonly UltraMsgClient $whatsApp,
-    ) {
-    }
+    ) {}
 
     public function send(Notification $notification): void
     {
@@ -51,9 +51,12 @@ class NotificationSender
         $to = null;
 
         if ($user && $user->phone) {
-            $to = $user->phone;
-        } elseif ($notification->type === 'order.paid.admin') {
-            $to = (string) config('ultramsg.admin_number');
+            $to = WhatsAppPhoneNormalizer::toDigits($user->phone);
+        }
+
+        if (! $to && $notification->type === 'order.paid.admin') {
+            $to = WhatsAppPhoneNormalizer::toDigits((string) config('ultramsg.admin_number'))
+                ?: preg_replace('/\D+/', '', (string) config('ultramsg.admin_number'));
         }
 
         if (! $to) {
@@ -70,4 +73,3 @@ class NotificationSender
         $this->whatsApp->sendText($to, $body);
     }
 }
-

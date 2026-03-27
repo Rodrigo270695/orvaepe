@@ -1,4 +1,4 @@
-import { Ban, CircleCheck, Clock3, FileEdit } from 'lucide-react';
+import { Ban, CircleCheck, Clock3, FileEdit, Hourglass } from 'lucide-react';
 
 import {
     licenseKeyStatusBadgeClass,
@@ -13,11 +13,13 @@ export default function LicenseKeyStatusBadge({ status }: Props) {
     const Icon =
         status === 'draft'
             ? FileEdit
-            : status === 'active'
-              ? CircleCheck
-              : status === 'expired'
-                ? Clock3
-                : Ban;
+            : status === 'pending'
+              ? Hourglass
+              : status === 'active'
+                ? CircleCheck
+                : status === 'expired'
+                  ? Clock3
+                  : Ban;
 
     return (
         <span

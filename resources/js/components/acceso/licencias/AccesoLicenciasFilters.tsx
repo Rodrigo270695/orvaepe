@@ -71,6 +71,7 @@ export default function AccesoLicenciasFilters({
                     options={[
                         { value: '_all_', label: 'Todos' },
                         { value: 'draft', label: 'Borrador' },
+                        { value: 'pending', label: 'Pendiente' },
                         { value: 'active', label: 'Activa' },
                         { value: 'expired', label: 'Vencida' },
                         { value: 'revoked', label: 'Revocada' },

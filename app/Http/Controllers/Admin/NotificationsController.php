@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Notification;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -92,5 +93,30 @@ class NotificationsController extends Controller
             ],
         ]);
     }
-}
 
+    public function unreadCount(Request $request): JsonResponse
+    {
+        $query = Notification::query()->whereNull('read_at');
+
+        if (! $request->user()->hasRole('superadmin')) {
+            $query->where('user_id', $request->user()->id);
+        }
+
+        return response()->json(['count' => $query->count()]);
+    }
+
+    public function markAsRead(Request $request, Notification $notification): JsonResponse
+    {
+        $isRecipient = (int) $notification->user_id === (int) $request->user()->id;
+        $isSuperAdmin = $request->user()->hasRole('superadmin');
+        if (! $isRecipient && ! $isSuperAdmin) {
+            abort(403);
+        }
+
+        $notification->markAsRead();
+
+        return response()->json([
+            'read_at' => $notification->fresh()->read_at?->toIso8601String(),
+        ]);
+    }
+}

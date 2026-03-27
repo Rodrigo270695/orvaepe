@@ -1,6 +1,7 @@
 export function licenseKeyStatusLabel(s: string): string {
     const map: Record<string, string> = {
         draft: 'Borrador',
+        pending: 'Pendiente',
         active: 'Activa',
         expired: 'Vencida',
         revoked: 'Revocada',
@@ -11,6 +12,9 @@ export function licenseKeyStatusLabel(s: string): string {
 export function licenseKeyStatusBadgeClass(s: string): string {
     if (s === 'draft') {
         return 'border-[#B8860B]/40 bg-[#B8860B]/12 text-[#D4A84B] shadow-sm';
+    }
+    if (s === 'pending') {
+        return 'border-[#B8860B]/50 bg-[#B8860B]/10 text-[#E8C547] shadow-sm';
     }
     if (s === 'active') {
         return 'border-[#4A9A72]/35 bg-[#4A9A72]/12 text-[#4A9A72] shadow-sm';

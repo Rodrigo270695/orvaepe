@@ -10,6 +10,7 @@ type Props = {
     /** Conteos en la página actual (referencia rápida). */
     statusOnPage?: {
         draft: number;
+        pending: number;
         active: number;
         expired: number;
         revoked: number;
@@ -66,6 +67,9 @@ export default function AccesoLicenciasToolbar({
                     <>
                         <span className="inline-flex items-center gap-1 rounded-full border border-[#B8860B]/35 bg-[#B8860B]/10 px-2.5 py-1 text-xs font-medium text-[#D4A84B]">
                             Borradores {statusOnPage.draft}
+                        </span>
+                        <span className="inline-flex items-center gap-1 rounded-full border border-[#E8C547]/35 bg-[#B8860B]/10 px-2.5 py-1 text-xs font-medium text-[#E8C547]">
+                            Pendientes {statusOnPage.pending}
                         </span>
                         <span className="inline-flex items-center gap-1 rounded-full border border-[#4A9A72]/30 bg-[#4A9A72]/10 px-2.5 py-1 text-xs font-medium text-[#4A9A72]">
                             Activas {statusOnPage.active}

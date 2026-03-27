@@ -84,6 +84,9 @@ type Props<T> = {
 
     emptyState?: string;
 
+    rowClassName?: (row: T) => string | undefined;
+    onRowClick?: (row: T) => void;
+
     /**
      * Listados solo lectura (sin modal crear/editar).
      */
@@ -102,6 +105,8 @@ export default function AdminCrudIndex<T>({
     renderAboveTable,
     renderMobileRows,
     emptyState = 'No hay registros todavía.',
+    rowClassName,
+    onRowClick,
     upsert,
     delete: deleteConfig,
 }: Props<T>) {
@@ -174,6 +179,8 @@ export default function AdminCrudIndex<T>({
                     rowKey={rowKey}
                     columns={computedColumns}
                     emptyState={emptyState}
+                    rowClassName={rowClassName}
+                    onRowClick={onRowClick}
                 />
             </div>
 

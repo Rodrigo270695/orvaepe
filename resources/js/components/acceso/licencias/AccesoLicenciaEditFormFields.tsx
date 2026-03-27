@@ -1,9 +1,11 @@
-import * as React from 'react';
-
 import InputError from '@/components/input-error';
 import AdminUnderlineInput from '@/components/admin/form/admin-underline-input';
 import AdminUnderlineLabel from '@/components/admin/form/admin-underline-label';
 import AdminUnderlineSelect from '@/components/admin/form/admin-underline-select';
+import {
+    isLicenseFromOrderPayment,
+    isLicenseManualAdmin,
+} from '@/components/acceso/licencias/licenseKeyAccess';
 import { formatLicenseKeyPreview } from '@/components/acceso/licencias/licenseKeyDisplay';
 import type { LicenseKeyRow } from '@/components/acceso/licencias/licenseKeyTypes';
 import { formatClientFullName } from '@/components/acceso/entitlements/entitlementDisplay';
@@ -28,6 +30,175 @@ function expiresAtToInputValue(iso: string | null): string {
 }
 
 export default function AccesoLicenciaEditFormFields({ item, errors }: Props) {
+    const orderPayment = isLicenseFromOrderPayment(item);
+
+    if (orderPayment && item.status === 'pending') {
+        return (
+            <div className="space-y-5">
+                <header className="border-b border-border/40 pb-4">
+                    <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Completar licencia (pedido pagado)
+                    </h2>
+                    <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
+                        Pega la clave que te entregó el proveedor y marca la licencia como
+                        activa cuando esté lista. El cliente podrá verla en su portal.
+                    </p>
+                </header>
+
+                <div className="space-y-3 rounded-xl border border-border/50 p-3 text-xs">
+                    <div>
+                        <p className="text-muted-foreground">Cliente</p>
+                        <p className="text-sm font-medium text-foreground">
+                            {formatClientFullName(item.user ?? null)}
+                        </p>
+                        <p className="truncate font-mono text-[10px] text-muted-foreground">
+                            {item.user?.email ?? '—'}
+                        </p>
+                    </div>
+                </div>
+
+                <div className="space-y-1.5">
+                    <AdminUnderlineLabel htmlFor="edit_license_key" required>
+                        Clave de producto
+                    </AdminUnderlineLabel>
+                    <AdminUnderlineInput
+                        id="edit_license_key"
+                        name="key"
+                        type="text"
+                        defaultValue={item.key}
+                        className="font-mono text-[11px]"
+                        required
+                    />
+                    <p className="text-[10px] text-muted-foreground">
+                        Sustituye el valor temporal (PEND-…) por la clave real.
+                    </p>
+                    <InputError message={errors.key} />
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div className="space-y-1.5 md:col-span-2">
+                        <AdminUnderlineLabel htmlFor="edit_order_license_status" required>
+                            Estado
+                        </AdminUnderlineLabel>
+                        <AdminUnderlineSelect
+                            id="edit_order_license_status"
+                            name="status"
+                            defaultValue={item.status}
+                            options={[
+                                { value: 'pending', label: 'Pendiente' },
+                                { value: 'active', label: 'Activa' },
+                            ]}
+                            required
+                        />
+                        <InputError message={errors.status} />
+                    </div>
+
+                    <div className="space-y-1.5">
+                        <AdminUnderlineLabel htmlFor="edit_max_activations" required>
+                            Máx. activaciones
+                        </AdminUnderlineLabel>
+                        <AdminUnderlineInput
+                            id="edit_max_activations"
+                            name="max_activations"
+                            type="number"
+                            min={1}
+                            max={999}
+                            defaultValue={item.max_activations ?? 1}
+                            required
+                        />
+                        <InputError message={errors.max_activations} />
+                    </div>
+
+                    <div className="space-y-1.5">
+                        <AdminUnderlineLabel htmlFor="edit_expires_at">
+                            Caduca (opcional)
+                        </AdminUnderlineLabel>
+                        <AdminUnderlineInput
+                            id="edit_expires_at"
+                            name="expires_at"
+                            type="date"
+                            defaultValue={expiresAtToInputValue(item.expires_at)}
+                        />
+                        <InputError message={errors.expires_at} />
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (orderPayment && item.status === 'active') {
+        return (
+            <div className="space-y-5">
+                <header className="border-b border-border/40 pb-4">
+                    <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Vigencia
+                    </h2>
+                    <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
+                        Licencia activa originada en un pedido. Solo puedes ajustar
+                        activaciones y fecha de caducidad.
+                    </p>
+                </header>
+
+                <div className="space-y-3 rounded-xl border border-border/50 p-3 text-xs">
+                    <div>
+                        <p className="text-muted-foreground">Clave</p>
+                        <p
+                            className="break-all font-mono text-[11px] font-medium text-[#4A80B8]"
+                            title={item.key}
+                        >
+                            {formatLicenseKeyPreview(item.key, 24, 8)}
+                        </p>
+                    </div>
+                    <div>
+                        <p className="text-muted-foreground">Cliente</p>
+                        <p className="text-sm font-medium text-foreground">
+                            {formatClientFullName(item.user ?? null)}
+                        </p>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div className="space-y-1.5">
+                        <AdminUnderlineLabel htmlFor="edit_max_activations" required>
+                            Máx. activaciones
+                        </AdminUnderlineLabel>
+                        <AdminUnderlineInput
+                            id="edit_max_activations"
+                            name="max_activations"
+                            type="number"
+                            min={1}
+                            max={999}
+                            defaultValue={item.max_activations ?? 1}
+                            required
+                        />
+                        <InputError message={errors.max_activations} />
+                    </div>
+
+                    <div className="space-y-1.5">
+                        <AdminUnderlineLabel htmlFor="edit_expires_at">
+                            Caduca (opcional)
+                        </AdminUnderlineLabel>
+                        <AdminUnderlineInput
+                            id="edit_expires_at"
+                            name="expires_at"
+                            type="date"
+                            defaultValue={expiresAtToInputValue(item.expires_at)}
+                        />
+                        <InputError message={errors.expires_at} />
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (!isLicenseManualAdmin(item)) {
+        return (
+            <p className="text-sm text-muted-foreground">
+                No se puede editar este registro desde aquí.
+            </p>
+        );
+    }
+
     return (
         <div className="space-y-5">
             <header className="border-b border-border/40 pb-4">
