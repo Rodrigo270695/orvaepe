@@ -5,9 +5,10 @@ namespace App\Actions\Fortify;
 use App\Concerns\PasswordValidationRules;
 use App\Concerns\ProfileValidationRules;
 use App\Models\User;
+use App\Models\UserProfile;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
 
 class CreateNewUser implements CreatesNewUsers
@@ -58,6 +59,16 @@ class CreateNewUser implements CreatesNewUsers
             'document_number' => $input['document_number'],
             'phone' => $input['phone'] ?? null,
         ]);
+
+        UserProfile::updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'user_id' => $user->id,
+                'phone' => $user->phone,
+                'billing_email' => $user->email,
+                'country' => 'PE',
+            ],
+        );
 
         $user->assignRole('client');
 

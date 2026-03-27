@@ -71,6 +71,12 @@ class ClientPortalController extends Controller
             array_merge($data, ['user_id' => $user->id]),
         );
 
+        if (array_key_exists('phone', $data)) {
+            $user->forceFill([
+                'phone' => $data['phone'] !== '' ? $data['phone'] : null,
+            ])->save();
+        }
+
         return redirect()
             ->route('cliente.billing')
             ->with('toast', AdminFlashToast::success('Datos de facturación guardados'));
@@ -145,13 +151,24 @@ class ClientPortalController extends Controller
 
     public function updateProfile(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
+        $validated = $request->validated();
+        $user->fill($validated);
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
         }
 
-        $request->user()->save();
+        $user->save();
+
+        UserProfile::updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'user_id' => $user->id,
+                'phone' => $validated['phone'] ?? $user->phone,
+                'billing_email' => $user->email,
+            ],
+        );
 
         return redirect()
             ->route('cliente.profile')
