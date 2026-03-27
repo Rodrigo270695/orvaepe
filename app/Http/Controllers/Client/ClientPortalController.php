@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Client;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Client\UserProfileUpdateRequest;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
+use App\Models\LicenseKey;
 use App\Models\Notification;
 use App\Models\Order;
 use App\Models\UserProfile;
@@ -80,6 +81,41 @@ class ClientPortalController extends Controller
         return Inertia::render('cliente/placeholder', [
             'title' => 'Servicios',
             'description' => 'Aquí verás tus productos y servicios contratados.',
+        ]);
+    }
+
+    public function licenses(Request $request): Response
+    {
+        $user = $request->user();
+
+        $licenses = LicenseKey::query()
+            ->where('user_id', $user->id)
+            ->with([
+                'catalogSku:id,code,name,catalog_product_id',
+                'catalogSku.product:id,name',
+                'order:id,order_number',
+            ])
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(static function (LicenseKey $row): array {
+                return [
+                    'id' => $row->id,
+                    'key' => $row->key,
+                    'status' => $row->status,
+                    'expires_at' => $row->expires_at?->toIso8601String(),
+                    'max_activations' => $row->max_activations,
+                    'activation_count' => $row->activation_count,
+                    'created_at' => $row->created_at?->toIso8601String(),
+                    'order_number' => $row->order?->order_number,
+                    'sku_code' => $row->catalogSku?->code,
+                    'sku_name' => $row->catalogSku?->name,
+                    'product_name' => $row->catalogSku?->product?->name,
+                ];
+            })
+            ->values();
+
+        return Inertia::render('cliente/licencias', [
+            'licenses' => $licenses,
         ]);
     }
 

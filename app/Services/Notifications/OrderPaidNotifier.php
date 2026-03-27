@@ -34,27 +34,42 @@ final class OrderPaidNotifier
 
     private function adminPaidMessage(Order $order, User $user, string $linesSummary): string
     {
-        return 'Pedido '.$order->order_number.' pagado.'."\n"
-            .'Cliente: '.$user->email."\n"
-            .'Total: '.(string) $order->grand_total.' '.(string) $order->currency."\n\n"
-            ."Productos / SKU:\n".$linesSummary;
+        return "🚨 *Nueva compra confirmada*\n"
+            .'📦 Pedido: '.$order->order_number."\n"
+            .'👤 Cliente: '.$user->email."\n"
+            .'💰 Total: '.(string) $order->grand_total.' '.(string) $order->currency."\n\n"
+            ."🧾 Productos / SKU:\n".$linesSummary."\n\n"
+            .'⚡ Acción requerida: revisa la orden y procede con la compra/carga de licencias.';
+    }
+
+    private function customerPaidMessage(Order $order, string $linesSummary): string
+    {
+        return "✅ *Pago confirmado*\n"
+            .'📦 Pedido: '.$order->order_number."\n"
+            .'💰 Total pagado: '.(string) $order->grand_total.' '.(string) $order->currency."\n\n"
+            ."🧾 Detalle:\n".$linesSummary."\n\n"
+            .'⏳ Tu licencia se está procesando y se activará en breve en tu portal.';
     }
 
     public function notifyCustomer(Order $order, User $user): void
     {
         $user->refresh();
+        $order->loadMissing(['lines.sku']);
+        $linesSummary = $this->orderLinesSummary($order);
+        $body = $this->customerPaidMessage($order, $linesSummary);
 
         Notification::query()->create([
             'user_id' => $user->id,
             'type' => 'order.paid.customer',
             'channel' => 'in_app',
             'subject' => 'Pago confirmado',
-            'message' => 'Tu pedido '.$order->order_number.' ha sido registrado como pagado. Las licencias se generarán en breve.',
+            'message' => $body,
             'data' => [
                 'order_id' => $order->id,
                 'order_number' => $order->order_number,
                 'amount' => (string) $order->grand_total,
                 'currency' => (string) $order->currency,
+                'lines_summary' => $linesSummary,
             ],
             'status' => 'sent',
             'sent_at' => now(),
@@ -65,12 +80,13 @@ final class OrderPaidNotifier
             'type' => 'order.paid.customer',
             'channel' => 'whatsapp',
             'subject' => 'Pago confirmado',
-            'message' => 'Tu pedido '.$order->order_number.' ha sido registrado como pagado. Las licencias se generarán en breve.',
+            'message' => $body,
             'data' => [
                 'order_id' => $order->id,
                 'order_number' => $order->order_number,
                 'amount' => (string) $order->grand_total,
                 'currency' => (string) $order->currency,
+                'lines_summary' => $linesSummary,
                 'phone_snapshot' => $user->phone,
             ],
             'status' => 'pending',

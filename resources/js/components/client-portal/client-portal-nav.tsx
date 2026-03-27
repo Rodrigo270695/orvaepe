@@ -3,6 +3,7 @@ import {
     Bell,
     FileText,
     Headphones,
+    KeyRound,
     LayoutDashboard,
     Layers,
     Receipt,
@@ -34,6 +35,11 @@ export const clientPortalNavItems: NavItem[] = [
             { href: '/cliente/servicios', label: 'Mis servicios' },
             { href: '/software', label: 'Ver catálogo' },
         ],
+    },
+    {
+        href: '/cliente/licencias',
+        label: 'Licencias',
+        icon: KeyRound,
     },
     {
         href: '/cliente/pagos',
