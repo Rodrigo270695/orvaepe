@@ -21,6 +21,7 @@ export type SeoDefaults = {
     twitterHandle: string | null;
     organizationDescription: string;
     organizationLegalName: string | null;
+    organizationAlternateNames: string[];
     organizationEmail: string | null;
     organizationPhone: string | null;
     organizationSameAs: string[];
@@ -58,6 +59,13 @@ function buildOrganizationNode(seo: SeoDefaults): Record<string, unknown> {
 
     if (seo.organizationLegalName) {
         org.legalName = seo.organizationLegalName;
+    }
+
+    if (seo.organizationAlternateNames.length > 0) {
+        org.alternateName =
+            seo.organizationAlternateNames.length === 1
+                ? seo.organizationAlternateNames[0]
+                : seo.organizationAlternateNames;
     }
 
     if (seo.organizationEmail) {

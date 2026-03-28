@@ -61,9 +61,17 @@ class MarketingSoftwareController extends Controller
             ->values()
             ->all();
 
+        $catalogSearch = null;
+        $q = $request->query('q');
+        if (is_string($q)) {
+            $trimmed = mb_substr(trim($q), 0, 160);
+            $catalogSearch = $trimmed !== '' ? $trimmed : null;
+        }
+
         return Inertia::render('software', [
             'canRegister' => Features::enabled(Features::registration()),
             'softwareCategories' => $categories,
+            'softwareCatalogSearch' => $catalogSearch,
         ]);
     }
 }

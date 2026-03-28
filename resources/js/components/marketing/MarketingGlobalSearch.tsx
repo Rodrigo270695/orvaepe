@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { marketingPreciosLinks, marketingServiciosSectionLinks } from '@/constants/marketingNavLinks';
 import { Button } from '@/components/ui/button';
+import { normalizeSearchText } from '@/lib/normalizeSearchText';
 import {
     Dialog,
     DialogContent,
@@ -25,14 +26,6 @@ type Props = {
     isLoggedIn: boolean;
     canRegister: boolean;
 };
-
-function normalizeText(value: string): string {
-    return value
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .toLowerCase()
-        .trim();
-}
 
 export default function MarketingGlobalSearch({ softwareLinks, isLoggedIn, canRegister }: Props) {
     const [open, setOpen] = useState(false);
@@ -79,12 +72,12 @@ export default function MarketingGlobalSearch({ softwareLinks, isLoggedIn, canRe
     }, [softwareLinks, isLoggedIn, canRegister]);
 
     const filtered = useMemo(() => {
-        const q = normalizeText(query);
+        const q = normalizeSearchText(query);
         if (!q) return items.slice(0, 10);
 
         return items
             .filter((item) => {
-                const text = normalizeText(`${item.label} ${item.section} ${(item.keywords ?? []).join(' ')}`);
+                const text = normalizeSearchText(`${item.label} ${item.section} ${(item.keywords ?? []).join(' ')}`);
                 return text.includes(q);
             })
             .slice(0, 10);
@@ -145,6 +138,18 @@ export default function MarketingGlobalSearch({ softwareLinks, isLoggedIn, canRe
                             ))
                         )}
                     </div>
+
+                    {query.trim() ? (
+                        <div className="mt-4 border-t border-[color-mix(in_oklab,var(--state-info)_18%,var(--border))] pt-4">
+                            <Link
+                                href={`/software?q=${encodeURIComponent(query.trim())}`}
+                                className="inline-flex text-sm font-semibold text-[var(--state-info)] underline-offset-4 hover:underline"
+                                onClick={() => setOpen(false)}
+                            >
+                                Buscar «{query.trim()}» en el catálogo de software
+                            </Link>
+                        </div>
+                    ) : null}
                 </div>
             </DialogContent>
         </Dialog>

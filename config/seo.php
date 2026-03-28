@@ -46,10 +46,26 @@ return [
     'geo_placename' => env('SEO_GEO_PLACENAME', 'Perú'),
 
     /**
-     * URL de búsqueda interna (opcional). Si existe, WebSite incluye SearchAction.
-     * Ejemplo: https://tudominio.com/software?q=
+     * Plantilla para JSON-LD SearchAction (debe contener el literal {search_term_string}).
+     * Si SEO_SITE_SEARCH_URL_TEMPLATE está vacío en .env, no se emite SearchAction.
+     * Si no está definida, se usa APP_URL + /software?q={search_term_string}.
      */
-    'site_search_url_template' => env('SEO_SITE_SEARCH_URL_TEMPLATE'),
+    'site_search_url_template' => (static function (): ?string {
+        $raw = env('SEO_SITE_SEARCH_URL_TEMPLATE');
+        if ($raw === '') {
+            return null;
+        }
+        if (is_string($raw) && trim($raw) !== '') {
+            return trim($raw);
+        }
+
+        $base = rtrim((string) env('APP_URL', ''), '/');
+        if ($base === '') {
+            return null;
+        }
+
+        return $base.'/software?q={search_term_string}';
+    })(),
 
     /*
     |--------------------------------------------------------------------------
@@ -64,6 +80,14 @@ return [
             'SEO_ORG_DESCRIPTION',
             'Desarrollo de software empresarial, licenciamiento y servicios tecnológicos para empresas en Perú.',
         ),
+        /**
+         * Nombres alternativos (JSON-LD alternateName) para desambiguar la marca en buscadores
+         * frente a otros usos de la palabra «ORVAE». Lista separada por comas.
+         */
+        'alternate_names' => array_values(array_filter(array_map('trim', explode(',', (string) env(
+            'SEO_ORG_ALTERNATE_NAMES',
+            'ORVAE Software,ORVAE Perú',
+        ))))),
         'email' => env('SEO_ORG_EMAIL', env('MAIL_FROM_ADDRESS')),
         'phone' => env('SEO_ORG_PHONE'),
         'same_as' => array_values(array_filter(array_map('trim', explode(',', (string) env('SEO_ORG_SAME_AS', ''))))),

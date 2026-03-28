@@ -1,20 +1,45 @@
 'use client';
 
-import ScrollReveal from '@/components/welcome/ScrollReveal';
+import { Link } from '@inertiajs/react';
+import { useMemo } from 'react';
+
+import SoftwareSystemCard from '@/components/software/SoftwareSystemCard';
 import GeometricBackground from '@/components/welcome/GeometricBackground';
+import ScrollReveal from '@/components/welcome/ScrollReveal';
+import { normalizeSearchText } from '@/lib/normalizeSearchText';
 import {
     getSystemsByCategory,
     softwareCategories,
 } from '@/marketplace/softwareCatalog';
-import SoftwareSystemCard from '@/components/software/SoftwareSystemCard';
+import type { SoftwareSystem } from '@/marketplace/softwareCatalog';
 import type { MarketingSoftwareCategorySection } from '@/pages/software';
+
+function systemMatchesSearch(system: SoftwareSystem, rawQuery: string): boolean {
+    const q = normalizeSearchText(rawQuery);
+    if (!q) {
+        return true;
+    }
+
+    const parts = [
+        system.name,
+        system.shortDescription,
+        system.description,
+        system.slug.replace(/-/g, ' '),
+        ...(system.badges ?? []),
+        ...(system.modules?.flatMap((m) => [m.name, m.description ?? '']) ?? []),
+    ];
+
+    return normalizeSearchText(parts.join(' ')).includes(q);
+}
 
 type Props = {
     /** Si viene del backend (catálogo admin), solo sistemas propios elegibles */
     catalogSections?: MarketingSoftwareCategorySection[];
+    /** Filtro desde URL ?q= (SearchAction / buscador global) */
+    searchQuery?: string | null;
 };
 
-export default function SoftwareCategories({ catalogSections }: Props) {
+export default function SoftwareCategories({ catalogSections, searchQuery }: Props) {
     const semanticAccents = [
         'var(--state-info)',
         'var(--state-success)',
@@ -22,19 +47,56 @@ export default function SoftwareCategories({ catalogSections }: Props) {
         'var(--state-danger)',
     ] as const;
 
-    const sections: MarketingSoftwareCategorySection[] =
-        catalogSections && catalogSections.length > 0
-            ? catalogSections
-            : softwareCategories.map((cat) => ({
-                  slug: cat.slug,
-                  title: cat.title,
-                  description: cat.description,
-                  systems: getSystemsByCategory(cat.slug),
-              }));
+    const sections = useMemo((): MarketingSoftwareCategorySection[] => {
+        if (catalogSections && catalogSections.length > 0) {
+            return catalogSections;
+        }
+        return softwareCategories.map((cat) => ({
+            slug: cat.slug,
+            title: cat.title,
+            description: cat.description,
+            systems: getSystemsByCategory(cat.slug),
+        }));
+    }, [catalogSections]);
+
+    const filteredSections = useMemo(() => {
+        const q = searchQuery?.trim();
+        if (!q) {
+            return sections;
+        }
+
+        return sections
+            .map((cat) => ({
+                ...cat,
+                systems: cat.systems.filter((sys) => systemMatchesSearch(sys, q)),
+            }))
+            .filter((cat) => cat.systems.length > 0);
+    }, [sections, searchQuery]);
+
+    if (searchQuery?.trim() && filteredSections.length === 0) {
+        return (
+            <section
+                id="catalogo-software"
+                className="scroll-mt-28 border-t border-border bg-[color-mix(in_oklab,var(--landing-surface-2)_88%,transparent)] py-16 md:py-24 dark:bg-[color-mix(in_oklab,var(--landing-surface-2)_78%,transparent)]"
+            >
+                <div className="mx-auto max-w-2xl px-4 text-center">
+                    <p className="text-muted-foreground">
+                        No hay productos que coincidan con «{searchQuery.trim()}».
+                    </p>
+                    <Link
+                        href="/software"
+                        className="mt-4 inline-flex text-sm font-semibold text-[var(--state-info)] underline-offset-4 hover:underline"
+                    >
+                        Ver todo el catálogo
+                    </Link>
+                </div>
+            </section>
+        );
+    }
 
     return (
         <>
-            {sections.map((cat, idx) => {
+            {filteredSections.map((cat, idx) => {
                 const systems = cat.systems;
                 const accent = semanticAccents[idx % semanticAccents.length];
                 const bgVariant: 'grid-hex' | 'circles-blur' | 'diagonal-lines' =

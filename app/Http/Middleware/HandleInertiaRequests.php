@@ -58,6 +58,7 @@ class HandleInertiaRequests extends Middleware
                 'geoPlacename' => (string) config('seo.geo_placename'),
                 'organizationDescription' => (string) config('seo.organization.description'),
                 'organizationLegalName' => config('seo.organization.legal_name'),
+                'organizationAlternateNames' => array_values(array_filter((array) config('seo.organization.alternate_names', []))),
                 'organizationEmail' => config('seo.organization.email'),
                 'organizationPhone' => config('seo.organization.phone'),
                 'organizationSameAs' => array_values(array_filter((array) config('seo.organization.same_as', []))),

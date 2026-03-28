@@ -1,3 +1,5 @@
+import { Link } from '@inertiajs/react';
+
 import MarketingUnifiedNavbar from '@/components/marketing/MarketingUnifiedNavbar';
 import SeoHead from '@/components/seo/SeoHead';
 import SoftwareCategories from '@/components/software/SoftwareCategories';
@@ -19,9 +21,11 @@ export type MarketingSoftwareCategorySection = {
 export default function Software({
     canRegister = true,
     softwareCategories: softwareCategoriesFromCatalog = [],
+    softwareCatalogSearch = null,
 }: {
     canRegister?: boolean;
     softwareCategories?: MarketingSoftwareCategorySection[];
+    softwareCatalogSearch?: string | null;
 }) {
     return (
         <>
@@ -52,12 +56,28 @@ export default function Software({
                     </ScrollReveal>
                     <div className="landing-section-flair mx-4 px-4" aria-hidden />
 
+                    {softwareCatalogSearch ? (
+                        <div className="mx-auto max-w-6xl px-4 pb-2">
+                            <p className="rounded-xl border border-[color-mix(in_oklab,var(--state-info)_22%,var(--border))] bg-[color-mix(in_oklab,var(--state-info)_8%,transparent)] px-4 py-3 text-sm text-foreground">
+                                <span className="text-muted-foreground">Filtrando por:</span>{' '}
+                                <span className="font-semibold">«{softwareCatalogSearch}»</span>
+                                <Link
+                                    href="/software"
+                                    className="ml-3 font-semibold text-[var(--state-info)] underline-offset-4 hover:underline"
+                                >
+                                    Quitar filtro
+                                </Link>
+                            </p>
+                        </div>
+                    ) : null}
+
                     <SoftwareCategories
                         catalogSections={
                             softwareCategoriesFromCatalog.length > 0
                                 ? softwareCategoriesFromCatalog
                                 : undefined
                         }
+                        searchQuery={softwareCatalogSearch}
                     />
                 </main>
 

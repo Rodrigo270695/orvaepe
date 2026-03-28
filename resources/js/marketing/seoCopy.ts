@@ -4,9 +4,9 @@
  */
 export const marketingSeo = {
     home: {
-        title: 'ORVAE — Software empresarial y ERP listo para operar',
+        title: 'ORVAE — Software empresarial en Perú | ERP, licencias y SaaS',
         description:
-            'Software empresarial en Perú: ERP, contabilidad, inventario y ventas. Licencias, SaaS e implementación rápida. Solicita demo y cotización.',
+            'Sitio oficial ORVAE: software y ERP para empresas en Perú. Contabilidad, inventario, ventas, licencias y SaaS. Demo y cotización.',
     },
     software: {
         title: 'Software desarrollado — Catálogo ORVAE',
