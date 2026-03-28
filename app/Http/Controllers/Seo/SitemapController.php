@@ -28,18 +28,23 @@ class SitemapController extends Controller
 
             $saleModels = MarketingSoftwareCatalogPresenter::OWN_SOFTWARE_SALE_MODELS;
 
-            $productSlugs = CatalogProduct::query()
-                ->where('is_active', true)
-                ->whereHas('category', function ($q): void {
-                    $q->where('is_active', true)
-                        ->where('revenue_line', 'software_system');
-                })
-                ->whereHas('skus', function ($sq) use ($saleModels): void {
-                    $sq->where('is_active', true)
-                        ->whereIn('sale_model', $saleModels);
-                })
-                ->orderBy('updated_at', 'desc')
-                ->get(['slug', 'updated_at']);
+            $productSlugs = collect();
+            try {
+                $productSlugs = CatalogProduct::query()
+                    ->where('is_active', true)
+                    ->whereHas('category', function ($q): void {
+                        $q->where('is_active', true)
+                            ->where('revenue_line', 'software_system');
+                    })
+                    ->whereHas('skus', function ($sq) use ($saleModels): void {
+                        $sq->where('is_active', true)
+                            ->whereIn('sale_model', $saleModels);
+                    })
+                    ->orderBy('updated_at', 'desc')
+                    ->get(['slug', 'updated_at']);
+            } catch (\Throwable $e) {
+                report($e);
+            }
 
             foreach ($productSlugs as $product) {
                 $urls[] = [

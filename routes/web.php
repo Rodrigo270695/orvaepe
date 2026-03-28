@@ -42,6 +42,8 @@ use App\Http\Controllers\Sunat\CompanyLegalProfilesController;
 use App\Http\Controllers\Sunat\DigitalCertificatesController;
 use App\Http\Controllers\Sunat\InvoiceDocumentSequencesController;
 use App\Http\Controllers\Sunat\SunatEmitterSettingsController;
+use App\Http\Middleware\AddLinkHeadersForPreloadedAssets;
+use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RedirectClientUsersFromStaffArea;
 use App\Models\ShowcaseClient;
 use Illuminate\Support\Facades\Route;
@@ -50,8 +52,17 @@ use Laravel\Fortify\Features;
 
 $canRegister = Features::enabled(Features::registration());
 
-Route::get('/sitemap.xml', SitemapController::class)->name('seo.sitemap');
-Route::get('/robots.txt', RobotsController::class)->name('seo.robots');
+/*
+ * Sin HandleInertiaRequests: evita consultas a catálogo en cada petición y permite que
+ * Google obtenga XML/texto aunque haya problemas puntuales con datos compartidos de Inertia.
+ */
+Route::withoutMiddleware([
+    HandleInertiaRequests::class,
+    AddLinkHeadersForPreloadedAssets::class,
+])->group(function () {
+    Route::get('/sitemap.xml', SitemapController::class)->name('seo.sitemap');
+    Route::get('/robots.txt', RobotsController::class)->name('seo.robots');
+});
 
 Route::get('/', function () use ($canRegister) {
     $showcaseClients = ShowcaseClient::query()
