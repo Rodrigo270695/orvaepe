@@ -558,16 +558,16 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                         aria-hidden
                     />
 
-                    <Link href="/" className="flex items-center gap-3" onClick={closeAll}>
+                    <Link href="/" className="flex shrink-0 items-center gap-3" onClick={closeAll}>
                         <img
                             src="/logo/orvae-logo-h-transparent-light.png"
                             alt="ORVAE"
-                            className="h-8 w-auto dark:hidden"
+                            className="h-11 w-auto sm:h-12 dark:hidden"
                         />
                         <img
                             src="/logo/orvae-logo-h-transparent-dark.png"
                             alt="ORVAE"
-                            className="hidden h-8 w-auto dark:block"
+                            className="hidden h-11 w-auto sm:h-12 dark:block"
                         />
                     </Link>
 

@@ -37,7 +37,7 @@ export default function Welcome({
                 </div>
                 <div className="relative z-[1]">
                     <MarketingUnifiedNavbar canRegister={canRegister} />
-                    <div className="h-16 shrink-0" aria-hidden />
+                    <div className="h-20 shrink-0" aria-hidden />
                     <AppearanceFloatingRailToggle />
 
                     <main id="main-content" className="outline-none">

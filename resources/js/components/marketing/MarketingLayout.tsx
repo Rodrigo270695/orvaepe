@@ -48,7 +48,7 @@ export default function MarketingLayout({
             />
             <div className="min-h-screen bg-background text-foreground">
                 <MarketingUnifiedNavbar />
-                <div className="h-16 shrink-0" aria-hidden />
+                <div className="h-20 shrink-0" aria-hidden />
                 <AppearanceFloatingRailToggle />
                 <main>{children}</main>
                 <WelcomeFooter />

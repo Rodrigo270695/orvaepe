@@ -27,6 +27,8 @@
             })();
         </script>
 
+        <link id="favicon" rel="icon" href="/orvae.ico" type="image/x-icon" sizes="any">
+
         <script>
             (function () {
                 const faviconLink = document.getElementById('favicon');
@@ -35,8 +37,8 @@
                 const applyFavicon = () => {
                     const isDark = document.documentElement.classList.contains('dark');
                     faviconLink.href = isDark
-                        ? '/orvae-negative.ico'
-                        : '/orvae-transparent.ico';
+                        ? '/orvae.ico'
+                        : '/orvae.ico';
                 };
 
                 applyFavicon();
@@ -64,7 +66,6 @@
 
         <title inertia>{{ config('app.name', 'Laravel') }}</title>
 
-        <link id="favicon" rel="icon" href="/orvae-transparent.ico" sizes="any">
         <link rel="manifest" href="/manifest.webmanifest">
         <link rel="apple-touch-icon" href="/icons/pwa/icon-180.png">
 
