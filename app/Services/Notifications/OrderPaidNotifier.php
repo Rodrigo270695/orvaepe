@@ -126,6 +126,29 @@ final class OrderPaidNotifier
         ]);
 
         $this->sender->send($notification);
+
+        $customerEmail = trim((string) $customer->email);
+        if ($customerEmail !== '' && filter_var($customerEmail, FILTER_VALIDATE_EMAIL)) {
+            $emailNotification = Notification::query()->create([
+                'user_id' => $customer->id,
+                'type' => 'order.paid.customer',
+                'channel' => 'email',
+                'subject' => 'Pago confirmado – '.$order->order_number,
+                'message' => $body,
+                'data' => [
+                    'order_id' => $order->id,
+                    'order_number' => $order->order_number,
+                    'amount' => (string) $order->grand_total,
+                    'currency' => (string) $order->currency,
+                    'lines_summary' => $linesSummary,
+                    'customer_email' => $customerEmail,
+                    'email_to' => $customerEmail,
+                ],
+                'status' => 'pending',
+            ]);
+
+            $this->sender->send($emailNotification);
+        }
     }
 
     public function notifyAdmin(Order $order, User $user): void
@@ -138,7 +161,7 @@ final class OrderPaidNotifier
         $adminUsers = User::query()
             ->role('superadmin')
             ->with('profile:id,user_id,phone')
-            ->get(['id', 'phone']);
+            ->get(['id', 'phone', 'email']);
 
         $data = [
             'order_id' => $order->id,
@@ -177,6 +200,23 @@ final class OrderPaidNotifier
             ]);
 
             $this->sender->send($notification);
+
+            $adminEmail = trim((string) $admin->email);
+            if ($adminEmail !== '' && filter_var($adminEmail, FILTER_VALIDATE_EMAIL)) {
+                $emailNotification = Notification::query()->create([
+                    'user_id' => $admin->id,
+                    'type' => 'order.paid.admin',
+                    'channel' => 'email',
+                    'subject' => 'Nuevo pedido pagado – '.$order->order_number,
+                    'message' => $body,
+                    'data' => array_merge($data, [
+                        'email_to' => $adminEmail,
+                    ]),
+                    'status' => 'pending',
+                ]);
+
+                $this->sender->send($emailNotification);
+            }
         }
     }
 }

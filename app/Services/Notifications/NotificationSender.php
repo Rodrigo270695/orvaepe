@@ -6,6 +6,7 @@ use App\Models\Notification;
 use App\Services\WhatsApp\UltraMsgClient;
 use App\Support\WhatsAppPhoneNormalizer;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class NotificationSender
 {
@@ -22,6 +23,7 @@ class NotificationSender
         try {
             match ($notification->channel) {
                 'whatsapp' => $this->sendWhatsApp($notification),
+                'email' => $this->sendEmail($notification),
                 default => null,
             };
         } catch (\Throwable $e) {
@@ -101,5 +103,47 @@ class NotificationSender
         ]);
 
         $this->whatsApp->sendText($to, $body);
+    }
+
+    private function sendEmail(Notification $notification): void
+    {
+        $data = is_array($notification->data) ? $notification->data : [];
+
+        $to = $data['email_to'] ?? null;
+        if (! is_string($to) || trim($to) === '' || ! filter_var($to, FILTER_VALIDATE_EMAIL)) {
+            $user = $notification->user()->first(['email']);
+            $to = $user?->email;
+        }
+
+        if (! is_string($to) || trim($to) === '' || ! filter_var($to, FILTER_VALIDATE_EMAIL)) {
+            throw new \RuntimeException('No hay correo electrónico válido para esta notificación.');
+        }
+
+        $subject = trim((string) ($notification->subject ?? ''));
+        if ($subject === '') {
+            $subject = 'Notificación ORVAE';
+        }
+
+        $message = (string) ($notification->message ?? '');
+        $body = $this->plainTextForEmail($message);
+
+        Log::info('notification.email_target', [
+            'notification_id' => $notification->id,
+            'type' => $notification->type,
+            'user_id' => $notification->user_id,
+            'to' => $to,
+        ]);
+
+        Mail::raw($body, function ($mail) use ($to, $subject): void {
+            $mail->to($to)->subject($subject);
+        });
+    }
+
+    /** Texto legible en correo (sin marcadores típicos de WhatsApp). */
+    private function plainTextForEmail(string $text): string
+    {
+        $t = str_replace(['*', '_'], '', $text);
+
+        return trim($t) !== '' ? $t : 'Notificación desde ORVAE.';
     }
 }

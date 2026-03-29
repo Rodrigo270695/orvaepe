@@ -64,8 +64,11 @@ class FortifyServiceProvider extends ServiceProvider
             }
 
             $user = User::query()
-                ->where('username', $login)
-                ->orWhere('document_number', $login)
+                ->where(function ($q) use ($login): void {
+                    $q->where('username', $login)
+                        ->orWhere('document_number', $login)
+                        ->orWhere('email', $login);
+                })
                 ->first();
 
             if (! $user) {
