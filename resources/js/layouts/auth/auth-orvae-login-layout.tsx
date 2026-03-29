@@ -53,17 +53,17 @@ export default function AuthOrvaeLoginLayout({
                     <div className="flex w-full flex-col justify-between">
                         <Link
                             href="/"
-                            className="inline-flex items-center gap-3 font-display font-semibold text-(--o-amber)"
+                            className="inline-flex shrink-0 items-center gap-3 font-display font-semibold text-(--o-amber)"
                         >
                             <img
                                 src="/logo/orvae-logo-h-transparent-light.png"
                                 alt="ORVAE"
-                                className="h-6 w-auto dark:hidden"
+                                className="h-9 w-auto dark:hidden"
                             />
                             <img
                                 src="/logo/orvae-logo-h-transparent-dark.png"
                                 alt="ORVAE"
-                                className="hidden h-6 w-auto dark:block"
+                                className="hidden h-9 w-auto dark:block"
                             />
                         </Link>
 
@@ -72,12 +72,12 @@ export default function AuthOrvaeLoginLayout({
                                 <img
                                     src="/logo/orvae-logo-h-transparent-light.png"
                                     alt="ORVAE"
-                                    className="h-16 w-auto dark:hidden"
+                                    className="h-24 w-auto dark:hidden"
                                 />
                                 <img
                                     src="/logo/orvae-logo-h-transparent-dark.png"
                                     alt="ORVAE"
-                                    className="hidden h-16 w-auto dark:block"
+                                    className="hidden h-24 w-auto dark:block"
                                 />
                             </div>
 
@@ -113,16 +113,19 @@ export default function AuthOrvaeLoginLayout({
 
                 {/* Right: contenido */}
                 <div className="relative flex w-full flex-col items-center justify-center p-6 sm:p-10">
-                    <Link href="/" className="mb-6 flex items-center justify-center gap-2 lg:hidden">
+                    <Link
+                        href="/"
+                        className="mb-8 flex shrink-0 items-center justify-center gap-2 lg:hidden"
+                    >
                         <img
                             src="/logo/orvae-logo-h-transparent-light.png"
                             alt="ORVAE"
-                            className="h-6 w-auto dark:hidden"
+                            className="h-11 w-auto min-[400px]:h-12 dark:hidden"
                         />
                         <img
                             src="/logo/orvae-logo-h-transparent-dark.png"
                             alt="ORVAE"
-                            className="hidden h-6 w-auto dark:block"
+                            className="hidden h-11 w-auto min-[400px]:h-12 dark:block"
                         />
                     </Link>
 
