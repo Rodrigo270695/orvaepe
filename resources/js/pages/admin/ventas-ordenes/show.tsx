@@ -124,81 +124,146 @@ export default function VentasOrdenShowPage({ order }: Props) {
                     <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                         Líneas del pedido
                     </h2>
-                    <div className="mt-3 overflow-x-auto">
-                        <table className="w-full min-w-[640px] text-left text-sm">
-                            <thead>
-                                <tr className="text-xs text-muted-foreground">
-                                    <th className="px-2 py-2 font-semibold">
-                                        Producto / SKU
-                                    </th>
-                                    <th className="px-2 py-2 font-semibold">
-                                        Cant.
-                                    </th>
-                                    <th className="px-2 py-2 font-semibold">
-                                        P. unit.
-                                    </th>
-                                    <th className="px-2 py-2 font-semibold">
-                                        Desc.
-                                    </th>
-                                    <th className="px-2 py-2 font-semibold">
-                                        IGV / imp.
-                                    </th>
-                                    <th className="px-2 py-2 font-semibold">
-                                        Total línea
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
+                    {order.lines.length === 0 ? (
+                        <p className="mt-4 text-sm text-muted-foreground">
+                            Sin líneas.
+                        </p>
+                    ) : (
+                        <>
+                            <div className="mt-3 space-y-3 md:hidden">
                                 {order.lines.map((line) => (
-                                    <tr
+                                    <div
                                         key={line.id}
-                                        className="border-t border-border/50"
+                                        className="rounded-lg border border-border/60 bg-black/5 p-3 dark:bg-black/20"
                                     >
-                                        <td className="px-2 py-2 align-top">
-                                            <span className="font-medium">
-                                                {line.product_name_snapshot}
-                                            </span>
-                                            <span className="mt-0.5 block text-xs text-muted-foreground">
-                                                {line.sku_name_snapshot}
-                                            </span>
-                                        </td>
-                                        <td className="px-2 py-2 font-mono text-xs">
-                                            {line.quantity}
-                                        </td>
-                                        <td className="px-2 py-2 font-mono text-xs">
-                                            {formatMoney(
-                                                line.unit_price,
-                                                order.currency,
-                                            )}
-                                        </td>
-                                        <td className="px-2 py-2 font-mono text-xs">
-                                            {formatMoney(
-                                                line.line_discount,
-                                                order.currency,
-                                            )}
-                                        </td>
-                                        <td className="px-2 py-2 font-mono text-xs">
-                                            {formatMoney(
-                                                line.tax_amount,
-                                                order.currency,
-                                            )}
-                                        </td>
-                                        <td className="px-2 py-2 font-mono text-xs font-medium">
-                                            {formatMoney(
-                                                line.line_total,
-                                                order.currency,
-                                            )}
-                                        </td>
-                                    </tr>
+                                        <p className="text-sm font-medium leading-snug text-foreground">
+                                            {line.product_name_snapshot}
+                                        </p>
+                                        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                                            {line.sku_name_snapshot}
+                                        </p>
+                                        <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
+                                            <dt className="text-muted-foreground">
+                                                Cantidad
+                                            </dt>
+                                            <dd className="text-right font-mono text-foreground">
+                                                {line.quantity}
+                                            </dd>
+                                            <dt className="text-muted-foreground">
+                                                P. unitario
+                                            </dt>
+                                            <dd className="text-right font-mono text-foreground">
+                                                {formatMoney(
+                                                    line.unit_price,
+                                                    order.currency,
+                                                )}
+                                            </dd>
+                                            <dt className="text-muted-foreground">
+                                                Descuento
+                                            </dt>
+                                            <dd className="text-right font-mono text-foreground">
+                                                {formatMoney(
+                                                    line.line_discount,
+                                                    order.currency,
+                                                )}
+                                            </dd>
+                                            <dt className="text-muted-foreground">
+                                                IGV / imp.
+                                            </dt>
+                                            <dd className="text-right font-mono text-foreground">
+                                                {formatMoney(
+                                                    line.tax_amount,
+                                                    order.currency,
+                                                )}
+                                            </dd>
+                                            <dt className="col-span-2 border-t border-border/40 pt-2 font-semibold text-foreground">
+                                                Total línea
+                                            </dt>
+                                            <dd className="col-span-2 border-border/40 pt-2 text-right font-mono text-sm font-semibold text-[#4A80B8]">
+                                                {formatMoney(
+                                                    line.line_total,
+                                                    order.currency,
+                                                )}
+                                            </dd>
+                                        </dl>
+                                    </div>
                                 ))}
-                            </tbody>
-                        </table>
-                        {order.lines.length === 0 ? (
-                            <p className="mt-4 text-sm text-muted-foreground">
-                                Sin líneas.
-                            </p>
-                        ) : null}
-                    </div>
+                            </div>
+
+                            <div className="mt-3 hidden overflow-x-auto md:block">
+                                <table className="w-full min-w-[640px] text-left text-sm">
+                                    <thead>
+                                        <tr className="text-xs text-muted-foreground">
+                                            <th className="px-2 py-2 font-semibold">
+                                                Producto / SKU
+                                            </th>
+                                            <th className="px-2 py-2 font-semibold">
+                                                Cant.
+                                            </th>
+                                            <th className="px-2 py-2 font-semibold">
+                                                P. unit.
+                                            </th>
+                                            <th className="px-2 py-2 font-semibold">
+                                                Desc.
+                                            </th>
+                                            <th className="px-2 py-2 font-semibold">
+                                                IGV / imp.
+                                            </th>
+                                            <th className="px-2 py-2 font-semibold">
+                                                Total línea
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {order.lines.map((line) => (
+                                            <tr
+                                                key={line.id}
+                                                className="border-t border-border/50"
+                                            >
+                                                <td className="px-2 py-2 align-top">
+                                                    <span className="font-medium">
+                                                        {
+                                                            line.product_name_snapshot
+                                                        }
+                                                    </span>
+                                                    <span className="mt-0.5 block text-xs text-muted-foreground">
+                                                        {line.sku_name_snapshot}
+                                                    </span>
+                                                </td>
+                                                <td className="px-2 py-2 font-mono text-xs">
+                                                    {line.quantity}
+                                                </td>
+                                                <td className="px-2 py-2 font-mono text-xs">
+                                                    {formatMoney(
+                                                        line.unit_price,
+                                                        order.currency,
+                                                    )}
+                                                </td>
+                                                <td className="px-2 py-2 font-mono text-xs">
+                                                    {formatMoney(
+                                                        line.line_discount,
+                                                        order.currency,
+                                                    )}
+                                                </td>
+                                                <td className="px-2 py-2 font-mono text-xs">
+                                                    {formatMoney(
+                                                        line.tax_amount,
+                                                        order.currency,
+                                                    )}
+                                                </td>
+                                                <td className="px-2 py-2 font-mono text-xs font-medium">
+                                                    {formatMoney(
+                                                        line.line_total,
+                                                        order.currency,
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </>
+                    )}
                 </div>
 
                 <div className="neumorph-inset mt-4 rounded-xl border border-border/60 p-4 md:p-5">

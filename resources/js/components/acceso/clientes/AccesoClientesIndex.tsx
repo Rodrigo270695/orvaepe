@@ -4,6 +4,7 @@ import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
 import AdminCrudIndex from '@/components/admin/crud/AdminCrudIndex';
 import type { AdminCrudTableColumn } from '@/components/admin/crud/AdminCrudTable';
 import AccesoClientesFilters from '@/components/acceso/clientes/AccesoClientesFilters';
+import AccesoClientesMobileCards from '@/components/acceso/clientes/AccesoClientesMobileCards';
 import AccesoClientesToolbar from '@/components/acceso/clientes/AccesoClientesToolbar';
 import type { ClientUserRow } from '@/components/acceso/clientes/clienteUserTypes';
 import { formatClientFullName } from '@/components/sales/orders/orderDisplay';
@@ -79,6 +80,9 @@ export default function AccesoClientesIndex({
         </button>
     );
 
+    const emptyState =
+        'No hay usuarios cliente en este rango. Ajusta fechas o búsqueda o registra cuentas con rol client.';
+
     const columns: AdminCrudTableColumn<ClientUserRow>[] = [
         {
             header: sortableHeader('Cliente', 'name'),
@@ -142,7 +146,13 @@ export default function AccesoClientesIndex({
             paginator={users ?? null}
             rowKey={(r) => String(r.id)}
             columns={columns}
-            emptyState="No hay usuarios cliente en este rango. Ajusta fechas o búsqueda o registra cuentas con rol client."
+            emptyState={emptyState}
+            renderMobileRows={({ rows: mobileRows }) => (
+                <AccesoClientesMobileCards
+                    rows={mobileRows}
+                    emptyMessage={emptyState}
+                />
+            )}
             renderToolbar={() => (
                 <AccesoClientesToolbar totalUsers={totalUsers} />
             )}

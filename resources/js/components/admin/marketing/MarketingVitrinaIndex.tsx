@@ -18,6 +18,7 @@ import AdminCrudIndex from '@/components/admin/crud/AdminCrudIndex';
 import ShowcaseClientFormFields, {
     type ShowcaseClientRow,
 } from '@/components/admin/marketing/ShowcaseClientFormFields';
+import MarketingVitrinaMobileCards from '@/components/admin/marketing/MarketingVitrinaMobileCards';
 import MarketingVitrinaSearch from '@/components/admin/marketing/MarketingVitrinaSearch';
 import { NeuButtonRaised } from '@/components/ui/neu-button-raised';
 import { NeuCardRaised } from '@/components/ui/neu-card-raised';
@@ -322,6 +323,16 @@ export default function MarketingVitrinaIndex({
                         <Trash2 className="size-4 text-[#C05050]/60 transition-colors group-hover:text-[#C05050]" />
                     </button>
                 </div>
+            )}
+            renderMobileRows={({ rows: mobileRows, onEdit, onDelete }) => (
+                <MarketingVitrinaMobileCards
+                    rows={mobileRows}
+                    onEdit={onEdit}
+                    onDelete={onDelete}
+                    onLogoPreview={(url, label) =>
+                        setLogoPreview({ url, label })
+                    }
+                />
             )}
             upsert={{
                 titleCreate: 'Nuevo cliente de vitrina',

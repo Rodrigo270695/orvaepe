@@ -2,6 +2,8 @@ import { router, usePage } from '@inertiajs/react';
 import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
 import * as React from 'react';
 
+import AccesoNotificationsMobileCards from '@/components/acceso/notifications/AccesoNotificationsMobileCards';
+import type { NotificationRow } from '@/components/acceso/notifications/notificationRowTypes';
 import AdminCrudIndex from '@/components/admin/crud/AdminCrudIndex';
 import type { AdminCrudTableColumn } from '@/components/admin/crud/AdminCrudTable';
 import {
@@ -17,26 +19,6 @@ function csrfHeader(): Record<string, string> {
         ?.getAttribute('content');
     return token ? { 'X-CSRF-TOKEN': token } : {};
 }
-
-type NotificationRow = {
-    id: string;
-    user_id?: number | string;
-    user: {
-        id: number | string;
-        name: string;
-        lastname?: string | null;
-        email: string;
-    } | null;
-    type: string;
-    channel: string;
-    subject: string | null;
-    message: string | null;
-    status: string;
-    error: string | null;
-    created_at: string;
-    read_at: string | null;
-    sent_at: string | null;
-};
 
 type Props = {
     notifications: any;
@@ -155,6 +137,21 @@ export default function AccesoNotificationsIndex({
         },
         [effectiveReadAt, markingId, authUserId, isSuperAdmin],
     );
+
+    const isRowUnreadMarkable = React.useCallback(
+        (r: NotificationRow) => {
+            const recipientId = r.user_id ?? r.user?.id;
+            const canMark =
+                isSuperAdmin ||
+                (authUserId !== undefined &&
+                    String(recipientId) === String(authUserId));
+            return Boolean(canMark && !effectiveReadAt(r));
+        },
+        [effectiveReadAt, authUserId, isSuperAdmin],
+    );
+
+    const emptyState =
+        'No hay notificaciones registradas. Cuando existan filas en notifications, aparecerán aquí.';
 
     const handleSort = (sortBy: string) => {
         const currentUrl = new URL(page.url, window.location.origin);
@@ -278,7 +275,18 @@ export default function AccesoNotificationsIndex({
             columns={columns}
             rowClassName={rowClassName}
             onRowClick={handleRowClick}
-            emptyState="No hay notificaciones registradas. Cuando existan filas en notifications, aparecerán aquí."
+            emptyState={emptyState}
+            renderMobileRows={({ rows: mobileRows }) => (
+                <AccesoNotificationsMobileCards
+                    rows={mobileRows}
+                    emptyMessage={emptyState}
+                    effectiveReadAt={effectiveReadAt}
+                    onRowClick={handleRowClick}
+                    rowClassName={rowClassName}
+                    markingId={markingId}
+                    isRowUnreadMarkable={isRowUnreadMarkable}
+                />
+            )}
         />
     );
 }

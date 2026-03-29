@@ -10,6 +10,7 @@ import {
     paymentStatusLabel,
     truncateGatewayId,
 } from '@/components/sales/payments/paymentDisplay';
+import VentasPagosMobileCards from '@/components/sales/payments/VentasPagosMobileCards';
 import VentasPagosTransaccionesFilters from '@/components/sales/payments/VentasPagosTransaccionesFilters';
 import type {
     PaymentRow,
@@ -142,6 +143,9 @@ export default function VentasPagosTransaccionesTable({
                         </Link>
                     ) : null}
                 </div>
+            )}
+            renderMobileRows={({ rows: mobileRows }) => (
+                <VentasPagosMobileCards rows={mobileRows} />
             )}
         />
     );
