@@ -44,11 +44,6 @@ function isStandalone(): boolean {
     return Boolean(nav.standalone);
 }
 
-function isMobileViewport(): boolean {
-    if (typeof window === 'undefined') return false;
-    return window.matchMedia('(max-width: 1023px)').matches;
-}
-
 function isIos(): boolean {
     if (typeof navigator === 'undefined') return false;
     return (
@@ -65,6 +60,14 @@ function isIosChrome(): boolean {
 function isAndroid(): boolean {
     if (typeof navigator === 'undefined') return false;
     return /Android/i.test(navigator.userAgent);
+}
+
+/** Escritorio con Chromium / Edge / Brave (suelen permitir instalación PWA). */
+function isDesktopChromiumLike(): boolean {
+    if (typeof navigator === 'undefined') return false;
+    const ua = navigator.userAgent;
+    if (/Mobi|Android|iPhone|iPad|iPod/i.test(ua)) return false;
+    return /Chrome|Edg|Chromium|Brave|OPR|Opera/i.test(ua);
 }
 
 function readDismissedUntil(): number {
@@ -99,7 +102,6 @@ export default function PwaInstallBanner() {
     const [pathname, setPathname] = useState(() =>
         typeof window === 'undefined' ? '' : window.location.pathname,
     );
-    const [mobile, setMobile] = useState(false);
     const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(
         null,
     );
@@ -109,6 +111,8 @@ export default function PwaInstallBanner() {
     const [installing, setInstalling] = useState(false);
     /** Chrome/Brave no siempre disparan beforeinstallprompt a tiempo; damos pista por menú ⋮ */
     const [androidMenuHint, setAndroidMenuHint] = useState(false);
+    /** Escritorio: si no llega el evento, texto de ayuda (Chrome/Edge/Brave). */
+    const [desktopHint, setDesktopHint] = useState(false);
 
     useEffect(() => {
         const until = readDismissedUntil();
@@ -121,15 +125,11 @@ export default function PwaInstallBanner() {
         if (typeof window === 'undefined') return;
 
         const updatePath = () => setPathname(window.location.pathname);
-        const mq = window.matchMedia('(max-width: 1023px)');
-        const updateMobile = () => setMobile(mq.matches);
 
-        updateMobile();
         setIos(isIos());
         setIosChrome(isIosChrome());
 
         window.addEventListener('popstate', updatePath);
-        mq.addEventListener('change', updateMobile);
 
         const originalPushState = history.pushState;
         const originalReplaceState = history.replaceState;
@@ -161,7 +161,6 @@ export default function PwaInstallBanner() {
 
         return () => {
             window.removeEventListener('popstate', updatePath);
-            mq.removeEventListener('change', updateMobile);
             history.pushState = originalPushState;
             history.replaceState = originalReplaceState;
             window.removeEventListener('beforeinstallprompt', onBip);
@@ -173,6 +172,14 @@ export default function PwaInstallBanner() {
         if (typeof window === 'undefined' || isIos()) return;
         if (!isAndroid()) return;
         const t = window.setTimeout(() => setAndroidMenuHint(true), 5000);
+        return () => window.clearTimeout(t);
+    }, []);
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        if (isIos() || isAndroid()) return;
+        if (!isDesktopChromiumLike()) return;
+        const t = window.setTimeout(() => setDesktopHint(true), 4000);
         return () => window.clearTimeout(t);
     }, []);
 
@@ -193,7 +200,7 @@ export default function PwaInstallBanner() {
         }
     }, [deferred]);
 
-    if (dismissed || isStandalone() || !mobile || shouldHideBanner(pathname)) {
+    if (dismissed || isStandalone() || shouldHideBanner(pathname)) {
         return null;
     }
 
@@ -201,8 +208,19 @@ export default function PwaInstallBanner() {
     const showIosHint = ios && !showChromiumInstall;
     const showAndroidHint =
         !ios && !showChromiumInstall && androidMenuHint;
+    const showDesktopHint =
+        !ios &&
+        !isAndroid() &&
+        !showChromiumInstall &&
+        desktopHint &&
+        isDesktopChromiumLike();
 
-    if (!showChromiumInstall && !showIosHint && !showAndroidHint) {
+    if (
+        !showChromiumInstall &&
+        !showIosHint &&
+        !showAndroidHint &&
+        !showDesktopHint
+    ) {
         return null;
     }
 
@@ -246,6 +264,18 @@ export default function PwaInstallBanner() {
                             >
                                 {installing ? 'Instalando…' : 'Instalar'}
                             </button>
+                        </>
+                    ) : showDesktopHint ? (
+                        <>
+                            <p className="text-sm font-semibold leading-snug text-foreground">
+                                Instalar {appLabel} en tu equipo
+                            </p>
+                            <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+                                Busca el icono de instalar en la barra de direcciones
+                                (monitor con flecha) o abre el menú{' '}
+                                <span className="font-medium text-foreground">⋮</span>{' '}
+                                y elige «Instalar ORVAE» o «Instalar aplicación».
+                            </p>
                         </>
                     ) : showAndroidHint ? (
                         <>
