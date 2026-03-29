@@ -1,0 +1,302 @@
+import { Download, Share2, X } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+
+import { cn } from '@/lib/utils';
+
+const DISMISS_KEY = 'orvae-pwa-install-dismiss-until';
+const DISMISS_MS = 7 * 24 * 60 * 60 * 1000;
+
+/** Mismas exclusiones que WhatsApp: sin banner en panel staff / ajustes; sí en marketing y área cliente. */
+const HIDE_PATH_PREFIXES = [
+    '/dashboard',
+    '/panel',
+    '/settings',
+] as const;
+
+function shouldHideBanner(pathname: string): boolean {
+    const p = pathname.split('?')[0] ?? '';
+    return HIDE_PATH_PREFIXES.some(
+        (prefix) => p === prefix || p.startsWith(`${prefix}/`),
+    );
+}
+
+/** WhatsApp flotante visible → dejamos hueco a la derecha. */
+const WHATSAPP_HIDE_PREFIXES = [
+    '/dashboard',
+    '/panel',
+    '/cliente',
+    '/settings',
+] as const;
+
+function isWhatsAppVisible(pathname: string): boolean {
+    const p = pathname.split('?')[0] ?? '';
+    return !WHATSAPP_HIDE_PREFIXES.some(
+        (prefix) => p === prefix || p.startsWith(`${prefix}/`),
+    );
+}
+
+function isStandalone(): boolean {
+    if (typeof window === 'undefined') return true;
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+        return true;
+    }
+    const nav = window.navigator as Navigator & { standalone?: boolean };
+    return Boolean(nav.standalone);
+}
+
+function isMobileViewport(): boolean {
+    if (typeof window === 'undefined') return false;
+    return window.matchMedia('(max-width: 1023px)').matches;
+}
+
+function isIos(): boolean {
+    if (typeof navigator === 'undefined') return false;
+    return (
+        /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+    );
+}
+
+function isIosChrome(): boolean {
+    if (typeof navigator === 'undefined') return false;
+    return isIos() && /CriOS|EdgiOS|FxiOS/.test(navigator.userAgent);
+}
+
+function isAndroid(): boolean {
+    if (typeof navigator === 'undefined') return false;
+    return /Android/i.test(navigator.userAgent);
+}
+
+function readDismissedUntil(): number {
+    try {
+        const raw = localStorage.getItem(DISMISS_KEY);
+        if (!raw) return 0;
+        return Number.parseInt(raw, 10) || 0;
+    } catch {
+        return 0;
+    }
+}
+
+function writeDismissed(): void {
+    try {
+        localStorage.setItem(
+            DISMISS_KEY,
+            String(Date.now() + DISMISS_MS),
+        );
+    } catch {
+        /* ignore */
+    }
+}
+
+type BeforeInstallPromptEvent = Event & {
+    prompt: () => Promise<void>;
+    userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+};
+
+const appLabel = import.meta.env.VITE_APP_NAME || 'ORVAE';
+
+export default function PwaInstallBanner() {
+    const [pathname, setPathname] = useState(() =>
+        typeof window === 'undefined' ? '' : window.location.pathname,
+    );
+    const [mobile, setMobile] = useState(false);
+    const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(
+        null,
+    );
+    const [dismissed, setDismissed] = useState(false);
+    const [ios, setIos] = useState(false);
+    const [iosChrome, setIosChrome] = useState(false);
+    const [installing, setInstalling] = useState(false);
+    /** Chrome/Brave no siempre disparan beforeinstallprompt a tiempo; damos pista por menú ⋮ */
+    const [androidMenuHint, setAndroidMenuHint] = useState(false);
+
+    useEffect(() => {
+        const until = readDismissedUntil();
+        if (until > Date.now()) {
+            setDismissed(true);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+
+        const updatePath = () => setPathname(window.location.pathname);
+        const mq = window.matchMedia('(max-width: 1023px)');
+        const updateMobile = () => setMobile(mq.matches);
+
+        updateMobile();
+        setIos(isIos());
+        setIosChrome(isIosChrome());
+
+        window.addEventListener('popstate', updatePath);
+        mq.addEventListener('change', updateMobile);
+
+        const originalPushState = history.pushState;
+        const originalReplaceState = history.replaceState;
+
+        history.pushState = function (...args) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const ret = (originalPushState as any).apply(this, args);
+            updatePath();
+            return ret;
+        };
+
+        history.replaceState = function (...args) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const ret = (originalReplaceState as any).apply(this, args);
+            updatePath();
+            return ret;
+        };
+
+        const onBip = (e: Event) => {
+            e.preventDefault();
+            setDeferred(e as BeforeInstallPromptEvent);
+        };
+        const onInstalled = () => {
+            setDeferred(null);
+            setDismissed(true);
+        };
+        window.addEventListener('beforeinstallprompt', onBip);
+        window.addEventListener('appinstalled', onInstalled);
+
+        return () => {
+            window.removeEventListener('popstate', updatePath);
+            mq.removeEventListener('change', updateMobile);
+            history.pushState = originalPushState;
+            history.replaceState = originalReplaceState;
+            window.removeEventListener('beforeinstallprompt', onBip);
+            window.removeEventListener('appinstalled', onInstalled);
+        };
+    }, []);
+
+    useEffect(() => {
+        if (typeof window === 'undefined' || isIos()) return;
+        if (!isAndroid()) return;
+        const t = window.setTimeout(() => setAndroidMenuHint(true), 5000);
+        return () => window.clearTimeout(t);
+    }, []);
+
+    const onDismiss = useCallback(() => {
+        writeDismissed();
+        setDismissed(true);
+    }, []);
+
+    const onInstallClick = useCallback(async () => {
+        if (!deferred) return;
+        setInstalling(true);
+        try {
+            await deferred.prompt();
+            await deferred.userChoice;
+        } finally {
+            setInstalling(false);
+            setDeferred(null);
+        }
+    }, [deferred]);
+
+    if (dismissed || isStandalone() || !mobile || shouldHideBanner(pathname)) {
+        return null;
+    }
+
+    const showChromiumInstall = Boolean(deferred);
+    const showIosHint = ios && !showChromiumInstall;
+    const showAndroidHint =
+        !ios && !showChromiumInstall && androidMenuHint;
+
+    if (!showChromiumInstall && !showIosHint && !showAndroidHint) {
+        return null;
+    }
+
+    const clearFab = isWhatsAppVisible(pathname);
+
+    return (
+        <div
+            className={cn(
+                'fixed bottom-0 left-0 right-0 z-40 border-t border-border/70 bg-background/95 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_-6px_28px_rgba(0,0,0,0.12)] backdrop-blur-md supports-backdrop-filter:bg-background/90',
+                clearFab ? 'pl-4 pr-18' : 'px-4',
+            )}
+            role="region"
+            aria-label="Instalar aplicación"
+        >
+            <div className="mx-auto flex max-w-lg items-start gap-3">
+                <div
+                    className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#4A80B8]/15 text-[#4A80B8]"
+                    aria-hidden
+                >
+                    {showIosHint && !iosChrome ? (
+                        <Share2 className="size-4" />
+                    ) : (
+                        <Download className="size-4" />
+                    )}
+                </div>
+                <div className="min-w-0 flex-1">
+                    {showChromiumInstall ? (
+                        <>
+                            <p className="text-sm font-semibold leading-snug text-foreground">
+                                Instalar {appLabel}
+                            </p>
+                            <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+                                Acceso rápido desde tu pantalla de inicio, como una
+                                app.
+                            </p>
+                            <button
+                                type="button"
+                                className="mt-2 inline-flex h-9 items-center justify-center rounded-lg bg-[#4A80B8] px-4 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#3d6fa0] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4A80B8]/40 disabled:opacity-60"
+                                onClick={onInstallClick}
+                                disabled={installing}
+                            >
+                                {installing ? 'Instalando…' : 'Instalar'}
+                            </button>
+                        </>
+                    ) : showAndroidHint ? (
+                        <>
+                            <p className="text-sm font-semibold leading-snug text-foreground">
+                                Añade {appLabel} a tu inicio
+                            </p>
+                            <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+                                Abre el menú del navegador{' '}
+                                <span className="font-medium text-foreground">⋮</span> y
+                                busca «Instalar aplicación», «Añadir a la pantalla de
+                                inicio» o «Instalar app».
+                            </p>
+                        </>
+                    ) : (
+                        <>
+                            <p className="text-sm font-semibold leading-snug text-foreground">
+                                Añade {appLabel} a tu inicio
+                            </p>
+                            <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+                                {iosChrome ? (
+                                    <>
+                                        Abre el menú{' '}
+                                        <span className="font-medium text-foreground">
+                                            ⋮
+                                        </span>{' '}
+                                        y elige «Añadir a la pantalla de inicio» o
+                                        «Instalar app».
+                                    </>
+                                ) : (
+                                    <>
+                                        En Safari, pulsa{' '}
+                                        <span className="font-medium text-foreground">
+                                            Compartir
+                                        </span>{' '}
+                                        (cuadrado con flecha) y «Añadir a la pantalla
+                                        de inicio».
+                                    </>
+                                )}
+                            </p>
+                        </>
+                    )}
+                </div>
+                <button
+                    type="button"
+                    className="-mr-1 -mt-1 flex size-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4A80B8]/30"
+                    onClick={onDismiss}
+                    aria-label="Cerrar aviso de instalación"
+                >
+                    <X className="size-4" />
+                </button>
+            </div>
+        </div>
+    );
+}

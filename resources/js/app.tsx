@@ -3,6 +3,7 @@ import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import PwaInstallBanner from '@/components/PwaInstallBanner';
 import WhatsAppFloatButton from '@/components/WhatsAppFloatButton';
 import '../css/app.css';
 import { initializeTheme } from '@/hooks/use-appearance';
@@ -23,6 +24,7 @@ createInertiaApp({
             <StrictMode>
                 <TooltipProvider delayDuration={0}>
                     <App {...props} />
+                    <PwaInstallBanner />
                     <WhatsAppFloatButton />
                 </TooltipProvider>
             </StrictMode>,

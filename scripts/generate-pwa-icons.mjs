@@ -2,9 +2,9 @@
  * Genera iconos PNG para PWA desde public/logo/orvae-icon-negative-512.png
  *
  * - `icon-{n}.png` → purpose **any** (escritorio / pestaña): mismo recorte que antes.
- * - `icon-maskable-{n}.png` → purpose **maskable** (Android/iOS home): fondo de marca,
+ * - `icon-maskable-{n}.png` → purpose **maskable** (Android/iOS home): fondo BLANCO,
  *   logo más pequeño centrado en zona segura (~56% del lado) para que al aplicar
- *   máscara circular/squircle no se recorte y se lea mejor junto al badge del navegador.
+ *   máscara circular/squircle no se recorte y, al ser el logo azul, tenga más contraste.
  *
  * Ejecutar: pnpm run pwa:icons
  */
@@ -22,17 +22,10 @@ const outDir = path.join(root, 'public/icons/pwa');
 /** Tamaños habituales PWA + Apple touch */
 const sizes = [72, 96, 128, 144, 152, 180, 192, 384, 512];
 
-function svgGradientBackground(size) {
+function svgWhiteBackground(size) {
     return Buffer.from(
         `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
-  <defs>
-    <linearGradient id="g" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#4F8AC4"/>
-      <stop offset="55%" stop-color="#4A80B8"/>
-      <stop offset="100%" stop-color="#3d6a9e"/>
-    </linearGradient>
-  </defs>
-  <rect width="100%" height="100%" fill="url(#g)"/>
+  <rect width="100%" height="100%" fill="#ffffff"/>
 </svg>`,
         'utf8',
     );
@@ -61,7 +54,7 @@ for (const size of sizes) {
         .png()
         .toBuffer();
 
-    const bgBuf = await sharp(svgGradientBackground(size))
+    const bgBuf = await sharp(svgWhiteBackground(size))
         .resize(size, size)
         .png()
         .toBuffer();
