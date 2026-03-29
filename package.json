@@ -12,7 +12,8 @@
         "lint:check": "eslint .",
         "types:check": "tsc --noEmit",
         "pwa:icons": "node scripts/generate-pwa-icons.mjs",
-        "seo:og-image": "node scripts/generate-og-image.mjs"
+        "seo:og-image": "node scripts/generate-og-image.mjs",
+        "seo:og-image:php": "php artisan orvae:seo-og-image"
     },
     "devDependencies": {
         "@eslint/js": "^9.19.0",

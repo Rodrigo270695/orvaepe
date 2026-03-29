@@ -2,6 +2,10 @@
  * Genera imagen Open Graph recomendada 1200×630 (PNG) para previews en redes y buscadores.
  * Ejecutar: pnpm run seo:og-image
  *
+ * En servidores Linux con CPU antigua, sharp puede fallar (x86-64-v2). Usa entonces:
+ *   php artisan orvae:seo-og-image
+ *   (o pnpm run seo:og-image:php)
+ *
  * Usa el logo horizontal claro sobre fondo oscuro (coherente con theme-color del sitio).
  */
 import { mkdir } from 'node:fs/promises';
