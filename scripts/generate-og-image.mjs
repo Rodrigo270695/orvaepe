@@ -6,7 +6,9 @@
  *   php artisan orvae:seo-og-image
  *   (o pnpm run seo:og-image:php)
  *
- * Usa el logo horizontal claro sobre fondo oscuro (coherente con theme-color del sitio).
+ * Fondo oscuro (#0f172a). El logo debe ser el de tema oscuro del sitio (texto claro):
+ *   orvae-logo-h-transparent-dark.png
+ * No uses *-light.png aquí: ese archivo es para navbar en modo claro (wordmark oscuro).
  */
 import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
@@ -22,8 +24,8 @@ const H = 630;
 const BG = { r: 15, g: 23, b: 42 }; // #0f172a (manifest background_color oscuro)
 
 const candidates = [
-    path.join(root, 'public/logo/orvae-logo-h-transparent-light.png'),
     path.join(root, 'public/logo/orvae-logo-h-transparent-dark.png'),
+    path.join(root, 'public/logo/orvae-logo-h-transparent-light.png'),
     path.join(root, 'public/icons/pwa/icon-512.png'),
 ];
 

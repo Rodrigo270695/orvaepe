@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\File;
 
 /**
  * Genera la imagen Open Graph 1200×630 sin Node/sharp (útil en VPS con CPU sin x86-64-v2).
+ * Fondo oscuro: prioriza orvae-logo-h-transparent-dark.png (wordmark claro). *-light.png es oscuro en tinta.
  */
 class GenerateSeoOgImageCommand extends Command
 {
@@ -31,8 +32,8 @@ class GenerateSeoOgImageCommand extends Command
 
         $public = public_path();
         $candidates = [
-            $public.'/logo/orvae-logo-h-transparent-light.png',
             $public.'/logo/orvae-logo-h-transparent-dark.png',
+            $public.'/logo/orvae-logo-h-transparent-light.png',
             $public.'/icons/pwa/icon-512.png',
         ];
 
