@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -54,4 +55,12 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->toResponse($request)
                 ->setStatusCode($status);
         });
-    })->create();
+    })
+    ->withSchedule(function (Schedule $schedule): void {
+        // Mantenimiento de trabajos fallidos (tabla failed_jobs). Ajusta la frecuencia si lo necesitas.
+        $schedule->command('queue:prune-failed')->daily();
+
+        // Añade aquí más tareas programadas (backups, reportes, etc.).
+        // El worker de colas no va aquí: debe ejecutarse con Supervisor (ver deploy/supervisor/).
+    })
+    ->create();

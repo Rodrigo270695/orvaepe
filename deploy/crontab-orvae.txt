@@ -1,0 +1,5 @@
+# Añadir con: sudo crontab -e -u www-data
+# (o el usuario que ejecuta PHP en el servidor web; ajusta la ruta del proyecto)
+#
+# Programador de Laravel: debe ejecutarse cada minuto.
+* * * * * cd /var/www/orvaepe && php artisan schedule:run >> /dev/null 2>&1
