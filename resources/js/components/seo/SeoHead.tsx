@@ -25,6 +25,8 @@ export type SeoDefaults = {
     organizationEmail: string | null;
     organizationPhone: string | null;
     organizationSameAs: string[];
+    organizationKnowsAbout: string[];
+    organizationSchemaTypes: string[];
     siteSearchUrlTemplate: string | null;
     geoRegion: string;
     geoPlacename: string;
@@ -37,12 +39,32 @@ function toAbsolute(siteUrl: string, path: string): string {
     return `${siteUrl}${p}`;
 }
 
+function mergeOrganizationSchemaTypes(extra: string[]): string | string[] {
+    const merged = ['Organization', ...extra.filter((t) => t && t !== 'Organization')];
+    const seen = new Set<string>();
+    const unique = merged.filter((t) => {
+        if (seen.has(t)) return false;
+        seen.add(t);
+        return true;
+    });
+    return unique.length === 1 ? unique[0] : unique;
+}
+
+function inferOgImageMimeType(absoluteUrl: string): string {
+    const pathOnly = absoluteUrl.split('?')[0]?.toLowerCase() ?? '';
+    if (pathOnly.endsWith('.png')) return 'image/png';
+    if (pathOnly.endsWith('.jpg') || pathOnly.endsWith('.jpeg')) return 'image/jpeg';
+    if (pathOnly.endsWith('.webp')) return 'image/webp';
+    if (pathOnly.endsWith('.gif')) return 'image/gif';
+    return 'image/png';
+}
+
 function buildOrganizationNode(seo: SeoDefaults): Record<string, unknown> {
     const orgId = `${seo.siteUrl}#organization`;
     const logoUrl = toAbsolute(seo.siteUrl, seo.logoPath);
 
     const org: Record<string, unknown> = {
-        '@type': 'Organization',
+        '@type': mergeOrganizationSchemaTypes(seo.organizationSchemaTypes),
         '@id': orgId,
         name: seo.siteName,
         url: seo.siteUrl,
@@ -56,6 +78,10 @@ function buildOrganizationNode(seo: SeoDefaults): Record<string, unknown> {
             name: 'Perú',
         },
     };
+
+    if (seo.organizationKnowsAbout.length > 0) {
+        org.knowsAbout = seo.organizationKnowsAbout;
+    }
 
     if (seo.organizationLegalName) {
         org.legalName = seo.organizationLegalName;
@@ -94,6 +120,7 @@ function buildWebSiteNode(seo: SeoDefaults): Record<string, unknown> {
         url: seo.siteUrl,
         description: seo.defaultDescription,
         publisher: { '@id': orgId },
+        copyrightHolder: { '@id': orgId },
         inLanguage: seo.alternateLocale,
     };
 
@@ -142,9 +169,11 @@ function buildWebPageNode(
     description: string,
     canonicalPath: string,
     breadcrumbListId: string | null,
+    primaryImageUrl: string | null,
 ): Record<string, unknown> {
     const pageId = `${toAbsolute(seo.siteUrl, canonicalPath)}#webpage`;
     const webId = `${seo.siteUrl}#website`;
+    const orgId = `${seo.siteUrl}#organization`;
 
     const page: Record<string, unknown> = {
         '@type': 'WebPage',
@@ -154,10 +183,18 @@ function buildWebPageNode(
         url: toAbsolute(seo.siteUrl, canonicalPath),
         isPartOf: { '@id': webId },
         inLanguage: seo.alternateLocale,
+        copyrightHolder: { '@id': orgId },
     };
 
     if (breadcrumbListId) {
         page.breadcrumb = { '@id': breadcrumbListId };
+    }
+
+    if (primaryImageUrl) {
+        page.primaryImageOfPage = {
+            '@type': 'ImageObject',
+            url: primaryImageUrl,
+        };
     }
 
     return page;
@@ -171,8 +208,9 @@ function buildJsonLdGraph(args: {
     structuredData: 'full' | 'minimal' | 'none';
     breadcrumbs: SeoBreadcrumbItem[] | undefined;
     extra: Record<string, unknown>[];
+    primaryImageUrl: string | null;
 }): Record<string, unknown> | null {
-    const { seo, title, description, path, structuredData, breadcrumbs, extra } =
+    const { seo, title, description, path, structuredData, breadcrumbs, extra, primaryImageUrl } =
         args;
 
     if (structuredData === 'none' && extra.length === 0) {
@@ -193,10 +231,10 @@ function buildJsonLdGraph(args: {
         }
 
         graph.push(
-            buildWebPageNode(seo, title, description, path, breadcrumbId),
+            buildWebPageNode(seo, title, description, path, breadcrumbId, primaryImageUrl),
         );
     } else if (structuredData === 'minimal') {
-        graph.push(buildWebPageNode(seo, title, description, path, null));
+        graph.push(buildWebPageNode(seo, title, description, path, null, primaryImageUrl));
     }
 
     for (const node of extra) {
@@ -273,6 +311,7 @@ export default function SeoHead({
         structuredData,
         breadcrumbs,
         extra,
+        primaryImageUrl: absoluteImage,
     });
 
     return (
@@ -315,6 +354,10 @@ export default function SeoHead({
             <meta
                 property="og:image:height"
                 content={String(seo.ogImageHeight)}
+            />
+            <meta
+                property="og:image:type"
+                content={inferOgImageMimeType(absoluteImage)}
             />
 
             <meta name="twitter:card" content="summary_large_image" />

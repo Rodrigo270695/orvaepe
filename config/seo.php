@@ -15,18 +15,15 @@ return [
         'ORVAE: software empresarial en Perú — ERP, sistemas listos para operar, licencias y servicios. Implementación ágil, soporte y facturación electrónica.',
     ),
 
-    /** Imagen Open Graph por defecto (ruta bajo public/) */
-    'default_og_image' => env('SEO_DEFAULT_OG_IMAGE', '/icons/pwa/icon-512.png'),
+    /** Imagen Open Graph por defecto (ruta bajo public/). Generar: pnpm run seo:og-image */
+    'default_og_image' => env('SEO_DEFAULT_OG_IMAGE', '/images/og/orvae-og-default.png'),
 
     /** Texto alternativo OG/Twitter (accesibilidad + redes) */
     'default_og_image_alt' => env('SEO_DEFAULT_OG_IMAGE_ALT', 'ORVAE — software empresarial para empresas en Perú'),
 
-    /**
-     * Dimensiones reales del archivo de default_og_image (los crawlers usan OG recomendado 1200×630;
-     * cuando subas una imagen dedicada, ajusta también estas variables).
-     */
-    'og_image_width' => (int) env('SEO_OG_IMAGE_WIDTH', 512),
-    'og_image_height' => (int) env('SEO_OG_IMAGE_HEIGHT', 512),
+    /** Dimensiones reales del archivo default_og_image (recomendado 1200×630) */
+    'og_image_width' => (int) env('SEO_OG_IMAGE_WIDTH', 1200),
+    'og_image_height' => (int) env('SEO_OG_IMAGE_HEIGHT', 630),
 
     /** Logo marca para JSON-LD Organization (ruta bajo public/) */
     'logo_path' => env('SEO_LOGO_PATH', '/icons/pwa/icon-512.png'),
@@ -91,6 +88,20 @@ return [
         'email' => env('SEO_ORG_EMAIL', env('MAIL_FROM_ADDRESS')),
         'phone' => env('SEO_ORG_PHONE'),
         'same_as' => array_values(array_filter(array_map('trim', explode(',', (string) env('SEO_ORG_SAME_AS', ''))))),
+        /**
+         * Temas que la organización cubre (JSON-LD knowsAbout). Lista separada por comas.
+         */
+        'knows_about' => array_values(array_filter(array_map('trim', explode(',', (string) env(
+            'SEO_ORG_KNOWS_ABOUT',
+            'Software empresarial,ERP,Facturación electrónica,Licencias de software,Soporte técnico,SaaS',
+        ))))),
+        /**
+         * Tipos Schema.org además de Organization (p. ej. SoftwareCompany). Separados por comas.
+         */
+        'schema_types' => array_values(array_filter(array_map('trim', explode(',', (string) env(
+            'SEO_ORG_SCHEMA_TYPES',
+            'SoftwareCompany',
+        ))))),
     ],
 
     /*

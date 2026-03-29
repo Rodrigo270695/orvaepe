@@ -35,6 +35,7 @@ class RobotsController extends Controller
         ];
 
         return response(implode("\n", $lines), 200)
-            ->header('Content-Type', 'text/plain; charset=UTF-8');
+            ->header('Content-Type', 'text/plain; charset=UTF-8')
+            ->header('Cache-Control', 'public, max-age=86400');
     }
 }

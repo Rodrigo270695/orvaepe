@@ -14,6 +14,7 @@ class SitemapController extends Controller
     {
         $xml = Cache::remember('seo.sitemap_xml', 3600, function (): string {
             $base = rtrim((string) config('app.url'), '/');
+            $staticLastmod = now()->toAtomString();
 
             $urls = [];
 
@@ -22,7 +23,7 @@ class SitemapController extends Controller
                     'loc' => $base.$path,
                     'priority' => $meta['priority'] ?? '0.8',
                     'changefreq' => $meta['changefreq'] ?? 'monthly',
-                    'lastmod' => null,
+                    'lastmod' => $staticLastmod,
                 ];
             }
 
@@ -60,6 +61,8 @@ class SitemapController extends Controller
             ])->render();
         });
 
-        return response($xml, 200)->header('Content-Type', 'application/xml; charset=UTF-8');
+        return response($xml, 200)
+            ->header('Content-Type', 'application/xml; charset=UTF-8')
+            ->header('Cache-Control', 'public, max-age=3600');
     }
 }

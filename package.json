@@ -11,7 +11,8 @@
         "lint": "eslint . --fix",
         "lint:check": "eslint .",
         "types:check": "tsc --noEmit",
-        "pwa:icons": "node scripts/generate-pwa-icons.mjs"
+        "pwa:icons": "node scripts/generate-pwa-icons.mjs",
+        "seo:og-image": "node scripts/generate-og-image.mjs"
     },
     "devDependencies": {
         "@eslint/js": "^9.19.0",

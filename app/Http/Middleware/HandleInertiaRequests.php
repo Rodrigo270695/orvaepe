@@ -62,6 +62,8 @@ class HandleInertiaRequests extends Middleware
                 'organizationEmail' => config('seo.organization.email'),
                 'organizationPhone' => config('seo.organization.phone'),
                 'organizationSameAs' => array_values(array_filter((array) config('seo.organization.same_as', []))),
+                'organizationKnowsAbout' => array_values(array_filter((array) config('seo.organization.knows_about', []))),
+                'organizationSchemaTypes' => array_values(array_filter((array) config('seo.organization.schema_types', []))),
             ],
             'auth' => [
                 'user' => $request->user(),
