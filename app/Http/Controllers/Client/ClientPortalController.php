@@ -145,7 +145,15 @@ class ClientPortalController extends Controller
      */
     private function evidenceImageFromMetadata(array $metadata): ?string
     {
-        $keys = ['evidencia_activacion_imagen', 'evidence_image_url'];
+        $keys = [
+            'evidencia_activacion_imagen',
+            'evidence_image_url',
+            'imagen_activacion',
+            'imagen_evidencia',
+            'captura_activacion',
+            'img',
+            'imagen',
+        ];
         foreach ($keys as $key) {
             $value = $metadata[$key] ?? null;
             if (is_string($value) && trim($value) !== '') {

@@ -183,16 +183,29 @@ class LicenseKeyExtrasController extends Controller
     private function humanLabel(string $code): string
     {
         $map = [
+            'creado_via' => 'Creado vía',
             'created_via' => 'Creado vía',
+            'linea_pedido_id' => 'ID de línea de pedido',
             'order_line_id' => 'ID de línea de pedido',
+            'nro_unidad' => 'Nro. de unidad',
             'line_slot' => 'Nro. de unidad',
+            'pendiente_clave_proveedor' => 'Pendiente de clave del proveedor',
             'awaiting_provider_key' => 'Pendiente de clave del proveedor',
+            'codigo_sku' => 'Código SKU',
             'sku_code' => 'Código SKU',
+            'nombre_sku' => 'Nombre SKU',
             'sku_name' => 'Nombre SKU',
+            'completado_en' => 'Completado en',
             'fulfilled_at' => 'Completado en',
             'evidencia_activacion_imagen' => 'Evidencia de activación (imagen)',
             'evidence_image_url' => 'Evidencia de activación (imagen)',
+            'imagen_activacion' => 'Evidencia de activación (imagen)',
+            'imagen_evidencia' => 'Evidencia de activación (imagen)',
+            'captura_activacion' => 'Evidencia de activación (imagen)',
+            'img' => 'Evidencia de activación (imagen)',
+            'imagen' => 'Evidencia de activación (imagen)',
             'activation_notes' => 'Notas de activación',
+            'notas_activacion' => 'Notas de activación',
         ];
 
         if (isset($map[$code])) {
@@ -207,7 +220,15 @@ class LicenseKeyExtrasController extends Controller
      */
     private function hasEvidenceImage(array $metadata): bool
     {
-        $keys = ['evidencia_activacion_imagen', 'evidence_image_url'];
+        $keys = [
+            'evidencia_activacion_imagen',
+            'evidence_image_url',
+            'imagen_activacion',
+            'imagen_evidencia',
+            'captura_activacion',
+            'img',
+            'imagen',
+        ];
         foreach ($keys as $key) {
             $value = $metadata[$key] ?? null;
             if (is_string($value) && trim($value) !== '') {

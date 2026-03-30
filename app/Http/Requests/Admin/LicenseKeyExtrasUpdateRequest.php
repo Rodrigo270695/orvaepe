@@ -82,7 +82,52 @@ class LicenseKeyExtrasUpdateRequest extends FormRequest
      */
     public function metadataObject(): array
     {
-        return $this->pairsToObject($this->validated('metadata_pairs') ?? []);
+        return $this->normalizeMetadataKeysToSpanish(
+            $this->pairsToObject($this->validated('metadata_pairs') ?? []),
+        );
+    }
+
+    /**
+     * Estandariza aliases/keys en inglés hacia claves canónicas en español.
+     *
+     * @param array<string, array<int, string>|string> $metadata
+     * @return array<string, array<int, string>|string>
+     */
+    private function normalizeMetadataKeysToSpanish(array $metadata): array
+    {
+        $out = [];
+
+        foreach ($metadata as $code => $value) {
+            $k = strtolower(trim((string) $code));
+            $canonical = match ($k) {
+                'created_via' => 'creado_via',
+                'order_line_id' => 'linea_pedido_id',
+                'line_slot' => 'nro_unidad',
+                'awaiting_provider_key' => 'pendiente_clave_proveedor',
+                'sku_code' => 'codigo_sku',
+                'sku_name' => 'nombre_sku',
+                'fulfilled_at' => 'completado_en',
+                'activation_notes' => 'notas_activacion',
+                'evidence_image_url',
+                'evidencia_activacion_imagen',
+                'imagen_activacion',
+                'imagen_evidencia',
+                'captura_activacion',
+                'screenshot_activacion',
+                'img',
+                'imagen',
+                'image',
+                'foto',
+                'captura',
+                'evidencia',
+                'evidence' => 'evidencia_activacion_imagen',
+                default => $k,
+            };
+
+            $out[$canonical] = $value;
+        }
+
+        return $out;
     }
 
     /**
