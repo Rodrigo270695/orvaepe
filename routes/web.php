@@ -126,6 +126,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::patch('/facturacion', [ClientPortalController::class, 'updateBilling'])->name('billing.update');
         Route::get('/servicios', [ClientPortalController::class, 'servicios'])->name('servicios');
         Route::get('/software', [ClientPortalController::class, 'software'])->name('software');
+        Route::get('/software/descargas/{software_release}', [ClientPortalController::class, 'downloadSoftwareRelease'])
+            ->name('software.release.download');
+        Route::get('/software/descargas/{software_release}/assets/{software_release_asset}', [ClientPortalController::class, 'downloadSoftwareReleaseAsset'])
+            ->name('software.asset.download');
         Route::get('/licencias', [ClientPortalController::class, 'licenses'])->name('licenses');
         Route::get('/facturas', [ClientPortalController::class, 'facturas'])->name('facturas');
         Route::get('/soporte', [ClientPortalController::class, 'soporte'])->name('soporte');

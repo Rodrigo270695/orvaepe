@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Eye } from 'lucide-react';
+import { Download, Eye, Package } from 'lucide-react';
 
 import { ClientPageTitleCard } from '@/components/client-portal/client-page-title-card';
 import CredentialSecretViewModal from '@/components/acceso/credenciales/CredentialSecretViewModal';
@@ -47,10 +47,34 @@ type EntitlementRow = {
     secrets_count: number;
 };
 
+/** Versiones de producto para SKUs de código fuente (perpetuo o alquiler). */
+type SourceCodeReleaseRow = {
+    id: string;
+    version: string;
+    changelog: string | null;
+    released_at: string | null;
+    min_php_version: string | null;
+    is_latest: boolean;
+    artifact_sha256: string | null;
+    main_download_available: boolean;
+    product: {
+        id: string | null;
+        name: string | null;
+        slug: string | null;
+    };
+    assets: Array<{
+        id: string;
+        label: string;
+        sha256: string | null;
+        download_available: boolean;
+    }>;
+};
+
 type Props = {
     subscriptions: SubscriptionRow[];
     entitlements: EntitlementRow[];
     credentialSecrets: EntitlementSecretDetail[];
+    sourceCodeReleases: SourceCodeReleaseRow[];
     licenses: Array<{
         id: string;
         status: string;
@@ -69,6 +93,19 @@ function fmtDate(iso: string | null): string {
     return d.toLocaleDateString('es-PE', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
+function fmtDateTime(iso: string | null): string {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '—';
+    return d.toLocaleString('es-PE', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+    });
+}
+
 function daysUntil(iso: string | null): number | null {
     if (!iso) return null;
     const d = new Date(iso);
@@ -81,6 +118,7 @@ export default function ClienteSoftwarePage({
     subscriptions,
     entitlements,
     credentialSecrets,
+    sourceCodeReleases,
     licenses,
 }: Props) {
     const [credentialModalOpen, setCredentialModalOpen] = useState(false);
@@ -242,6 +280,136 @@ export default function ClienteSoftwarePage({
                                     ))}
                                 </tbody>
                             </table>
+                        </div>
+                    )}
+                </div>
+
+                <div className="rounded-xl border border-border/60 bg-background/90 p-4">
+                    <div className="mb-3 flex flex-wrap items-start gap-2">
+                        <Package className="mt-0.5 size-4 text-[#4A80B8]" />
+                        <div>
+                            <h2 className="text-sm font-semibold">
+                                Código fuente — versiones y descargas
+                            </h2>
+                            <p className="mt-1 text-xs text-muted-foreground">
+                                Disponible cuando tu derecho de uso es de tipo{' '}
+                                <span className="font-medium text-foreground/90">
+                                    código fuente (perpetuo o alquiler)
+                                </span>
+                                . Aquí ves notas de versión, requisitos y enlaces
+                                para descargar el paquete principal y archivos
+                                adicionales registrados por el equipo.
+                            </p>
+                        </div>
+                    </div>
+                    {sourceCodeReleases.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">
+                            No hay versiones disponibles para tus productos de
+                            código fuente, o aún no tienes un derecho activo de
+                            ese tipo.
+                        </p>
+                    ) : (
+                        <div className="space-y-4">
+                            {sourceCodeReleases.map((rel) => (
+                                <div
+                                    key={rel.id}
+                                    className="rounded-lg border border-border/60 bg-background/60 p-4"
+                                >
+                                    <div className="flex flex-wrap items-start justify-between gap-3">
+                                        <div>
+                                            <p className="text-sm font-medium">
+                                                {rel.product?.name ?? 'Producto'}
+                                                {rel.is_latest ? (
+                                                    <span className="ml-2 inline-flex rounded-full border border-[#4A9A72]/40 bg-[#4A9A72]/12 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#2d6b47]">
+                                                        Última
+                                                    </span>
+                                                ) : null}
+                                            </p>
+                                            <p className="mt-1 font-mono text-[13px] text-[#4A80B8]">
+                                                v{rel.version}
+                                            </p>
+                                            <p className="mt-2 text-xs text-muted-foreground">
+                                                Publicada: {fmtDateTime(rel.released_at)}
+                                                {rel.min_php_version
+                                                    ? ` · PHP ≥ ${rel.min_php_version}`
+                                                    : ''}
+                                            </p>
+                                            {rel.artifact_sha256 ? (
+                                                <p className="mt-1 break-all font-mono text-[10px] text-muted-foreground">
+                                                    SHA-256: {rel.artifact_sha256}
+                                                </p>
+                                            ) : null}
+                                        </div>
+                                        <div className="shrink-0">
+                                            {rel.main_download_available ? (
+                                                <Button
+                                                    asChild
+                                                    size="sm"
+                                                    variant="outline"
+                                                    className="h-9 cursor-pointer gap-1.5"
+                                                >
+                                                    <a
+                                                        href={`/cliente/software/descargas/${rel.id}`}
+                                                    >
+                                                        <Download className="size-3.5" />
+                                                        Descargar
+                                                    </a>
+                                                </Button>
+                                            ) : (
+                                                <span className="text-xs text-muted-foreground">
+                                                    Artefacto no configurado
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                    {rel.changelog ? (
+                                        <details className="mt-3 rounded-md border border-border/50 bg-muted/30 px-3 py-2 text-sm">
+                                            <summary className="cursor-pointer text-xs font-medium text-muted-foreground">
+                                                Ver changelog
+                                            </summary>
+                                            <pre className="mt-2 max-h-48 overflow-auto whitespace-pre-wrap font-sans text-xs leading-relaxed text-foreground/90">
+                                                {rel.changelog}
+                                            </pre>
+                                        </details>
+                                    ) : null}
+                                    {rel.assets.length > 0 ? (
+                                        <div className="mt-4 border-t border-border/50 pt-3">
+                                            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                                                Archivos adicionales
+                                            </p>
+                                            <ul className="space-y-2">
+                                                {rel.assets.map((a) => (
+                                                    <li
+                                                        key={a.id}
+                                                        className="flex flex-wrap items-center justify-between gap-2 text-sm"
+                                                    >
+                                                        <span>{a.label}</span>
+                                                        {a.download_available ? (
+                                                            <Button
+                                                                asChild
+                                                                size="sm"
+                                                                variant="ghost"
+                                                                className="h-8 cursor-pointer gap-1 px-2 text-xs"
+                                                            >
+                                                                <a
+                                                                    href={`/cliente/software/descargas/${rel.id}/assets/${a.id}`}
+                                                                >
+                                                                    <Download className="size-3" />
+                                                                    Descargar
+                                                                </a>
+                                                            </Button>
+                                                        ) : (
+                                                            <span className="text-xs text-muted-foreground">
+                                                                No disponible
+                                                            </span>
+                                                        )}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    ) : null}
+                                </div>
+                            ))}
                         </div>
                     )}
                 </div>

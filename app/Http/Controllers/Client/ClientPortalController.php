@@ -9,14 +9,22 @@ use App\Models\Entitlement;
 use App\Models\EntitlementSecret;
 use App\Models\LicenseKey;
 use App\Models\Order;
+use App\Models\SoftwareRelease;
+use App\Models\SoftwareReleaseAsset;
 use App\Models\Subscription;
 use App\Models\UserProfile;
+use App\Services\Catalog\SoftwareArtifactStorage;
 use App\Support\AdminFlashToast;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ClientPortalController extends Controller
 {
@@ -262,12 +270,176 @@ class ClientPortalController extends Controller
                 ];
             })->values()->all();
 
+        $sourceProductIds = $this->sourceCatalogProductIdsForUser($user);
+
+        $sourceCodeReleases = [];
+        if ($sourceProductIds->isNotEmpty()) {
+            $artifactDisk = Storage::disk(SoftwareArtifactStorage::DISK);
+            $sourceCodeReleases = SoftwareRelease::query()
+                ->whereIn('catalog_product_id', $sourceProductIds)
+                ->with([
+                    'product:id,name,slug',
+                    'assets' => fn ($q) => $q->orderBy('label')->orderBy('created_at'),
+                ])
+                ->orderByDesc('released_at')
+                ->orderByDesc('created_at')
+                ->get()
+                ->map(function (SoftwareRelease $r) use ($artifactDisk): array {
+                    return [
+                        'id' => $r->id,
+                        'version' => $r->version,
+                        'changelog' => $r->changelog,
+                        'released_at' => $r->released_at?->toIso8601String(),
+                        'min_php_version' => $r->min_php_version,
+                        'is_latest' => (bool) $r->is_latest,
+                        'artifact_sha256' => $r->artifact_sha256,
+                        'main_download_available' => $this->clientArtifactIsDownloadable(
+                            $r->artifact_path,
+                            $artifactDisk,
+                        ),
+                        'product' => [
+                            'id' => $r->product?->id,
+                            'name' => $r->product?->name,
+                            'slug' => $r->product?->slug,
+                        ],
+                        'assets' => $r->assets->map(function (SoftwareReleaseAsset $a) use ($artifactDisk): array {
+                            return [
+                                'id' => $a->id,
+                                'label' => $a->label,
+                                'sha256' => $a->sha256,
+                                'download_available' => $this->clientArtifactIsDownloadable(
+                                    $a->path,
+                                    $artifactDisk,
+                                ),
+                            ];
+                        })->values()->all(),
+                    ];
+                })->values()->all();
+        }
+
         return Inertia::render('cliente/software', [
             'subscriptions' => $subscriptions,
             'entitlements' => $entitlements,
             'licenses' => $licenses,
             'credentialSecrets' => $credentialSecrets,
+            'sourceCodeReleases' => $sourceCodeReleases,
         ]);
+    }
+
+    /**
+     * Descarga del artefacto principal de un release (código fuente).
+     */
+    public function downloadSoftwareRelease(
+        Request $request,
+        SoftwareRelease $softwareRelease,
+    ): RedirectResponse|StreamedResponse {
+        $user = $request->user();
+        abort_unless($this->userMayDownloadSourceRelease($user, $softwareRelease), 403);
+
+        return $this->streamArtifactResponse($softwareRelease->artifact_path);
+    }
+
+    /**
+     * Descarga de un archivo adicional del release.
+     */
+    public function downloadSoftwareReleaseAsset(
+        Request $request,
+        SoftwareRelease $softwareRelease,
+        SoftwareReleaseAsset $software_release_asset,
+    ): RedirectResponse|StreamedResponse {
+        if ($software_release_asset->software_release_id !== $softwareRelease->id) {
+            abort(404);
+        }
+        $user = $request->user();
+        abort_unless($this->userMayDownloadSourceRelease($user, $softwareRelease), 403);
+
+        return $this->streamArtifactResponse($software_release_asset->path);
+    }
+
+    /**
+     * @param  Authenticatable|null  $user
+     */
+    private function userMayDownloadSourceRelease($user, SoftwareRelease $release): bool
+    {
+        if ($user === null) {
+            return false;
+        }
+
+        return Entitlement::query()
+            ->where('user_id', $user->id)
+            ->where('catalog_product_id', $release->catalog_product_id)
+            ->where('status', Entitlement::STATUS_ACTIVE)
+            ->whereHas('catalogSku', function ($q): void {
+                $q->whereIn('sale_model', ['source_perpetual', 'source_rental']);
+            })
+            ->where(function ($q): void {
+                $q->whereNull('starts_at')->orWhere('starts_at', '<=', now());
+            })
+            ->where(function ($q): void {
+                $q->whereNull('ends_at')->orWhere('ends_at', '>=', now());
+            })
+            ->exists();
+    }
+
+    /**
+     * @return Collection<int, string>
+     */
+    private function sourceCatalogProductIdsForUser(Authenticatable $user)
+    {
+        return Entitlement::query()
+            ->where('user_id', $user->id)
+            ->where('status', Entitlement::STATUS_ACTIVE)
+            ->whereHas('catalogSku', function ($q): void {
+                $q->whereIn('sale_model', ['source_perpetual', 'source_rental']);
+            })
+            ->where(function ($q): void {
+                $q->whereNull('starts_at')->orWhere('starts_at', '<=', now());
+            })
+            ->where(function ($q): void {
+                $q->whereNull('ends_at')->orWhere('ends_at', '>=', now());
+            })
+            ->pluck('catalog_product_id')
+            ->unique()
+            ->values();
+    }
+
+    private function clientArtifactIsDownloadable(
+        ?string $path,
+        Filesystem $disk,
+    ): bool {
+        if ($path === null || $path === '') {
+            return false;
+        }
+        if (preg_match('#^https?://#i', $path)) {
+            return true;
+        }
+        if (str_contains($path, '://')) {
+            return false;
+        }
+
+        return $disk->exists($path);
+    }
+
+    /**
+     * @return RedirectResponse|StreamedResponse
+     */
+    private function streamArtifactResponse(?string $path)
+    {
+        if ($path === null || $path === '') {
+            abort(404);
+        }
+        if (preg_match('#^https?://#i', $path)) {
+            return redirect()->away($path);
+        }
+        if (str_contains($path, '://')) {
+            abort(404, 'Este archivo no está disponible para descarga directa.');
+        }
+        $disk = Storage::disk(SoftwareArtifactStorage::DISK);
+        if (! $disk->exists($path)) {
+            abort(404);
+        }
+
+        return $disk->response($path, basename($path));
     }
 
     /**
