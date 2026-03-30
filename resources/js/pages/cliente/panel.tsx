@@ -12,9 +12,15 @@ type Props = {
         active: number;
         pending: number;
     };
+    softwareStats?: {
+        subscriptions_total: number;
+        subscriptions_active: number;
+        subscriptions_past_due: number;
+        entitlements_active: number;
+    };
 };
 
-export default function ClientePanel({ profile, licenseStats }: Props) {
+export default function ClientePanel({ profile, licenseStats, softwareStats }: Props) {
     const { auth } = usePage().props;
     const user = auth.user;
 
@@ -80,6 +86,14 @@ export default function ClientePanel({ profile, licenseStats }: Props) {
                             <ul className="mt-2 space-y-2">
                                 <li>
                                     <Link
+                                        href="/cliente/software"
+                                        className="text-[color-mix(in_oklab,var(--state-info)_68%,var(--foreground))] hover:underline"
+                                    >
+                                        Estado de software y suscripciones
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link
                                         href="/software"
                                     className="text-[color-mix(in_oklab,var(--state-info)_68%,var(--foreground))] hover:underline"
                                     >
@@ -122,7 +136,10 @@ export default function ClientePanel({ profile, licenseStats }: Props) {
                                     label: 'Licencias pendientes',
                                     value: String(licenseStats?.pending ?? 0),
                                 },
-                                { label: 'Recibos pendientes', value: '0' },
+                                {
+                                    label: 'Suscripciones activas',
+                                    value: String(softwareStats?.subscriptions_active ?? 0),
+                                },
                                 { label: 'Tickets', value: '0' },
                             ].map((stat) => (
                                 <div
@@ -141,14 +158,29 @@ export default function ClientePanel({ profile, licenseStats }: Props) {
 
                         <div className="rounded-xl border border-[color-mix(in_oklab,var(--state-info)_20%,var(--border))] bg-[color-mix(in_oklab,var(--card)_92%,var(--background))] p-6 shadow-sm transition-shadow hover:shadow-md">
                             <h2 className="text-lg font-semibold text-foreground">
-                                Productos / servicios
+                                Resumen de software
                             </h2>
                             <p className="mt-2 text-sm text-muted-foreground">
-                                Cuando contrates servicios, aparecerán aquí con
-                                estado y enlaces de administración.
+                                Revisa tus suscripciones, vigencias y derechos de uso en detalle.
                             </p>
-                            <div className="mt-6 rounded-lg border border-dashed border-[color-mix(in_oklab,var(--state-alert)_35%,var(--border))] bg-[color-mix(in_oklab,var(--state-alert)_8%,transparent)] py-12 text-center text-sm text-zinc-500">
-                                Aún no hay servicios registrados.
+                            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                                <div className="rounded-lg border border-border/60 px-4 py-3 text-sm">
+                                    <p className="text-muted-foreground">Suscripciones totales</p>
+                                    <p className="mt-1 text-xl font-semibold">{softwareStats?.subscriptions_total ?? 0}</p>
+                                </div>
+                                <div className="rounded-lg border border-border/60 px-4 py-3 text-sm">
+                                    <p className="text-muted-foreground">Derechos activos</p>
+                                    <p className="mt-1 text-xl font-semibold">{softwareStats?.entitlements_active ?? 0}</p>
+                                </div>
+                            </div>
+                            <div className="mt-4">
+                                <Link
+                                    href="/cliente/software"
+                                    className="inline-flex items-center gap-1 text-sm font-medium text-[color-mix(in_oklab,var(--state-info)_68%,var(--foreground))] hover:underline"
+                                >
+                                    Ir a Software
+                                    <ArrowRight className="size-3.5" />
+                                </Link>
                             </div>
                         </div>
 

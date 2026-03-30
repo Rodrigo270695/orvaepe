@@ -4,6 +4,7 @@ import {
     Headphones,
     KeyRound,
     LayoutDashboard,
+    Laptop,
     Layers,
     Receipt,
     Wallet,
@@ -34,6 +35,11 @@ export const clientPortalNavItems: NavItem[] = [
             { href: '/cliente/servicios', label: 'Mis servicios' },
             { href: '/software', label: 'Ver catálogo' },
         ],
+    },
+    {
+        href: '/cliente/software',
+        label: 'Software',
+        icon: Laptop,
     },
     {
         href: '/cliente/licencias',

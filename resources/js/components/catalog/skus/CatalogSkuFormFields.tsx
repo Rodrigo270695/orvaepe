@@ -111,6 +111,8 @@ export default function CatalogSkuFormFields({
     );
     const [selectedCategoryId, setSelectedCategoryId] = React.useState('');
     const [selectedProductId, setSelectedProductId] = React.useState('');
+    const [saleModelValue, setSaleModelValue] = React.useState(item?.sale_model ?? 'saas_subscription');
+    const [billingIntervalValue, setBillingIntervalValue] = React.useState(item?.billing_interval ?? '_none_');
 
     const fallbackProductId = item?.catalog_product_id
         ? String(item.catalog_product_id)
@@ -139,6 +141,8 @@ export default function CatalogSkuFormFields({
                     ? String(item.product.id)
                     : '',
         );
+        setSaleModelValue(item?.sale_model ?? 'saas_subscription');
+        setBillingIntervalValue(item?.billing_interval ?? '_none_');
 
         const currentProductId = item?.catalog_product_id
             ? String(item.catalog_product_id)
@@ -166,6 +170,33 @@ export default function CatalogSkuFormFields({
         nextSortOrder,
         productsForSelect,
     ]);
+
+    const recurringModels = React.useMemo(
+        () => new Set(['source_rental', 'saas_subscription', 'oem_license_subscription', 'service_subscription']),
+        [],
+    );
+    const isRecurringModel = recurringModels.has(saleModelValue);
+
+    const billingOptionsForModel = React.useMemo(() => {
+        if (isRecurringModel) {
+            return billingIntervalOptions.filter((opt) => ['monthly', 'annual', 'custom'].includes(opt.value));
+        }
+
+        return billingIntervalOptions.filter((opt) => ['_none_', 'one_time'].includes(opt.value));
+    }, [isRecurringModel]);
+
+    React.useEffect(() => {
+        if (isRecurringModel) {
+            if (!['monthly', 'annual', 'custom'].includes(billingIntervalValue)) {
+                setBillingIntervalValue('monthly');
+            }
+            return;
+        }
+
+        if (!['_none_', 'one_time'].includes(billingIntervalValue)) {
+            setBillingIntervalValue('_none_');
+        }
+    }, [isRecurringModel, billingIntervalValue]);
 
     const toTitleCaseWords = (value: string) =>
         value
@@ -312,7 +343,8 @@ export default function CatalogSkuFormFields({
                     <AdminUnderlineSelect
                         id="sale_model"
                         name="sale_model"
-                        defaultValue={item?.sale_model ?? 'saas_subscription'}
+                        value={saleModelValue}
+                        onValueChange={(next) => setSaleModelValue(next)}
                         options={saleModelOptions as unknown as { value: string; label: string }[]}
                     />
                     <InputError message={errors.sale_model} />
@@ -325,10 +357,16 @@ export default function CatalogSkuFormFields({
                     <AdminUnderlineSelect
                         id="billing_interval"
                         name="billing_interval"
-                        defaultValue={item?.billing_interval ?? '_none_'}
-                        options={billingIntervalOptions as unknown as { value: string; label: string }[]}
+                        value={billingIntervalValue}
+                        onValueChange={(next) => setBillingIntervalValue(next)}
+                        options={billingOptionsForModel as unknown as { value: string; label: string }[]}
                         required={false}
                     />
+                    <p className="text-[11px] text-muted-foreground">
+                        {isRecurringModel
+                            ? 'Modelo recurrente: usa mensual, anual o personalizado.'
+                            : 'Modelo no recurrente: usa una vez o no aplica.'}
+                    </p>
                     <InputError message={errors.billing_interval} />
                 </div>
             </div>
@@ -375,9 +413,13 @@ export default function CatalogSkuFormFields({
                         name="rental_days"
                         type="number"
                         min="1"
+                        required={billingIntervalValue === 'custom'}
                         defaultValue={item?.rental_days ?? ''}
-                        placeholder="Opcional"
+                        placeholder={billingIntervalValue === 'custom' ? 'Requerido' : 'Opcional'}
                     />
+                    {billingIntervalValue === 'custom' ? (
+                        <p className="text-[11px] text-muted-foreground">Con intervalo personalizado, indica cuántos días dura.</p>
+                    ) : null}
                     <InputError message={errors.rental_days} />
                 </div>
 

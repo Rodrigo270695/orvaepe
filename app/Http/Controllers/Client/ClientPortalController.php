@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Client\UserProfileUpdateRequest;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
 use App\Models\LicenseKey;
+use App\Models\Entitlement;
 use App\Models\Order;
+use App\Models\Subscription;
 use App\Models\UserProfile;
 use App\Support\AdminFlashToast;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -34,9 +36,26 @@ class ClientPortalController extends Controller
             'pending' => (int) ($licenseCountsByStatus->get(LicenseKey::STATUS_PENDING) ?? 0),
         ];
 
+        $subscriptionCountsByStatus = Subscription::query()
+            ->where('user_id', $user?->id)
+            ->selectRaw('status, COUNT(*) as total')
+            ->groupBy('status')
+            ->pluck('total', 'status');
+
+        $softwareStats = [
+            'subscriptions_total' => (int) $subscriptionCountsByStatus->sum(),
+            'subscriptions_active' => (int) ($subscriptionCountsByStatus->get(Subscription::STATUS_ACTIVE) ?? 0),
+            'subscriptions_past_due' => (int) ($subscriptionCountsByStatus->get(Subscription::STATUS_PAST_DUE) ?? 0),
+            'entitlements_active' => Entitlement::query()
+                ->where('user_id', $user?->id)
+                ->where('status', Entitlement::STATUS_ACTIVE)
+                ->count(),
+        ];
+
         return Inertia::render('cliente/panel', [
             'profile' => $user?->profile,
             'licenseStats' => $licenseStats,
+            'softwareStats' => $softwareStats,
         ]);
     }
 
@@ -137,6 +156,59 @@ class ClientPortalController extends Controller
 
         return Inertia::render('cliente/licencias', [
             'licenses' => $licenses,
+        ]);
+    }
+
+    public function software(Request $request): Response
+    {
+        $user = $request->user();
+
+        $subscriptions = Subscription::query()
+            ->where('user_id', $user->id)
+            ->with(['items.catalogSku:id,code,name,catalog_product_id', 'items.catalogSku.product:id,name'])
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(static function (Subscription $sub): array {
+                return [
+                    'id' => $sub->id,
+                    'status' => $sub->status,
+                    'current_period_start' => $sub->current_period_start?->toIso8601String(),
+                    'current_period_end' => $sub->current_period_end?->toIso8601String(),
+                    'cancel_at_period_end' => (bool) $sub->cancel_at_period_end,
+                    'items' => $sub->items->map(static function ($item): array {
+                        return [
+                            'sku_code' => $item->catalogSku?->code,
+                            'sku_name' => $item->catalogSku?->name,
+                            'product_name' => $item->catalogSku?->product?->name,
+                            'quantity' => (int) $item->quantity,
+                            'unit_price' => (string) $item->unit_price,
+                        ];
+                    })->values()->all(),
+                ];
+            })->values()->all();
+
+        $entitlements = Entitlement::query()
+            ->where('user_id', $user->id)
+            ->with(['catalogProduct:id,name', 'catalogSku:id,code,name'])
+            ->withCount('secrets')
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(static function (Entitlement $ent): array {
+                return [
+                    'id' => $ent->id,
+                    'status' => $ent->status,
+                    'starts_at' => $ent->starts_at?->toIso8601String(),
+                    'ends_at' => $ent->ends_at?->toIso8601String(),
+                    'product_name' => $ent->catalogProduct?->name,
+                    'sku' => $ent->catalogSku?->code,
+                    'sku_name' => $ent->catalogSku?->name,
+                    'secrets_count' => (int) $ent->secrets_count,
+                ];
+            })->values()->all();
+
+        return Inertia::render('cliente/software', [
+            'subscriptions' => $subscriptions,
+            'entitlements' => $entitlements,
         ]);
     }
 

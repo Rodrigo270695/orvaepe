@@ -8,6 +8,18 @@ use Illuminate\Validation\Rule;
 
 class CatalogSkuStoreRequest extends FormRequest
 {
+    /**
+     * Modelos con cobro recurrente.
+     *
+     * @var list<string>
+     */
+    private const RECURRING_MODELS = [
+        'source_rental',
+        'saas_subscription',
+        'oem_license_subscription',
+        'service_subscription',
+    ];
+
     public function authorize(): bool
     {
         return true;
@@ -80,6 +92,45 @@ class CatalogSkuStoreRequest extends FormRequest
             'is_active' => ['nullable', 'boolean'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
         ];
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator): void {
+            $saleModel = (string) ($this->input('sale_model') ?? '');
+            $billingInterval = $this->input('billing_interval');
+            $rentalDays = $this->input('rental_days');
+
+            $isRecurring = in_array($saleModel, self::RECURRING_MODELS, true);
+            $isBillingEmpty = $billingInterval === null || $billingInterval === '';
+
+            if ($isRecurring) {
+                $allowedRecurring = ['monthly', 'annual', 'custom'];
+                if ($isBillingEmpty || ! in_array((string) $billingInterval, $allowedRecurring, true)) {
+                    $validator->errors()->add(
+                        'billing_interval',
+                        'Para este modelo, el intervalo debe ser mensual, anual o personalizado.',
+                    );
+                }
+            } else {
+                $allowedNonRecurring = [null, 'one_time'];
+                if (! in_array($billingInterval, $allowedNonRecurring, true)) {
+                    $validator->errors()->add(
+                        'billing_interval',
+                        'Para este modelo, el intervalo debe ser "Una vez" o "No aplica".',
+                    );
+                }
+            }
+
+            if ((string) $billingInterval === 'custom') {
+                if (! is_numeric($rentalDays) || (int) $rentalDays < 1) {
+                    $validator->errors()->add(
+                        'rental_days',
+                        'Con intervalo personalizado, debes indicar días de alquiler mayores a 0.',
+                    );
+                }
+            }
+        });
     }
 }
 
