@@ -420,10 +420,7 @@ class ClientPortalController extends Controller
         return $disk->exists($path);
     }
 
-    /**
-     * @return RedirectResponse|StreamedResponse
-     */
-    private function streamArtifactResponse(?string $path)
+    private function streamArtifactResponse(?string $path): RedirectResponse|StreamedResponse
     {
         if ($path === null || $path === '') {
             abort(404);
@@ -434,12 +431,13 @@ class ClientPortalController extends Controller
         if (str_contains($path, '://')) {
             abort(404, 'Este archivo no está disponible para descarga directa.');
         }
+
         $disk = Storage::disk(SoftwareArtifactStorage::DISK);
         if (! $disk->exists($path)) {
             abort(404);
         }
 
-        return $disk->response($path, basename($path));
+        return $disk->download($path, basename($path));
     }
 
     /**
