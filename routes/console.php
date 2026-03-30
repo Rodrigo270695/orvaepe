@@ -2,6 +2,7 @@
 
 use App\Services\Payments\PayPalClient;
 use App\Services\Access\SubscriptionEntitlementSyncService;
+use App\Services\Notifications\ExpiringAccessNotifier;
 use App\Services\WhatsApp\UltraMsgClient;
 use App\Support\WhatsAppPhoneNormalizer;
 use App\Models\Subscription;
@@ -66,3 +67,10 @@ Artisan::command('subscriptions:sync-entitlements', function (SubscriptionEntitl
 
     return 0;
 })->purpose('Sincroniza entitlements según estado de suscripciones');
+
+Artisan::command('alerts:expiring-access', function (ExpiringAccessNotifier $notifier): int {
+    $sent = $notifier->notifyExpiring(7);
+    $this->info("Alertas de vencimiento enviadas: {$sent}");
+
+    return 0;
+})->purpose('Notifica accesos/suscripciones por vencer (7 días)');

@@ -59,6 +59,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withSchedule(function (Schedule $schedule): void {
         // Mantenimiento de trabajos fallidos (tabla failed_jobs). Ajusta la frecuencia si lo necesitas.
         $schedule->command('queue:prune-failed')->daily();
+        $schedule->command('alerts:expiring-access')->dailyAt('09:00');
 
         // Añade aquí más tareas programadas (backups, reportes, etc.).
         // El worker de colas no va aquí: debe ejecutarse con Supervisor (ver deploy/supervisor/).

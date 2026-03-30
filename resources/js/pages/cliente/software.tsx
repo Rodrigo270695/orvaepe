@@ -36,6 +36,15 @@ type EntitlementRow = {
 type Props = {
     subscriptions: SubscriptionRow[];
     entitlements: EntitlementRow[];
+    licenses: Array<{
+        id: string;
+        status: string;
+        key: string;
+        expires_at: string | null;
+        sku_code: string | null;
+        sku_name: string | null;
+        product_name: string | null;
+    }>;
 };
 
 function fmtDate(iso: string | null): string {
@@ -45,7 +54,28 @@ function fmtDate(iso: string | null): string {
     return d.toLocaleDateString('es-PE', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
-export default function ClienteSoftwarePage({ subscriptions, entitlements }: Props) {
+function daysUntil(iso: string | null): number | null {
+    if (!iso) return null;
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return null;
+    const diffMs = d.getTime() - Date.now();
+    return Math.floor(diffMs / 86400000);
+}
+
+export default function ClienteSoftwarePage({ subscriptions, entitlements, licenses }: Props) {
+    const expiringSoonSubscriptions = subscriptions.filter((sub) => {
+        const days = daysUntil(sub.current_period_end);
+        return days !== null && days >= 0 && days <= 7;
+    });
+    const expiredSubscriptions = subscriptions.filter((sub) => {
+        const days = daysUntil(sub.current_period_end);
+        return days !== null && days < 0;
+    });
+    const expiringSoonLicenses = licenses.filter((row) => {
+        const days = daysUntil(row.expires_at);
+        return days !== null && days >= 0 && days <= 7;
+    });
+
     return (
         <ClientPortalLayout
             title="Software"
@@ -73,6 +103,41 @@ export default function ClienteSoftwarePage({ subscriptions, entitlements }: Pro
                         <p className="mt-1 text-2xl font-semibold">{entitlements.reduce((acc, row) => acc + (row.secrets_count ?? 0), 0)}</p>
                     </div>
                 </div>
+
+                {(expiringSoonSubscriptions.length > 0 || expiredSubscriptions.length > 0 || expiringSoonLicenses.length > 0) ? (
+                    <div className="space-y-2">
+                        {expiredSubscriptions.length > 0 ? (
+                            <div className="rounded-xl border border-[color-mix(in_oklab,var(--state-danger)_45%,var(--border))] bg-[color-mix(in_oklab,var(--state-danger)_12%,transparent)] px-4 py-3 text-sm">
+                                <p className="font-semibold text-[color-mix(in_oklab,var(--state-danger)_80%,var(--foreground))]">
+                                    Suscripción vencida
+                                </p>
+                                <p className="text-[color-mix(in_oklab,var(--state-danger)_70%,var(--foreground))]">
+                                    Acción recomendada: renovar o contactar soporte.
+                                </p>
+                            </div>
+                        ) : null}
+                        {expiringSoonSubscriptions.length > 0 ? (
+                            <div className="rounded-xl border border-[color-mix(in_oklab,var(--state-alert)_40%,var(--border))] bg-[color-mix(in_oklab,var(--state-alert)_12%,transparent)] px-4 py-3 text-sm">
+                                <p className="font-semibold text-[color-mix(in_oklab,var(--state-alert)_75%,var(--foreground))]">
+                                    Suscripción por vencer (7 días)
+                                </p>
+                                <p className="text-[color-mix(in_oklab,var(--state-alert)_70%,var(--foreground))]">
+                                    Acción recomendada: revisar renovación para evitar suspensión.
+                                </p>
+                            </div>
+                        ) : null}
+                        {expiringSoonLicenses.length > 0 ? (
+                            <div className="rounded-xl border border-[color-mix(in_oklab,var(--state-alert)_40%,var(--border))] bg-[color-mix(in_oklab,var(--state-alert)_10%,transparent)] px-4 py-3 text-sm">
+                                <p className="font-semibold text-[color-mix(in_oklab,var(--state-alert)_75%,var(--foreground))]">
+                                    Licencia por vencer (7 días)
+                                </p>
+                                <p className="text-[color-mix(in_oklab,var(--state-alert)_70%,var(--foreground))]">
+                                    Acción recomendada: renovar licencia para mantener continuidad.
+                                </p>
+                            </div>
+                        ) : null}
+                    </div>
+                ) : null}
 
                 <div className="rounded-xl border border-border/60 bg-background/90 p-4">
                     <h2 className="mb-3 text-sm font-semibold">Suscripciones</h2>
@@ -140,6 +205,54 @@ export default function ClienteSoftwarePage({ subscriptions, entitlements }: Pro
                                             <td className="py-2 pr-4">{row.secrets_count}</td>
                                         </tr>
                                     ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
+
+                <div className="rounded-xl border border-border/60 bg-background/90 p-4">
+                    <h2 className="mb-3 text-sm font-semibold">Licencias con caducidad</h2>
+                    {licenses.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">No tienes licencias con vencimiento configurado.</p>
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <table className="w-full min-w-[680px] text-left text-sm">
+                                <thead>
+                                    <tr className="text-xs uppercase tracking-wide text-muted-foreground">
+                                        <th className="py-2 pr-4">Estado</th>
+                                        <th className="py-2 pr-4">Producto / SKU</th>
+                                        <th className="py-2 pr-4">Clave</th>
+                                        <th className="py-2 pr-4">Caduca</th>
+                                        <th className="py-2 pr-4">Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {licenses.map((row) => {
+                                        const days = daysUntil(row.expires_at);
+                                        const action = days === null
+                                            ? '—'
+                                            : days < 0
+                                                ? 'Contactar soporte'
+                                                : days <= 7
+                                                    ? 'Renovar'
+                                                    : 'Sin acción';
+                                        return (
+                                            <tr key={row.id} className="border-t border-border/50 align-top">
+                                                <td className="py-2 pr-4">
+                                                    <span className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium ${licenseKeyStatusBadgeClass(row.status)}`}>
+                                                        {licenseKeyStatusLabel(row.status)}
+                                                    </span>
+                                                </td>
+                                                <td className="py-2 pr-4">
+                                                    {(row.product_name ?? '—')} · {(row.sku_code ?? '—')} · {(row.sku_name ?? '—')}
+                                                </td>
+                                                <td className="py-2 pr-4 font-mono text-xs">{row.key}</td>
+                                                <td className="py-2 pr-4 text-muted-foreground">{fmtDate(row.expires_at)}</td>
+                                                <td className="py-2 pr-4 text-muted-foreground">{action}</td>
+                                            </tr>
+                                        );
+                                    })}
                                 </tbody>
                             </table>
                         </div>

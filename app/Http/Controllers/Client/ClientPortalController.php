@@ -187,6 +187,25 @@ class ClientPortalController extends Controller
                 ];
             })->values()->all();
 
+        $licenses = LicenseKey::query()
+            ->where('user_id', $user->id)
+            ->whereIn('status', [LicenseKey::STATUS_ACTIVE, LicenseKey::STATUS_PENDING])
+            ->whereNotNull('expires_at')
+            ->with(['catalogSku:id,code,name,catalog_product_id', 'catalogSku.product:id,name'])
+            ->orderBy('expires_at')
+            ->get()
+            ->map(static function (LicenseKey $row): array {
+                return [
+                    'id' => $row->id,
+                    'status' => $row->status,
+                    'key' => $row->key,
+                    'expires_at' => $row->expires_at?->toIso8601String(),
+                    'sku_code' => $row->catalogSku?->code,
+                    'sku_name' => $row->catalogSku?->name,
+                    'product_name' => $row->catalogSku?->product?->name,
+                ];
+            })->values()->all();
+
         $entitlements = Entitlement::query()
             ->where('user_id', $user->id)
             ->with(['catalogProduct:id,name', 'catalogSku:id,code,name'])
@@ -209,6 +228,7 @@ class ClientPortalController extends Controller
         return Inertia::render('cliente/software', [
             'subscriptions' => $subscriptions,
             'entitlements' => $entitlements,
+            'licenses' => $licenses,
         ]);
     }
 
