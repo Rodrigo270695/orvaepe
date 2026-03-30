@@ -82,19 +82,17 @@ final class OrderPaidEntitlementProvisioner
 
     private function isRecurringSku(CatalogSku $sku): bool
     {
-        $interval = strtolower(trim((string) ($sku->billing_interval ?? '')));
-        if ($interval !== '') {
+        $saleModel = strtolower(trim((string) $sku->sale_model));
+        if (in_array($saleModel, [
+            'source_rental',
+            'saas_subscription',
+            'oem_license_subscription',
+            'service_subscription',
+        ], true)) {
             return true;
         }
 
-        $saleModel = strtolower(trim((string) $sku->sale_model));
-        if ($saleModel === '') {
-            return false;
-        }
-
-        return str_contains($saleModel, 'subscription')
-            || str_contains($saleModel, 'mensual')
-            || str_contains($saleModel, 'recurrent')
-            || str_contains($saleModel, 'rental');
+        $interval = strtolower(trim((string) ($sku->billing_interval ?? '')));
+        return in_array($interval, ['monthly', 'annual', 'custom'], true);
     }
 }

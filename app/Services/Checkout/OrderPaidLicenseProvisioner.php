@@ -37,7 +37,10 @@ final class OrderPaidLicenseProvisioner
 
     private function isOemLicenseSku(CatalogSku $sku): bool
     {
-        return str_starts_with((string) $sku->sale_model, 'oem_license');
+        return in_array((string) $sku->sale_model, [
+            'oem_license_one_time',
+            'oem_license_subscription',
+        ], true);
     }
 
     private function slotExists(string $orderId, string $orderLineId, int $slot): bool
@@ -55,6 +58,7 @@ final class OrderPaidLicenseProvisioner
         $maxActivations = isset($limits['usuarios']) && is_numeric($limits['usuarios'])
             ? max(1, (int) $limits['usuarios'])
             : 1;
+        $expiresAt = $this->expiresAtForSku($sku);
 
         LicenseKey::query()->create([
             'key' => $this->uniquePlaceholderKey(),
@@ -64,7 +68,7 @@ final class OrderPaidLicenseProvisioner
             'status' => LicenseKey::STATUS_PENDING,
             'max_activations' => $maxActivations,
             'activation_count' => 0,
-            'expires_at' => null,
+            'expires_at' => $expiresAt,
             'metadata' => [
                 'created_via' => LicenseKey::CREATED_VIA_ORDER_PAYMENT,
                 'order_line_id' => $line->id,
@@ -72,8 +76,23 @@ final class OrderPaidLicenseProvisioner
                 'awaiting_provider_key' => true,
                 'sku_code' => $sku->code,
                 'sku_name' => $line->sku_name_snapshot ?? $sku->name,
+                'modelo_venta' => $sku->sale_model,
             ],
         ]);
+    }
+
+    private function expiresAtForSku(CatalogSku $sku): ?\DateTimeInterface
+    {
+        if ((string) $sku->sale_model !== 'oem_license_subscription') {
+            return null;
+        }
+
+        $interval = strtolower(trim((string) ($sku->billing_interval ?? '')));
+        return match ($interval) {
+            'annual' => now()->addYear(),
+            'custom' => now()->addDays(max(1, (int) ($sku->rental_days ?? 30))),
+            default => now()->addMonth(),
+        };
     }
 
     private function uniquePlaceholderKey(): string
