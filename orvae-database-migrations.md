@@ -730,7 +730,7 @@ Soporte posventa: conversación **asíncrona** (ticket + mensajes; no exige chat
 | Campo | Tipo | Notas |
 |-------|------|--------|
 | `id` | uuid | PK |
-| `user_id` | uuid o bigint | Nullable |
+| `user_id` | uuid o bigint | Nullable |b
 | `action` | string | |
 | `entity_type` | string | |
 | `entity_id` | uuid | |

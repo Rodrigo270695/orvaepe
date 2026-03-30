@@ -25,7 +25,7 @@ import {
 import type { ClienteUserOption } from '@/components/admin/form/admin-cliente-select';
 import type { SkuOption } from '@/components/acceso/licencias/AccesoLicenciaFormFields';
 import panel from '@/routes/panel';
-import { ArrowDown, ArrowUp, ArrowUpDown, Pencil, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpDown, KeyRound, Pencil, Trash2 } from 'lucide-react';
 
 type Props = {
     licenseKeys: any;
@@ -229,6 +229,14 @@ export default function AccesoLicenciasIndex({
                                 <Pencil className="size-4 text-[#4A80B8]/60 transition-colors group-hover:text-[#4A80B8]" />
                             </button>
                         ) : null}
+                        <a
+                            href={`/panel/acceso-licencias/${row.id}/extras`}
+                            className="group inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4A80B8]/30"
+                            aria-label="Metadatos y evidencia"
+                            title="Metadatos y evidencia"
+                        >
+                            <KeyRound className="size-4 text-[#4A80B8]/60 transition-colors group-hover:text-[#4A80B8]" />
+                        </a>
                         {canDeleteLicense(row) ? (
                             <button
                                 type="button"

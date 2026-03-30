@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\EntitlementsController;
 use App\Http\Controllers\Admin\EntitlementSecretsController;
 use App\Http\Controllers\Admin\InformesController;
 use App\Http\Controllers\Admin\LicenseActivationsController;
+use App\Http\Controllers\Admin\LicenseKeyExtrasController;
 use App\Http\Controllers\Admin\LicenseKeysController;
 use App\Http\Controllers\Admin\NotificationsController;
 use App\Http\Controllers\Admin\OemLicenseDeliveriesController;
@@ -343,6 +344,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::patch('panel/acceso-licencias/{license_key}', [LicenseKeysController::class, 'update'])
             ->name('panel.acceso-licencias.update');
+
+        Route::get('panel/acceso-licencias/{license_key}/extras', [LicenseKeyExtrasController::class, 'index'])
+            ->name('panel.acceso-licencias.extras.index');
+
+        Route::patch('panel/acceso-licencias/{license_key}/extras', [LicenseKeyExtrasController::class, 'update'])
+            ->name('panel.acceso-licencias.extras.update');
+
+        Route::post('panel/acceso-licencias/{license_key}/extras/evidencia-imagen', [LicenseKeyExtrasController::class, 'storeEvidenceImage'])
+            ->name('panel.acceso-licencias.extras.evidence-image.store');
 
         Route::delete('panel/acceso-licencias/{license_key}', [LicenseKeysController::class, 'destroy'])
             ->name('panel.acceso-licencias.destroy');
