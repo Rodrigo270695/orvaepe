@@ -118,7 +118,7 @@ class ClientPortalController extends Controller
             ->orderByDesc('created_at')
             ->paginate($perPage)
             ->withQueryString()
-            ->through(static function (LicenseKey $row): array {
+            ->through(function (LicenseKey $row): array {
                 return [
                     'id' => $row->id,
                     'key' => $row->key,
@@ -131,12 +131,29 @@ class ClientPortalController extends Controller
                     'sku_code' => $row->catalogSku?->code,
                     'sku_name' => $row->catalogSku?->name,
                     'product_name' => $row->catalogSku?->product?->name,
+                    'evidence_image_url' => $this->evidenceImageFromMetadata(is_array($row->metadata) ? $row->metadata : []),
                 ];
             });
 
         return Inertia::render('cliente/licencias', [
             'licenses' => $licenses,
         ]);
+    }
+
+    /**
+     * @param array<string, mixed> $metadata
+     */
+    private function evidenceImageFromMetadata(array $metadata): ?string
+    {
+        $keys = ['evidencia_activacion_imagen', 'evidence_image_url'];
+        foreach ($keys as $key) {
+            $value = $metadata[$key] ?? null;
+            if (is_string($value) && trim($value) !== '') {
+                return trim($value);
+            }
+        }
+
+        return null;
     }
 
     public function facturas(Request $request): Response

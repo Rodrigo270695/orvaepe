@@ -22,6 +22,7 @@ type LicenseRow = {
     sku_code: string | null;
     sku_name: string | null;
     product_name: string | null;
+    evidence_image_url?: string | null;
 };
 
 type Props = {
@@ -135,6 +136,7 @@ export default function ClienteLicencias({ licenses }: Props) {
                                         <th className="px-4 py-3">Producto / SKU</th>
                                         <th className="px-4 py-3">Pedido</th>
                                         <th className="px-4 py-3">Clave</th>
+                                        <th className="px-4 py-3">Evidencia</th>
                                         <th className="px-4 py-3">Caduca</th>
                                     </tr>
                                 </thead>
@@ -166,6 +168,25 @@ export default function ClienteLicencias({ licenses }: Props) {
                                             </td>
                                             <td className="px-4 py-3">
                                                 <LicenseKeyCell row={row} />
+                                            </td>
+                                            <td className="px-4 py-3 text-xs text-muted-foreground">
+                                                {row.evidence_image_url ? (
+                                                    <a
+                                                        href={row.evidence_image_url}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="inline-flex items-center gap-2"
+                                                    >
+                                                        <img
+                                                            src={row.evidence_image_url}
+                                                            alt="Evidencia de activación"
+                                                            className="h-10 w-10 rounded-md border border-border object-cover"
+                                                        />
+                                                        <span>Ver</span>
+                                                    </a>
+                                                ) : (
+                                                    '—'
+                                                )}
                                             </td>
                                             <td className="px-4 py-3 text-xs text-muted-foreground">
                                                 {formatDate(row.expires_at)}

@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 type ValueKind = 'text' | 'list';
 type SpecPair = {
     code: string;
+    label?: string;
     value_kind: ValueKind;
     value: string;
     values: string[];
@@ -34,6 +35,13 @@ type Props = {
         order?: { order_number: string } | null;
     };
     metadataPairs?: SpecPair[] | null;
+    latestActivation?: {
+        domain: string;
+        ip_address: string;
+        server_fingerprint?: string | null;
+        last_ping_at?: string | null;
+        is_active: boolean;
+    } | null;
 };
 
 function emptyRow(): SpecPair {
@@ -45,17 +53,27 @@ function asPairs(raw: unknown): SpecPair[] {
     return raw.map((r) => {
         const row = r as Record<string, unknown>;
         const kind: ValueKind = row.value_kind === 'list' ? 'list' : 'text';
+        const label = typeof row.label === 'string' ? row.label : '';
         if (kind === 'list') {
             const values = Array.isArray(row.values) ? row.values.map((v) => String(v ?? '')) : [''];
-            return { code: String(row.code ?? ''), value_kind: 'list', value: '', values: values.length > 0 ? values : [''] };
+            return { code: String(row.code ?? ''), label, value_kind: 'list', value: '', values: values.length > 0 ? values : [''] };
         }
-        return { code: String(row.code ?? ''), value_kind: 'text', value: String(row.value ?? ''), values: [''] };
+        return { code: String(row.code ?? ''), label, value_kind: 'text', value: String(row.value ?? ''), values: [''] };
     });
 }
 
 function isEvidenceImageKey(code: string): boolean {
     const k = code.trim().toLowerCase();
-    return ['evidencia_activacion_imagen', 'evidence_image_url'].includes(k);
+    if (k === '') return false;
+    return (
+        k.includes('evid') ||
+        k.includes('captur') ||
+        k.includes('imagen') ||
+        k.includes('image') ||
+        k.includes('img') ||
+        k.includes('foto') ||
+        k.includes('screenshot')
+    );
 }
 
 function rowSingleUrl(row: SpecPair): string {
@@ -63,7 +81,7 @@ function rowSingleUrl(row: SpecPair): string {
     return row.value.trim();
 }
 
-export default function LicenseExtrasPage({ license, metadataPairs }: Props) {
+export default function LicenseExtrasPage({ license, metadataPairs, latestActivation }: Props) {
     const backUrl = panelPath('acceso-licencias');
     const extrasUrl = `/panel/acceso-licencias/${license.id}/extras`;
     const uploadUrl = `/panel/acceso-licencias/${license.id}/extras/evidencia-imagen`;
@@ -150,6 +168,26 @@ export default function LicenseExtrasPage({ license, metadataPairs }: Props) {
                     <p className="mt-1 text-[11px] text-muted-foreground">
                         Activaciones: {license.activation_count} / {license.max_activations}
                     </p>
+                    {latestActivation ? (
+                        <div className="mt-2 grid gap-1 text-[11px] text-muted-foreground md:grid-cols-3">
+                            <p>
+                                <span className="font-semibold text-foreground">Dominio/equipo:</span>{' '}
+                                {latestActivation.domain || '—'}
+                            </p>
+                            <p>
+                                <span className="font-semibold text-foreground">IP:</span>{' '}
+                                {latestActivation.ip_address || '—'}
+                            </p>
+                            <p>
+                                <span className="font-semibold text-foreground">Fingerprint:</span>{' '}
+                                {latestActivation.server_fingerprint || '—'}
+                            </p>
+                        </div>
+                    ) : (
+                        <p className="mt-2 text-[11px] text-muted-foreground">
+                            Aún no hay activación registrada para esta licencia.
+                        </p>
+                    )}
                 </NeuCardRaised>
 
                 <form
@@ -192,6 +230,9 @@ export default function LicenseExtrasPage({ license, metadataPairs }: Props) {
                                             onChange={(e) => updateRow(index, { code: e.target.value })}
                                             className={cn('neumorph-inset w-full rounded-lg border border-border/60 bg-background px-2.5 py-1.5 text-xs outline-none', 'placeholder:text-muted-foreground/60 focus-visible:ring-2 focus-visible:ring-[#4A80B8]/30')}
                                         />
+                                        <p className="text-[10px] text-muted-foreground">
+                                            {row.label && row.label.trim() !== '' ? row.label : 'Sin etiqueta'}
+                                        </p>
                                     </div>
 
                                     {isEvidenceImageKey(row.code) ? (

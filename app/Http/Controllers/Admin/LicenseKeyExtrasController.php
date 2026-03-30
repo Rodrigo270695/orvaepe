@@ -23,6 +23,7 @@ class LicenseKeyExtrasController extends Controller
             'catalogSku:id,code,name,catalog_product_id',
             'catalogSku.product:id,name',
             'order:id,order_number',
+            'activations:id,license_key_id,domain,ip_address,server_fingerprint,last_ping_at,is_active,created_at',
         ]);
 
         return Inertia::render('admin/acceso-licencias/extras', [
@@ -38,6 +39,15 @@ class LicenseKeyExtrasController extends Controller
                 'order' => $license_key->order,
             ],
             'metadataPairs' => $this->objectToPairs(is_array($license_key->metadata) ? $license_key->metadata : []),
+            'latestActivation' => $license_key->activations
+                ->sortByDesc('created_at')
+                ->map(static fn (LicenseActivation $row): array => [
+                    'domain' => $row->domain,
+                    'ip_address' => $row->ip_address,
+                    'server_fingerprint' => $row->server_fingerprint,
+                    'last_ping_at' => $row->last_ping_at?->toIso8601String(),
+                    'is_active' => (bool) $row->is_active,
+                ])->first(),
         ]);
     }
 
@@ -150,6 +160,7 @@ class LicenseKeyExtrasController extends Controller
             if (is_array($value)) {
                 $pairs[] = [
                     'code' => $code,
+                    'label' => $this->humanLabel($code),
                     'value_kind' => 'list',
                     'value' => '',
                     'values' => array_map(static fn ($v) => (string) $v, $value),
@@ -159,6 +170,7 @@ class LicenseKeyExtrasController extends Controller
 
             $pairs[] = [
                 'code' => $code,
+                'label' => $this->humanLabel($code),
                 'value_kind' => 'text',
                 'value' => $value === null ? '' : (string) $value,
                 'values' => [''],
@@ -166,6 +178,28 @@ class LicenseKeyExtrasController extends Controller
         }
 
         return $pairs;
+    }
+
+    private function humanLabel(string $code): string
+    {
+        $map = [
+            'created_via' => 'Creado vía',
+            'order_line_id' => 'ID de línea de pedido',
+            'line_slot' => 'Nro. de unidad',
+            'awaiting_provider_key' => 'Pendiente de clave del proveedor',
+            'sku_code' => 'Código SKU',
+            'sku_name' => 'Nombre SKU',
+            'fulfilled_at' => 'Completado en',
+            'evidencia_activacion_imagen' => 'Evidencia de activación (imagen)',
+            'evidence_image_url' => 'Evidencia de activación (imagen)',
+            'activation_notes' => 'Notas de activación',
+        ];
+
+        if (isset($map[$code])) {
+            return $map[$code];
+        }
+
+        return ucfirst(str_replace('_', ' ', $code));
     }
 
     /**
