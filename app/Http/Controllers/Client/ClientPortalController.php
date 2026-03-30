@@ -9,6 +9,7 @@ use App\Models\Entitlement;
 use App\Models\EntitlementSecret;
 use App\Models\LicenseKey;
 use App\Models\Order;
+use App\Models\OrderLine;
 use App\Models\SoftwareRelease;
 use App\Models\SoftwareReleaseAsset;
 use App\Models\Subscription;
@@ -125,9 +126,148 @@ class ClientPortalController extends Controller
 
     public function servicios(Request $request): Response
     {
-        return Inertia::render('cliente/placeholder', [
-            'title' => 'Servicios',
-            'description' => 'Aquí verás tus productos y servicios contratados.',
+        $user = $request->user();
+
+        $serviceLines = OrderLine::query()
+            ->join('orders', 'orders.id', '=', 'order_lines.order_id')
+            ->where('orders.user_id', $user->id)
+            ->join('catalog_skus', 'catalog_skus.id', '=', 'order_lines.catalog_sku_id')
+            ->join('catalog_products', 'catalog_products.id', '=', 'catalog_skus.catalog_product_id')
+            ->join('catalog_categories', 'catalog_categories.id', '=', 'catalog_products.category_id')
+            ->where('catalog_categories.revenue_line', 'service')
+            ->orderByDesc('orders.placed_at')
+            ->orderByDesc('orders.created_at')
+            ->select('order_lines.*')
+            ->with([
+                'order:id,order_number,status,currency,placed_at,created_at',
+                'sku:id,code,name,catalog_product_id',
+                'sku.product:id,slug,name',
+            ])
+            ->get()
+            ->map(static function (OrderLine $line): array {
+                $placed = $line->order?->placed_at ?? $line->order?->created_at;
+
+                return [
+                    'id' => $line->id,
+                    'product_name' => $line->product_name_snapshot ?: $line->sku?->product?->name,
+                    'sku_name' => $line->sku_name_snapshot ?: $line->sku?->name,
+                    'sku_code' => $line->sku?->code,
+                    'product_slug' => $line->sku?->product?->slug,
+                    'order_number' => $line->order?->order_number,
+                    'order_status' => $line->order?->status,
+                    'placed_at' => $placed?->toIso8601String(),
+                    'line_total' => (string) $line->line_total,
+                    'currency' => $line->order?->currency ?? 'PEN',
+                ];
+            })->values()->all();
+
+        $subscriptions = Subscription::query()
+            ->where('user_id', $user->id)
+            ->whereHas('items.catalogSku.product.category', static function ($q): void {
+                $q->where('revenue_line', 'service');
+            })
+            ->with([
+                'items.catalogSku:id,code,name,catalog_product_id',
+                'items.catalogSku.product:id,name,slug,category_id',
+                'items.catalogSku.product.category:id,revenue_line',
+            ])
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(static function (Subscription $sub): ?array {
+                $serviceItems = $sub->items->filter(static function ($item): bool {
+                    return ($item->catalogSku?->product?->category?->revenue_line ?? '') === 'service';
+                });
+                if ($serviceItems->isEmpty()) {
+                    return null;
+                }
+
+                return [
+                    'id' => $sub->id,
+                    'status' => $sub->status,
+                    'current_period_start' => $sub->current_period_start?->toIso8601String(),
+                    'current_period_end' => $sub->current_period_end?->toIso8601String(),
+                    'cancel_at_period_end' => (bool) $sub->cancel_at_period_end,
+                    'items' => $serviceItems->map(static function ($item): array {
+                        return [
+                            'sku_code' => $item->catalogSku?->code,
+                            'sku_name' => $item->catalogSku?->name,
+                            'product_name' => $item->catalogSku?->product?->name,
+                            'product_slug' => $item->catalogSku?->product?->slug,
+                            'quantity' => (int) $item->quantity,
+                            'unit_price' => (string) $item->unit_price,
+                        ];
+                    })->values()->all(),
+                ];
+            })->filter()->values()->all();
+
+        $entitlements = Entitlement::query()
+            ->where('user_id', $user->id)
+            ->whereHas('catalogProduct.category', static function ($q): void {
+                $q->where('revenue_line', 'service');
+            })
+            ->with(['catalogProduct:id,name,slug', 'catalogSku:id,code,name'])
+            ->withCount('secrets')
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(static function (Entitlement $ent): array {
+                return [
+                    'id' => $ent->id,
+                    'status' => $ent->status,
+                    'starts_at' => $ent->starts_at?->toIso8601String(),
+                    'ends_at' => $ent->ends_at?->toIso8601String(),
+                    'product_name' => $ent->catalogProduct?->name,
+                    'product_slug' => $ent->catalogProduct?->slug,
+                    'sku' => $ent->catalogSku?->code,
+                    'sku_name' => $ent->catalogSku?->name,
+                    'secrets_count' => (int) $ent->secrets_count,
+                ];
+            })->values()->all();
+
+        $credentialSecrets = EntitlementSecret::query()
+            ->whereHas('entitlement', static function ($q) use ($user): void {
+                $q->where('user_id', $user->id)
+                    ->whereHas('catalogProduct.category', static function ($c): void {
+                        $c->where('revenue_line', 'service');
+                    });
+            })
+            ->with([
+                'entitlement:id,user_id,status,catalog_product_id,catalog_sku_id',
+                'entitlement.catalogProduct:id,name,slug',
+                'entitlement.catalogSku:id,code,name',
+            ])
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(static function (EntitlementSecret $secret): array {
+                $ent = $secret->entitlement;
+
+                return [
+                    'id' => $secret->id,
+                    'kind' => $secret->kind,
+                    'label' => $secret->label,
+                    'public_ref' => $secret->public_ref,
+                    'secret_value' => $secret->decryptPlainOrNull(),
+                    'metadata' => $secret->metadata,
+                    'expires_at' => $secret->expires_at?->toIso8601String(),
+                    'revoked_at' => $secret->revoked_at?->toIso8601String(),
+                    'rotated_at' => $secret->rotated_at?->toIso8601String(),
+                    'last_used_at' => $secret->last_used_at?->toIso8601String(),
+                    'created_at' => $secret->created_at?->toIso8601String(),
+                    'entitlement' => $ent !== null ? [
+                        'id' => $ent->id,
+                        'status' => $ent->status,
+                        'product_name' => $ent->catalogProduct?->name,
+                        'product_slug' => $ent->catalogProduct?->slug,
+                        'sku' => $ent->catalogSku?->code,
+                        'sku_name' => $ent->catalogSku?->name,
+                    ] : null,
+                ];
+            })->values()->all();
+
+        return Inertia::render('cliente/servicios', [
+            'serviceLines' => $serviceLines,
+            'subscriptions' => $subscriptions,
+            'entitlements' => $entitlements,
+            'credentialSecrets' => $credentialSecrets,
         ]);
     }
 
@@ -217,7 +357,7 @@ class ClientPortalController extends Controller
 
         $entitlements = Entitlement::query()
             ->where('user_id', $user->id)
-            ->with(['catalogProduct:id,name', 'catalogSku:id,code,name'])
+            ->with(['catalogProduct:id,name,slug', 'catalogSku:id,code,name'])
             ->withCount('secrets')
             ->orderByDesc('created_at')
             ->get()
@@ -228,6 +368,7 @@ class ClientPortalController extends Controller
                     'starts_at' => $ent->starts_at?->toIso8601String(),
                     'ends_at' => $ent->ends_at?->toIso8601String(),
                     'product_name' => $ent->catalogProduct?->name,
+                    'product_slug' => $ent->catalogProduct?->slug,
                     'sku' => $ent->catalogSku?->code,
                     'sku_name' => $ent->catalogSku?->name,
                     'secrets_count' => (int) $ent->secrets_count,
@@ -240,7 +381,7 @@ class ClientPortalController extends Controller
             })
             ->with([
                 'entitlement:id,user_id,status,catalog_product_id,catalog_sku_id',
-                'entitlement.catalogProduct:id,name',
+                'entitlement.catalogProduct:id,name,slug',
                 'entitlement.catalogSku:id,code,name',
             ])
             ->orderByDesc('created_at')
@@ -264,6 +405,7 @@ class ClientPortalController extends Controller
                         'id' => $ent->id,
                         'status' => $ent->status,
                         'product_name' => $ent->catalogProduct?->name,
+                        'product_slug' => $ent->catalogProduct?->slug,
                         'sku' => $ent->catalogSku?->code,
                         'sku_name' => $ent->catalogSku?->name,
                     ] : null,

@@ -17,6 +17,7 @@ export type EntitlementSecretDetail = {
         id: string;
         status: string;
         product_name?: string | null;
+        product_slug?: string | null;
         sku?: string | null;
         sku_name?: string | null;
         user?: {

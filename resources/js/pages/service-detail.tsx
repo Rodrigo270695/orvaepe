@@ -14,7 +14,12 @@ import SoftwareProductHero from '@/components/software/SoftwareProductHero';
 import GeometricBackground from '@/components/welcome/GeometricBackground';
 import ScrollReveal from '@/components/welcome/ScrollReveal';
 import ScrollToTopButton from '@/components/welcome/ScrollToTopButton';
-import { parsePenUnitFromPriceText } from '@/lib/cartPricing';
+import {
+    planHasPurchasablePrice,
+    planNumericUnitPricePen,
+    parsePenUnitFromPriceText,
+} from '@/lib/cartPricing';
+import { buildWhatsAppHref, WHATSAPP_E164 } from '@/lib/whatsapp';
 import { normalizeModuleDisplayName } from '@/lib/normalizeModuleDisplayName';
 import { addMarketingCatalogSkuToCart } from '@/lib/oemCart';
 import {
@@ -25,9 +30,52 @@ import {
 } from '@/components/ui/dialog';
 import { type SoftwarePricingPlan, type SoftwareSystem } from '@/marketplace/softwareCatalog';
 
+function getPlanPriceBefore(p: SoftwarePricingPlan): string | undefined {
+    const anyPlan = p as SoftwarePricingPlan & {
+        oldPriceText?: string;
+        price_before?: string | number;
+        precio_antes?: string | number;
+        precioAntes?: string | number;
+    };
+
+    return (
+        p.priceBeforeText ??
+        (p.priceBefore !== undefined ? String(p.priceBefore) : undefined) ??
+        anyPlan.oldPriceText ??
+        (anyPlan.price_before !== undefined ? String(anyPlan.price_before) : undefined) ??
+        (anyPlan.precio_antes !== undefined
+            ? String(anyPlan.precio_antes)
+            : anyPlan.precioAntes !== undefined
+              ? String(anyPlan.precioAntes)
+              : undefined)
+    );
+}
+
+function getPlanPriceNow(p: SoftwarePricingPlan): string | undefined {
+    const anyPlan = p as SoftwarePricingPlan & {
+        newPriceText?: string;
+        price_now?: string | number;
+        precio_ahora?: string | number;
+        precioAhora?: string | number;
+    };
+
+    return (
+        p.priceNowText ??
+        (p.priceNow !== undefined ? String(p.priceNow) : undefined) ??
+        anyPlan.newPriceText ??
+        (anyPlan.price_now !== undefined ? String(anyPlan.price_now) : undefined) ??
+        (anyPlan.precio_ahora !== undefined
+            ? String(anyPlan.precio_ahora)
+            : anyPlan.precioAhora !== undefined
+              ? String(anyPlan.precioAhora)
+              : undefined)
+    );
+}
+
 type ServiceDetailPageProps = {
     canRegister?: boolean;
     system?: SoftwareSystem | null;
+    contact?: { whatsapp_e164?: string };
 };
 
 export default function ServiceDetail() {
@@ -39,7 +87,9 @@ export default function ServiceDetail() {
     ] as const;
 
     const page = usePage<ServiceDetailPageProps & { seo: SeoDefaults }>();
-    const { system: systemFromServer, seo } = page.props;
+    const { system: systemFromServer, seo, contact } = page.props;
+    const whatsappE164 =
+        contact?.whatsapp_e164?.replace(/\D/g, '') || WHATSAPP_E164;
     const { url } = page;
 
     /** Slug del servicio en `/servicios/{slug}`. */
@@ -169,6 +219,10 @@ export default function ServiceDetail() {
             return;
         }
 
+        if (!planHasPurchasablePrice(selectedPlan)) {
+            return;
+        }
+
         const price =
             selectedPlan.listPrice ??
             parsePenUnitFromPriceText(selectedPlan.priceText) ??
@@ -213,13 +267,18 @@ export default function ServiceDetail() {
 
         const first = visiblePlans[0];
         if (first) {
-            base.offers = {
+            const unit = planNumericUnitPricePen(first);
+            const offer: Record<string, unknown> = {
                 '@type': 'Offer',
                 url: productUrl,
                 priceCurrency: 'PEN',
                 availability: 'https://schema.org/InStock',
                 name: first.label,
             };
+            if (unit !== null && unit > 0) {
+                offer.price = String(unit);
+            }
+            base.offers = offer;
         }
 
         if (system.demoUrl) {
@@ -234,6 +293,27 @@ export default function ServiceDetail() {
 
         return base;
     }, [system, seo.siteUrl, visiblePlans]);
+
+    const purchaseEnabled = Boolean(selectedPlan && planHasPurchasablePrice(selectedPlan));
+
+    const consultationWhatsAppHref = useMemo(() => {
+        if (!system || !selectedPlan) {
+            return '';
+        }
+
+        return buildWhatsAppHref(
+            whatsappE164,
+            `Hola ORVAE, quiero información sobre el servicio «${system.name}» — plan «${selectedPlan.label}». [Web /servicios/${system.slug}]`,
+        );
+    }, [system, selectedPlan, whatsappE164]);
+
+    const selectionPriceLine = useMemo(() => {
+        if (!selectedPlan || !purchaseEnabled) {
+            return undefined;
+        }
+
+        return getPlanPriceNow(selectedPlan) ?? selectedPlan.priceText;
+    }, [selectedPlan, purchaseEnabled]);
 
     if (!system) {
         return (
@@ -329,56 +409,6 @@ export default function ServiceDetail() {
 
         return 'Modelo de venta definido por administración';
     };
-
-    const getPlanPriceBefore = (p: SoftwarePricingPlan): string | undefined => {
-        const anyPlan = p as SoftwarePricingPlan & {
-            oldPriceText?: string;
-            price_before?: string | number;
-            precio_antes?: string | number;
-            precioAntes?: string | number;
-        };
-
-        return (
-            p.priceBeforeText ??
-            (p.priceBefore !== undefined ? String(p.priceBefore) : undefined) ??
-            anyPlan.oldPriceText ??
-            (anyPlan.price_before !== undefined ? String(anyPlan.price_before) : undefined) ??
-            (anyPlan.precio_antes !== undefined
-                ? String(anyPlan.precio_antes)
-                : anyPlan.precioAntes !== undefined
-                  ? String(anyPlan.precioAntes)
-                  : undefined)
-        );
-    };
-
-    const getPlanPriceNow = (p: SoftwarePricingPlan): string | undefined => {
-        const anyPlan = p as SoftwarePricingPlan & {
-            newPriceText?: string;
-            price_now?: string | number;
-            precio_ahora?: string | number;
-            precioAhora?: string | number;
-        };
-
-        return (
-            p.priceNowText ??
-            (p.priceNow !== undefined ? String(p.priceNow) : undefined) ??
-            anyPlan.newPriceText ??
-            (anyPlan.price_now !== undefined ? String(anyPlan.price_now) : undefined) ??
-            (anyPlan.precio_ahora !== undefined
-                ? String(anyPlan.precio_ahora)
-                : anyPlan.precioAhora !== undefined
-                  ? String(anyPlan.precioAhora)
-                  : undefined)
-        );
-    };
-
-    const selectionPriceLine = useMemo(() => {
-        if (!selectedPlan) {
-            return undefined;
-        }
-
-        return getPlanPriceNow(selectedPlan) ?? selectedPlan.priceText;
-    }, [selectedPlan]);
 
     return (
         <MarketingLayout
@@ -806,6 +836,7 @@ export default function ServiceDetail() {
                                                     saleModelLabel={saleModelLabel}
                                                     planPriceBefore={planPriceBefore}
                                                     planPriceNow={planPriceNow}
+                                                    showPriceAmount={planHasPurchasablePrice(p)}
                                                     onChoose={() => setSelectedPlanId(p.id)}
                                                 />
                                             );
@@ -818,6 +849,10 @@ export default function ServiceDetail() {
                                                 selectedPlan ? 'Selección actual' : 'Siguiente paso'
                                             }
                                             planSelected={Boolean(selectedPlan)}
+                                            purchaseEnabled={purchaseEnabled}
+                                            whatsappHref={
+                                                consultationWhatsAppHref || undefined
+                                            }
                                             selectionTitle={
                                                 selectedPlan
                                                     ? `${selectedPlan.label} · ${inferSaleModelLabel(selectedPlan)}`
@@ -892,6 +927,8 @@ export default function ServiceDetail() {
                         selectedPlanLabel={`${selectedPlan.label} · ${inferSaleModelLabel(selectedPlan)}`}
                         priceLine={selectionPriceLine}
                         planReady
+                        purchaseEnabled={purchaseEnabled}
+                        whatsappHref={consultationWhatsAppHref || undefined}
                         onPay={() => {
                             alert('Checkout pendiente: integra pasarela de pagos');
                         }}

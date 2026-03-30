@@ -14,7 +14,12 @@ import SoftwareProductHero from '@/components/software/SoftwareProductHero';
 import GeometricBackground from '@/components/welcome/GeometricBackground';
 import ScrollReveal from '@/components/welcome/ScrollReveal';
 import ScrollToTopButton from '@/components/welcome/ScrollToTopButton';
-import { parsePenUnitFromPriceText } from '@/lib/cartPricing';
+import {
+    planHasPurchasablePrice,
+    planNumericUnitPricePen,
+    parsePenUnitFromPriceText,
+} from '@/lib/cartPricing';
+import { buildWhatsAppHref, WHATSAPP_E164 } from '@/lib/whatsapp';
 import { normalizeModuleDisplayName } from '@/lib/normalizeModuleDisplayName';
 import { readSoftwareCart, writeSoftwareCart } from '@/lib/softwareCartStorage';
 import {
@@ -29,9 +34,52 @@ import {
     type SoftwareSystem,
 } from '@/marketplace/softwareCatalog';
 
+function getPlanPriceBefore(p: SoftwarePricingPlan): string | undefined {
+    const anyPlan = p as SoftwarePricingPlan & {
+        oldPriceText?: string;
+        price_before?: string | number;
+        precio_antes?: string | number;
+        precioAntes?: string | number;
+    };
+
+    return (
+        p.priceBeforeText ??
+        (p.priceBefore !== undefined ? String(p.priceBefore) : undefined) ??
+        anyPlan.oldPriceText ??
+        (anyPlan.price_before !== undefined ? String(anyPlan.price_before) : undefined) ??
+        (anyPlan.precio_antes !== undefined
+            ? String(anyPlan.precio_antes)
+            : anyPlan.precioAntes !== undefined
+              ? String(anyPlan.precioAntes)
+              : undefined)
+    );
+}
+
+function getPlanPriceNow(p: SoftwarePricingPlan): string | undefined {
+    const anyPlan = p as SoftwarePricingPlan & {
+        newPriceText?: string;
+        price_now?: string | number;
+        precio_ahora?: string | number;
+        precioAhora?: string | number;
+    };
+
+    return (
+        p.priceNowText ??
+        (p.priceNow !== undefined ? String(p.priceNow) : undefined) ??
+        anyPlan.newPriceText ??
+        (anyPlan.price_now !== undefined ? String(anyPlan.price_now) : undefined) ??
+        (anyPlan.precio_ahora !== undefined
+            ? String(anyPlan.precio_ahora)
+            : anyPlan.precioAhora !== undefined
+              ? String(anyPlan.precioAhora)
+              : undefined)
+    );
+}
+
 type SoftwareDetailPageProps = {
     canRegister?: boolean;
     system?: SoftwareSystem | null;
+    contact?: { whatsapp_e164?: string };
 };
 
 export default function SoftwareDetail() {
@@ -43,7 +91,9 @@ export default function SoftwareDetail() {
     ] as const;
 
     const page = usePage<SoftwareDetailPageProps & { seo: SeoDefaults }>();
-    const { system: systemFromServer, seo } = page.props;
+    const { system: systemFromServer, seo, contact } = page.props;
+    const whatsappE164 =
+        contact?.whatsapp_e164?.replace(/\D/g, '') || WHATSAPP_E164;
     const { url } = page;
 
     /** Slug de la URL actual (Inertia `url` coincide en SSR y tras navegación cliente). */
@@ -155,12 +205,18 @@ export default function SoftwareDetail() {
             return;
         }
 
+        if (!planHasPurchasablePrice(selectedPlan)) {
+            return;
+        }
+
         const items = readSoftwareCart();
         const existing = items.find(
             (i) => i.systemSlug === system.slug && i.planId === selectedPlan.id,
         );
 
-        const unitPen = parsePenUnitFromPriceText(selectedPlan.priceText);
+        const unitPen =
+            planNumericUnitPricePen(selectedPlan) ??
+            parsePenUnitFromPriceText(selectedPlan.priceText);
 
         const snapshot = {
             systemName: system.name,
@@ -213,13 +269,18 @@ export default function SoftwareDetail() {
 
         const first = system.pricingPlans[0];
         if (first) {
-            base.offers = {
+            const unit = planNumericUnitPricePen(first);
+            const offer: Record<string, unknown> = {
                 '@type': 'Offer',
                 url: productUrl,
                 priceCurrency: 'PEN',
                 availability: 'https://schema.org/InStock',
                 name: first.label,
             };
+            if (unit !== null && unit > 0) {
+                offer.price = String(unit);
+            }
+            base.offers = offer;
         }
 
         if (system.demoUrl) {
@@ -234,6 +295,27 @@ export default function SoftwareDetail() {
 
         return base;
     }, [system, seo.siteUrl]);
+
+    const purchaseEnabled = Boolean(selectedPlan && planHasPurchasablePrice(selectedPlan));
+
+    const consultationWhatsAppHref = useMemo(() => {
+        if (!system || !selectedPlan) {
+            return '';
+        }
+
+        return buildWhatsAppHref(
+            whatsappE164,
+            `Hola ORVAE, quiero información sobre el software «${system.name}» — plan «${selectedPlan.label}». [Web /software/${system.slug}]`,
+        );
+    }, [system, selectedPlan, whatsappE164]);
+
+    const selectionPriceLine = useMemo(() => {
+        if (!selectedPlan || !purchaseEnabled) {
+            return undefined;
+        }
+
+        return getPlanPriceNow(selectedPlan) ?? selectedPlan.priceText;
+    }, [selectedPlan, purchaseEnabled]);
 
     if (!system) {
         return (
@@ -329,56 +411,6 @@ export default function SoftwareDetail() {
 
         return 'Modelo de venta definido por administración';
     };
-
-    const getPlanPriceBefore = (p: SoftwarePricingPlan): string | undefined => {
-        const anyPlan = p as SoftwarePricingPlan & {
-            oldPriceText?: string;
-            price_before?: string | number;
-            precio_antes?: string | number;
-            precioAntes?: string | number;
-        };
-
-        return (
-            p.priceBeforeText ??
-            (p.priceBefore !== undefined ? String(p.priceBefore) : undefined) ??
-            anyPlan.oldPriceText ??
-            (anyPlan.price_before !== undefined ? String(anyPlan.price_before) : undefined) ??
-            (anyPlan.precio_antes !== undefined
-                ? String(anyPlan.precio_antes)
-                : anyPlan.precioAntes !== undefined
-                  ? String(anyPlan.precioAntes)
-                  : undefined)
-        );
-    };
-
-    const getPlanPriceNow = (p: SoftwarePricingPlan): string | undefined => {
-        const anyPlan = p as SoftwarePricingPlan & {
-            newPriceText?: string;
-            price_now?: string | number;
-            precio_ahora?: string | number;
-            precioAhora?: string | number;
-        };
-
-        return (
-            p.priceNowText ??
-            (p.priceNow !== undefined ? String(p.priceNow) : undefined) ??
-            anyPlan.newPriceText ??
-            (anyPlan.price_now !== undefined ? String(anyPlan.price_now) : undefined) ??
-            (anyPlan.precio_ahora !== undefined
-                ? String(anyPlan.precio_ahora)
-                : anyPlan.precioAhora !== undefined
-                  ? String(anyPlan.precioAhora)
-                  : undefined)
-        );
-    };
-
-    const selectionPriceLine = useMemo(() => {
-        if (!selectedPlan) {
-            return undefined;
-        }
-
-        return getPlanPriceNow(selectedPlan) ?? selectedPlan.priceText;
-    }, [selectedPlan]);
 
     return (
         <MarketingLayout
@@ -806,6 +838,7 @@ export default function SoftwareDetail() {
                                                     saleModelLabel={saleModelLabel}
                                                     planPriceBefore={planPriceBefore}
                                                     planPriceNow={planPriceNow}
+                                                    showPriceAmount={planHasPurchasablePrice(p)}
                                                     onChoose={() => setSelectedPlanId(p.id)}
                                                 />
                                             );
@@ -818,6 +851,10 @@ export default function SoftwareDetail() {
                                                 selectedPlan ? 'Selección actual' : 'Siguiente paso'
                                             }
                                             planSelected={Boolean(selectedPlan)}
+                                            purchaseEnabled={purchaseEnabled}
+                                            whatsappHref={
+                                                consultationWhatsAppHref || undefined
+                                            }
                                             selectionTitle={
                                                 selectedPlan
                                                     ? `${selectedPlan.label} · ${inferSaleModelLabel(selectedPlan)}`
@@ -883,6 +920,8 @@ export default function SoftwareDetail() {
                         selectedPlanLabel={`${selectedPlan.label} · ${inferSaleModelLabel(selectedPlan)}`}
                         priceLine={selectionPriceLine}
                         planReady
+                        purchaseEnabled={purchaseEnabled}
+                        whatsappHref={consultationWhatsAppHref || undefined}
                         onPay={() => {
                             alert('Checkout pendiente: integra pasarela de pagos');
                         }}

@@ -9,6 +9,8 @@ import {
     Ticket,
 } from 'lucide-react';
 
+import { Link } from '@inertiajs/react';
+
 import {
     secretKindBadgeClass,
     secretKindLabel,
@@ -144,14 +146,21 @@ type EntitlementsCardsProps = {
         starts_at: string | null;
         ends_at: string | null;
         product_name: string | null;
+        product_slug?: string | null;
         sku: string | null;
         sku_name: string | null;
         secrets_count: number;
     }>;
     fmtDate: (iso: string | null) => string;
+    /** Ruta pública del producto (ej. `/servicios/{slug}` o `/software/{slug}`). */
+    productPublicHref?: (slug: string) => string;
 };
 
-export function EntitlementsCards({ entitlements, fmtDate }: EntitlementsCardsProps) {
+export function EntitlementsCards({
+    entitlements,
+    fmtDate,
+    productPublicHref,
+}: EntitlementsCardsProps) {
     return (
         <div className="grid gap-3 sm:grid-cols-1 lg:grid-cols-2">
             {entitlements.map((row) => (
@@ -160,11 +169,21 @@ export function EntitlementsCards({ entitlements, fmtDate }: EntitlementsCardsPr
                     className="rounded-xl border border-border/60 bg-background/50 p-4"
                 >
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                        <ProductHeading
-                            productName={row.product_name}
-                            skuCode={row.sku}
-                            skuName={row.sku_name}
-                        />
+                        <div className="min-w-0">
+                            <ProductHeading
+                                productName={row.product_name}
+                                skuCode={row.sku}
+                                skuName={row.sku_name}
+                            />
+                            {row.product_slug && productPublicHref ? (
+                                <Link
+                                    href={productPublicHref(row.product_slug)}
+                                    className="mt-2 inline-block text-xs font-medium text-[#4A80B8] hover:underline"
+                                >
+                                    Ver ficha pública
+                                </Link>
+                            ) : null}
+                        </div>
                         <span
                             className={`inline-flex w-fit shrink-0 rounded-full border px-2.5 py-0.5 text-xs font-medium ${licenseKeyStatusBadgeClass(row.status === 'suspended' ? 'expired' : row.status)}`}
                         >
@@ -197,12 +216,14 @@ type CredentialsCardsProps = {
     rows: EntitlementSecretDetail[];
     fmtDate: (iso: string | null) => string;
     onView: (row: EntitlementSecretDetail) => void;
+    productPublicHref?: (slug: string) => string;
 };
 
 export function CredentialsCards({
     rows,
     fmtDate,
     onView,
+    productPublicHref,
 }: CredentialsCardsProps) {
     return (
         <div className="grid gap-3 sm:grid-cols-1 lg:grid-cols-2">
@@ -239,6 +260,14 @@ export function CredentialsCards({
                                 skuCode={row.entitlement?.sku ?? null}
                                 skuName={row.entitlement?.sku_name ?? null}
                             />
+                            {row.entitlement?.product_slug && productPublicHref ? (
+                                <Link
+                                    href={productPublicHref(row.entitlement.product_slug)}
+                                    className="mt-2 inline-block text-xs font-medium text-[#4A80B8] hover:underline"
+                                >
+                                    Ver ficha pública
+                                </Link>
+                            ) : null}
                         </div>
                         {row.public_ref ? (
                             <p className="mt-2 break-all font-mono text-[10px] text-muted-foreground">

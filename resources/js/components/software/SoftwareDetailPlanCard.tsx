@@ -11,6 +11,7 @@ export default function SoftwareDetailPlanCard({
     saleModelLabel,
     planPriceBefore,
     planPriceNow,
+    showPriceAmount = true,
     onChoose,
 }: {
     plan: SoftwarePricingPlan;
@@ -19,6 +20,8 @@ export default function SoftwareDetailPlanCard({
     saleModelLabel: string;
     planPriceBefore?: string;
     planPriceNow?: string;
+    /** Si es false (precio 0 o solo cotización), no se muestra importe numérico. */
+    showPriceAmount?: boolean;
     onChoose: () => void;
 }) {
     return (
@@ -94,15 +97,26 @@ export default function SoftwareDetailPlanCard({
                         {saleModelLabel}
                     </p>
 
-                    {planPriceBefore && (
+                    {showPriceAmount && planPriceBefore ? (
                         <p className="mt-2 text-sm font-semibold text-[var(--muted-foreground)] opacity-80 line-through">
                             {planPriceBefore}
                         </p>
-                    )}
+                    ) : null}
 
-                    <p className="mt-1 text-3xl font-bold text-[var(--foreground)] tabular-nums">
-                        {planPriceNow ?? plan.priceText}
-                    </p>
+                    {showPriceAmount ? (
+                        <p className="mt-1 text-3xl font-bold text-[var(--foreground)] tabular-nums">
+                            {planPriceNow ?? plan.priceText}
+                        </p>
+                    ) : (
+                        <div className="mt-1 space-y-1">
+                            <p className="text-lg font-semibold leading-snug text-[var(--muted-foreground)]">
+                                Precio bajo cotización
+                            </p>
+                            <p className="text-xs leading-relaxed text-[var(--muted-foreground)]">
+                                Coordina alcance e importe con nosotros por WhatsApp.
+                            </p>
+                        </div>
+                    )}
                 </div>
 
                 <ul className="mt-4 space-y-2">

@@ -1,4 +1,5 @@
 import type { SoftwareCartItem } from '@/lib/softwareCartStorage';
+import type { SoftwarePricingPlan } from '@/marketplace/softwareCatalog';
 
 /** Fila de precio desde el catálogo (API /carrito/precios-skus). */
 export type SkuPriceRow = {
@@ -98,6 +99,28 @@ export function looksLikeUuid(value: string): boolean {
     return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
         value.trim(),
     );
+}
+
+/**
+ * Precio unitario PEN del plan de catálogo: prioriza `listPrice` y luego parsea textos.
+ */
+export function planNumericUnitPricePen(p: SoftwarePricingPlan): number | null {
+    if (typeof p.listPrice === 'number' && Number.isFinite(p.listPrice)) {
+        return p.listPrice;
+    }
+
+    const fromNow = parsePenUnitFromPriceText(p.priceNowText);
+    if (fromNow !== null) {
+        return fromNow;
+    }
+
+    return parsePenUnitFromPriceText(p.priceText);
+}
+
+/** Compra en web (carrito / checkout) solo si hay importe de lista mayor que 0. */
+export function planHasPurchasablePrice(p: SoftwarePricingPlan): boolean {
+    const n = planNumericUnitPricePen(p);
+    return n !== null && n > 0;
 }
 
 export function parsePenUnitFromPriceText(text: string | undefined): number | null {

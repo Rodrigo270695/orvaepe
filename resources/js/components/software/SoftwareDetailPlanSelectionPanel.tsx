@@ -1,6 +1,6 @@
 'use client';
 
-import { CheckCircle2, CreditCard, Sparkles } from 'lucide-react';
+import { CheckCircle2, CreditCard, MessageCircle, Sparkles } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 
@@ -9,6 +9,10 @@ type Props = {
     selectionTitle: string;
     /** Hay un plan elegido (aunque no tenga precio en texto). */
     planSelected: boolean;
+    /** Si es false (precio 0 / solo cotización), se ocultan pago y carrito. */
+    purchaseEnabled?: boolean;
+    /** Enlace wa.me cuando `purchaseEnabled` es false. */
+    whatsappHref?: string;
     /** Texto de precio (ej. desde catálogo / SKU). */
     priceLine?: string;
     /** Línea pequeña bajo el precio (disclaimer). */
@@ -22,6 +26,8 @@ export default function SoftwareDetailPlanSelectionPanel({
     eyebrow,
     selectionTitle,
     planSelected,
+    purchaseEnabled = true,
+    whatsappHref,
     priceLine,
     priceCaption,
     onPay,
@@ -29,6 +35,7 @@ export default function SoftwareDetailPlanSelectionPanel({
     addedCount,
 }: Props) {
     const hasPrice = Boolean(priceLine?.trim());
+    const showConsultation = planSelected && !purchaseEnabled;
 
     return (
         <div
@@ -79,7 +86,11 @@ export default function SoftwareDetailPlanSelectionPanel({
                         {selectionTitle}
                     </p>
 
-                    {hasPrice ? (
+                    {showConsultation ? (
+                        <p className="text-sm leading-relaxed text-[var(--muted-foreground)]">
+                            Este plan no tiene precio publicado en la web. Te cotizamos el alcance según tu proyecto.
+                        </p>
+                    ) : hasPrice ? (
                         <div className="pt-1">
                             <p
                                 className="font-[family-name:var(--font-display)] text-2xl font-bold tracking-tight text-[color-mix(in_oklab,var(--state-success)_40%,var(--foreground))] tabular-nums sm:text-3xl"
@@ -106,56 +117,76 @@ export default function SoftwareDetailPlanSelectionPanel({
                 </div>
 
                 <div className="flex w-full flex-shrink-0 flex-col gap-3 sm:flex-row sm:justify-end lg:w-auto lg:flex-col xl:flex-row">
-                    <button
-                        type="button"
-                        disabled={!planSelected}
-                        className={cn(
-                            'inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border px-5 py-3.5 text-sm font-semibold',
-                            'border-[color-mix(in_oklab,var(--border)_75%,transparent)]',
-                            'bg-[color-mix(in_oklab,var(--background)_55%,transparent)] text-[var(--foreground)] backdrop-blur-md',
-                            'transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]',
-                            'hover:shadow-[0_0_28px_-6px_color-mix(in_oklab,var(--state-info)_32%,transparent)]',
-                            'active:scale-[0.98]',
-                            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-background',
-                            !planSelected && 'pointer-events-none opacity-45',
-                        )}
-                        style={{
-                            borderColor: 'color-mix(in oklab, var(--state-info) 35%, var(--border))',
-                        }}
-                        onClick={onPay}
-                    >
-                        <CreditCard className="size-4 opacity-90" aria-hidden />
-                        Ir a pagar
-                    </button>
-                    <button
-                        type="button"
-                        disabled={!planSelected}
-                        className={cn(
-                            'inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl px-5 py-3.5 text-sm font-semibold',
-                            'text-[var(--primary-foreground)]',
-                            'shadow-[0_6px_28px_-6px_color-mix(in_oklab,var(--state-success)_55%,transparent),inset_0_1px_0_0_color-mix(in_oklab,var(--primary-foreground)_16%,transparent)]',
-                            'transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]',
-                            'hover:brightness-[1.08]',
-                            'hover:shadow-[0_10px_40px_-8px_color-mix(in_oklab,var(--state-success)_52%,transparent)]',
-                            'active:scale-[0.98]',
-                            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-background',
-                            addedCount > 0 &&
-                                'ring-2 ring-[color-mix(in_oklab,var(--primary)_38%,transparent)] ring-offset-2 ring-offset-[color-mix(in_oklab,var(--background)_80%,transparent)]',
-                            !planSelected && 'pointer-events-none opacity-45',
-                        )}
-                        style={{
-                            background:
-                                'linear-gradient(135deg, color-mix(in oklab, var(--state-success) 92%, var(--state-info)), color-mix(in oklab, var(--state-info) 72%, var(--state-success)))',
-                        }}
-                        onClick={onAdd}
-                    >
-                        Agregar al carrito
-                        <Sparkles className="size-4 opacity-95" aria-hidden />
-                    </button>
+                    {showConsultation && whatsappHref ? (
+                        <a
+                            href={whatsappHref}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={cn(
+                                'inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl px-5 py-3.5 text-sm font-semibold',
+                                'bg-[#25D366] text-white shadow-[0_6px_28px_-6px_rgba(37,211,102,0.45)]',
+                                'transition-[transform,filter] duration-200 hover:brightness-110 active:scale-[0.98]',
+                                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25D366] focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+                                'sm:w-auto xl:w-auto',
+                            )}
+                        >
+                            <MessageCircle className="size-4 shrink-0" strokeWidth={2} aria-hidden />
+                            Contactar por WhatsApp
+                        </a>
+                    ) : (
+                        <>
+                            <button
+                                type="button"
+                                disabled={!planSelected}
+                                className={cn(
+                                    'inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border px-5 py-3.5 text-sm font-semibold',
+                                    'border-[color-mix(in_oklab,var(--border)_75%,transparent)]',
+                                    'bg-[color-mix(in_oklab,var(--background)_55%,transparent)] text-[var(--foreground)] backdrop-blur-md',
+                                    'transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]',
+                                    'hover:shadow-[0_0_28px_-6px_color-mix(in_oklab,var(--state-info)_32%,transparent)]',
+                                    'active:scale-[0.98]',
+                                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+                                    !planSelected && 'pointer-events-none opacity-45',
+                                )}
+                                style={{
+                                    borderColor: 'color-mix(in oklab, var(--state-info) 35%, var(--border))',
+                                }}
+                                onClick={onPay}
+                            >
+                                <CreditCard className="size-4 opacity-90" aria-hidden />
+                                Ir a pagar
+                            </button>
+                            <button
+                                type="button"
+                                disabled={!planSelected}
+                                className={cn(
+                                    'inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl px-5 py-3.5 text-sm font-semibold',
+                                    'text-[var(--primary-foreground)]',
+                                    'shadow-[0_6px_28px_-6px_color-mix(in_oklab,var(--state-success)_55%,transparent),inset_0_1px_0_0_color-mix(in_oklab,var(--primary-foreground)_16%,transparent)]',
+                                    'transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]',
+                                    'hover:brightness-[1.08]',
+                                    'hover:shadow-[0_10px_40px_-8px_color-mix(in_oklab,var(--state-success)_52%,transparent)]',
+                                    'active:scale-[0.98]',
+                                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+                                    addedCount > 0 &&
+                                        'ring-2 ring-[color-mix(in_oklab,var(--primary)_38%,transparent)] ring-offset-2 ring-offset-[color-mix(in_oklab,var(--background)_80%,transparent)]',
+                                    !planSelected && 'pointer-events-none opacity-45',
+                                )}
+                                style={{
+                                    background:
+                                        'linear-gradient(135deg, color-mix(in oklab, var(--state-success) 92%, var(--state-info)), color-mix(in oklab, var(--state-info) 72%, var(--state-success)))',
+                                }}
+                                onClick={onAdd}
+                            >
+                                Agregar al carrito
+                                <Sparkles className="size-4 opacity-95" aria-hidden />
+                            </button>
+                        </>
+                    )}
                 </div>
             </div>
 
-            {addedCount > 0 ? (
+            {purchaseEnabled && addedCount > 0 ? (
                 <div
                     className="relative z-10 mt-8 border-t border-[color-mix(in_oklab,var(--border)_65%,transparent)] pt-6"
                     role="status"
