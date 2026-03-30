@@ -26,6 +26,7 @@ class OemLicenseDelivery extends Model
 
     #[Fillable([
         'order_line_id',
+        'license_key_id',
         'vendor',
         'license_code',
         'activation_payload',
@@ -57,6 +58,11 @@ class OemLicenseDelivery extends Model
     public function orderLine(): BelongsTo
     {
         return $this->belongsTo(OrderLine::class, 'order_line_id');
+    }
+
+    public function licenseKey(): BelongsTo
+    {
+        return $this->belongsTo(LicenseKey::class, 'license_key_id');
     }
 
     public function isPending(): bool

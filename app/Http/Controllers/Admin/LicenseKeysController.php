@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\CatalogSku;
 use App\Models\LicenseKey;
+use App\Models\OemLicenseDelivery;
 use App\Models\Order;
 use App\Models\User;
 use App\Support\AdminFlashToast;
@@ -289,6 +290,12 @@ class LicenseKeysController extends Controller
                 'metadata' => $metadata,
             ]);
 
+            if ($validated['status'] === LicenseKey::STATUS_ACTIVE) {
+                $this->syncOemDeliveryForActivatedOemLicense(
+                    $license_key->fresh(['catalogSku']),
+                );
+            }
+
             return redirect()
                 ->route('panel.acceso-licencias.index', $this->licenseListRetainQuery($request))
                 ->with('toast', AdminFlashToast::success('Licencia actualizada.'));
@@ -337,6 +344,60 @@ class LicenseKeysController extends Controller
         return redirect()
             ->route('panel.acceso-licencias.index', $this->licenseListRetainQuery($request))
             ->with('toast', AdminFlashToast::success('Licencia eliminada.'));
+    }
+
+    /**
+     * Registra o actualiza oem_license_deliveries cuando una licencia OEM de pedido pasa de pendiente a activa.
+     */
+    private function syncOemDeliveryForActivatedOemLicense(LicenseKey $licenseKey): void
+    {
+        $sku = $licenseKey->catalogSku;
+        if ($sku === null || ! $this->catalogSkuIsOemLicense($sku)) {
+            return;
+        }
+
+        $meta = is_array($licenseKey->metadata) ? $licenseKey->metadata : [];
+        $orderLineId = $meta['order_line_id'] ?? null;
+        if (! is_string($orderLineId) || $orderLineId === '') {
+            return;
+        }
+
+        OemLicenseDelivery::query()->updateOrCreate(
+            ['license_key_id' => $licenseKey->id],
+            [
+                'order_line_id' => $orderLineId,
+                'vendor' => $this->oemVendorLabelFromSku($sku),
+                'license_code' => $licenseKey->key,
+                'delivered_at' => now(),
+                'expires_at' => $licenseKey->expires_at,
+                'status' => OemLicenseDelivery::STATUS_DELIVERED,
+                'metadata' => [
+                    'line_slot' => $meta['line_slot'] ?? null,
+                    'sku_code' => $meta['sku_code'] ?? $sku->code,
+                    'sku_name' => $meta['sku_name'] ?? $sku->name,
+                    'synced_from' => 'license_key_activation',
+                ],
+            ],
+        );
+    }
+
+    private function catalogSkuIsOemLicense(CatalogSku $sku): bool
+    {
+        return in_array((string) $sku->sale_model, [
+            'oem_license_one_time',
+            'oem_license_subscription',
+        ], true);
+    }
+
+    private function oemVendorLabelFromSku(CatalogSku $sku): string
+    {
+        $meta = is_array($sku->metadata) ? $sku->metadata : [];
+        $label = $meta['vendor'] ?? $meta['icon_key'] ?? null;
+        if (is_string($label) && $label !== '') {
+            return mb_substr($label, 0, 120);
+        }
+
+        return 'oem';
     }
 
     private function generateUniqueLicenseKey(): string
