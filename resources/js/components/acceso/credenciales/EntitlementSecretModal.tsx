@@ -78,6 +78,23 @@ export default function EntitlementSecretModal({
         ? 'Registrar credencial para este derecho'
         : 'Registrar credencial';
 
+    const errorEntries = Object.entries(errors).flatMap(([key, v]) => {
+        if (v === undefined || v === null || v === '') {
+            return [];
+        }
+        const msg = Array.isArray(v) ? v.join(' ') : String(v);
+        return msg.trim() === '' ? [] : ([[key, msg]] as [string, string][]);
+    });
+
+    const bannerRef = React.useRef<HTMLDivElement | null>(null);
+
+    React.useEffect(() => {
+        if (errorEntries.length === 0) {
+            return;
+        }
+        bannerRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }, [errorEntries.length]);
+
     return (
         <AdminModalShell
             open={open}
@@ -87,7 +104,22 @@ export default function EntitlementSecretModal({
             width="wide"
         >
             <form onSubmit={submit} className="flex flex-col gap-0">
-                <div className="space-y-4">
+                {errorEntries.length > 0 ? (
+                    <div
+                        ref={bannerRef}
+                        role="alert"
+                        className="relative z-10 mb-4 rounded-lg border border-red-500/45 bg-red-50 px-3 py-2.5 text-[13px] text-red-800 shadow-sm dark:bg-red-950/50 dark:text-red-100"
+                    >
+                        <p className="font-semibold">No se pudo guardar</p>
+                        <ul className="mt-1.5 list-disc space-y-0.5 pl-4">
+                            {errorEntries.map(([key, msg]) => (
+                                <li key={key}>{msg}</li>
+                            ))}
+                        </ul>
+                    </div>
+                ) : null}
+
+                <div className="relative z-0 space-y-4">
                     {fixedEntitlement ? (
                         <NeuCardRaised className="rounded-xl p-3 md:p-4">
                             <div className="flex items-start gap-2">
@@ -114,7 +146,7 @@ export default function EntitlementSecretModal({
                             </div>
                         </NeuCardRaised>
                     ) : (
-                        <div>
+                        <div className="relative">
                             <AdminUnderlineLabel htmlFor="modal_entitlement_id">
                                 Derecho de uso (entitlement){' '}
                                 <span className="text-red-500">*</span>
