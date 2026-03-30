@@ -1,8 +1,10 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import { ArrowDown, ArrowUp, ArrowUpDown, KeyRound } from 'lucide-react';
+import * as React from 'react';
 
 import AdminCrudIndex from '@/components/admin/crud/AdminCrudIndex';
 import type { AdminCrudTableColumn } from '@/components/admin/crud/AdminCrudTable';
+import EntitlementSecretModal from '@/components/acceso/credenciales/EntitlementSecretModal';
 import AccesoEntitlementsFilters from '@/components/acceso/entitlements/AccesoEntitlementsFilters';
 import AccesoEntitlementsMobileCards from '@/components/acceso/entitlements/AccesoEntitlementsMobileCards';
 import AccesoEntitlementsToolbar from '@/components/acceso/entitlements/AccesoEntitlementsToolbar';
@@ -13,11 +15,10 @@ import {
     formatDateShort,
     formatDateTime,
 } from '@/components/acceso/entitlements/entitlementDisplay';
+import { credencialesListHrefForEntitlement } from '@/components/acceso/entitlements/credencialesHrefFromEntitlement';
 import type { EntitlementRow } from '@/components/acceso/entitlements/entitlementTypes';
-import { NeuButtonRaised } from '@/components/ui/neu-button-raised';
 
-const credencialCreateHref = (entitlementId: string) =>
-    `/panel/acceso-credenciales/create?entitlement_id=${encodeURIComponent(entitlementId)}`;
+type KindOption = { value: string; label: string };
 
 type Props = {
     entitlements: any;
@@ -27,6 +28,8 @@ type Props = {
     initialDateTo: string;
     initialSortBy: string;
     initialSortDir: 'asc' | 'desc';
+    kindOptions: KindOption[];
+    credentialStoreUrl: string;
 };
 
 export default function AccesoEntitlementsIndex({
@@ -37,8 +40,15 @@ export default function AccesoEntitlementsIndex({
     initialDateTo,
     initialSortBy,
     initialSortDir,
+    kindOptions,
+    credentialStoreUrl,
 }: Props) {
     const page = usePage();
+    const [credentialOpen, setCredentialOpen] = React.useState(false);
+    const [credentialRow, setCredentialRow] = React.useState<EntitlementRow | null>(
+        null,
+    );
+
     const rows: EntitlementRow[] = (entitlements?.data ?? []) as EntitlementRow[];
     const total = entitlements?.total ?? rows.length;
     const handleSort = (sortBy: string) => {
@@ -75,6 +85,11 @@ export default function AccesoEntitlementsIndex({
             {sortIcon(key)}
         </button>
     );
+
+    const openCredentialFor = (row: EntitlementRow) => {
+        setCredentialRow(row);
+        setCredentialOpen(true);
+    };
 
     const columns: AdminCrudTableColumn<EntitlementRow>[] = [
         {
@@ -136,8 +151,29 @@ export default function AccesoEntitlementsIndex({
         },
         {
             header: sortableHeader('Secretos', 'secrets_count'),
-            cellClassName: 'px-3 py-2 align-middle text-sm tabular-nums',
-            render: (r) => r.secrets_count ?? 0,
+            cellClassName: 'px-3 py-2 align-middle text-sm',
+            render: (r) => {
+                const n = r.secrets_count ?? 0;
+                if (n <= 0) {
+                    return (
+                        <span className="text-xs tabular-nums text-muted-foreground">
+                            Sin registros
+                        </span>
+                    );
+                }
+                return (
+                    <Link
+                        href={credencialesListHrefForEntitlement(
+                            r,
+                            initialDateFrom,
+                            initialDateTo,
+                        )}
+                        className="inline-flex items-center rounded-full bg-[#4A80B8]/14 px-2.5 py-1 text-xs font-semibold text-[#4A80B8] transition-colors hover:bg-[#4A80B8]/24 hover:text-[#3d6fa0]"
+                    >
+                        {n} {n === 1 ? 'registro' : 'registros'}
+                    </Link>
+                );
+            },
         },
         {
             header: sortableHeader('Alta', 'created_at'),
@@ -145,50 +181,65 @@ export default function AccesoEntitlementsIndex({
                 'px-3 py-2 align-middle text-xs text-muted-foreground',
             render: (r) => formatDateTime(r.created_at),
         },
-        {
-            header: 'Acción',
-            cellClassName: 'px-3 py-2 align-middle w-[1%] whitespace-nowrap',
-            render: (r) => (
-                <Link href={credencialCreateHref(r.id)} className="inline-flex">
-                    <NeuButtonRaised
-                        type="button"
-                        className="gap-1 px-2.5 py-1.5 text-[11px] font-medium"
-                    >
-                        <KeyRound className="size-3" />
-                        Credencial
-                    </NeuButtonRaised>
-                </Link>
-            ),
-        },
     ];
 
     return (
-        <AdminCrudIndex<EntitlementRow>
-            rows={rows}
-            paginator={entitlements ?? null}
-            rowKey={(r) => r.id}
-            columns={columns}
-            emptyState="No hay entitlements registrados. Cuando existan filas en la tabla entitlements, aparecerán aquí."
-            renderToolbar={() => (
-                <AccesoEntitlementsToolbar
-                    totalEntitlements={total}
-                    rowsCount={rows.length}
-                />
-            )}
-            renderAboveTable={() => (
-                <AccesoEntitlementsFilters
-                    initialQuery={initialQuery}
-                    initialStatus={initialStatus}
-                    initialDateFrom={initialDateFrom}
-                    initialDateTo={initialDateTo}
-                />
-            )}
-            renderMobileRows={({ rows: mobileRows }) => (
-                <AccesoEntitlementsMobileCards
-                    rows={mobileRows}
-                    emptyMessage="No hay entitlements registrados. Cuando existan filas en la tabla entitlements, aparecerán aquí."
-                />
-            )}
-        />
+        <>
+            <AdminCrudIndex<EntitlementRow>
+                rows={rows}
+                paginator={entitlements ?? null}
+                rowKey={(r) => r.id}
+                columns={columns}
+                emptyState="No hay entitlements registrados. Cuando existan filas en la tabla entitlements, aparecerán aquí."
+                renderToolbar={() => (
+                    <AccesoEntitlementsToolbar
+                        totalEntitlements={total}
+                        rowsCount={rows.length}
+                    />
+                )}
+                renderAboveTable={() => (
+                    <AccesoEntitlementsFilters
+                        initialQuery={initialQuery}
+                        initialStatus={initialStatus}
+                        initialDateFrom={initialDateFrom}
+                        initialDateTo={initialDateTo}
+                    />
+                )}
+                renderRowActions={({ row }) => (
+                    <div className="flex items-center gap-2">
+                        <button
+                            type="button"
+                            aria-label="Registrar credencial"
+                            className="group cursor-pointer inline-flex h-8 w-8 items-center justify-center rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D28C3C]/30"
+                            onClick={() => openCredentialFor(row)}
+                        >
+                            <KeyRound className="size-4 text-[#D28C3C]/60 transition-colors group-hover:text-[#D28C3C]" />
+                        </button>
+                    </div>
+                )}
+                renderMobileRows={({ rows: mobileRows }) => (
+                    <AccesoEntitlementsMobileCards
+                        rows={mobileRows}
+                        emptyMessage="No hay entitlements registrados. Cuando existan filas en la tabla entitlements, aparecerán aquí."
+                        onCredentialClick={openCredentialFor}
+                        dateFrom={initialDateFrom}
+                        dateTo={initialDateTo}
+                    />
+                )}
+            />
+
+            <EntitlementSecretModal
+                open={credentialOpen}
+                onOpenChange={(next) => {
+                    setCredentialOpen(next);
+                    if (!next) {
+                        setCredentialRow(null);
+                    }
+                }}
+                kindOptions={kindOptions}
+                storeUrl={credentialStoreUrl}
+                fixedEntitlement={credentialRow}
+            />
+        </>
     );
 }

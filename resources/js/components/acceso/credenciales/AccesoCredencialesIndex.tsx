@@ -1,11 +1,14 @@
 import { router, usePage } from '@inertiajs/react';
 import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
+import * as React from 'react';
 
 import AdminCrudIndex from '@/components/admin/crud/AdminCrudIndex';
 import type { AdminCrudTableColumn } from '@/components/admin/crud/AdminCrudTable';
 import AccesoCredencialesFilters from '@/components/acceso/credenciales/AccesoCredencialesFilters';
 import AccesoCredencialesMobileCards from '@/components/acceso/credenciales/AccesoCredencialesMobileCards';
 import AccesoCredencialesToolbar from '@/components/acceso/credenciales/AccesoCredencialesToolbar';
+import EntitlementSecretModal from '@/components/acceso/credenciales/EntitlementSecretModal';
+import type { SearchableSelectOption } from '@/components/admin/form/searchable-select';
 import {
     formatDateTime,
     secretKindBadgeClass,
@@ -27,6 +30,11 @@ type Props = {
     initialDateTo: string;
     initialSortBy: string;
     initialSortDir: 'asc' | 'desc';
+    initialEntitlementId: string;
+    entitlementFilterLabel: string | null;
+    entitlementOptions: SearchableSelectOption[];
+    kindOptions: { value: string; label: string }[];
+    credentialStoreUrl: string;
 };
 
 function truncateId(s: string | null, len = 12): string {
@@ -45,8 +53,14 @@ export default function AccesoCredencialesIndex({
     initialDateTo,
     initialSortBy,
     initialSortDir,
+    initialEntitlementId,
+    entitlementFilterLabel,
+    entitlementOptions,
+    kindOptions,
+    credentialStoreUrl,
 }: Props) {
     const page = usePage();
+    const [registerOpen, setRegisterOpen] = React.useState(false);
     const rows: EntitlementSecretRow[] = (entitlementSecrets?.data ??
         []) as EntitlementSecretRow[];
     const total = entitlementSecrets?.total ?? rows.length;
@@ -167,6 +181,7 @@ export default function AccesoCredencialesIndex({
     ];
 
     return (
+        <>
         <AdminCrudIndex<EntitlementSecretRow>
             rows={rows}
             paginator={entitlementSecrets ?? null}
@@ -177,6 +192,7 @@ export default function AccesoCredencialesIndex({
                 <AccesoCredencialesToolbar
                     totalSecrets={total}
                     rowsCount={rows.length}
+                    onRegisterClick={() => setRegisterOpen(true)}
                 />
             )}
             renderAboveTable={() => (
@@ -186,6 +202,8 @@ export default function AccesoCredencialesIndex({
                     initialEntitlementStatus={initialEntitlementStatus}
                     initialDateFrom={initialDateFrom}
                     initialDateTo={initialDateTo}
+                    initialEntitlementId={initialEntitlementId}
+                    entitlementFilterLabel={entitlementFilterLabel}
                 />
             )}
             renderMobileRows={({ rows: mobileRows }) => (
@@ -195,5 +213,14 @@ export default function AccesoCredencialesIndex({
                 />
             )}
         />
+
+        <EntitlementSecretModal
+            open={registerOpen}
+            onOpenChange={setRegisterOpen}
+            kindOptions={kindOptions}
+            storeUrl={credentialStoreUrl}
+            entitlementOptions={entitlementOptions}
+        />
+        </>
     );
 }

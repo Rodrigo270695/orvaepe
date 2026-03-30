@@ -337,9 +337,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('panel/acceso-credenciales', [EntitlementSecretsController::class, 'index'])
             ->name('panel.acceso-credenciales.index');
 
-        Route::get('panel/acceso-credenciales/create', [EntitlementSecretsController::class, 'create'])
-            ->name('panel.acceso-credenciales.create');
-
         Route::post('panel/acceso-credenciales', [EntitlementSecretsController::class, 'store'])
             ->name('panel.acceso-credenciales.store');
 

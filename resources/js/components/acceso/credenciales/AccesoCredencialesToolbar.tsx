@@ -1,19 +1,18 @@
-import { Link } from '@inertiajs/react';
 import { KeyRound, Lock, Plus } from 'lucide-react';
 
 import { NeuButtonRaised } from '@/components/ui/neu-button-raised';
 import { NeuCardRaised } from '@/components/ui/neu-card-raised';
 
-const CREATE_CREDENCIAL_HREF = '/panel/acceso-credenciales/create';
-
 type Props = {
     totalSecrets: number;
     rowsCount: number;
+    onRegisterClick: () => void;
 };
 
 export default function AccesoCredencialesToolbar({
     totalSecrets,
     rowsCount,
+    onRegisterClick,
 }: Props) {
     return (
         <NeuCardRaised className="rounded-xl p-4 md:p-5">
@@ -33,15 +32,14 @@ export default function AccesoCredencialesToolbar({
                             </p>
                         </div>
                     </div>
-                    <Link href={CREATE_CREDENCIAL_HREF} className="shrink-0 self-start">
-                        <NeuButtonRaised
-                            type="button"
-                            className="gap-1.5 text-[12px]"
-                        >
-                            <Plus className="size-3.5" />
-                            Registrar credencial
-                        </NeuButtonRaised>
-                    </Link>
+                    <NeuButtonRaised
+                        type="button"
+                        className="shrink-0 cursor-pointer gap-1.5 self-start border border-[#4A9A72]/35 bg-[#4A9A72]/12 text-[12px] font-semibold text-[#2d6b47] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.25)] dark:text-[#6ee7a8] hover:bg-[#4A9A72]/22"
+                        onClick={onRegisterClick}
+                    >
+                        <Plus className="size-3.5 text-[#4A9A72]" />
+                        Registrar credencial
+                    </NeuButtonRaised>
                 </div>
             </div>
 

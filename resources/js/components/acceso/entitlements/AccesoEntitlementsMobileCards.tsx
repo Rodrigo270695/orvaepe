@@ -1,6 +1,6 @@
 import { Link } from '@inertiajs/react';
-import { KeyRound } from 'lucide-react';
 
+import { credencialesListHrefForEntitlement } from '@/components/acceso/entitlements/credencialesHrefFromEntitlement';
 import {
     entitlementStatusBadgeClass,
     entitlementStatusLabel,
@@ -11,17 +11,20 @@ import {
 import type { EntitlementRow } from '@/components/acceso/entitlements/entitlementTypes';
 import { NeuButtonRaised } from '@/components/ui/neu-button-raised';
 
-const credencialCreateHref = (entitlementId: string) =>
-    `/panel/acceso-credenciales/create?entitlement_id=${encodeURIComponent(entitlementId)}`;
-
 type Props = {
     rows: EntitlementRow[];
     emptyMessage: string;
+    onCredentialClick: (row: EntitlementRow) => void;
+    dateFrom: string;
+    dateTo: string;
 };
 
 export default function AccesoEntitlementsMobileCards({
     rows,
     emptyMessage,
+    onCredentialClick,
+    dateFrom,
+    dateTo,
 }: Props) {
     if (rows.length === 0) {
         return (
@@ -84,9 +87,25 @@ export default function AccesoEntitlementsMobileCards({
                         </div>
                         <div>
                             <p className="text-muted-foreground">Secretos</p>
-                            <p className="font-mono tabular-nums text-foreground">
-                                {String(row.secrets_count ?? 0)}
-                            </p>
+                            {(row.secrets_count ?? 0) > 0 ? (
+                                <Link
+                                    href={credencialesListHrefForEntitlement(
+                                        row,
+                                        dateFrom,
+                                        dateTo,
+                                    )}
+                                    className="inline-flex w-full max-w-full items-center justify-center rounded-full bg-[#4A80B8]/14 px-2 py-1 text-center text-[11px] font-semibold text-[#4A80B8] hover:bg-[#4A80B8]/24"
+                                >
+                                    {row.secrets_count ?? 0}{' '}
+                                    {(row.secrets_count ?? 0) === 1
+                                        ? 'registro'
+                                        : 'registros'}
+                                </Link>
+                            ) : (
+                                <p className="text-[11px] text-muted-foreground">
+                                    Sin registros
+                                </p>
+                            )}
                         </div>
                         <div>
                             <p className="text-muted-foreground">Alta</p>
@@ -97,18 +116,13 @@ export default function AccesoEntitlementsMobileCards({
                     </div>
 
                     <div className="mt-3">
-                        <Link
-                            href={credencialCreateHref(row.id)}
-                            className="inline-flex w-full sm:w-auto"
+                        <NeuButtonRaised
+                            type="button"
+                            className="w-full cursor-pointer gap-1.5 justify-center px-3 py-2 text-[12px] font-semibold sm:w-auto"
+                            onClick={() => onCredentialClick(row)}
                         >
-                            <NeuButtonRaised
-                                type="button"
-                                className="w-full gap-1 justify-center px-2.5 py-1.5 text-[11px] font-medium sm:w-auto"
-                            >
-                                <KeyRound className="size-3" />
-                                Añadir credencial
-                            </NeuButtonRaised>
-                        </Link>
+                            Registrar credencial
+                        </NeuButtonRaised>
                     </div>
                 </div>
             ))}

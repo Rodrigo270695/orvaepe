@@ -8,6 +8,8 @@ import type { BreadcrumbItem } from '@/types';
 
 type Props = {
     entitlements: any;
+    kindOptions: { value: string; label: string }[];
+    credentialStoreUrl: string;
     filters?: {
         q?: string;
         status?: string;
@@ -18,7 +20,12 @@ type Props = {
     };
 };
 
-export default function AccesoEntitlementsPage({ entitlements, filters }: Props) {
+export default function AccesoEntitlementsPage({
+    entitlements,
+    kindOptions,
+    credentialStoreUrl,
+    filters,
+}: Props) {
     const section = 'acceso-entitlements';
 
     const breadcrumbs: BreadcrumbItem[] = [
@@ -38,6 +45,8 @@ export default function AccesoEntitlementsPage({ entitlements, filters }: Props)
                     initialDateTo={filters?.date_to ?? ''}
                     initialSortBy={filters?.sort_by ?? 'created_at'}
                     initialSortDir={filters?.sort_dir ?? 'desc'}
+                    kindOptions={kindOptions}
+                    credentialStoreUrl={credentialStoreUrl}
                 />
             </div>
         </AppLayout>

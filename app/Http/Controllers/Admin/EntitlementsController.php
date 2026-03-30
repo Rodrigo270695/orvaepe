@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Entitlement;
+use App\Models\EntitlementSecret;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -90,6 +91,8 @@ class EntitlementsController extends Controller
 
         return Inertia::render('admin/acceso-entitlements/index', [
             'entitlements' => $entitlements,
+            'kindOptions' => EntitlementSecret::kindOptionsForAdmin(),
+            'credentialStoreUrl' => '/panel/acceso-credenciales',
             'filters' => [
                 'q' => $q,
                 'status' => $status,

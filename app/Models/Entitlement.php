@@ -113,4 +113,43 @@ class Entitlement extends Model
     {
         return $this->hasMany(LicenseKey::class, 'entitlement_id');
     }
+
+    /**
+     * Selector de derechos de uso en el modal de credenciales (admin).
+     *
+     * @return list<array{value: string, label: string, searchTerms: list<string>}>
+     */
+    public static function adminSelectOptionsForSecrets(int $limit = 400): array
+    {
+        $entitlements = static::query()
+            ->with([
+                'user:id,name,lastname,email',
+                'catalogProduct:id,name',
+                'catalogSku:id,code,name',
+            ])
+            ->orderByDesc('created_at')
+            ->limit($limit)
+            ->get();
+
+        return $entitlements->map(static function (self $e): array {
+            $email = $e->user?->email ?? '—';
+            $product = $e->catalogProduct?->name ?? 'Producto';
+            $sku = $e->catalogSku?->code ?? '';
+
+            return [
+                'value' => $e->id,
+                'label' => $sku !== ''
+                    ? "{$email} · {$product} ({$sku})"
+                    : "{$email} · {$product}",
+                'searchTerms' => array_values(array_filter([
+                    $email,
+                    $e->user?->name,
+                    $e->user?->lastname,
+                    $product,
+                    $sku,
+                    $e->catalogSku?->name,
+                ])),
+            ];
+        })->values()->all();
+    }
 }

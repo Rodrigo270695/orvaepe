@@ -75,4 +75,18 @@ class EntitlementSecret extends Model
     {
         return $this->belongsTo(Entitlement::class, 'entitlement_id');
     }
+
+    /**
+     * @return list<array{value: string, label: string}>
+     */
+    public static function kindOptionsForAdmin(): array
+    {
+        return [
+            ['value' => self::KIND_API_KEY, 'label' => 'API key'],
+            ['value' => self::KIND_HMAC_SECRET, 'label' => 'HMAC secret'],
+            ['value' => self::KIND_OAUTH_REFRESH, 'label' => 'OAuth refresh'],
+            ['value' => self::KIND_CERTIFICATE, 'label' => 'Certificado'],
+            ['value' => self::KIND_CUSTOM, 'label' => 'Personalizado (URL, usuario, token, …)'],
+        ];
+    }
 }
