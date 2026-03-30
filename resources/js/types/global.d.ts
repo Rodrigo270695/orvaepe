@@ -12,6 +12,8 @@ declare module '@inertiajs/core' {
             softwareNavLinks?: { label: string; href: string }[];
             /** Dropdown Licencias agrupado por categoría -> productos */
             licenseNavGroups?: { categoryLabel: string; items: { label: string; href: string }[] }[];
+            /** Dropdown Servicios: categoría (admin) → productos con ancla /servicios#slug */
+            serviceNavGroups?: { categoryLabel: string; items: { label: string; href: string }[] }[];
             /** Metadatos y URLs para SEO (manifest, OG, JSON-LD) */
             seo: SeoDefaults;
             /** Notificaciones sin leer (tabla `notifications`, rol superadmin) */

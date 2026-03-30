@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Models\Notification;
 use App\Support\MarketingLicenseNavGroups;
+use App\Support\MarketingServicesNavGroups;
 use App\Support\MarketingSoftwareNavLinks;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -76,6 +77,7 @@ class HandleInertiaRequests extends Middleware
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'softwareNavLinks' => MarketingSoftwareNavLinks::all(),
             'licenseNavGroups' => MarketingLicenseNavGroups::all(),
+            'serviceNavGroups' => MarketingServicesNavGroups::all(),
             'staffUnreadNotificationsCount' => fn () => $request->user()?->hasRole('superadmin')
                 ? Notification::query()->whereNull('read_at')->count()
                 : 0,

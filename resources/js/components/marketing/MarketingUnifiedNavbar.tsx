@@ -4,10 +4,7 @@ import { Link, usePage } from '@inertiajs/react';
 import { ChevronDown, Menu, ShoppingCart, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
-import {
-    marketingPreciosLinks,
-    marketingServiciosSectionLinks,
-} from '@/constants/marketingNavLinks';
+import { marketingPreciosLinks, marketingServiciosSectionLinks } from '@/constants/marketingNavLinks';
 import MarketingGlobalSearch from '@/components/marketing/MarketingGlobalSearch';
 import {
     clearSoftwareCart,
@@ -39,13 +36,19 @@ function getUserDisplayName(name?: string | null) {
 }
 
 export default function MarketingUnifiedNavbar({ canRegister }: Props) {
-    const { auth, canRegister: canRegisterFromPage, softwareNavLinks, licenseNavGroups: licenseNavGroupsFromPage } =
-        usePage().props as {
-            auth: { user?: { name: string } | null };
-            canRegister?: boolean;
-            softwareNavLinks?: { label: string; href: string }[];
-            licenseNavGroups?: { categoryLabel: string; items: { label: string; href: string }[] }[];
-        };
+    const {
+        auth,
+        canRegister: canRegisterFromPage,
+        softwareNavLinks,
+        licenseNavGroups: licenseNavGroupsFromPage,
+        serviceNavGroups: serviceNavGroupsFromPage,
+    } = usePage().props as {
+        auth: { user?: { name: string } | null };
+        canRegister?: boolean;
+        softwareNavLinks?: { label: string; href: string }[];
+        licenseNavGroups?: { categoryLabel: string; items: { label: string; href: string }[] }[];
+        serviceNavGroups?: { categoryLabel: string; items: { label: string; href: string }[] }[];
+    };
 
     const finalCanRegister = canRegister ?? canRegisterFromPage ?? true;
 
@@ -425,10 +428,16 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
             ? licenseNavGroupsFromPage
             : fallbackLicenseGroups;
 
-    const serviciosLinks = [
-        { label: 'Servicios', href: '/servicios' },
-        ...marketingServiciosSectionLinks,
+    const fallbackServiceGroups = [
+        {
+            categoryLabel: 'Servicios',
+            items: [...marketingServiciosSectionLinks],
+        },
     ];
+    const serviceNavGroups =
+        serviceNavGroupsFromPage && serviceNavGroupsFromPage.length > 0
+            ? serviceNavGroupsFromPage
+            : fallbackServiceGroups;
 
     const renderLink = (l: { label: string; href: string }, style: 'primary' | 'secondary') => {
         const base = 'block cursor-pointer rounded-xl px-4 py-2 transition-colors';
@@ -480,8 +489,10 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
         );
     };
 
-    const renderLicensesDesktopDropdown = (
+    const renderGroupedCategoryDropdown = (
         groups: { categoryLabel: string; items: { label: string; href: string }[] }[],
+        categoryBaseHref: string,
+        ariaLabel: string,
     ) => {
         return (
             <div
@@ -494,7 +505,7 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                         '0 18px 50px -20px color-mix(in oklab, var(--foreground) 30%, transparent), 0 0 0 1px color-mix(in oklab, var(--state-info) 10%, transparent) inset',
                 }}
                 role="menu"
-                aria-label="Menú desplegable de licencias"
+                aria-label={ariaLabel}
             >
                 {groups.map((group, groupIndex) => (
                     <div key={`${group.categoryLabel}-${groupIndex}`}>
@@ -505,7 +516,7 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                             />
                         )}
                         <Link
-                            href="/licencias"
+                            href={categoryBaseHref}
                             className="block cursor-pointer rounded-xl px-3 py-2 text-sm font-semibold text-[var(--foreground)] transition-colors hover:bg-[color-mix(in_oklab,var(--o-amber)_12%,transparent)] dark:hover:bg-[color-mix(in_oklab,var(--state-info)_26%,var(--background))] dark:hover:text-[color-mix(in_oklab,var(--state-info)_88%,var(--foreground))]"
                             onClick={closeAll}
                         >
@@ -637,7 +648,12 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                                 <ChevronDown className="size-4 text-[var(--o-amber)]" />
                                 <span className={activeUnderline} style={{ transform: activeTop === 'precios' ? 'scaleX(1)' : 'scaleX(0)' }} />
                             </button>
-                            {openDropdown === 'precios' && renderLicensesDesktopDropdown(licenseNavGroups)}
+                            {openDropdown === 'precios' &&
+                                renderGroupedCategoryDropdown(
+                                    licenseNavGroups,
+                                    '/licencias',
+                                    'Menú desplegable de licencias',
+                                )}
                         </div>
 
                         <div className="relative">
@@ -659,7 +675,12 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                                 <ChevronDown className="size-4 text-[var(--o-amber)]" />
                                 <span className={activeUnderline} style={{ transform: activeTop === 'servicios' ? 'scaleX(1)' : 'scaleX(0)' }} />
                             </button>
-                            {openDropdown === 'servicios' && renderDesktopDropdown('servicios', serviciosLinks)}
+                            {openDropdown === 'servicios' &&
+                                renderGroupedCategoryDropdown(
+                                    serviceNavGroups,
+                                    '/servicios',
+                                    'Menú desplegable de servicios',
+                                )}
                         </div>
 
                         <Link
@@ -685,6 +706,7 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                     <div className="hidden items-center gap-2 md:flex">
                         <MarketingGlobalSearch
                             softwareLinks={softwareLinks}
+                            serviceNavGroups={serviceNavGroups}
                             isLoggedIn={Boolean(auth.user)}
                             canRegister={finalCanRegister}
                         />
@@ -774,6 +796,7 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                     <div className="flex items-center gap-1.5 md:hidden">
                         <MarketingGlobalSearch
                             softwareLinks={softwareLinks}
+                            serviceNavGroups={serviceNavGroups}
                             isLoggedIn={Boolean(auth.user)}
                             canRegister={finalCanRegister}
                         />
@@ -950,21 +973,36 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                                 </button>
                                 {openMobileSection === 'servicios' && (
                                     <div className="grid gap-1 px-1 pb-2">
-                                        {serviciosLinks.map((l, i) => (
-                                            <span key={l.href}>
-                                                {i === 1 && (
-                                                    <div className="my-1.5 border-t border-[color-mix(in_oklab,var(--o-amber)_25%,var(--border))]" aria-hidden />
+                                        {serviceNavGroups.map((group, groupIndex) => (
+                                            <div key={`${group.categoryLabel}-${groupIndex}`} className="grid gap-1">
+                                                {groupIndex > 0 && (
+                                                    <div
+                                                        className="my-1.5 border-t border-[color-mix(in_oklab,var(--o-amber)_25%,var(--border))]"
+                                                        aria-hidden
+                                                    />
                                                 )}
-                                                {l.href.startsWith('#') ? (
-                                                    <a href={l.href} className={i === 0 ? 'cursor-pointer rounded-xl px-3 py-2 text-sm font-semibold text-[var(--foreground)] hover:bg-[color-mix(in_oklab,var(--o-amber)_12%,transparent)] dark:hover:bg-[color-mix(in_oklab,var(--state-info)_26%,var(--background))] dark:hover:text-[color-mix(in_oklab,var(--state-info)_88%,var(--foreground))]' : 'cursor-pointer rounded-xl px-3 py-1.5 text-xs font-medium text-[var(--foreground)]/75 hover:text-[var(--o-amber)] hover:bg-[color-mix(in_oklab,var(--o-amber)_8%,transparent)] dark:hover:bg-[color-mix(in_oklab,var(--state-info)_26%,var(--background))] dark:hover:text-[color-mix(in_oklab,var(--state-info)_88%,var(--foreground))]'} onClick={closeAll}>
-                                                    {l.label}
-                                                </a>
-                                                ) : (
-                                                    <Link href={l.href} className={i === 0 ? 'cursor-pointer rounded-xl px-3 py-2 text-sm font-semibold text-[var(--foreground)] hover:bg-[color-mix(in_oklab,var(--o-amber)_12%,transparent)] dark:hover:bg-[color-mix(in_oklab,var(--state-info)_26%,var(--background))] dark:hover:text-[color-mix(in_oklab,var(--state-info)_88%,var(--foreground))]' : 'cursor-pointer rounded-xl px-3 py-1.5 text-xs font-medium text-[var(--foreground)]/75 hover:text-[var(--o-amber)] hover:bg-[color-mix(in_oklab,var(--o-amber)_8%,transparent)] dark:hover:bg-[color-mix(in_oklab,var(--state-info)_26%,var(--background))] dark:hover:text-[color-mix(in_oklab,var(--state-info)_88%,var(--foreground))]'}>
-                                                        {l.label}
+                                                <Link
+                                                    href="/servicios"
+                                                    className="block cursor-pointer rounded-xl px-3 py-1 text-sm font-semibold text-[var(--foreground)] transition-colors hover:bg-[color-mix(in_oklab,var(--o-amber)_12%,transparent)] dark:hover:bg-[color-mix(in_oklab,var(--state-info)_26%,var(--background))] dark:hover:text-[color-mix(in_oklab,var(--state-info)_88%,var(--foreground))]"
+                                                    onClick={closeAll}
+                                                >
+                                                    {group.categoryLabel}
+                                                </Link>
+                                                <div
+                                                    className="mb-1 border-t border-[color-mix(in_oklab,var(--state-info)_24%,var(--border))]"
+                                                    aria-hidden
+                                                />
+                                                {group.items.map((item) => (
+                                                    <Link
+                                                        key={item.href}
+                                                        href={item.href}
+                                                        className="cursor-pointer rounded-xl px-3 py-1.5 text-xs font-medium text-[var(--foreground)]/75 hover:bg-[color-mix(in_oklab,var(--o-amber)_8%,transparent)] hover:text-[var(--o-amber)] dark:hover:bg-[color-mix(in_oklab,var(--state-info)_26%,var(--background))] dark:hover:text-[color-mix(in_oklab,var(--state-info)_88%,var(--foreground))]"
+                                                        onClick={closeAll}
+                                                    >
+                                                        {item.label}
                                                     </Link>
-                                                )}
-                                            </span>
+                                                ))}
+                                            </div>
                                         ))}
                                     </div>
                                 )}

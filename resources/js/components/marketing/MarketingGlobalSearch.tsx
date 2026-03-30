@@ -23,11 +23,17 @@ type SearchItem = {
 
 type Props = {
     softwareLinks: { label: string; href: string }[];
+    serviceNavGroups?: { categoryLabel: string; items: { label: string; href: string }[] }[];
     isLoggedIn: boolean;
     canRegister: boolean;
 };
 
-export default function MarketingGlobalSearch({ softwareLinks, isLoggedIn, canRegister }: Props) {
+export default function MarketingGlobalSearch({
+    softwareLinks,
+    serviceNavGroups,
+    isLoggedIn,
+    canRegister,
+}: Props) {
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState('');
 
@@ -53,7 +59,19 @@ export default function MarketingGlobalSearch({ softwareLinks, isLoggedIn, canRe
             { label: 'Carrito', href: '/carrito', section: 'General' },
             ...softwareLinks.map((l) => ({ ...l, section: 'Software', keywords: ['software'] })),
             ...marketingPreciosLinks.map((l) => ({ ...l, section: 'Licencias', keywords: ['licencias', 'precios'] })),
-            ...marketingServiciosSectionLinks.map((l) => ({ ...l, section: 'Servicios', keywords: ['servicios'] })),
+            ...(serviceNavGroups && serviceNavGroups.length > 0
+                ? serviceNavGroups.flatMap((g) =>
+                      g.items.map((l) => ({
+                          ...l,
+                          section: `Servicios · ${g.categoryLabel}`,
+                          keywords: ['servicios', g.categoryLabel],
+                      })),
+                  )
+                : marketingServiciosSectionLinks.map((l) => ({
+                      ...l,
+                      section: 'Servicios',
+                      keywords: ['servicios'],
+                  }))),
         ];
 
         if (isLoggedIn) {
@@ -69,7 +87,7 @@ export default function MarketingGlobalSearch({ softwareLinks, isLoggedIn, canRe
             if (!map.has(key)) map.set(key, item);
         });
         return Array.from(map.values());
-    }, [softwareLinks, isLoggedIn, canRegister]);
+    }, [softwareLinks, serviceNavGroups, isLoggedIn, canRegister]);
 
     const filtered = useMemo(() => {
         const q = normalizeSearchText(query);
