@@ -383,6 +383,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::patch('panel/acceso-notificaciones/{notification}/read', [NotificationsController::class, 'markAsRead'])
             ->name('panel.acceso-notificaciones.read');
 
+        Route::post('panel/acceso-notificaciones/read-all', [NotificationsController::class, 'markAllAsRead'])
+            ->name('panel.acceso-notificaciones.read-all');
+
         Route::get('panel/operacion-webhooks', [WebhookEventsController::class, 'index'])
             ->name('panel.operacion-webhooks.index');
 

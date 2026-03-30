@@ -119,4 +119,23 @@ class NotificationsController extends Controller
             'read_at' => $notification->fresh()->read_at?->toIso8601String(),
         ]);
     }
+
+    /**
+     * Marca como leídas todas las notificaciones sin `read_at`.
+     * Misma regla que {@see unreadCount()}: superadmin ve todas; el resto solo las propias.
+     */
+    public function markAllAsRead(Request $request): JsonResponse
+    {
+        $query = Notification::query()->whereNull('read_at');
+
+        if (! $request->user()->hasRole('superadmin')) {
+            $query->where('user_id', $request->user()->id);
+        }
+
+        $updated = $query->update(['read_at' => now()]);
+
+        return response()->json([
+            'updated' => $updated,
+        ]);
+    }
 }

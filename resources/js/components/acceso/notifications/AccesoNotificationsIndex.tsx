@@ -11,6 +11,7 @@ import {
     formatDateShort,
     formatDateTime,
 } from '@/components/acceso/entitlements/entitlementDisplay';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 function csrfHeader(): Record<string, string> {
@@ -47,6 +48,67 @@ export default function AccesoNotificationsIndex({
     const rows: NotificationRow[] = (notifications?.data ?? []) as NotificationRow[];
     const [readOverride, setReadOverride] = React.useState<Record<string, string>>({});
     const [markingId, setMarkingId] = React.useState<string | null>(null);
+    const [markingAll, setMarkingAll] = React.useState(false);
+    const [unreadTotal, setUnreadTotal] = React.useState<number | null>(null);
+
+    React.useEffect(() => {
+        let cancelled = false;
+        void (async () => {
+            try {
+                const res = await fetch('/panel/acceso-notificaciones/unread-count', {
+                    credentials: 'same-origin',
+                    headers: { Accept: 'application/json' },
+                });
+                if (!res.ok || cancelled) {
+                    return;
+                }
+                const data = (await res.json()) as { count?: number };
+                if (typeof data.count === 'number' && !cancelled) {
+                    setUnreadTotal(data.count);
+                }
+            } catch {
+                if (!cancelled) {
+                    setUnreadTotal(0);
+                }
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+
+    const handleMarkAllRead = React.useCallback(async () => {
+        if (markingAll || (unreadTotal ?? 0) === 0) {
+            return;
+        }
+        setMarkingAll(true);
+        try {
+            const res = await fetch('/panel/acceso-notificaciones/read-all', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    ...csrfHeader(),
+                },
+                body: JSON.stringify({}),
+            });
+            if (!res.ok) {
+                return;
+            }
+            setUnreadTotal(0);
+            setReadOverride({});
+            window.dispatchEvent(
+                new CustomEvent('orvae:staff-notifications-count', {
+                    detail: { count: 0 },
+                }),
+            );
+            router.reload({ only: ['notifications'] });
+        } finally {
+            setMarkingAll(false);
+        }
+    }, [markingAll, unreadTotal]);
 
     const effectiveReadAt = React.useCallback(
         (r: NotificationRow) => readOverride[r.id] ?? r.read_at,
@@ -93,6 +155,7 @@ export default function AccesoNotificationsIndex({
                 if (countRes.ok) {
                     const { count } = (await countRes.json()) as { count?: number };
                     if (typeof count === 'number') {
+                        setUnreadTotal(count);
                         window.dispatchEvent(
                             new CustomEvent('orvae:staff-notifications-count', {
                                 detail: { count },
@@ -267,6 +330,9 @@ export default function AccesoNotificationsIndex({
         },
     ];
 
+    const canMarkAll =
+        unreadTotal !== null && unreadTotal > 0 && !markingAll;
+
     return (
         <AdminCrudIndex<NotificationRow>
             rows={rows}
@@ -276,6 +342,22 @@ export default function AccesoNotificationsIndex({
             rowClassName={rowClassName}
             onRowClick={handleRowClick}
             emptyState={emptyState}
+            renderToolbar={() =>
+                unreadTotal !== null ? (
+                    <div className="flex flex-wrap items-center justify-end gap-2">
+                        <Button
+                            type="button"
+                            variant="default"
+                            size="sm"
+                            className="cursor-pointer"
+                            disabled={!canMarkAll}
+                            onClick={() => void handleMarkAllRead()}
+                        >
+                            {markingAll ? 'Marcando…' : 'Leer todas'}
+                        </Button>
+                    </div>
+                ) : null
+            }
             renderMobileRows={({ rows: mobileRows }) => (
                 <AccesoNotificationsMobileCards
                     rows={mobileRows}
