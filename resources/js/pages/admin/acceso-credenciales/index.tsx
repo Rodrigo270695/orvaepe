@@ -8,9 +8,6 @@ import type { BreadcrumbItem } from '@/types';
 
 type Props = {
     entitlementSecrets: any;
-    entitlementOptions: { value: string; label: string; searchTerms?: string[] }[];
-    kindOptions: { value: string; label: string }[];
-    credentialStoreUrl: string;
     filters?: {
         entitlement_id?: string;
         entitlement_filter_label?: string | null;
@@ -26,9 +23,6 @@ type Props = {
 
 export default function AccesoCredencialesPage({
     entitlementSecrets,
-    entitlementOptions,
-    kindOptions,
-    credentialStoreUrl,
     filters,
 }: Props) {
     const section = 'acceso-credenciales';
@@ -53,9 +47,6 @@ export default function AccesoCredencialesPage({
                     initialSortDir={filters?.sort_dir ?? 'desc'}
                     initialEntitlementId={filters?.entitlement_id ?? ''}
                     entitlementFilterLabel={filters?.entitlement_filter_label ?? null}
-                    entitlementOptions={entitlementOptions}
-                    kindOptions={kindOptions}
-                    credentialStoreUrl={credentialStoreUrl}
                 />
             </div>
         </AppLayout>

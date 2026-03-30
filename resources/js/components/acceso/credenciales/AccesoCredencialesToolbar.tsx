@@ -1,18 +1,15 @@
-import { KeyRound, Lock, Plus } from 'lucide-react';
+import { KeyRound, Lock } from 'lucide-react';
 
-import { NeuButtonRaised } from '@/components/ui/neu-button-raised';
 import { NeuCardRaised } from '@/components/ui/neu-card-raised';
 
 type Props = {
     totalSecrets: number;
     rowsCount: number;
-    onRegisterClick: () => void;
 };
 
 export default function AccesoCredencialesToolbar({
     totalSecrets,
     rowsCount,
-    onRegisterClick,
 }: Props) {
     return (
         <NeuCardRaised className="rounded-xl p-4 md:p-5">
@@ -28,18 +25,11 @@ export default function AccesoCredencialesToolbar({
                                 Registros en{' '}
                                 <span className="font-mono">entitlement_secrets</span>{' '}
                                 vinculados a un entitlement. El valor del secreto no
-                                se expone en pantalla.
+                                se expone en pantalla. El alta de credenciales se hace
+                                desde Derechos de uso.
                             </p>
                         </div>
                     </div>
-                    <NeuButtonRaised
-                        type="button"
-                        className="shrink-0 cursor-pointer gap-1.5 self-start border border-[#4A9A72]/35 bg-[#4A9A72]/12 text-[12px] font-semibold text-[#2d6b47] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.25)] dark:text-[#6ee7a8] hover:bg-[#4A9A72]/22"
-                        onClick={onRegisterClick}
-                    >
-                        <Plus className="size-3.5 text-[#4A9A72]" />
-                        Registrar credencial
-                    </NeuButtonRaised>
                 </div>
             </div>
 

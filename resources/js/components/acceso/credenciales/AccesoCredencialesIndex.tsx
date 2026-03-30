@@ -1,14 +1,10 @@
 import { router, usePage } from '@inertiajs/react';
 import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
-import * as React from 'react';
-
 import AdminCrudIndex from '@/components/admin/crud/AdminCrudIndex';
 import type { AdminCrudTableColumn } from '@/components/admin/crud/AdminCrudTable';
 import AccesoCredencialesFilters from '@/components/acceso/credenciales/AccesoCredencialesFilters';
 import AccesoCredencialesMobileCards from '@/components/acceso/credenciales/AccesoCredencialesMobileCards';
 import AccesoCredencialesToolbar from '@/components/acceso/credenciales/AccesoCredencialesToolbar';
-import EntitlementSecretModal from '@/components/acceso/credenciales/EntitlementSecretModal';
-import type { SearchableSelectOption } from '@/components/admin/form/searchable-select';
 import {
     formatDateTime,
     secretKindBadgeClass,
@@ -32,9 +28,6 @@ type Props = {
     initialSortDir: 'asc' | 'desc';
     initialEntitlementId: string;
     entitlementFilterLabel: string | null;
-    entitlementOptions: SearchableSelectOption[];
-    kindOptions: { value: string; label: string }[];
-    credentialStoreUrl: string;
 };
 
 function truncateId(s: string | null, len = 12): string {
@@ -55,12 +48,8 @@ export default function AccesoCredencialesIndex({
     initialSortDir,
     initialEntitlementId,
     entitlementFilterLabel,
-    entitlementOptions,
-    kindOptions,
-    credentialStoreUrl,
 }: Props) {
     const page = usePage();
-    const [registerOpen, setRegisterOpen] = React.useState(false);
     const rows: EntitlementSecretRow[] = (entitlementSecrets?.data ??
         []) as EntitlementSecretRow[];
     const total = entitlementSecrets?.total ?? rows.length;
@@ -192,7 +181,6 @@ export default function AccesoCredencialesIndex({
                 <AccesoCredencialesToolbar
                     totalSecrets={total}
                     rowsCount={rows.length}
-                    onRegisterClick={() => setRegisterOpen(true)}
                 />
             )}
             renderAboveTable={() => (
@@ -212,14 +200,6 @@ export default function AccesoCredencialesIndex({
                     emptyMessage="No hay credenciales registradas. Cuando existan filas en entitlement_secrets, aparecerán aquí."
                 />
             )}
-        />
-
-        <EntitlementSecretModal
-            open={registerOpen}
-            onOpenChange={setRegisterOpen}
-            kindOptions={kindOptions}
-            storeUrl={credentialStoreUrl}
-            entitlementOptions={entitlementOptions}
         />
         </>
     );

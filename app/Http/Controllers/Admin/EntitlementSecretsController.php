@@ -85,7 +85,9 @@ class EntitlementSecretsController extends Controller
             ]);
 
         $entitlementFilterLabel = null;
-        if ($entitlementId !== '' && Str::isUuid($entitlementId)) {
+        $filterByEntitlementId = $entitlementId !== '' && Str::isUuid($entitlementId);
+
+        if ($filterByEntitlementId) {
             $secretsQuery->where('entitlement_id', $entitlementId);
             $entForLabel = Entitlement::query()
                 ->with([
@@ -100,7 +102,10 @@ class EntitlementSecretsController extends Controller
             }
         }
 
-        if ($q !== '') {
+        // Si ya filtramos por entitlement_id, no aplicar `q`: el texto del buscador es solo
+        // informativo (viene del enlace desde Derechos de uso) y una frase larga no coincide
+        // con name/lastname por separado en ILIKE.
+        if ($q !== '' && ! $filterByEntitlementId) {
             $like = '%'.$q.'%';
             $secretsQuery->where(function ($outer) use ($like): void {
                 $outer->whereHas('entitlement.user', function ($userQuery) use ($like): void {
@@ -157,9 +162,6 @@ class EntitlementSecretsController extends Controller
 
         return Inertia::render('admin/acceso-credenciales/index', [
             'entitlementSecrets' => $secrets,
-            'entitlementOptions' => Entitlement::adminSelectOptionsForSecrets(),
-            'kindOptions' => EntitlementSecret::kindOptionsForAdmin(),
-            'credentialStoreUrl' => '/panel/acceso-credenciales',
             'filters' => [
                 'q' => $q,
                 'entitlement_id' => ($entitlementId !== '' && Str::isUuid($entitlementId)) ? $entitlementId : '',
