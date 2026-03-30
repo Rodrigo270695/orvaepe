@@ -188,6 +188,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('panel/catalogo-productos', [CatalogProductsController::class, 'index'])
             ->name('panel.catalogo-productos.index');
 
+        Route::get('panel/catalogo-productos/export', [CatalogProductsController::class, 'exportExcel'])
+            ->name('panel.catalogo-productos.export');
+
         Route::post('panel/catalogo-productos', [CatalogProductsController::class, 'store'])
             ->name('panel.catalogo-productos.store');
 

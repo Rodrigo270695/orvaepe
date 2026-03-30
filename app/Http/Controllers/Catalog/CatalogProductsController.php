@@ -6,10 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Catalog\CatalogProductStoreRequest;
 use App\Models\CatalogCategory;
 use App\Models\CatalogProduct;
+use App\Services\Catalog\CatalogProductsExcelExport;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CatalogProductsController extends Controller
 {
@@ -18,14 +22,85 @@ class CatalogProductsController extends Controller
         $q = trim((string) $request->query('q', ''));
         $sortBy = (string) $request->query('sort_by', '');
         $sortDir = strtolower((string) $request->query('sort_dir', 'asc'));
-        if (!in_array($sortDir, ['asc', 'desc'], true)) {
+        if (! in_array($sortDir, ['asc', 'desc'], true)) {
             $sortDir = 'asc';
         }
 
         $perPage = (int) $request->query('per_page', 10);
         $allowedPerPage = [10, 20, 30, 40, 50];
-        if (!in_array($perPage, $allowedPerPage, true)) {
+        if (! in_array($perPage, $allowedPerPage, true)) {
             $perPage = 10;
+        }
+
+        $allowedSortBy = ['is_active', 'name', 'slug', 'created_at'];
+        $filterSortBy = $sortBy;
+        if (! in_array($filterSortBy, $allowedSortBy, true)) {
+            $filterSortBy = '';
+        }
+
+        $productsQuery = $this->baseProductsQuery($request);
+
+        $append = ['per_page' => $perPage];
+        if ($q !== '') {
+            $append['q'] = $q;
+        }
+        if ($filterSortBy !== '') {
+            $append['sort_by'] = $filterSortBy;
+            $append['sort_dir'] = $sortDir;
+        }
+
+        $products = $productsQuery
+            ->paginate($perPage)
+            ->appends($append);
+
+        $categoriesForSelect = CatalogCategory::query()
+            ->select(['id', 'name', 'revenue_line', 'is_active'])
+            ->where('is_active', true)
+            ->orderBy('revenue_line')
+            ->orderBy('name')
+            ->get();
+
+        return Inertia::render('admin/catalogo-productos/index', [
+            'products' => $products,
+            'categoriesForSelect' => $categoriesForSelect,
+            'filters' => [
+                'q' => $q,
+                'sort_by' => $filterSortBy,
+                'sort_dir' => $sortDir,
+            ],
+        ]);
+    }
+
+    /**
+     * Exporta a Excel los productos con los mismos filtros y orden que el listado (sin paginar).
+     */
+    public function exportExcel(Request $request): StreamedResponse
+    {
+        $products = $this->baseProductsQuery($request)->get();
+        $spreadsheet = CatalogProductsExcelExport::buildSpreadsheet($products);
+
+        $filename = 'productos-catalogo-'.now()->format('Y-m-d-His').'.xlsx';
+
+        return response()->streamDownload(function () use ($spreadsheet) {
+            $writer = new Xlsx($spreadsheet);
+            $writer->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
+    }
+
+    /**
+     * Consulta base: búsqueda `q`, orden — idéntica a la vista index (antes de paginar).
+     *
+     * @return Builder<CatalogProduct>
+     */
+    protected function baseProductsQuery(Request $request): Builder
+    {
+        $q = trim((string) $request->query('q', ''));
+        $sortBy = (string) $request->query('sort_by', '');
+        $sortDir = strtolower((string) $request->query('sort_dir', 'asc'));
+        if (! in_array($sortDir, ['asc', 'desc'], true)) {
+            $sortDir = 'asc';
         }
 
         $productsQuery = CatalogProduct::query()
@@ -48,38 +123,9 @@ class CatalogProductsController extends Controller
             $productsQuery->orderBy($sortBy, $sortDir)->orderBy('created_at');
         } else {
             $productsQuery->orderBy('created_at', 'desc');
-            $sortBy = '';
         }
 
-        $append = ['per_page' => $perPage];
-        if ($q !== '') {
-            $append['q'] = $q;
-        }
-        if ($sortBy !== '') {
-            $append['sort_by'] = $sortBy;
-            $append['sort_dir'] = $sortDir;
-        }
-
-        $products = $productsQuery
-            ->paginate($perPage)
-            ->appends($append);
-
-        $categoriesForSelect = CatalogCategory::query()
-            ->select(['id', 'name', 'revenue_line', 'is_active'])
-            ->where('is_active', true)
-            ->orderBy('revenue_line')
-            ->orderBy('name')
-            ->get();
-
-        return Inertia::render('admin/catalogo-productos/index', [
-            'products' => $products,
-            'categoriesForSelect' => $categoriesForSelect,
-            'filters' => [
-                'q' => $q,
-                'sort_by' => $sortBy,
-                'sort_dir' => $sortDir,
-            ],
-        ]);
+        return $productsQuery;
     }
 
     public function store(CatalogProductStoreRequest $request): RedirectResponse
@@ -125,4 +171,3 @@ class CatalogProductsController extends Controller
             ]);
     }
 }
-

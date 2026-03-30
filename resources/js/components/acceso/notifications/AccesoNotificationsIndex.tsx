@@ -347,9 +347,20 @@ export default function AccesoNotificationsIndex({
                     <div className="flex flex-wrap items-center justify-end gap-2">
                         <Button
                             type="button"
-                            variant="default"
+                            variant="outline"
                             size="sm"
-                            className="cursor-pointer"
+                            className={cn(
+                                'cursor-pointer disabled:cursor-not-allowed',
+                                'border-[color-mix(in_oklab,var(--primary)_30%,var(--border))]',
+                                'bg-background text-foreground shadow-sm',
+                                'transition-[background-color,border-color,box-shadow,color]',
+                                'hover:bg-[color-mix(in_oklab,var(--primary)_10%,var(--background))]',
+                                'hover:border-[color-mix(in_oklab,var(--primary)_42%,var(--border))]',
+                                'dark:border-[color-mix(in_oklab,var(--primary)_42%,var(--border))]',
+                                'dark:bg-card dark:shadow-[0_1px_2px_rgba(0,0,0,0.35)]',
+                                'dark:hover:bg-[color-mix(in_oklab,var(--primary)_18%,var(--card))]',
+                                'dark:hover:border-[color-mix(in_oklab,var(--primary)_55%,var(--border))]',
+                            )}
                             disabled={!canMarkAll}
                             onClick={() => void handleMarkAllRead()}
                         >

@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+
 import { Link, router, usePage } from '@inertiajs/react';
 import {
     ArrowDown,
@@ -6,6 +8,7 @@ import {
     Ban,
     Box,
     CheckCircle2,
+    FileSpreadsheet,
     Images,
     LayoutGrid,
     TableProperties,
@@ -51,6 +54,13 @@ export default function CatalogProductsIndex({
     initialSortDir,
 }: Props) {
     const page = usePage();
+    const exportUrl = useMemo(() => {
+        const u = new URL(page.url, window.location.origin);
+        u.pathname = '/panel/catalogo-productos/export';
+        u.searchParams.delete('page');
+        u.searchParams.delete('per_page');
+        return u.pathname + u.search;
+    }, [page.url]);
     const rows: CatalogProduct[] = (products?.data ?? []) as CatalogProduct[];
     const totalInScreen = rows.length;
     const totalProducts = products?.total ?? totalInScreen;
@@ -201,7 +211,20 @@ export default function CatalogProductsIndex({
                 </NeuCardRaised>
             )}
             renderAboveTable={() => (
-                <CatalogProductsSearch initialQuery={initialQuery} className="mt-1" />
+                <div className="mt-1 flex flex-wrap items-stretch gap-2 md:items-center">
+                    <CatalogProductsSearch
+                        initialQuery={initialQuery}
+                        className="min-w-0 flex-1 md:max-w-md"
+                    />
+                    <a
+                        href={exportUrl}
+                        className="inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-[color-mix(in_oklab,var(--border)_55%,transparent)] bg-[color-mix(in_oklab,var(--card)_92%,var(--background))] text-[#217346] shadow-sm transition-colors hover:bg-[color-mix(in_oklab,var(--primary)_8%,var(--background))] dark:text-[#4ade80] dark:hover:bg-[color-mix(in_oklab,var(--primary)_12%,var(--card))]"
+                        aria-label="Descargar listado en Excel (respeta búsqueda y orden)"
+                        title="Descargar Excel — mismos filtros que la tabla"
+                    >
+                        <FileSpreadsheet className="size-5" aria-hidden />
+                    </a>
+                </div>
             )}
             renderRowActions={({ row, onEdit, onDelete }) => (
                 <div className="flex items-center gap-2">
