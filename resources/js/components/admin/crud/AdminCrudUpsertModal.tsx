@@ -112,6 +112,20 @@ export default function AdminCrudUpsertModal({
                 if (el instanceof HTMLInputElement && el.type === 'file') {
                     return true;
                 }
+                /* Ruta o URL opcional si ya hay archivo adjunto (releases / assets). */
+                if (
+                    el instanceof HTMLInputElement &&
+                    (field === 'path' || field === 'artifact_path')
+                ) {
+                    const fileFieldName =
+                        field === 'path' ? 'asset_file' : 'artifact_file';
+                    const fileEl = form.querySelector<HTMLInputElement>(
+                        `input[type="file"][name="${fileFieldName}"]`,
+                    );
+                    if (fileEl?.files?.length) {
+                        return true;
+                    }
+                }
                 const v = el.value.trim();
                 if (v === '') {
                     return false;
