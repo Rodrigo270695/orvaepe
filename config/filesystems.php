@@ -47,6 +47,17 @@ return [
             'report' => false,
         ],
 
+        /*
+         * ZIPs y archivos de software_releases / software_release_assets.
+         * Rutas guardadas en BD son relativas a este disco (sin esquema tipo https://).
+         */
+        'software_artifacts' => [
+            'driver' => 'local',
+            'root' => storage_path('app/software-artifacts'),
+            'throw' => false,
+            'report' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

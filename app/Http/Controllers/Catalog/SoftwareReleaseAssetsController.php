@@ -6,12 +6,17 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Catalog\SoftwareReleaseAssetStoreRequest;
 use App\Models\SoftwareRelease;
 use App\Models\SoftwareReleaseAsset;
+use App\Services\Catalog\SoftwareArtifactStorage;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class SoftwareReleaseAssetsController extends Controller
 {
+    public function __construct(
+        private readonly SoftwareArtifactStorage $artifactStorage,
+    ) {}
+
     public function index(SoftwareRelease $software_release): Response
     {
         $software_release->load([
@@ -45,7 +50,19 @@ class SoftwareReleaseAssetsController extends Controller
         SoftwareReleaseAssetStoreRequest $request,
         SoftwareRelease $software_release,
     ): RedirectResponse {
-        $software_release->assets()->create($request->validated());
+        $data = $request->assetPayload();
+
+        if ($request->hasFile('asset_file')) {
+            $stored = $this->artifactStorage->storeReleaseAsset(
+                $request->file('asset_file'),
+                $software_release->catalog_product_id,
+                $software_release->id,
+            );
+            $data['path'] = $stored['path'];
+            $data['sha256'] = $stored['sha256'];
+        }
+
+        $software_release->assets()->create($data);
 
         return redirect()
             ->route('panel.catalogo-releases.assets.index', $software_release)
@@ -63,7 +80,20 @@ class SoftwareReleaseAssetsController extends Controller
     ): RedirectResponse {
         $this->assertAssetBelongsToRelease($software_release, $software_release_asset);
 
-        $software_release_asset->update($request->validated());
+        $data = $request->assetPayload();
+
+        if ($request->hasFile('asset_file')) {
+            $this->artifactStorage->deleteIfManaged($software_release_asset->path);
+            $stored = $this->artifactStorage->storeReleaseAsset(
+                $request->file('asset_file'),
+                $software_release->catalog_product_id,
+                $software_release->id,
+            );
+            $data['path'] = $stored['path'];
+            $data['sha256'] = $stored['sha256'];
+        }
+
+        $software_release_asset->update($data);
 
         return redirect()
             ->route('panel.catalogo-releases.assets.index', $software_release)
@@ -80,6 +110,7 @@ class SoftwareReleaseAssetsController extends Controller
     ): RedirectResponse {
         $this->assertAssetBelongsToRelease($software_release, $software_release_asset);
 
+        $this->artifactStorage->deleteIfManaged($software_release_asset->path);
         $software_release_asset->delete();
 
         return redirect()

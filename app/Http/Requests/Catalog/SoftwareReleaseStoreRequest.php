@@ -66,6 +66,7 @@ class SoftwareReleaseStoreRequest extends FormRequest
                 $versionUnique,
             ],
             'changelog' => ['nullable', 'string'],
+            'artifact_file' => ['nullable', 'file', 'max:204800'],
             'artifact_path' => ['nullable', 'string', 'max:512'],
             'artifact_sha256' => ['nullable', 'string', 'max:64', 'regex:/^[a-fA-F0-9]*$/'],
             'min_php_version' => ['nullable', 'string', 'max:20'],
@@ -79,7 +80,9 @@ class SoftwareReleaseStoreRequest extends FormRequest
      */
     public function releasePayload(): array
     {
-        $data = $this->validated();
+        $data = collect($this->validated())
+            ->except('artifact_file')
+            ->all();
         $data['is_latest'] = $this->boolean('is_latest');
 
         return $data;

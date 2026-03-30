@@ -277,6 +277,7 @@ export default function SoftwareReleasesIndex({
                 submitLabelCreate: 'Registrar',
                 submitLabelEdit: 'Guardar cambios',
                 successToastTitle: 'Se ha guardado la versión',
+                encType: 'multipart/form-data',
                 renderFormFields: ({ mode, item, errors }) => (
                     <SoftwareReleaseFormFields
                         key={item?.id ?? 'create'}

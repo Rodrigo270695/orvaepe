@@ -19,7 +19,7 @@ class SoftwareReleaseAssetStoreRequest extends FormRequest
 
         $this->merge([
             'label' => is_string($label) ? trim($label) : $label,
-            'path' => is_string($path) ? trim($path) : $path,
+            'path' => $path === '' || $path === null ? null : trim((string) $path),
             'sha256' => $sha === '' || $sha === null ? null : trim((string) $sha),
         ]);
     }
@@ -28,8 +28,19 @@ class SoftwareReleaseAssetStoreRequest extends FormRequest
     {
         return [
             'label' => ['required', 'string', 'max:255'],
-            'path' => ['required', 'string', 'max:512'],
+            'asset_file' => ['nullable', 'file', 'max:204800'],
+            'path' => ['required_without:asset_file', 'nullable', 'string', 'max:512'],
             'sha256' => ['nullable', 'string', 'max:64', 'regex:/^[a-fA-F0-9]*$/'],
         ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function assetPayload(): array
+    {
+        return collect($this->validated())
+            ->except('asset_file')
+            ->all();
     }
 }

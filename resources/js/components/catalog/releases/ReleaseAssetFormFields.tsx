@@ -45,32 +45,50 @@ export default function ReleaseAssetFormFields({
                 <InputError message={errors.label} />
             </div>
 
-            <div className="space-y-2">
-                <AdminUnderlineLabel htmlFor="path" required>
-                    Ruta o URL
-                </AdminUnderlineLabel>
-                <AdminUnderlineInput
-                    id="path"
-                    name="path"
-                    defaultValue={item?.path ?? ''}
-                    required
-                    placeholder="s3://… https://… o ruta relativa"
-                />
-                <InputError message={errors.path} />
-            </div>
+            <div className="space-y-3 rounded-lg border border-border/60 bg-muted/20 p-4">
+                <p className="text-[11px] leading-relaxed text-muted-foreground">
+                    Sube un archivo para guardarlo en el servidor (misma carpeta
+                    que los releases) o indica una ruta/URL externa si el
+                    fichero está fuera.
+                </p>
+                <div className="space-y-2">
+                    <AdminUnderlineLabel htmlFor="asset_file">
+                        Subir archivo
+                    </AdminUnderlineLabel>
+                    <input
+                        id="asset_file"
+                        name="asset_file"
+                        type="file"
+                        className="block w-full cursor-pointer text-sm file:mr-3 file:cursor-pointer file:rounded-md file:border-0 file:bg-[#4A80B8]/15 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-[#4A80B8]"
+                    />
+                    <InputError message={errors.asset_file} />
+                </div>
+                <div className="space-y-2">
+                    <AdminUnderlineLabel htmlFor="path">
+                        Ruta o URL (si no subes archivo)
+                    </AdminUnderlineLabel>
+                    <AdminUnderlineInput
+                        id="path"
+                        name="path"
+                        defaultValue={item?.path ?? ''}
+                        placeholder="s3://… https://… o vacío si subes archivo"
+                    />
+                    <InputError message={errors.path} />
+                </div>
 
-            <div className="space-y-2">
-                <AdminUnderlineLabel htmlFor="sha256">
-                    SHA-256 (opcional)
-                </AdminUnderlineLabel>
-                <AdminUnderlineInput
-                    id="sha256"
-                    name="sha256"
-                    defaultValue={item?.sha256 ?? ''}
-                    placeholder="64 caracteres hex"
-                    className="font-mono text-xs"
-                />
-                <InputError message={errors.sha256} />
+                <div className="space-y-2">
+                    <AdminUnderlineLabel htmlFor="sha256">
+                        SHA-256 manual (opcional)
+                    </AdminUnderlineLabel>
+                    <AdminUnderlineInput
+                        id="sha256"
+                        name="sha256"
+                        defaultValue={item?.sha256 ?? ''}
+                        placeholder="Se calcula solo al subir archivo"
+                        className="font-mono text-xs"
+                    />
+                    <InputError message={errors.sha256} />
+                </div>
             </div>
         </div>
     );

@@ -149,32 +149,53 @@ export default function SoftwareReleaseFormFields({
                 <InputError message={errors.changelog} />
             </div>
 
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="space-y-3 rounded-lg border border-border/60 bg-muted/20 p-4">
+                <p className="text-[11px] leading-relaxed text-muted-foreground">
+                    <strong className="text-foreground/90">Artefacto principal:</strong>{' '}
+                    sube un ZIP (u otro archivo) y se guardará en{' '}
+                    <span className="font-mono text-[10px]">storage/app/software-artifacts</span>
+                    ; el SHA-256 se calcula solo. Si prefieres un bucket S3 o URL
+                    pública, deja el archivo vacío y rellena ruta y hash abajo.
+                </p>
                 <div className="space-y-2">
-                    <AdminUnderlineLabel htmlFor="artifact_path">
-                        Ruta del artefacto
+                    <AdminUnderlineLabel htmlFor="artifact_file">
+                        Subir archivo
                     </AdminUnderlineLabel>
-                    <AdminUnderlineInput
-                        id="artifact_path"
-                        name="artifact_path"
-                        defaultValue={item?.artifact_path ?? ''}
-                        placeholder="s3://… o ruta relativa"
+                    <input
+                        id="artifact_file"
+                        name="artifact_file"
+                        type="file"
+                        className="block w-full cursor-pointer text-sm file:mr-3 file:cursor-pointer file:rounded-md file:border-0 file:bg-[#4A80B8]/15 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-[#4A80B8]"
                     />
-                    <InputError message={errors.artifact_path} />
+                    <InputError message={errors.artifact_file} />
                 </div>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                        <AdminUnderlineLabel htmlFor="artifact_path">
+                            Ruta o URL externa (opcional)
+                        </AdminUnderlineLabel>
+                        <AdminUnderlineInput
+                            id="artifact_path"
+                            name="artifact_path"
+                            defaultValue={item?.artifact_path ?? ''}
+                            placeholder="Vacío si subes archivo; s3://… https://…"
+                        />
+                        <InputError message={errors.artifact_path} />
+                    </div>
 
-                <div className="space-y-2">
-                    <AdminUnderlineLabel htmlFor="artifact_sha256">
-                        SHA-256
-                    </AdminUnderlineLabel>
-                    <AdminUnderlineInput
-                        id="artifact_sha256"
-                        name="artifact_sha256"
-                        defaultValue={item?.artifact_sha256 ?? ''}
-                        placeholder="64 caracteres hex"
-                        className="font-mono text-xs"
-                    />
-                    <InputError message={errors.artifact_sha256} />
+                    <div className="space-y-2">
+                        <AdminUnderlineLabel htmlFor="artifact_sha256">
+                            SHA-256 manual (opcional)
+                        </AdminUnderlineLabel>
+                        <AdminUnderlineInput
+                            id="artifact_sha256"
+                            name="artifact_sha256"
+                            defaultValue={item?.artifact_sha256 ?? ''}
+                            placeholder="Solo si usas ruta externa"
+                            className="font-mono text-xs"
+                        />
+                        <InputError message={errors.artifact_sha256} />
+                    </div>
                 </div>
             </div>
 

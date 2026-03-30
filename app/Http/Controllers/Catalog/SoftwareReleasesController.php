@@ -6,20 +6,26 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Catalog\SoftwareReleaseStoreRequest;
 use App\Models\CatalogProduct;
 use App\Models\SoftwareRelease;
+use App\Services\Catalog\SoftwareArtifactStorage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class SoftwareReleasesController extends Controller
 {
+    public function __construct(
+        private readonly SoftwareArtifactStorage $artifactStorage,
+    ) {}
+
     public function index(Request $request): Response
     {
         $q = trim((string) $request->query('q', ''));
         $sortBy = (string) $request->query('sort_by', '');
         $sortDir = strtolower((string) $request->query('sort_dir', 'asc'));
-        if (!in_array($sortDir, ['asc', 'desc'], true)) {
+        if (! in_array($sortDir, ['asc', 'desc'], true)) {
             $sortDir = 'asc';
         }
 
@@ -27,7 +33,7 @@ class SoftwareReleasesController extends Controller
 
         $perPage = (int) $request->query('per_page', 10);
         $allowedPerPage = [10, 20, 30, 40, 50];
-        if (!in_array($perPage, $allowedPerPage, true)) {
+        if (! in_array($perPage, $allowedPerPage, true)) {
             $perPage = 10;
         }
 
@@ -94,6 +100,15 @@ class SoftwareReleasesController extends Controller
     {
         $data = $request->releasePayload();
 
+        if ($request->hasFile('artifact_file')) {
+            $stored = $this->artifactStorage->storeReleaseMain(
+                $request->file('artifact_file'),
+                $data['catalog_product_id'],
+            );
+            $data['artifact_path'] = $stored['path'];
+            $data['artifact_sha256'] = $stored['sha256'];
+        }
+
         DB::transaction(function () use ($data) {
             if ($data['is_latest']) {
                 $this->clearLatestForProduct($data['catalog_product_id'], null);
@@ -116,6 +131,16 @@ class SoftwareReleasesController extends Controller
     ): RedirectResponse {
         $data = $request->releasePayload();
 
+        if ($request->hasFile('artifact_file')) {
+            $this->artifactStorage->deleteIfManaged($software_release->artifact_path);
+            $stored = $this->artifactStorage->storeReleaseMain(
+                $request->file('artifact_file'),
+                $data['catalog_product_id'],
+            );
+            $data['artifact_path'] = $stored['path'];
+            $data['artifact_sha256'] = $stored['sha256'];
+        }
+
         DB::transaction(function () use ($data, $software_release) {
             if ($data['is_latest']) {
                 $this->clearLatestForProduct(
@@ -137,6 +162,10 @@ class SoftwareReleasesController extends Controller
 
     public function destroy(SoftwareRelease $software_release): RedirectResponse
     {
+        foreach ($software_release->assets as $asset) {
+            $this->artifactStorage->deleteIfManaged($asset->path);
+        }
+        $this->artifactStorage->deleteIfManaged($software_release->artifact_path);
         $software_release->delete();
 
         return redirect()
@@ -149,7 +178,7 @@ class SoftwareReleasesController extends Controller
     }
 
     /**
-     * @return \Illuminate\Support\Collection<int, array{id: string, name: string, slug: string}>
+     * @return Collection<int, array{id: string, name: string, slug: string}>
      */
     private function softwareSystemProductsForSelect()
     {

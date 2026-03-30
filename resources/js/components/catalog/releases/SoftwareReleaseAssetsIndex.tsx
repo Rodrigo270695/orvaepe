@@ -192,6 +192,7 @@ export default function SoftwareReleaseAssetsIndex({
                 submitLabelCreate: 'Añadir',
                 submitLabelEdit: 'Guardar',
                 successToastTitle: 'Archivo guardado',
+                encType: 'multipart/form-data',
                 renderFormFields: ({ mode, item, errors }) => (
                     <ReleaseAssetFormFields
                         key={item?.id ?? 'create'}
