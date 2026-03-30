@@ -8,6 +8,7 @@ use App\Models\LicenseKey;
 use App\Models\OemLicenseDelivery;
 use App\Models\Order;
 use App\Models\User;
+use App\Services\Audit\AuditLogger;
 use App\Support\AdminFlashToast;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -186,7 +187,7 @@ class LicenseKeysController extends Controller
             $key = $this->generateUniqueLicenseKey();
         }
 
-        LicenseKey::query()->create([
+        $created = LicenseKey::query()->create([
             'key' => $key,
             'user_id' => $validated['user_id'],
             'order_id' => $orderId,
@@ -199,6 +200,15 @@ class LicenseKeysController extends Controller
                 'created_via' => LicenseKey::CREATED_VIA_ADMIN_MANUAL,
             ],
         ]);
+
+        app(AuditLogger::class)->log(
+            action: 'license_key.created',
+            entityType: 'LicenseKey',
+            entityId: $created->id,
+            oldValues: null,
+            newValues: $this->licenseAuditSnapshot($created),
+            request: $request,
+        );
 
         return redirect()
             ->route('panel.acceso-licencias.index', $this->licenseListRetainQuery($request))
@@ -248,7 +258,18 @@ class LicenseKeysController extends Controller
                 ]);
         }
 
+        $before = $this->licenseAuditSnapshot($license_key);
         $license_key->update($payload);
+        $after = $this->licenseAuditSnapshot($license_key->fresh());
+
+        app(AuditLogger::class)->log(
+            action: 'license_key.updated',
+            entityType: 'LicenseKey',
+            entityId: $license_key->id,
+            oldValues: $before,
+            newValues: $after,
+            request: $request,
+        );
 
         return redirect()
             ->route('panel.acceso-licencias.index', $this->licenseListRetainQuery($request))
@@ -282,6 +303,7 @@ class LicenseKeysController extends Controller
                 $metadata['fulfilled_at'] = now()->toIso8601String();
             }
 
+            $before = $this->licenseAuditSnapshot($license_key);
             $license_key->update([
                 'key' => trim($validated['key']),
                 'max_activations' => $validated['max_activations'],
@@ -289,6 +311,16 @@ class LicenseKeysController extends Controller
                 'status' => $validated['status'],
                 'metadata' => $metadata,
             ]);
+            $after = $this->licenseAuditSnapshot($license_key->fresh(['catalogSku']));
+
+            app(AuditLogger::class)->log(
+                action: 'license_key.order_payment_updated',
+                entityType: 'LicenseKey',
+                entityId: $license_key->id,
+                oldValues: $before,
+                newValues: $after,
+                request: $request,
+            );
 
             if ($validated['status'] === LicenseKey::STATUS_ACTIVE) {
                 $this->syncOemDeliveryForActivatedOemLicense(
@@ -311,10 +343,21 @@ class LicenseKeysController extends Controller
             $expiresAt = null;
         }
 
+        $before = $this->licenseAuditSnapshot($license_key);
         $license_key->update([
             'max_activations' => $validated['max_activations'],
             'expires_at' => $expiresAt,
         ]);
+        $after = $this->licenseAuditSnapshot($license_key->fresh());
+
+        app(AuditLogger::class)->log(
+            action: 'license_key.order_payment_limits_updated',
+            entityType: 'LicenseKey',
+            entityId: $license_key->id,
+            oldValues: $before,
+            newValues: $after,
+            request: $request,
+        );
 
         return redirect()
             ->route('panel.acceso-licencias.index', $this->licenseListRetainQuery($request))
@@ -339,7 +382,18 @@ class LicenseKeysController extends Controller
                 ->with('toast', AdminFlashToast::error('No se puede eliminar: la licencia ya tiene activaciones registradas.'));
         }
 
+        $before = $this->licenseAuditSnapshot($license_key);
+        $licenseId = $license_key->id;
         $license_key->delete();
+
+        app(AuditLogger::class)->log(
+            action: 'license_key.deleted',
+            entityType: 'LicenseKey',
+            entityId: $licenseId,
+            oldValues: $before,
+            newValues: null,
+            request: $request,
+        );
 
         return redirect()
             ->route('panel.acceso-licencias.index', $this->licenseListRetainQuery($request))
@@ -362,7 +416,7 @@ class LicenseKeysController extends Controller
             return;
         }
 
-        OemLicenseDelivery::query()->updateOrCreate(
+        $delivery = OemLicenseDelivery::query()->updateOrCreate(
             ['license_key_id' => $licenseKey->id],
             [
                 'order_line_id' => $orderLineId,
@@ -377,6 +431,18 @@ class LicenseKeysController extends Controller
                     'sku_name' => $meta['sku_name'] ?? $sku->name,
                     'synced_from' => 'license_key_activation',
                 ],
+            ],
+        );
+
+        app(AuditLogger::class)->log(
+            action: $delivery->wasRecentlyCreated ? 'oem_delivery.created_from_activation' : 'oem_delivery.updated_from_activation',
+            entityType: 'OemLicenseDelivery',
+            entityId: $delivery->id,
+            oldValues: null,
+            newValues: [
+                'license_key_id' => $licenseKey->id,
+                'order_line_id' => $orderLineId,
+                'status' => $delivery->status,
             ],
         );
     }
@@ -398,6 +464,33 @@ class LicenseKeysController extends Controller
         }
 
         return 'oem';
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function licenseAuditSnapshot(LicenseKey $license): array
+    {
+        $metadata = is_array($license->metadata) ? $license->metadata : [];
+
+        return [
+            'id' => $license->id,
+            'key' => $license->key,
+            'status' => $license->status,
+            'max_activations' => $license->max_activations,
+            'activation_count' => $license->activation_count,
+            'expires_at' => $license->expires_at?->toIso8601String(),
+            'order_id' => $license->order_id,
+            'catalog_sku_id' => $license->catalog_sku_id,
+            'user_id' => $license->user_id,
+            'metadata' => [
+                'created_via' => $metadata['created_via'] ?? null,
+                'order_line_id' => $metadata['order_line_id'] ?? null,
+                'line_slot' => $metadata['line_slot'] ?? null,
+                'awaiting_provider_key' => $metadata['awaiting_provider_key'] ?? null,
+                'fulfilled_at' => $metadata['fulfilled_at'] ?? null,
+            ],
+        ];
     }
 
     private function generateUniqueLicenseKey(): string

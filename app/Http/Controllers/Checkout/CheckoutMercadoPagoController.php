@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\Payment;
 use App\Models\User;
 use App\Models\WebhookEvent;
+use App\Services\Audit\AuditLogger;
 use App\Services\Checkout\OrderFromCartLinesBuilder;
 use App\Services\Checkout\OrderPaidEntitlementProvisioner;
 use App\Services\Checkout\OrderPaidLicenseProvisioner;
@@ -237,6 +238,19 @@ class CheckoutMercadoPagoController extends Controller
         );
 
         if ($event->processed) {
+            app(AuditLogger::class)->log(
+                action: 'webhook.duplicate_ignored',
+                entityType: 'WebhookEvent',
+                entityId: $event->id,
+                oldValues: null,
+                newValues: [
+                    'gateway' => $event->gateway,
+                    'gateway_event_id' => $event->gateway_event_id,
+                    'event_type' => $event->event_type,
+                ],
+                request: $request,
+            );
+
             return response()->json(['ok' => true, 'duplicate' => true]);
         }
 
@@ -245,6 +259,14 @@ class CheckoutMercadoPagoController extends Controller
 
             if ($paymentIds === []) {
                 $event->markProcessed();
+                app(AuditLogger::class)->log(
+                    action: 'webhook.processed_ignored',
+                    entityType: 'WebhookEvent',
+                    entityId: $event->id,
+                    oldValues: ['processed' => false],
+                    newValues: ['processed' => true, 'reason' => 'no_payment_ids'],
+                    request: $request,
+                );
 
                 return response()->json(['ok' => true, 'ignored' => true]);
             }
@@ -285,6 +307,14 @@ class CheckoutMercadoPagoController extends Controller
             }
 
             $event->markProcessed();
+            app(AuditLogger::class)->log(
+                action: 'webhook.processed',
+                entityType: 'WebhookEvent',
+                entityId: $event->id,
+                oldValues: ['processed' => false],
+                newValues: ['processed' => true, 'attempts' => $event->attempts],
+                request: $request,
+            );
 
             return response()->json(['ok' => true]);
         } catch (\Throwable $e) {
@@ -294,6 +324,14 @@ class CheckoutMercadoPagoController extends Controller
                 'exception' => $e->getMessage(),
             ]);
             $event->markFailed($e->getMessage());
+            app(AuditLogger::class)->log(
+                action: 'webhook.failed',
+                entityType: 'WebhookEvent',
+                entityId: $event->id,
+                oldValues: ['processed' => false, 'attempts' => max(0, $event->attempts - 1)],
+                newValues: ['processed' => false, 'attempts' => $event->attempts, 'error' => $event->error],
+                request: $request,
+            );
 
             return response()->json(['ok' => false], 500);
         }
@@ -325,6 +363,14 @@ class CheckoutMercadoPagoController extends Controller
                     'status' => Order::STATUS_PAID,
                     'placed_at' => now(),
                 ]);
+                app(AuditLogger::class)->log(
+                    action: 'order.marked_paid_existing_payment',
+                    entityType: 'Order',
+                    entityId: $order->id,
+                    oldValues: ['status' => Order::STATUS_PENDING_PAYMENT],
+                    newValues: ['status' => Order::STATUS_PAID, 'gateway_payment_id' => $gatewayPaymentId],
+                    userId: $user->id,
+                );
 
                 $order->refresh();
                 $order->coupon?->increment('used_count');
@@ -343,8 +389,16 @@ class CheckoutMercadoPagoController extends Controller
                 'status' => Order::STATUS_PAID,
                 'placed_at' => now(),
             ]);
+            app(AuditLogger::class)->log(
+                action: 'order.marked_paid',
+                entityType: 'Order',
+                entityId: $order->id,
+                oldValues: ['status' => Order::STATUS_PENDING_PAYMENT],
+                newValues: ['status' => Order::STATUS_PAID, 'gateway_payment_id' => $gatewayPaymentId],
+                userId: $user->id,
+            );
 
-            Payment::query()->create([
+            $payment = Payment::query()->create([
                 'order_id' => $order->id,
                 'user_id' => $user->id,
                 'gateway' => $gateway,
@@ -355,6 +409,21 @@ class CheckoutMercadoPagoController extends Controller
                 'raw_response' => $rawResponse,
                 'paid_at' => now(),
             ]);
+            app(AuditLogger::class)->log(
+                action: 'payment.created',
+                entityType: 'Payment',
+                entityId: (string) $payment->id,
+                oldValues: null,
+                newValues: [
+                    'order_id' => $payment->order_id,
+                    'gateway' => $payment->gateway,
+                    'gateway_payment_id' => $payment->gateway_payment_id,
+                    'amount' => $payment->amount,
+                    'currency' => $payment->currency,
+                    'status' => $payment->status,
+                ],
+                userId: $user->id,
+            );
 
             $order->refresh();
             $order->coupon?->increment('used_count');
