@@ -78,6 +78,9 @@ class HandleInertiaRequests extends Middleware
             'softwareNavLinks' => MarketingSoftwareNavLinks::all(),
             'licenseNavGroups' => MarketingLicenseNavGroups::all(),
             'serviceNavGroups' => MarketingServicesNavGroups::all(),
+            'contact' => [
+                'whatsapp_e164' => (string) config('contact.whatsapp_e164'),
+            ],
             'staffUnreadNotificationsCount' => fn () => $request->user()?->hasRole('superadmin')
                 ? Notification::query()->whereNull('read_at')->count()
                 : 0,

@@ -7,6 +7,10 @@ use App\Models\Order;
 use App\Models\User;
 use App\Support\WhatsAppPhoneNormalizer;
 
+/**
+ * Tras un pago confirmado: notificación in-app, intento de WhatsApp (UltraMsg) y correo
+ * al cliente y a cada superadmin (ver {@see NotificationSender}).
+ */
 final class OrderPaidNotifier
 {
     public function __construct(

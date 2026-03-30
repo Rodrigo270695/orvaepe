@@ -5,7 +5,10 @@ import { ChevronDown, Menu, ShoppingCart, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 import { marketingPreciosLinks, marketingServiciosSectionLinks } from '@/constants/marketingNavLinks';
-import MarketingGlobalSearch from '@/components/marketing/MarketingGlobalSearch';
+import {
+    MarketingGlobalSearchProvider,
+    MarketingSearchTrigger,
+} from '@/components/marketing/MarketingGlobalSearch';
 import {
     clearSoftwareCart,
     getSoftwareCartTotalQty,
@@ -544,6 +547,13 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
     };
 
     return (
+        <MarketingGlobalSearchProvider
+            softwareLinks={softwareLinks}
+            licenseNavGroups={licenseNavGroups}
+            serviceNavGroups={serviceNavGroups}
+            isLoggedIn={Boolean(auth.user)}
+            canRegister={finalCanRegister}
+        >
         <div ref={rootRef}>
             <header
                 className={[
@@ -704,12 +714,7 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                     </nav>
 
                     <div className="hidden items-center gap-2 md:flex">
-                        <MarketingGlobalSearch
-                            softwareLinks={softwareLinks}
-                            serviceNavGroups={serviceNavGroups}
-                            isLoggedIn={Boolean(auth.user)}
-                            canRegister={finalCanRegister}
-                        />
+                        <MarketingSearchTrigger />
                         <div className="group/cart relative">
                             <Link
                                 href="/carrito"
@@ -794,12 +799,7 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                     </div>
 
                     <div className="flex items-center gap-1.5 md:hidden">
-                        <MarketingGlobalSearch
-                            softwareLinks={softwareLinks}
-                            serviceNavGroups={serviceNavGroups}
-                            isLoggedIn={Boolean(auth.user)}
-                            canRegister={finalCanRegister}
-                        />
+                        <MarketingSearchTrigger />
                         <Link
                             href="/carrito"
                             aria-label="Ir al carrito de compras"
@@ -1025,6 +1025,7 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                 )}
             </header>
         </div>
+        </MarketingGlobalSearchProvider>
     );
 }
 
