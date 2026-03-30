@@ -10,6 +10,5 @@ self.addEventListener('activate', (event) => {
     event.waitUntil(self.clients.claim());
 });
 
-self.addEventListener('fetch', (event) => {
-    event.respondWith(fetch(event.request));
-});
+// No interceptamos fetch para evitar rechazos no controlados en navegación.
+// Este SW solo se usa para habilitar instalación y scope de la PWA.

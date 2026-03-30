@@ -9,6 +9,7 @@ use App\Models\CatalogSku;
 use App\Models\Subscription;
 use App\Models\SubscriptionItem;
 use App\Models\User;
+use App\Services\Access\SubscriptionEntitlementSyncService;
 use App\Support\AdminFlashToast;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -101,7 +102,10 @@ class SubscriptionsController extends Controller
         ]);
     }
 
-    public function store(SubscriptionStoreRequest $request): RedirectResponse
+    public function store(
+        SubscriptionStoreRequest $request,
+        SubscriptionEntitlementSyncService $entitlementSync,
+    ): RedirectResponse
     {
         $data = $request->validated();
         $items = $data['items'];
@@ -115,7 +119,7 @@ class SubscriptionsController extends Controller
             $data['cancelled_at'] = null;
         }
 
-        DB::transaction(function () use ($data, $items): void {
+        DB::transaction(function () use ($data, $items, $entitlementSync): void {
             $subscription = Subscription::create($data);
             foreach ($items as $item) {
                 SubscriptionItem::create([
@@ -125,6 +129,8 @@ class SubscriptionsController extends Controller
                     'unit_price' => $item['unit_price'],
                 ]);
             }
+
+            $entitlementSync->sync($subscription->fresh());
         });
 
         return redirect()
@@ -160,7 +166,11 @@ class SubscriptionsController extends Controller
         ]);
     }
 
-    public function update(SubscriptionUpdateRequest $request, Subscription $subscription): RedirectResponse
+    public function update(
+        SubscriptionUpdateRequest $request,
+        Subscription $subscription,
+        SubscriptionEntitlementSyncService $entitlementSync,
+    ): RedirectResponse
     {
         $data = $request->validated();
         $items = $data['items'];
@@ -177,7 +187,7 @@ class SubscriptionsController extends Controller
             $data['cancelled_at'] = null;
         }
 
-        DB::transaction(function () use ($subscription, $data, $items): void {
+        DB::transaction(function () use ($subscription, $data, $items, $entitlementSync): void {
             $subscription->update($data);
             $subscription->items()->delete();
             foreach ($items as $item) {
@@ -188,6 +198,8 @@ class SubscriptionsController extends Controller
                     'unit_price' => $item['unit_price'],
                 ]);
             }
+
+            $entitlementSync->sync($subscription->fresh());
         });
 
         return redirect()
@@ -195,7 +207,10 @@ class SubscriptionsController extends Controller
             ->with('toast', AdminFlashToast::success('Suscripción actualizada.'));
     }
 
-    public function cancel(Subscription $subscription): RedirectResponse
+    public function cancel(
+        Subscription $subscription,
+        SubscriptionEntitlementSyncService $entitlementSync,
+    ): RedirectResponse
     {
         if ($subscription->status === Subscription::STATUS_CANCELLED) {
             return redirect()
@@ -208,6 +223,7 @@ class SubscriptionsController extends Controller
             'cancelled_at' => now(),
             'cancel_at_period_end' => false,
         ]);
+        $entitlementSync->sync($subscription->fresh());
 
         return redirect()
             ->route('panel.ventas-suscripciones.index')

@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\Payment;
 use App\Models\User;
 use App\Services\Checkout\OrderFromCartLinesBuilder;
+use App\Services\Checkout\OrderPaidEntitlementProvisioner;
 use App\Services\Checkout\OrderPaidLicenseProvisioner;
 use App\Services\Notifications\OrderPaidNotifier;
 use App\Services\Payments\PayPalClient;
@@ -185,6 +186,7 @@ class CheckoutPayPalController extends Controller
                 'environment' => app()->environment(),
             ],
             app(OrderPaidNotifier::class),
+            app(OrderPaidEntitlementProvisioner::class),
             app(OrderPaidLicenseProvisioner::class),
         );
 
@@ -262,6 +264,7 @@ class CheckoutPayPalController extends Controller
             'paypal',
             $capture,
             app(OrderPaidNotifier::class),
+            app(OrderPaidEntitlementProvisioner::class),
             app(OrderPaidLicenseProvisioner::class),
         );
 
@@ -313,9 +316,10 @@ class CheckoutPayPalController extends Controller
         string $gateway,
         array $rawResponse,
         OrderPaidNotifier $notifier,
+        OrderPaidEntitlementProvisioner $entitlementProvisioner,
         OrderPaidLicenseProvisioner $licenseProvisioner,
     ): void {
-        DB::transaction(function () use ($order, $user, $gatewayPaymentId, $gateway, $rawResponse, $notifier, $licenseProvisioner) {
+        DB::transaction(function () use ($order, $user, $gatewayPaymentId, $gateway, $rawResponse, $notifier, $entitlementProvisioner, $licenseProvisioner) {
             $order->update([
                 'status' => Order::STATUS_PAID,
                 'placed_at' => now(),
@@ -339,7 +343,9 @@ class CheckoutPayPalController extends Controller
             $notifier->notifyCustomer($order, $user);
             $notifier->notifyAdmin($order, $user);
 
-            $licenseProvisioner->provision($order->fresh());
+            $freshOrder = $order->fresh();
+            $entitlementProvisioner->provision($freshOrder);
+            $licenseProvisioner->provision($freshOrder);
         });
     }
 

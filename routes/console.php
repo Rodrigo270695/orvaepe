@@ -1,8 +1,10 @@
 <?php
 
 use App\Services\Payments\PayPalClient;
+use App\Services\Access\SubscriptionEntitlementSyncService;
 use App\Services\WhatsApp\UltraMsgClient;
 use App\Support\WhatsAppPhoneNormalizer;
+use App\Models\Subscription;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 
@@ -43,3 +45,24 @@ Artisan::command('ultramsg:test-send', function (UltraMsgClient $ultraMsg): int 
         return 1;
     }
 })->purpose('Envía WhatsApp de prueba a 976709811 por UltraMsg');
+
+Artisan::command('subscriptions:sync-entitlements', function (SubscriptionEntitlementSyncService $sync): int {
+    $count = 0;
+
+    Subscription::query()
+        ->with('items.catalogSku')
+        ->orderBy('created_at')
+        ->chunkById(100, function ($subscriptions) use ($sync, &$count): void {
+            foreach ($subscriptions as $subscription) {
+                if (! $subscription instanceof Subscription) {
+                    continue;
+                }
+                $sync->sync($subscription);
+                $count++;
+            }
+        });
+
+    $this->info("Entitlements sincronizados para {$count} suscripciones.");
+
+    return 0;
+})->purpose('Sincroniza entitlements según estado de suscripciones');
