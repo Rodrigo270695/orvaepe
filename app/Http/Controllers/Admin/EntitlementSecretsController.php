@@ -3,15 +3,116 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\EntitlementSecretStoreRequest;
 use App\Models\Entitlement;
 use App\Models\EntitlementSecret;
+use App\Support\AdminFlashToast;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Crypt;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class EntitlementSecretsController extends Controller
 {
+    public function create(Request $request): Response
+    {
+        $preselected = trim((string) $request->query('entitlement_id', ''));
+
+        $entitlementsQuery = Entitlement::query()
+            ->with([
+                'user:id,name,lastname,email',
+                'catalogProduct:id,name',
+                'catalogSku:id,code,name',
+            ])
+            ->orderByDesc('created_at')
+            ->limit(400);
+
+        $entitlements = $entitlementsQuery->get();
+
+        if ($preselected !== '' && strlen($preselected) === 36
+            && ! $entitlements->pluck('id')->contains($preselected)) {
+            $extra = Entitlement::query()
+                ->whereKey($preselected)
+                ->with([
+                    'user:id,name,lastname,email',
+                    'catalogProduct:id,name',
+                    'catalogSku:id,code,name',
+                ])
+                ->first();
+            if ($extra !== null) {
+                $entitlements->prepend($extra);
+            }
+        }
+
+        $entitlementOptions = $entitlements->map(static function (Entitlement $e): array {
+            $email = $e->user?->email ?? '—';
+            $product = $e->catalogProduct?->name ?? 'Producto';
+            $sku = $e->catalogSku?->code ?? '';
+
+            return [
+                'value' => $e->id,
+                'label' => $sku !== ''
+                    ? "{$email} · {$product} ({$sku})"
+                    : "{$email} · {$product}",
+                'searchTerms' => array_filter([
+                    $email,
+                    $e->user?->name,
+                    $e->user?->lastname,
+                    $product,
+                    $sku,
+                    $e->catalogSku?->name,
+                ]),
+            ];
+        })->values()->all();
+
+        return Inertia::render('admin/acceso-credenciales/create', [
+            'entitlementOptions' => $entitlementOptions,
+            'selectedEntitlementId' => $preselected !== '' && strlen($preselected) === 36
+                ? $preselected
+                : null,
+            'kindOptions' => [
+                ['value' => EntitlementSecret::KIND_API_KEY, 'label' => 'API key'],
+                ['value' => EntitlementSecret::KIND_HMAC_SECRET, 'label' => 'HMAC secret'],
+                ['value' => EntitlementSecret::KIND_OAUTH_REFRESH, 'label' => 'OAuth refresh'],
+                ['value' => EntitlementSecret::KIND_CERTIFICATE, 'label' => 'Certificado'],
+                ['value' => EntitlementSecret::KIND_CUSTOM, 'label' => 'Personalizado (URL, usuario, token, …)'],
+            ],
+        ]);
+    }
+
+    public function store(EntitlementSecretStoreRequest $request): RedirectResponse
+    {
+        $data = $request->validated();
+        $plain = $data['secret_value'];
+        unset($data['secret_value']);
+
+        $publicRef = $data['public_ref'] ?? null;
+        if ($publicRef === null || $publicRef === '') {
+            $publicRef = '…'.substr(preg_replace('/\s+/', '', $plain), -6);
+        }
+
+        EntitlementSecret::query()->create([
+            'entitlement_id' => $data['entitlement_id'],
+            'kind' => $data['kind'],
+            'label' => $data['label'] ?? null,
+            'public_ref' => $publicRef,
+            'secret_ciphertext' => Crypt::encryptString($plain),
+            'expires_at' => $data['expires_at'] ?? null,
+            'rotated_at' => null,
+            'revoked_at' => null,
+            'last_used_at' => null,
+            'metadata' => null,
+        ]);
+
+        return redirect()
+            ->route('panel.acceso-credenciales.index', [
+                'date_from' => now()->startOfMonth()->format('Y-m-d'),
+                'date_to' => now()->endOfMonth()->format('Y-m-d'),
+            ])
+            ->with('toast', AdminFlashToast::success('Credencial registrada correctamente.'));
+    }
+
     public function index(Request $request): Response|RedirectResponse
     {
         $q = trim((string) $request->query('q', ''));

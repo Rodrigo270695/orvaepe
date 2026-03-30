@@ -1,3 +1,6 @@
+import { Link } from '@inertiajs/react';
+import { KeyRound } from 'lucide-react';
+
 import {
     entitlementStatusBadgeClass,
     entitlementStatusLabel,
@@ -6,6 +9,10 @@ import {
     formatDateTime,
 } from '@/components/acceso/entitlements/entitlementDisplay';
 import type { EntitlementRow } from '@/components/acceso/entitlements/entitlementTypes';
+import { NeuButtonRaised } from '@/components/ui/neu-button-raised';
+
+const credencialCreateHref = (entitlementId: string) =>
+    `/panel/acceso-credenciales/create?entitlement_id=${encodeURIComponent(entitlementId)}`;
 
 type Props = {
     rows: EntitlementRow[];
@@ -87,6 +94,21 @@ export default function AccesoEntitlementsMobileCards({
                                 {formatDateTime(row.created_at)}
                             </p>
                         </div>
+                    </div>
+
+                    <div className="mt-3">
+                        <Link
+                            href={credencialCreateHref(row.id)}
+                            className="inline-flex w-full sm:w-auto"
+                        >
+                            <NeuButtonRaised
+                                type="button"
+                                className="w-full gap-1 justify-center px-2.5 py-1.5 text-[11px] font-medium sm:w-auto"
+                            >
+                                <KeyRound className="size-3" />
+                                Añadir credencial
+                            </NeuButtonRaised>
+                        </Link>
                     </div>
                 </div>
             ))}

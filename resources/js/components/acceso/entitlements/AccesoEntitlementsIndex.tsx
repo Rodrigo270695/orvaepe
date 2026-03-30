@@ -1,5 +1,5 @@
-import { router, usePage } from '@inertiajs/react';
-import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
+import { Link, router, usePage } from '@inertiajs/react';
+import { ArrowDown, ArrowUp, ArrowUpDown, KeyRound } from 'lucide-react';
 
 import AdminCrudIndex from '@/components/admin/crud/AdminCrudIndex';
 import type { AdminCrudTableColumn } from '@/components/admin/crud/AdminCrudTable';
@@ -14,6 +14,10 @@ import {
     formatDateTime,
 } from '@/components/acceso/entitlements/entitlementDisplay';
 import type { EntitlementRow } from '@/components/acceso/entitlements/entitlementTypes';
+import { NeuButtonRaised } from '@/components/ui/neu-button-raised';
+
+const credencialCreateHref = (entitlementId: string) =>
+    `/panel/acceso-credenciales/create?entitlement_id=${encodeURIComponent(entitlementId)}`;
 
 type Props = {
     entitlements: any;
@@ -140,6 +144,21 @@ export default function AccesoEntitlementsIndex({
             cellClassName:
                 'px-3 py-2 align-middle text-xs text-muted-foreground',
             render: (r) => formatDateTime(r.created_at),
+        },
+        {
+            header: 'Acción',
+            cellClassName: 'px-3 py-2 align-middle w-[1%] whitespace-nowrap',
+            render: (r) => (
+                <Link href={credencialCreateHref(r.id)} className="inline-flex">
+                    <NeuButtonRaised
+                        type="button"
+                        className="gap-1 px-2.5 py-1.5 text-[11px] font-medium"
+                    >
+                        <KeyRound className="size-3" />
+                        Credencial
+                    </NeuButtonRaised>
+                </Link>
+            ),
         },
     ];
 
