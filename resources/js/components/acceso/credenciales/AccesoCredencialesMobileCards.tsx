@@ -1,3 +1,5 @@
+import { Eye } from 'lucide-react';
+
 import {
     formatDateTime,
     secretKindBadgeClass,
@@ -13,6 +15,7 @@ import {
 type Props = {
     rows: EntitlementSecretRow[];
     emptyMessage: string;
+    onViewDetail?: (row: EntitlementSecretRow) => void;
 };
 
 function truncateId(s: string | null, len = 14): string {
@@ -25,6 +28,7 @@ function truncateId(s: string | null, len = 14): string {
 export default function AccesoCredencialesMobileCards({
     rows,
     emptyMessage,
+    onViewDetail,
 }: Props) {
     if (rows.length === 0) {
         return (
@@ -56,14 +60,26 @@ export default function AccesoCredencialesMobileCards({
                             >
                                 {secretKindLabel(row.kind)}
                             </span>
-                            <span
-                                className={[
-                                    'inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-xs font-medium',
-                                    entitlementStatusBadgeClass(entStatus),
-                                ].join(' ')}
-                            >
-                                {entitlementStatusLabel(entStatus)}
-                            </span>
+                            <div className="flex shrink-0 items-center gap-1">
+                                {onViewDetail ? (
+                                    <button
+                                        type="button"
+                                        className="group inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4A80B8]/30"
+                                        aria-label="Ver detalle completo"
+                                        onClick={() => onViewDetail(row)}
+                                    >
+                                        <Eye className="size-4 text-[#4A80B8]/60 transition-colors group-hover:text-[#4A80B8]" />
+                                    </button>
+                                ) : null}
+                                <span
+                                    className={[
+                                        'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium',
+                                        entitlementStatusBadgeClass(entStatus),
+                                    ].join(' ')}
+                                >
+                                    {entitlementStatusLabel(entStatus)}
+                                </span>
+                            </div>
                         </div>
 
                         <div className="mt-2 min-w-0 space-y-1">

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Crypt;
 
 class EntitlementSecret extends Model
 {
@@ -74,6 +75,23 @@ class EntitlementSecret extends Model
     public function entitlement(): BelongsTo
     {
         return $this->belongsTo(Entitlement::class, 'entitlement_id');
+    }
+
+    /**
+     * Descifra el valor almacenado o null si no existe o falla el descifrado.
+     */
+    public function decryptPlainOrNull(): ?string
+    {
+        $raw = $this->getRawOriginal('secret_ciphertext');
+        if (! is_string($raw) || $raw === '') {
+            return null;
+        }
+
+        try {
+            return Crypt::decryptString($raw);
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     /**

@@ -1,10 +1,14 @@
 import { router, usePage } from '@inertiajs/react';
-import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpDown, Eye } from 'lucide-react';
+import * as React from 'react';
+
 import AdminCrudIndex from '@/components/admin/crud/AdminCrudIndex';
 import type { AdminCrudTableColumn } from '@/components/admin/crud/AdminCrudTable';
 import AccesoCredencialesFilters from '@/components/acceso/credenciales/AccesoCredencialesFilters';
 import AccesoCredencialesMobileCards from '@/components/acceso/credenciales/AccesoCredencialesMobileCards';
 import AccesoCredencialesToolbar from '@/components/acceso/credenciales/AccesoCredencialesToolbar';
+import CredentialSecretViewModal from '@/components/acceso/credenciales/CredentialSecretViewModal';
+import type { EntitlementSecretDetail } from '@/components/acceso/credenciales/secretDetailTypes';
 import {
     formatDateTime,
     secretKindBadgeClass,
@@ -26,8 +30,6 @@ type Props = {
     initialDateTo: string;
     initialSortBy: string;
     initialSortDir: 'asc' | 'desc';
-    initialEntitlementId: string;
-    entitlementFilterLabel: string | null;
 };
 
 function truncateId(s: string | null, len = 12): string {
@@ -46,10 +48,46 @@ export default function AccesoCredencialesIndex({
     initialDateTo,
     initialSortBy,
     initialSortDir,
-    initialEntitlementId,
-    entitlementFilterLabel,
 }: Props) {
     const page = usePage();
+    const [detailOpen, setDetailOpen] = React.useState(false);
+    const [detail, setDetail] = React.useState<EntitlementSecretDetail | null>(null);
+    const [detailLoading, setDetailLoading] = React.useState(false);
+    const [detailError, setDetailError] = React.useState<string | null>(null);
+
+    const openDetail = React.useCallback(async (id: string) => {
+        setDetailOpen(true);
+        setDetail(null);
+        setDetailError(null);
+        setDetailLoading(true);
+        try {
+            const res = await fetch(`/panel/acceso-credenciales/${id}`, {
+                headers: {
+                    Accept: 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                credentials: 'same-origin',
+            });
+            if (!res.ok) {
+                throw new Error('fetch');
+            }
+            const json = (await res.json()) as { secret: EntitlementSecretDetail };
+            setDetail(json.secret);
+        } catch {
+            setDetailError('No se pudo cargar el detalle de la credencial.');
+        } finally {
+            setDetailLoading(false);
+        }
+    }, []);
+
+    const handleDetailOpenChange = (open: boolean) => {
+        setDetailOpen(open);
+        if (!open) {
+            setDetail(null);
+            setDetailError(null);
+        }
+    };
+
     const rows: EntitlementSecretRow[] = (entitlementSecrets?.data ??
         []) as EntitlementSecretRow[];
     const total = entitlementSecrets?.total ?? rows.length;
@@ -190,16 +228,36 @@ export default function AccesoCredencialesIndex({
                     initialEntitlementStatus={initialEntitlementStatus}
                     initialDateFrom={initialDateFrom}
                     initialDateTo={initialDateTo}
-                    initialEntitlementId={initialEntitlementId}
-                    entitlementFilterLabel={entitlementFilterLabel}
                 />
+            )}
+            renderRowActions={({ row }) => (
+                <button
+                    type="button"
+                    className="group inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4A80B8]/30"
+                    aria-label="Ver detalle completo"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        void openDetail(row.id);
+                    }}
+                >
+                    <Eye className="size-4 text-[#4A80B8]/60 transition-colors group-hover:text-[#4A80B8]" />
+                </button>
             )}
             renderMobileRows={({ rows: mobileRows }) => (
                 <AccesoCredencialesMobileCards
                     rows={mobileRows}
                     emptyMessage="No hay credenciales registradas. Cuando existan filas en entitlement_secrets, aparecerán aquí."
+                    onViewDetail={(row) => void openDetail(row.id)}
                 />
             )}
+        />
+
+        <CredentialSecretViewModal
+            open={detailOpen}
+            onOpenChange={handleDetailOpenChange}
+            detail={detail}
+            loading={detailLoading}
+            errorMessage={detailError}
         />
         </>
     );

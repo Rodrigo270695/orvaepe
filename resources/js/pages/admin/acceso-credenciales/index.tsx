@@ -45,8 +45,6 @@ export default function AccesoCredencialesPage({
                     initialDateTo={filters?.date_to ?? ''}
                     initialSortBy={filters?.sort_by ?? 'created_at'}
                     initialSortDir={filters?.sort_dir ?? 'desc'}
-                    initialEntitlementId={filters?.entitlement_id ?? ''}
-                    entitlementFilterLabel={filters?.entitlement_filter_label ?? null}
                 />
             </div>
         </AppLayout>

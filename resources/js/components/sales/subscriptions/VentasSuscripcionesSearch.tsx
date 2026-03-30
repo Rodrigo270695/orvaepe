@@ -6,12 +6,15 @@ import * as React from 'react';
 type Props = {
     initialQuery: string;
     className?: string;
+    /** Sin tope estrecho: el input usa todo el ancho del contenedor. */
+    wide?: boolean;
     placeholder?: string;
 };
 
 export default function VentasSuscripcionesSearch({
     initialQuery,
     className,
+    wide = false,
     placeholder = 'Cliente, correo o N° documento…',
 }: Props) {
     const page = usePage();
@@ -58,7 +61,12 @@ export default function VentasSuscripcionesSearch({
 
     return (
         <div className={className}>
-            <div className="relative w-full max-w-sm rounded-xl px-1 neumorph-inset">
+            <div
+                className={[
+                    'relative w-full rounded-xl px-1 neumorph-inset',
+                    wide ? 'max-w-full' : 'max-w-sm',
+                ].join(' ')}
+            >
                 <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                     ref={inputRef}

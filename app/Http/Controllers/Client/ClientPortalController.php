@@ -5,8 +5,9 @@ namespace App\Http\Controllers\Client;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Client\UserProfileUpdateRequest;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
-use App\Models\LicenseKey;
 use App\Models\Entitlement;
+use App\Models\EntitlementSecret;
+use App\Models\LicenseKey;
 use App\Models\Order;
 use App\Models\Subscription;
 use App\Models\UserProfile;
@@ -225,15 +226,52 @@ class ClientPortalController extends Controller
                 ];
             })->values()->all();
 
+        $credentialSecrets = EntitlementSecret::query()
+            ->whereHas('entitlement', static function ($q) use ($user): void {
+                $q->where('user_id', $user->id);
+            })
+            ->with([
+                'entitlement:id,user_id,status,catalog_product_id,catalog_sku_id',
+                'entitlement.catalogProduct:id,name',
+                'entitlement.catalogSku:id,code,name',
+            ])
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(static function (EntitlementSecret $secret): array {
+                $ent = $secret->entitlement;
+
+                return [
+                    'id' => $secret->id,
+                    'kind' => $secret->kind,
+                    'label' => $secret->label,
+                    'public_ref' => $secret->public_ref,
+                    'secret_value' => $secret->decryptPlainOrNull(),
+                    'metadata' => $secret->metadata,
+                    'expires_at' => $secret->expires_at?->toIso8601String(),
+                    'revoked_at' => $secret->revoked_at?->toIso8601String(),
+                    'rotated_at' => $secret->rotated_at?->toIso8601String(),
+                    'last_used_at' => $secret->last_used_at?->toIso8601String(),
+                    'created_at' => $secret->created_at?->toIso8601String(),
+                    'entitlement' => $ent !== null ? [
+                        'id' => $ent->id,
+                        'status' => $ent->status,
+                        'product_name' => $ent->catalogProduct?->name,
+                        'sku' => $ent->catalogSku?->code,
+                        'sku_name' => $ent->catalogSku?->name,
+                    ] : null,
+                ];
+            })->values()->all();
+
         return Inertia::render('cliente/software', [
             'subscriptions' => $subscriptions,
             'entitlements' => $entitlements,
             'licenses' => $licenses,
+            'credentialSecrets' => $credentialSecrets,
         ]);
     }
 
     /**
-     * @param array<string, mixed> $metadata
+     * @param  array<string, mixed>  $metadata
      */
     private function evidenceImageFromMetadata(array $metadata): ?string
     {
@@ -310,5 +348,4 @@ class ClientPortalController extends Controller
     {
         return Inertia::render('cliente/seguridad');
     }
-
 }

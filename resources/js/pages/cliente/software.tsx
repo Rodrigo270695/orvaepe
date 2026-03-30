@@ -1,8 +1,22 @@
+import { useState } from 'react';
+import { Eye } from 'lucide-react';
+
 import { ClientPageTitleCard } from '@/components/client-portal/client-page-title-card';
+import CredentialSecretViewModal from '@/components/acceso/credenciales/CredentialSecretViewModal';
+import {
+    secretKindBadgeClass,
+    secretKindLabel,
+} from '@/components/acceso/credenciales/secretDisplay';
+import type { EntitlementSecretDetail } from '@/components/acceso/credenciales/secretDetailTypes';
 import {
     licenseKeyStatusBadgeClass,
     licenseKeyStatusLabel,
 } from '@/components/acceso/licencias/licenseKeyDisplay';
+import {
+    entitlementStatusBadgeClass,
+    entitlementStatusLabel,
+} from '@/components/acceso/entitlements/entitlementDisplay';
+import { Button } from '@/components/ui/button';
 import ClientPortalLayout from '@/layouts/client-portal-layout';
 
 type SubscriptionItemRow = {
@@ -36,6 +50,7 @@ type EntitlementRow = {
 type Props = {
     subscriptions: SubscriptionRow[];
     entitlements: EntitlementRow[];
+    credentialSecrets: EntitlementSecretDetail[];
     licenses: Array<{
         id: string;
         status: string;
@@ -62,7 +77,27 @@ function daysUntil(iso: string | null): number | null {
     return Math.floor(diffMs / 86400000);
 }
 
-export default function ClienteSoftwarePage({ subscriptions, entitlements, licenses }: Props) {
+export default function ClienteSoftwarePage({
+    subscriptions,
+    entitlements,
+    credentialSecrets,
+    licenses,
+}: Props) {
+    const [credentialModalOpen, setCredentialModalOpen] = useState(false);
+    const [credentialDetail, setCredentialDetail] =
+        useState<EntitlementSecretDetail | null>(null);
+
+    const openCredentialDetail = (row: EntitlementSecretDetail) => {
+        setCredentialDetail(row);
+        setCredentialModalOpen(true);
+    };
+
+    const handleCredentialModalChange = (open: boolean) => {
+        setCredentialModalOpen(open);
+        if (!open) {
+            setCredentialDetail(null);
+        }
+    };
     const expiringSoonSubscriptions = subscriptions.filter((sub) => {
         const days = daysUntil(sub.current_period_end);
         return days !== null && days >= 0 && days <= 7;
@@ -210,6 +245,100 @@ export default function ClienteSoftwarePage({ subscriptions, entitlements, licen
                         </div>
                     )}
                 </div>
+
+                <div className="rounded-xl border border-border/60 bg-background/90 p-4">
+                    <h2 className="mb-3 text-sm font-semibold">Credenciales y API keys</h2>
+                    <p className="mb-4 text-xs text-muted-foreground">
+                        Estas son las credenciales técnicas asociadas a tus derechos de uso. Guárdalas en un lugar seguro; no las compartas.
+                    </p>
+                    {credentialSecrets.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">
+                            No hay credenciales registradas para tu cuenta.
+                        </p>
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <table className="w-full min-w-[760px] text-left text-sm">
+                                <thead>
+                                    <tr className="text-xs uppercase tracking-wide text-muted-foreground">
+                                        <th className="py-2 pr-4">Tipo</th>
+                                        <th className="py-2 pr-4">Producto / SKU</th>
+                                        <th className="py-2 pr-4">Ref. pública</th>
+                                        <th className="py-2 pr-4">Estado</th>
+                                        <th className="py-2 pr-4">Caduca</th>
+                                        <th className="py-2 pr-4">Revocado</th>
+                                        <th className="py-2 pr-4 text-right">Ver</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {credentialSecrets.map((row) => {
+                                        const entSt = row.entitlement?.status ?? '';
+                                        return (
+                                            <tr key={row.id} className="border-t border-border/50 align-top">
+                                                <td className="py-2 pr-4">
+                                                    <span
+                                                        className={[
+                                                            'inline-flex rounded-full px-2 py-0.5 text-xs font-medium',
+                                                            secretKindBadgeClass(row.kind),
+                                                        ].join(' ')}
+                                                    >
+                                                        {secretKindLabel(row.kind)}
+                                                    </span>
+                                                </td>
+                                                <td className="py-2 pr-4">
+                                                    <span className="line-clamp-2">
+                                                        {row.entitlement?.product_name ?? '—'}
+                                                        {(row.entitlement?.sku || row.entitlement?.sku_name)
+                                                            ? ` · ${[row.entitlement?.sku, row.entitlement?.sku_name].filter(Boolean).join(' · ')}`
+                                                            : ''}
+                                                    </span>
+                                                </td>
+                                                <td className="max-w-[10rem] py-2 pr-4 font-mono text-[11px] text-muted-foreground">
+                                                    <span className="line-clamp-2 break-all">
+                                                        {row.public_ref ?? '—'}
+                                                    </span>
+                                                </td>
+                                                <td className="py-2 pr-4">
+                                                    <span
+                                                        className={[
+                                                            'inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium',
+                                                            entitlementStatusBadgeClass(entSt),
+                                                        ].join(' ')}
+                                                    >
+                                                        {entitlementStatusLabel(entSt)}
+                                                    </span>
+                                                </td>
+                                                <td className="py-2 pr-4 text-muted-foreground">
+                                                    {fmtDate(row.expires_at ?? null)}
+                                                </td>
+                                                <td className="py-2 pr-4 text-muted-foreground">
+                                                    {fmtDate(row.revoked_at ?? null)}
+                                                </td>
+                                                <td className="py-2 pr-0 text-right">
+                                                    <Button
+                                                        type="button"
+                                                        size="sm"
+                                                        variant="outline"
+                                                        className="h-8 cursor-pointer px-2"
+                                                        aria-label="Ver credencial completa"
+                                                        onClick={() => openCredentialDetail(row)}
+                                                    >
+                                                        <Eye className="size-3.5" />
+                                                    </Button>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
+
+                <CredentialSecretViewModal
+                    open={credentialModalOpen}
+                    onOpenChange={handleCredentialModalChange}
+                    detail={credentialDetail}
+                />
 
                 <div className="rounded-xl border border-border/60 bg-background/90 p-4">
                     <h2 className="mb-3 text-sm font-semibold">Licencias con caducidad</h2>

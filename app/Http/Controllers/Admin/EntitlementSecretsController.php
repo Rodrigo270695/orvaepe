@@ -7,6 +7,7 @@ use App\Http\Requests\Admin\EntitlementSecretStoreRequest;
 use App\Models\Entitlement;
 use App\Models\EntitlementSecret;
 use App\Support\AdminFlashToast;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
@@ -174,5 +175,53 @@ class EntitlementSecretsController extends Controller
                 'sort_dir' => $sortDir,
             ],
         ]);
+    }
+
+    public function show(EntitlementSecret $entitlementSecret): JsonResponse
+    {
+        $entitlementSecret->load([
+            'entitlement' => fn ($q) => $q->select('id', 'user_id', 'status', 'catalog_product_id', 'catalog_sku_id'),
+            'entitlement.user:id,name,lastname,email',
+            'entitlement.catalogProduct:id,name',
+            'entitlement.catalogSku:id,code,name',
+        ]);
+
+        return response()->json([
+            'secret' => $this->secretDetailPayload($entitlementSecret),
+        ]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function secretDetailPayload(EntitlementSecret $secret): array
+    {
+        $ent = $secret->entitlement;
+
+        return [
+            'id' => $secret->id,
+            'kind' => $secret->kind,
+            'label' => $secret->label,
+            'public_ref' => $secret->public_ref,
+            'secret_value' => $secret->decryptPlainOrNull(),
+            'metadata' => $secret->metadata,
+            'expires_at' => $secret->expires_at?->toIso8601String(),
+            'revoked_at' => $secret->revoked_at?->toIso8601String(),
+            'rotated_at' => $secret->rotated_at?->toIso8601String(),
+            'last_used_at' => $secret->last_used_at?->toIso8601String(),
+            'created_at' => $secret->created_at?->toIso8601String(),
+            'entitlement' => $ent !== null ? [
+                'id' => $ent->id,
+                'status' => $ent->status,
+                'product_name' => $ent->catalogProduct?->name,
+                'sku' => $ent->relationLoaded('catalogSku') ? $ent->catalogSku?->code : null,
+                'sku_name' => $ent->relationLoaded('catalogSku') ? $ent->catalogSku?->name : null,
+                'user' => $ent->relationLoaded('user') && $ent->user !== null ? [
+                    'name' => $ent->user->name,
+                    'lastname' => $ent->user->lastname,
+                    'email' => $ent->user->email,
+                ] : null,
+            ] : null,
+        ];
     }
 }
