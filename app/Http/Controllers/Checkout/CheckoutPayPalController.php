@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Services\Checkout\OrderFromCartLinesBuilder;
 use App\Services\Checkout\OrderPaidEntitlementProvisioner;
 use App\Services\Checkout\OrderPaidLicenseProvisioner;
+use App\Services\Checkout\OrderPaidSubscriptionProvisioner;
 use App\Services\Notifications\OrderPaidNotifier;
 use App\Services\Payments\PayPalClient;
 use Illuminate\Http\JsonResponse;
@@ -187,6 +188,7 @@ class CheckoutPayPalController extends Controller
             ],
             app(OrderPaidNotifier::class),
             app(OrderPaidEntitlementProvisioner::class),
+            app(OrderPaidSubscriptionProvisioner::class),
             app(OrderPaidLicenseProvisioner::class),
         );
 
@@ -265,6 +267,7 @@ class CheckoutPayPalController extends Controller
             $capture,
             app(OrderPaidNotifier::class),
             app(OrderPaidEntitlementProvisioner::class),
+            app(OrderPaidSubscriptionProvisioner::class),
             app(OrderPaidLicenseProvisioner::class),
         );
 
@@ -317,9 +320,10 @@ class CheckoutPayPalController extends Controller
         array $rawResponse,
         OrderPaidNotifier $notifier,
         OrderPaidEntitlementProvisioner $entitlementProvisioner,
+        OrderPaidSubscriptionProvisioner $subscriptionProvisioner,
         OrderPaidLicenseProvisioner $licenseProvisioner,
     ): void {
-        DB::transaction(function () use ($order, $user, $gatewayPaymentId, $gateway, $rawResponse, $notifier, $entitlementProvisioner, $licenseProvisioner) {
+        DB::transaction(function () use ($order, $user, $gatewayPaymentId, $gateway, $rawResponse, $notifier, $entitlementProvisioner, $subscriptionProvisioner, $licenseProvisioner) {
             $order->update([
                 'status' => Order::STATUS_PAID,
                 'placed_at' => now(),
@@ -344,6 +348,7 @@ class CheckoutPayPalController extends Controller
             $notifier->notifyAdmin($order, $user);
 
             $freshOrder = $order->fresh();
+            $subscriptionProvisioner->provision($freshOrder);
             $entitlementProvisioner->provision($freshOrder);
             $licenseProvisioner->provision($freshOrder);
         });

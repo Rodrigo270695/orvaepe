@@ -22,6 +22,10 @@ final class OrderPaidEntitlementProvisioner
             if (! $sku instanceof CatalogSku) {
                 continue;
             }
+            if ($this->isRecurringSku($sku)) {
+                // Los recurrentes se gestionan por suscripción + sync de entitlements.
+                continue;
+            }
 
             $entitlement = Entitlement::query()
                 ->where('user_id', $order->user_id)
@@ -74,5 +78,23 @@ final class OrderPaidEntitlementProvisioner
                 'metadata' => $meta,
             ])->save();
         }
+    }
+
+    private function isRecurringSku(CatalogSku $sku): bool
+    {
+        $interval = strtolower(trim((string) ($sku->billing_interval ?? '')));
+        if ($interval !== '') {
+            return true;
+        }
+
+        $saleModel = strtolower(trim((string) $sku->sale_model));
+        if ($saleModel === '') {
+            return false;
+        }
+
+        return str_contains($saleModel, 'subscription')
+            || str_contains($saleModel, 'mensual')
+            || str_contains($saleModel, 'recurrent')
+            || str_contains($saleModel, 'rental');
     }
 }

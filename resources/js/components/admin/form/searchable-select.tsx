@@ -86,12 +86,6 @@ export function SearchableSelect({
                 'neumorph-inset w-full rounded-xl border border-border/60',
                 className ?? '',
             ].join(' ')}
-            style={
-                {
-                    '--neu-bg':
-                        'color-mix(in oklab, var(--o-dark2) 70%, black 30%)',
-                } as React.CSSProperties
-            }
         >
             <ReactSelect<
                 SearchableSelectOption,

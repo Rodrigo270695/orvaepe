@@ -11,6 +11,7 @@ use App\Models\WebhookEvent;
 use App\Services\Checkout\OrderFromCartLinesBuilder;
 use App\Services\Checkout\OrderPaidEntitlementProvisioner;
 use App\Services\Checkout\OrderPaidLicenseProvisioner;
+use App\Services\Checkout\OrderPaidSubscriptionProvisioner;
 use App\Services\Notifications\OrderPaidNotifier;
 use App\Services\Payments\MercadoPagoClient;
 use Illuminate\Http\JsonResponse;
@@ -174,6 +175,7 @@ class CheckoutMercadoPagoController extends Controller
             $payment,
             app(OrderPaidNotifier::class),
             app(OrderPaidEntitlementProvisioner::class),
+            app(OrderPaidSubscriptionProvisioner::class),
             app(OrderPaidLicenseProvisioner::class),
         );
 
@@ -277,6 +279,7 @@ class CheckoutMercadoPagoController extends Controller
                     $payment,
                     app(OrderPaidNotifier::class),
                     app(OrderPaidEntitlementProvisioner::class),
+                    app(OrderPaidSubscriptionProvisioner::class),
                     app(OrderPaidLicenseProvisioner::class),
                 );
             }
@@ -307,9 +310,10 @@ class CheckoutMercadoPagoController extends Controller
         array $rawResponse,
         OrderPaidNotifier $notifier,
         OrderPaidEntitlementProvisioner $entitlementProvisioner,
+        OrderPaidSubscriptionProvisioner $subscriptionProvisioner,
         OrderPaidLicenseProvisioner $licenseProvisioner,
     ): void {
-        DB::transaction(function () use ($order, $user, $gatewayPaymentId, $gateway, $rawResponse, $notifier, $entitlementProvisioner, $licenseProvisioner) {
+        DB::transaction(function () use ($order, $user, $gatewayPaymentId, $gateway, $rawResponse, $notifier, $entitlementProvisioner, $subscriptionProvisioner, $licenseProvisioner) {
             $existing = Payment::query()->where('gateway_payment_id', $gatewayPaymentId)->first();
 
             if ($existing !== null) {
@@ -328,6 +332,7 @@ class CheckoutMercadoPagoController extends Controller
                 $notifier->notifyCustomer($order, $user);
                 $notifier->notifyAdmin($order, $user);
                 $freshOrder = $order->fresh();
+                $subscriptionProvisioner->provision($freshOrder);
                 $entitlementProvisioner->provision($freshOrder);
                 $licenseProvisioner->provision($freshOrder);
 
@@ -357,6 +362,7 @@ class CheckoutMercadoPagoController extends Controller
             $notifier->notifyCustomer($order, $user);
             $notifier->notifyAdmin($order, $user);
             $freshOrder = $order->fresh();
+            $subscriptionProvisioner->provision($freshOrder);
             $entitlementProvisioner->provision($freshOrder);
             $licenseProvisioner->provision($freshOrder);
         });
