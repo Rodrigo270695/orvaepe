@@ -54,8 +54,17 @@ export default function EntitlementSecretModal({
 }: Props) {
     const kindDefault = kindOptions[0]?.value ?? 'custom';
 
-    const { data, setData, post, processing, errors, reset } = useForm(
-        emptyForm(kindDefault, fixedEntitlement?.id ?? ''),
+    const { data, setData, post, processing, errors, reset, transform } =
+        useForm(emptyForm(kindDefault, fixedEntitlement?.id ?? ''));
+
+    const handleModalOpenChange = React.useCallback(
+        (next: boolean) => {
+            if (!next) {
+                reset(emptyForm(kindDefault, fixedEntitlement?.id ?? ''));
+            }
+            onOpenChange(next);
+        },
+        [fixedEntitlement?.id, kindDefault, onOpenChange, reset],
     );
 
     React.useEffect(() => {
@@ -66,11 +75,25 @@ export default function EntitlementSecretModal({
         // eslint-disable-next-line react-hooks/exhaustive-deps -- reset al abrir / cambiar entitlement fijo
     }, [open, fixedEntitlement?.id]);
 
+    const canSubmit = React.useMemo(() => {
+        if (!data.secret_value?.trim()) {
+            return false;
+        }
+        if (!fixedEntitlement && !data.entitlement_id?.trim()) {
+            return false;
+        }
+        return true;
+    }, [data.secret_value, data.entitlement_id, fixedEntitlement]);
+
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
+        transform((fd) => ({
+            ...fd,
+            entitlement_id: fixedEntitlement?.id ?? fd.entitlement_id,
+        }));
         post(storeUrl, {
             preserveScroll: true,
-            onSuccess: () => onOpenChange(false),
+            onSuccess: () => handleModalOpenChange(false),
         });
     };
 
@@ -78,73 +101,44 @@ export default function EntitlementSecretModal({
         ? 'Registrar credencial para este derecho'
         : 'Registrar credencial';
 
-    const errorEntries = Object.entries(errors).flatMap(([key, v]) => {
-        if (v === undefined || v === null || v === '') {
-            return [];
-        }
-        const msg = Array.isArray(v) ? v.join(' ') : String(v);
-        return msg.trim() === '' ? [] : ([[key, msg]] as [string, string][]);
-    });
-
-    const bannerRef = React.useRef<HTMLDivElement | null>(null);
-
-    React.useEffect(() => {
-        if (errorEntries.length === 0) {
-            return;
-        }
-        bannerRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-    }, [errorEntries.length]);
-
     return (
         <AdminModalShell
             open={open}
-            onOpenChange={onOpenChange}
+            onOpenChange={handleModalOpenChange}
             title={title}
             description="Formulario de credencial técnica"
             width="wide"
         >
             <form onSubmit={submit} className="flex flex-col gap-0">
-                {errorEntries.length > 0 ? (
-                    <div
-                        ref={bannerRef}
-                        role="alert"
-                        className="relative z-10 mb-4 rounded-lg border border-red-500/45 bg-red-50 px-3 py-2.5 text-[13px] text-red-800 shadow-sm dark:bg-red-950/50 dark:text-red-100"
-                    >
-                        <p className="font-semibold">No se pudo guardar</p>
-                        <ul className="mt-1.5 list-disc space-y-0.5 pl-4">
-                            {errorEntries.map(([key, msg]) => (
-                                <li key={key}>{msg}</li>
-                            ))}
-                        </ul>
-                    </div>
-                ) : null}
-
-                <div className="relative z-0 space-y-4">
+                <div className="space-y-4">
                     {fixedEntitlement ? (
-                        <NeuCardRaised className="rounded-xl p-3 md:p-4">
-                            <div className="flex items-start gap-2">
-                                <KeyRound className="mt-0.5 size-4 shrink-0 text-[#D28C3C]" />
-                                <div className="min-w-0 space-y-1 text-[12px]">
-                                    <p className="font-medium text-foreground">
-                                        {formatClientFullName(
-                                            fixedEntitlement.user ?? null,
-                                        )}
-                                    </p>
-                                    <p className="truncate font-mono text-[11px] text-muted-foreground">
-                                        {fixedEntitlement.user?.email ?? '—'}
-                                    </p>
-                                    <p className="text-foreground">
-                                        {fixedEntitlement.catalog_product?.name ??
-                                            '—'}
-                                    </p>
-                                    <p className="font-mono text-[11px] text-muted-foreground">
-                                        {fixedEntitlement.catalog_sku
-                                            ? `${fixedEntitlement.catalog_sku.code} · ${fixedEntitlement.catalog_sku.name}`
-                                            : '—'}
-                                    </p>
+                        <div>
+                            <NeuCardRaised className="rounded-xl p-3 md:p-4">
+                                <div className="flex items-start gap-2">
+                                    <KeyRound className="mt-0.5 size-4 shrink-0 text-[#D28C3C]" />
+                                    <div className="min-w-0 space-y-1 text-[12px]">
+                                        <p className="font-medium text-foreground">
+                                            {formatClientFullName(
+                                                fixedEntitlement.user ?? null,
+                                            )}
+                                        </p>
+                                        <p className="truncate font-mono text-[11px] text-muted-foreground">
+                                            {fixedEntitlement.user?.email ?? '—'}
+                                        </p>
+                                        <p className="text-foreground">
+                                            {fixedEntitlement.catalog_product?.name ??
+                                                '—'}
+                                        </p>
+                                        <p className="font-mono text-[11px] text-muted-foreground">
+                                            {fixedEntitlement.catalog_sku
+                                                ? `${fixedEntitlement.catalog_sku.code} · ${fixedEntitlement.catalog_sku.name}`
+                                                : '—'}
+                                        </p>
+                                    </div>
                                 </div>
-                            </div>
-                        </NeuCardRaised>
+                            </NeuCardRaised>
+                            <InputError message={errors.entitlement_id} />
+                        </div>
                     ) : (
                         <div className="relative">
                             <AdminUnderlineLabel htmlFor="modal_entitlement_id">
@@ -254,7 +248,7 @@ export default function EntitlementSecretModal({
                     <div className="grid w-full grid-cols-2 gap-2 sm:w-auto sm:grid-cols-2">
                         <NeuButtonInset
                             type="button"
-                            onClick={() => onOpenChange(false)}
+                            onClick={() => handleModalOpenChange(false)}
                             className="inline-flex w-full cursor-pointer items-center justify-center gap-2 whitespace-nowrap sm:w-auto"
                         >
                             <X className="size-4 text-[#C05050]" />
@@ -262,11 +256,8 @@ export default function EntitlementSecretModal({
                         </NeuButtonInset>
                         <NeuButtonRaised
                             type="submit"
-                            disabled={
-                                processing ||
-                                (!fixedEntitlement && data.entitlement_id === '')
-                            }
-                            className="w-full cursor-pointer sm:w-auto"
+                            disabled={processing || !canSubmit}
+                            className="w-full cursor-pointer sm:w-auto disabled:cursor-not-allowed disabled:opacity-50"
                         >
                             <Save className="size-4 text-[#4A9A72]" />
                             {processing ? 'Guardando…' : 'Registrar'}
