@@ -66,9 +66,9 @@ class CheckoutMercadoPagoController extends Controller
         }
 
         $payload = [
+            // Payload mínimo recomendado para Checkout Pro en producción.
             'items' => [[
                 'title' => 'Pedido '.$order->order_number,
-                'description' => 'Checkout ORVAE',
                 'quantity' => 1,
                 'currency_id' => $targetCurrency,
                 'unit_price' => (float) $order->grand_total,
@@ -82,6 +82,7 @@ class CheckoutMercadoPagoController extends Controller
                 'failure' => route('checkout.mercadopago.cancel', [], true),
                 'pending' => route('checkout.mercadopago.return', [], true),
             ],
+            'auto_return' => 'approved',
         ];
 
         $webhook = trim((string) config('mercadopago.webhook_url'));
