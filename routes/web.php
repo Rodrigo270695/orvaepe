@@ -25,6 +25,7 @@ use App\Http\Controllers\Catalog\SoftwareReleaseAssetsController;
 use App\Http\Controllers\Catalog\SoftwareReleasesController;
 use App\Http\Controllers\Checkout\CheckoutMercadoPagoController;
 use App\Http\Controllers\Checkout\CheckoutPayPalController;
+use App\Http\Controllers\Checkout\PayPalWebhookController;
 use App\Http\Controllers\Client\ClientPortalController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Marketing\MarketingCartController;
@@ -104,6 +105,8 @@ Route::get('/licencias', MarketingLicensesController::class)->name('marketing-li
 
 Route::match(['GET', 'POST'], '/webhooks/mercadopago', [CheckoutMercadoPagoController::class, 'webhook'])
     ->name('webhooks.mercadopago');
+Route::post('/webhooks/paypal', [PayPalWebhookController::class, 'handle'])
+    ->name('webhooks.paypal');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/checkout/mercadopago', [CheckoutMercadoPagoController::class, 'store'])->name('checkout.mercadopago.store');

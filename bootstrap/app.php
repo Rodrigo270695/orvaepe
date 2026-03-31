@@ -23,6 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
         $middleware->validateCsrfTokens(except: [
             'webhooks/mercadopago',
+            'webhooks/paypal',
         ]);
 
         $middleware->alias([
