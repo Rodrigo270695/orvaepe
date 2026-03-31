@@ -272,7 +272,21 @@ class CheckoutMercadoPagoController extends Controller
             }
 
             foreach ($paymentIds as $paymentId) {
-                $payment = $mercadoPago->getPayment($paymentId);
+                try {
+                    $payment = $mercadoPago->getPayment($paymentId);
+                } catch (\Throwable $e) {
+                    // En pruebas/simulaciones Mercado Pago puede enviar IDs no consultables (p. ej. 123456).
+                    // No rompemos todo el webhook por un ID individual.
+                    Log::warning('mercadopago.webhook_payment_lookup_failed', [
+                        'payment_id' => $paymentId,
+                        'topic' => $topic,
+                        'resource_id' => $resourceId,
+                        'exception' => $e->getMessage(),
+                    ]);
+
+                    continue;
+                }
+
                 $status = strtolower((string) ($payment['status'] ?? ''));
                 if ($status !== 'approved') {
                     continue;
