@@ -1,4 +1,5 @@
 import { router, usePage } from '@inertiajs/react';
+import { useMemo } from 'react';
 import {
     ArrowDown,
     ArrowUp,
@@ -12,6 +13,7 @@ import {
     Trash2,
 } from 'lucide-react';
 
+import AdminExcelExportLink from '@/components/admin/AdminExcelExportLink';
 import AdminCrudIndex from '@/components/admin/crud/AdminCrudIndex';
 import CouponFormFields, {
     type CouponRow,
@@ -72,6 +74,13 @@ export default function CouponsIndex({
     initialSortDir,
 }: Props) {
     const page = usePage();
+    const exportUrl = useMemo(() => {
+        const u = new URL(page.url, window.location.origin);
+        u.pathname = '/panel/catalogo-cupones/export';
+        u.searchParams.delete('page');
+        u.searchParams.delete('per_page');
+        return u.pathname + u.search;
+    }, [page.url]);
 
     const rows: CouponRow[] = (coupons?.data ?? []) as CouponRow[];
     const totalInScreen = rows.length;
@@ -212,6 +221,11 @@ export default function CouponsIndex({
                         </div>
 
                         <div className="flex items-center gap-2">
+                            <AdminExcelExportLink
+                                href={exportUrl}
+                                aria-label="Descargar listado de cupones en Excel (respeta búsqueda y orden)"
+                                title="Descargar Excel — mismos filtros que la tabla"
+                            />
                             <NeuButtonRaised
                                 type="button"
                                 className="cursor-pointer"

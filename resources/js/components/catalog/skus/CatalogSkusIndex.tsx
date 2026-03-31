@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import * as React from 'react';
 
+import AdminExcelExportLink from '@/components/admin/AdminExcelExportLink';
 import AdminCrudIndex from '@/components/admin/crud/AdminCrudIndex';
 import type { AdminCrudTableColumn } from '@/components/admin/crud/AdminCrudTable';
 import CatalogSkuFormFields, {
@@ -57,6 +58,13 @@ export default function CatalogSkusIndex({
     initialSortDir,
 }: Props) {
     const page = usePage();
+    const exportUrl = React.useMemo(() => {
+        const u = new URL(page.url, window.location.origin);
+        u.pathname = '/panel/catalogo-skus/export';
+        u.searchParams.delete('page');
+        u.searchParams.delete('per_page');
+        return u.pathname + u.search;
+    }, [page.url]);
     const rows: CatalogSku[] = (skus?.data ?? []) as CatalogSku[];
     const totalInScreen = rows.length;
     const totalSkus = skus?.total ?? totalInScreen;
@@ -189,6 +197,11 @@ export default function CatalogSkusIndex({
                         </div>
 
                         <div className="flex items-center gap-2">
+                            <AdminExcelExportLink
+                                href={exportUrl}
+                                aria-label="Descargar listado de SKUs en Excel (respeta búsqueda, categoría y orden)"
+                                title="Descargar Excel — mismos filtros que la tabla"
+                            />
                             <NeuButtonRaised
                                 type="button"
                                 className="cursor-pointer"

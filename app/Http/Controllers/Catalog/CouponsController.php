@@ -6,10 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Catalog\CouponStoreRequest;
 use App\Models\CatalogSku;
 use App\Models\Coupon;
+use App\Services\Catalog\CouponsExcelExport;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CouponsController extends Controller
 {
@@ -28,14 +32,7 @@ class CouponsController extends Controller
             $perPage = 10;
         }
 
-        $couponsQuery = Coupon::query();
-
-        if ($q !== '') {
-            $couponsQuery->where(function ($sub) use ($q) {
-                $sub->where('code', 'ILIKE', "%{$q}%")
-                    ->orWhere('discount_type', 'ILIKE', "%{$q}%");
-            });
-        }
+        $couponsQuery = $this->baseCouponsQuery($request);
 
         $allowedSortBy = ['code', 'is_active', 'discount_type', 'discount_value', 'expires_at', 'used_count', 'max_uses'];
         if (in_array($sortBy, $allowedSortBy, true)) {
@@ -81,6 +78,62 @@ class CouponsController extends Controller
                 'sort_dir' => $sortDir,
             ],
         ]);
+    }
+
+    /**
+     * Exporta a Excel los cupones con los mismos filtros y orden que el listado (sin paginar).
+     */
+    public function exportExcel(Request $request): StreamedResponse
+    {
+        $couponsQuery = $this->baseCouponsQuery($request);
+
+        $sortBy = (string) $request->query('sort_by', '');
+        $sortDir = strtolower((string) $request->query('sort_dir', 'asc'));
+        if (!in_array($sortDir, ['asc', 'desc'], true)) {
+            $sortDir = 'asc';
+        }
+
+        $allowedSortBy = ['code', 'is_active', 'discount_type', 'discount_value', 'expires_at', 'used_count', 'max_uses'];
+        if (in_array($sortBy, $allowedSortBy, true)) {
+            $couponsQuery
+                ->orderBy($sortBy, $sortDir)
+                ->orderBy('created_at');
+        } else {
+            $couponsQuery->orderByDesc('created_at');
+        }
+
+        $coupons = $couponsQuery->get();
+        $spreadsheet = CouponsExcelExport::buildSpreadsheet($coupons);
+
+        $filename = 'catalogo-cupones-'.now()->format('Y-m-d-His').'.xlsx';
+
+        return response()->streamDownload(function () use ($spreadsheet) {
+            $writer = new Xlsx($spreadsheet);
+            $writer->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
+    }
+
+    /**
+     * Consulta base: búsqueda `q` — idéntica a index antes de ordenar / paginar.
+     *
+     * @return Builder<Coupon>
+     */
+    protected function baseCouponsQuery(Request $request): Builder
+    {
+        $q = trim((string) $request->query('q', ''));
+
+        $couponsQuery = Coupon::query();
+
+        if ($q !== '') {
+            $couponsQuery->where(function ($sub) use ($q) {
+                $sub->where('code', 'ILIKE', "%{$q}%")
+                    ->orWhere('discount_type', 'ILIKE', "%{$q}%");
+            });
+        }
+
+        return $couponsQuery;
     }
 
     public function store(CouponStoreRequest $request): RedirectResponse

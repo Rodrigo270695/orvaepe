@@ -227,6 +227,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('panel/catalogo-skus', [CatalogSkusController::class, 'index'])
             ->name('panel.catalogo-skus.index');
 
+        Route::get('panel/catalogo-skus/export', [CatalogSkusController::class, 'exportExcel'])
+            ->name('panel.catalogo-skus.export');
+
         Route::post('panel/catalogo-skus', [CatalogSkusController::class, 'store'])
             ->name('panel.catalogo-skus.store');
 
@@ -251,6 +254,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Catálogo — Cupones (coupons)
         Route::get('panel/catalogo-cupones', [CouponsController::class, 'index'])
             ->name('panel.catalogo-cupones.index');
+
+        Route::get('panel/catalogo-cupones/export', [CouponsController::class, 'exportExcel'])
+            ->name('panel.catalogo-cupones.export');
 
         Route::post('panel/catalogo-cupones', [CouponsController::class, 'store'])
             ->name('panel.catalogo-cupones.store');

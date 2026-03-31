@@ -6,12 +6,16 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Catalog\CatalogSkuStoreRequest;
 use App\Models\CatalogProduct;
 use App\Models\CatalogSku;
+use App\Services\Catalog\CatalogSkusExcelExport;
 use App\Support\AdminFlashToast;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CatalogSkusController extends Controller
 {
@@ -31,27 +35,7 @@ class CatalogSkusController extends Controller
             $perPage = 10;
         }
 
-        $skusQuery = CatalogSku::query()
-            ->with(['product:id,name,slug,category_id', 'product.category:id,name,revenue_line']);
-
-        if ($q !== '') {
-            $skusQuery->where(function ($sub) use ($q) {
-                $sub->where('code', 'ILIKE', "%{$q}%")
-                    ->orWhere('name', 'ILIKE', "%{$q}%")
-                    ->orWhere('sale_model', 'ILIKE', "%{$q}%")
-                    ->orWhere('fulfillment_type', 'ILIKE', "%{$q}%")
-                    ->orWhereHas('product', function ($productQuery) use ($q) {
-                        $productQuery->where('name', 'ILIKE', "%{$q}%")
-                            ->orWhere('slug', 'ILIKE', "%{$q}%");
-                    });
-            });
-        }
-
-        if ($categoryId !== '') {
-            $skusQuery->whereHas('product', function ($productQuery) use ($categoryId) {
-                $productQuery->where('category_id', $categoryId);
-            });
-        }
+        $skusQuery = $this->baseSkusQuery($request);
 
         $allowedSortBy = ['is_active', 'code', 'name', 'list_price', 'sale_model', 'sort_order'];
         if (in_array($sortBy, $allowedSortBy, true)) {
@@ -104,6 +88,74 @@ class CatalogSkusController extends Controller
                 'sort_dir' => $sortDir,
             ],
         ]);
+    }
+
+    /**
+     * Exporta a Excel los SKUs con los mismos filtros y orden que el listado (sin paginar).
+     */
+    public function exportExcel(Request $request): StreamedResponse
+    {
+        $skusQuery = $this->baseSkusQuery($request);
+
+        $sortBy = (string) $request->query('sort_by', '');
+        $sortDir = strtolower((string) $request->query('sort_dir', 'asc'));
+        if (!in_array($sortDir, ['asc', 'desc'], true)) {
+            $sortDir = 'asc';
+        }
+
+        $allowedSortBy = ['is_active', 'code', 'name', 'list_price', 'sale_model', 'sort_order'];
+        if (in_array($sortBy, $allowedSortBy, true)) {
+            $skusQuery->orderBy($sortBy, $sortDir)->orderBy('created_at');
+        } else {
+            $skusQuery->orderBy('sort_order')->orderBy('created_at', 'desc');
+        }
+
+        $skus = $skusQuery->get();
+        $spreadsheet = CatalogSkusExcelExport::buildSpreadsheet($skus);
+
+        $filename = 'catalogo-skus-'.now()->format('Y-m-d-His').'.xlsx';
+
+        return response()->streamDownload(function () use ($spreadsheet) {
+            $writer = new Xlsx($spreadsheet);
+            $writer->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
+    }
+
+    /**
+     * Consulta base: búsqueda `q` y filtro por categoría (sin orden ni paginación).
+     *
+     * @return Builder<CatalogSku>
+     */
+    protected function baseSkusQuery(Request $request): Builder
+    {
+        $q = trim((string) $request->query('q', ''));
+        $categoryId = trim((string) $request->query('category_id', ''));
+
+        $skusQuery = CatalogSku::query()
+            ->with(['product:id,name,slug,category_id', 'product.category:id,name,revenue_line']);
+
+        if ($q !== '') {
+            $skusQuery->where(function ($sub) use ($q) {
+                $sub->where('code', 'ILIKE', "%{$q}%")
+                    ->orWhere('name', 'ILIKE', "%{$q}%")
+                    ->orWhere('sale_model', 'ILIKE', "%{$q}%")
+                    ->orWhere('fulfillment_type', 'ILIKE', "%{$q}%")
+                    ->orWhereHas('product', function ($productQuery) use ($q) {
+                        $productQuery->where('name', 'ILIKE', "%{$q}%")
+                            ->orWhere('slug', 'ILIKE', "%{$q}%");
+                    });
+            });
+        }
+
+        if ($categoryId !== '') {
+            $skusQuery->whereHas('product', function ($productQuery) use ($categoryId) {
+                $productQuery->where('category_id', $categoryId);
+            });
+        }
+
+        return $skusQuery;
     }
 
     public function store(CatalogSkuStoreRequest $request): RedirectResponse
