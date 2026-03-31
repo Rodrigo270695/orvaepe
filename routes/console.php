@@ -1,6 +1,7 @@
 <?php
 
 use App\Services\Payments\PayPalClient;
+use App\Services\Payments\MercadoPagoClient;
 use App\Services\Access\SubscriptionEntitlementSyncService;
 use App\Services\Notifications\ExpiringAccessNotifier;
 use App\Services\WhatsApp\UltraMsgClient;
@@ -26,6 +27,32 @@ Artisan::command('paypal:test-connection', function (PayPalClient $paypal): int 
         return 1;
     }
 })->purpose('Comprueba PAYPAL_CLIENT_ID / PAYPAL_SECRET contra la API de PayPal');
+
+Artisan::command('mercadopago:test-connection', function (MercadoPagoClient $mp): int {
+    try {
+        // Hacemos una llamada ligera para validar el access token.
+        // Usamos un ID obviamente inválido solo para comprobar autenticación.
+        $mp->getPayment('test-connection-invalid-id');
+    } catch (\RuntimeException $e) {
+        // Si la autenticación es válida, Mercado Pago responderá 404 (u otro error de recurso),
+        // pero nuestro cliente ya habrá lanzado una RuntimeException con el mensaje HTTP.
+        // Consideramos conexión OK si el mensaje NO es por falta de token.
+        if (str_contains($e->getMessage(), 'Configura MP_ACCESS_TOKEN')) {
+            $this->error($e->getMessage());
+
+            return 1;
+        }
+
+        $this->info('Mercado Pago: conexión OK (access token configurado).');
+        $this->line('Detalle de respuesta: '.substr($e->getMessage(), 0, 120).'…');
+
+        return 0;
+    } catch (Throwable $e) {
+        $this->error($e->getMessage());
+
+        return 1;
+    }
+})->purpose('Comprueba MP_ACCESS_TOKEN contra la API de Mercado Pago');
 
 Artisan::command('ultramsg:test-send', function (UltraMsgClient $ultraMsg): int {
     try {
