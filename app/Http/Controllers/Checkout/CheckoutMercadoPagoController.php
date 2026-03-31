@@ -45,6 +45,14 @@ class CheckoutMercadoPagoController extends Controller
         $couponCode = $couponCode === '' ? null : $couponCode;
 
         $order = $builder->createPendingOrder($user, $lines, $couponCode);
+        Log::info('mercadopago.checkout_start', [
+            'order_number' => $order->order_number,
+            'order_id' => $order->id,
+            'user_id' => $user->id,
+            'grand_total' => (string) $order->grand_total,
+            'order_currency' => (string) $order->currency,
+            'coupon_code' => $couponCode,
+        ]);
 
         $targetCurrency = strtoupper((string) config('mercadopago.checkout_currency', 'PEN'));
         $orderCurrency = strtoupper((string) $order->currency);
@@ -80,11 +88,24 @@ class CheckoutMercadoPagoController extends Controller
         if ($webhook !== '') {
             $payload['notification_url'] = $webhook;
         }
+        Log::info('mercadopago.preference_payload_ready', [
+            'order_number' => $order->order_number,
+            'external_reference' => $payload['external_reference'] ?? null,
+            'currency_id' => $payload['items'][0]['currency_id'] ?? null,
+            'unit_price' => $payload['items'][0]['unit_price'] ?? null,
+            'notification_url' => $payload['notification_url'] ?? null,
+            'back_urls' => $payload['back_urls'] ?? null,
+        ]);
 
         try {
             $preference = $mercadoPago->createPreference($payload);
         } catch (\Throwable $e) {
             $order->delete();
+            Log::warning('mercadopago.create_preference_failed', [
+                'order_number' => $order->order_number,
+                'order_id' => $order->id,
+                'exception' => $e->getMessage(),
+            ]);
 
             return response()->json([
                 'message' => 'No se pudo iniciar Mercado Pago: '.$e->getMessage(),
@@ -105,6 +126,12 @@ class CheckoutMercadoPagoController extends Controller
             $order->notes_internal = trim((string) $order->notes_internal.' | MP preference '.$prefId);
             $order->save();
         }
+        Log::info('mercadopago.preference_created', [
+            'order_number' => $order->order_number,
+            'order_id' => $order->id,
+            'preference_id' => is_string($prefId) ? $prefId : null,
+            'init_point' => $initPoint,
+        ]);
 
         return response()->json([
             'approval_url' => $initPoint,
@@ -115,6 +142,10 @@ class CheckoutMercadoPagoController extends Controller
     public function handleReturn(Request $request, MercadoPagoClient $mercadoPago): RedirectResponse
     {
         $user = $request->user();
+        Log::info('mercadopago.handle_return_received', [
+            'query' => $request->query(),
+            'user_id' => $user?->id,
+        ]);
 
         $externalRef = (string) $request->query('external_reference', '');
         if ($externalRef === '') {
@@ -162,6 +193,13 @@ class CheckoutMercadoPagoController extends Controller
         }
 
         $status = strtolower((string) ($payment['status'] ?? ''));
+        Log::info('mercadopago.handle_return_payment_status', [
+            'order_number' => $order->order_number,
+            'payment_id' => $paymentId,
+            'status' => $status,
+            'status_detail' => $payment['status_detail'] ?? null,
+            'external_reference' => $payment['external_reference'] ?? null,
+        ]);
         if ($status !== 'approved') {
             return redirect()
                 ->route('marketing-cart')
@@ -223,6 +261,12 @@ class CheckoutMercadoPagoController extends Controller
         if ($gatewayEventId === ':' || $gatewayEventId === '') {
             $gatewayEventId = 'unknown:'.sha1((string) $request->getContent());
         }
+        Log::info('mercadopago.webhook_received', [
+            'topic' => $topic,
+            'resource_id' => $resourceId,
+            'gateway_event_id' => $gatewayEventId,
+            'payload' => $request->all(),
+        ]);
 
         $event = WebhookEvent::query()->firstOrCreate(
             [
@@ -256,6 +300,11 @@ class CheckoutMercadoPagoController extends Controller
 
         try {
             $paymentIds = $this->resolvePaymentIdsFromWebhook($topic, $resourceId, $mercadoPago);
+            Log::info('mercadopago.webhook_resolved_payment_ids', [
+                'topic' => $topic,
+                'resource_id' => $resourceId,
+                'payment_ids' => $paymentIds,
+            ]);
 
             if ($paymentIds === []) {
                 $event->markProcessed();
@@ -288,6 +337,12 @@ class CheckoutMercadoPagoController extends Controller
                 }
 
                 $status = strtolower((string) ($payment['status'] ?? ''));
+                Log::info('mercadopago.webhook_payment_status', [
+                    'payment_id' => $paymentId,
+                    'status' => $status,
+                    'status_detail' => $payment['status_detail'] ?? null,
+                    'external_reference' => $payment['external_reference'] ?? null,
+                ]);
                 if ($status !== 'approved') {
                     continue;
                 }
@@ -318,6 +373,11 @@ class CheckoutMercadoPagoController extends Controller
                     app(OrderPaidSubscriptionProvisioner::class),
                     app(OrderPaidLicenseProvisioner::class),
                 );
+                Log::info('mercadopago.webhook_order_finalized', [
+                    'payment_id' => $paymentId,
+                    'order_number' => $order->order_number,
+                    'order_id' => $order->id,
+                ]);
             }
 
             $event->markProcessed();
