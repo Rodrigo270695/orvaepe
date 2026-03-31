@@ -434,14 +434,17 @@ export default function Dashboard({
                                 />
                                 <Tooltip
                                     contentStyle={tooltipContentStyle}
-                                    formatter={(value, name) => {
-                                        if (name === 'revenue') {
+                                    formatter={(value, _name, item) => {
+                                        if (item?.dataKey === 'revenue') {
                                             return [
                                                 formatPEN(Number(value)),
-                                                'Ingresos pagados',
+                                                'Ingresos',
                                             ];
                                         }
-                                        return [value, 'Pedidos'];
+                                        if (item?.dataKey === 'orders') {
+                                            return [value, 'Pedidos'];
+                                        }
+                                        return [value, String(item?.name ?? '')];
                                     }}
                                     labelFormatter={(_, payload) =>
                                         payload?.[0]?.payload?.date ?? ''
