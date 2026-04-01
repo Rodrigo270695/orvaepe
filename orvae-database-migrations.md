@@ -848,3 +848,4 @@ Un **ticket** es el contenedor del caso; los **mensajes** forman el hilo (client
 
 *Enlaces útiles oficiales: [Orientación SUNAT — emisor electrónico](https://orientacion.sunat.gob.pe/01condiciones-para-ser-emisor-electronico-y-para-emitir-comprobantes-electronicos), [CPE — información general / OSE](https://cpe.sunat.gob.pe/informacion_general/operador_servicios_electronicos).*
 
+

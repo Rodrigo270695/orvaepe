@@ -1,19 +1,18 @@
 import { usePage } from '@inertiajs/react';
 
-import PageHero from '@/components/marketing/PageHero';
-import { getMarketingHeroNavCtas } from '@/marketing/marketingHeroNavCtas';
+import LicenseOemSkuCard from '@/components/marketing/LicenseOemSkuCard';
+import type {LicenseSkuItem} from '@/components/marketing/LicenseOemSkuCard';
 import MarketingUnifiedNavbar from '@/components/marketing/MarketingUnifiedNavbar';
+import PageHero from '@/components/marketing/PageHero';
 import SeoHead from '@/components/seo/SeoHead';
-import { marketingSeo } from '@/marketing/seoCopy';
-import LicenseOemSkuCard, {
-    type LicenseSkuItem,
-} from '@/components/marketing/LicenseOemSkuCard';
 import AppearanceFloatingRailToggle from '@/components/welcome/AppearanceFloatingRailToggle';
 import GeometricBackground from '@/components/welcome/GeometricBackground';
 import ScrollReveal from '@/components/welcome/ScrollReveal';
 import ScrollToTopButton from '@/components/welcome/ScrollToTopButton';
 import Section from '@/components/welcome/Section';
 import WelcomeFooter from '@/components/welcome/WelcomeFooter';
+import { getMarketingHeroNavCtas } from '@/marketing/marketingHeroNavCtas';
+import { marketingSeo } from '@/marketing/seoCopy';
 
 type LicenseSection = {
     slug: string;
@@ -140,6 +139,7 @@ export default function Licenses() {
                                                                         productSlug={section.slug}
                                                                         sectionTitle={section.title}
                                                                         accent={accent}
+                                                                        showImage
                                                                     />
                                                                 ))}
                                                             </div>

@@ -4,11 +4,13 @@ import { Link, usePage } from '@inertiajs/react';
 import { Check, MessageCircle, ShoppingCart } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 
-import { cn } from '@/lib/utils';
 import {
-    addMarketingCatalogSkuToCart,
-    type MarketingCartCategoryLabel,
+    addMarketingCatalogSkuToCart
+    
 } from '@/lib/oemCart';
+import type {MarketingCartCategoryLabel} from '@/lib/oemCart';
+import { resolveOemBrandIconUrl } from '@/lib/oemLicenseIcons';
+import { cn } from '@/lib/utils';
 import { buildWhatsAppHref, WHATSAPP_E164 } from '@/lib/whatsapp';
 
 export type LicenseSkuItem = {
@@ -31,6 +33,7 @@ export default function LicenseOemSkuCard({
     cartCategoryLabel = 'Licencias',
     detailHref,
     accent = 'var(--state-info)',
+    showImage = false,
 }: {
     item: LicenseSkuItem;
     /** Slug del catalog_product (ej. oem-nuevos-ingresos). */
@@ -42,12 +45,16 @@ export default function LicenseOemSkuCard({
     /** Enlace opcional a página de detalle (ej. `/servicios/{slug}`). */
     detailHref?: string;
     accent?: string;
+    /** Muestra imagen/ícono en el card (ej. licencias). */
+    showImage?: boolean;
 }) {
     const { contact } = usePage().props as { contact?: { whatsapp_e164?: string } };
     const whatsappE164 = contact?.whatsapp_e164?.replace(/\D/g, '') || WHATSAPP_E164;
 
     const [justAdded, setJustAdded] = useState(false);
     const hasPrice = item.list_price > 0;
+    const fallbackIconUrl = resolveOemBrandIconUrl(item.icon_key);
+    const imageUrl = item.image_url ?? fallbackIconUrl;
 
     const detailLines =
         item.details && item.details.length > 0
@@ -88,6 +95,17 @@ export default function LicenseOemSkuCard({
             }}
         >
             <div className="min-w-0">
+                {showImage && imageUrl ? (
+                    <div className="mb-3 overflow-hidden rounded-xl border border-[color-mix(in_oklab,var(--border)_65%,transparent)] bg-[color-mix(in_oklab,var(--background)_92%,var(--card))] p-2">
+                        <img
+                            src={imageUrl}
+                            alt={item.name}
+                            className="h-28 w-full rounded-lg object-contain"
+                            loading="lazy"
+                        />
+                    </div>
+                ) : null}
+
                 {item.list_number !== null ? (
                     <p
                         className="mb-2 text-center font-mono text-[0.62rem] font-bold uppercase tracking-widest text-[var(--muted-foreground)]"
