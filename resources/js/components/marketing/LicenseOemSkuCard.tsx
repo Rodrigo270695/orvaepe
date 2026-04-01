@@ -97,7 +97,7 @@ export default function LicenseOemSkuCard({
             <div className="min-w-0">
                 {showImage && imageUrl ? (
                     <div
-                        className="mb-3 flex h-40 items-center justify-center overflow-hidden rounded-xl border border-[color-mix(in_oklab,var(--border)_65%,transparent)] p-3"
+                        className="mb-3 h-52 overflow-hidden rounded-xl border border-[color-mix(in_oklab,var(--border)_65%,transparent)]"
                         style={{
                             background: `linear-gradient(180deg, color-mix(in oklab, ${accent} 8%, var(--background)), color-mix(in oklab, ${accent} 3%, var(--card)))`,
                         }}
@@ -105,7 +105,7 @@ export default function LicenseOemSkuCard({
                         <img
                             src={imageUrl}
                             alt={item.name}
-                            className="h-full w-full rounded-lg object-contain object-center"
+                            className="h-full w-full object-cover object-center"
                             loading="lazy"
                         />
                     </div>
