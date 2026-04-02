@@ -17,7 +17,7 @@ class MarketingLicensesController extends Controller
             ->where('is_active', true)
             ->whereHas('category', function ($q) {
                 $q->where('revenue_line', 'oem_license');
-            })
+            }) 
             ->with([
                 'skus' => function ($q) {
                     $q->where('is_active', true)
