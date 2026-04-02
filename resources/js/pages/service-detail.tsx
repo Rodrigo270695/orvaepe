@@ -532,7 +532,7 @@ export default function ServiceDetail() {
                                     }
                                 }}
                             >
-                                <DialogContent className="max-h-[92vh] max-w-[min(96vw,56rem)] border-border/60 bg-background p-3 sm:p-4">
+                                <DialogContent className="flex max-h-[92vh] w-[calc(100vw-2rem)] max-w-[calc(100vw-2rem)] flex-col overflow-hidden border-border/60 bg-background p-2 sm:max-w-[calc(100vw-2rem)] sm:p-3">
                                     <DialogTitle className="sr-only">
                                         Imagen en tamaño original
                                     </DialogTitle>
@@ -543,7 +543,7 @@ export default function ServiceDetail() {
                                         <img
                                             src={specImagePreviewUrl}
                                             alt=""
-                                            className="mx-auto max-h-[85vh] w-auto max-w-full object-contain"
+                                            className="mx-auto block h-auto max-h-[min(88vh,88dvh)] w-auto max-w-full object-contain"
                                             loading="lazy"
                                             decoding="async"
                                         />
