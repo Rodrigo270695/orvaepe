@@ -102,6 +102,9 @@ Route::get('/servicios/{service}', [MarketingServiceDetailController::class, 'sh
 Route::get('/contacto', [MarketingContactController::class, 'show'])->name('marketing-contact');
 Route::post('/contacto', [MarketingContactController::class, 'store'])->name('marketing-contact.store');
 Route::get('/licencias', MarketingLicensesController::class)->name('marketing-licenses');
+Route::get('/redesorvae', function () {
+    return Inertia::render('public/redesorvae');
+})->name('public.redesorvae');
 
 Route::match(['GET', 'POST'], '/webhooks/mercadopago', [CheckoutMercadoPagoController::class, 'webhook'])
     ->name('webhooks.mercadopago');
