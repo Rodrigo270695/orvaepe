@@ -1,48 +1,9 @@
 import { ArrowRight } from 'lucide-react';
 
 import SeoHead from '@/components/seo/SeoHead';
-
-type SocialItem = {
-    id: string;
-    label: string;
-    subtitle: string;
-    href: string;
-    iconKey: string;
-    iconColor: string;
-};
+import { orvaeSocialLinks, simpleIconUrl } from '@/marketing/orvaeContact';
 
 const PUBLIC_PATH = '/redesorvae';
-
-const socials: SocialItem[] = [
-    {
-        id: 'facebook',
-        label: 'Facebook',
-        subtitle: 'Síguenos en Facebook',
-        href: 'https://www.facebook.com/share/1B9ZMXbTRh/',
-        iconKey: 'facebook',
-        iconColor: '1877F2',
-    },
-    {
-        id: 'tiktok',
-        label: 'TikTok',
-        subtitle: 'Videos y novedades',
-        href: 'https://www.tiktok.com/@orvae.pe?_r=1&_t=ZS-95CCe7LjUdW',
-        iconKey: 'tiktok',
-        iconColor: '000000',
-    },
-    {
-        id: 'instagram',
-        label: 'Instagram',
-        subtitle: 'Fotos, reels y marca',
-        href: 'https://www.instagram.com/orvaepe?igsh=MTN0MDg5bTEyemJiYQ==',
-        iconKey: 'instagram',
-        iconColor: 'E4405F',
-    },
-];
-
-function simpleIconUrl(iconKey: string, color: string): string {
-    return `https://cdn.simpleicons.org/${iconKey}/${color}`;
-}
 
 export default function RedesORVAE() {
     return (
@@ -102,7 +63,7 @@ export default function RedesORVAE() {
 
                     <div className="mt-3 space-y-2">
                         <p className="text-sm font-semibold text-[#4A9EB8]">Nuestras redes</p>
-                        {socials.map((item) => (
+                        {orvaeSocialLinks.map((item) => (
                             <a
                                 key={item.id}
                                 href={item.href}

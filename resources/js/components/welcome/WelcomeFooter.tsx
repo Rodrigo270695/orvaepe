@@ -1,6 +1,13 @@
 import { Link } from '@inertiajs/react';
 
 import { whatsAppHref } from '@/lib/whatsapp';
+import {
+    ORVAE_CONTACT_EMAIL,
+    ORVAE_LEGAL_NAME,
+    ORVAE_RUC,
+    orvaeSocialLinks,
+    simpleIconUrl,
+} from '@/marketing/orvaeContact';
 
 export default function WelcomeFooter() {
     return (
@@ -34,45 +41,84 @@ export default function WelcomeFooter() {
                         />
                     </div>
 
-                    <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
-                        <Link
-                            href="/software"
-                            className="transition-colors hover:text-[var(--o-amber)] dark:hover:text-[var(--o-tech2)]"
-                        >
-                            Software
-                        </Link>
-                        <Link
-                            href="/licencias"
-                            className="transition-colors hover:text-[var(--o-amber)] dark:hover:text-[var(--o-tech2)]"
-                        >
-                            Precios
-                        </Link>
-                        <Link
-                            href="/servicios"
-                            className="transition-colors hover:text-[var(--o-amber)] dark:hover:text-[var(--o-tech2)]"
-                        >
-                            Servicios
-                        </Link>
-                        <a
-                            href="#contacto"
-                            className="transition-colors hover:text-[var(--o-amber)] dark:hover:text-[var(--o-tech2)]"
-                        >
-                            Contacto
-                        </a>
-                        <Link
-                            href="/"
-                            className="transition-colors hover:text-[var(--o-amber)] dark:hover:text-[var(--o-tech2)]"
-                        >
-                            Inicio
-                        </Link>
-                        <a
-                            href={whatsAppHref()}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="transition-colors hover:text-[var(--o-amber)] dark:hover:text-[var(--o-tech2)]"
-                        >
-                            WhatsApp
-                        </a>
+                    <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
+                        <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
+                            <Link
+                                href="/software"
+                                className="transition-colors hover:text-[var(--o-amber)] dark:hover:text-[var(--o-tech2)]"
+                            >
+                                Software
+                            </Link>
+                            <Link
+                                href="/licencias"
+                                className="transition-colors hover:text-[var(--o-amber)] dark:hover:text-[var(--o-tech2)]"
+                            >
+                                Precios
+                            </Link>
+                            <Link
+                                href="/servicios"
+                                className="transition-colors hover:text-[var(--o-amber)] dark:hover:text-[var(--o-tech2)]"
+                            >
+                                Servicios
+                            </Link>
+                            <a
+                                href="#contacto"
+                                className="transition-colors hover:text-[var(--o-amber)] dark:hover:text-[var(--o-tech2)]"
+                            >
+                                Contacto
+                            </a>
+                            <Link
+                                href="/"
+                                className="transition-colors hover:text-[var(--o-amber)] dark:hover:text-[var(--o-tech2)]"
+                            >
+                                Inicio
+                            </Link>
+                            <a
+                                href={whatsAppHref()}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="transition-colors hover:text-[var(--o-amber)] dark:hover:text-[var(--o-tech2)]"
+                            >
+                                WhatsApp
+                            </a>
+                        </div>
+
+                        <div className="flex flex-col gap-3 text-sm">
+                            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                                Contacto
+                            </p>
+                            <a
+                                href={`mailto:${ORVAE_CONTACT_EMAIL}`}
+                                className="w-fit font-medium text-foreground underline-offset-4 transition-colors hover:text-[var(--o-amber)] hover:underline dark:hover:text-[var(--o-tech2)]"
+                            >
+                                {ORVAE_CONTACT_EMAIL}
+                            </a>
+                            <div className="flex flex-wrap items-center gap-2">
+                                {orvaeSocialLinks.map((s) => (
+                                    <a
+                                        key={s.id}
+                                        href={s.href}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        title={s.label}
+                                        className="flex size-10 items-center justify-center rounded-full border border-border/80 bg-background/80 transition-colors hover:border-[var(--o-amber)]/50 hover:bg-muted/50 dark:hover:border-[var(--o-tech2)]/40"
+                                    >
+                                        <img
+                                            src={simpleIconUrl(s.iconKey, s.iconColor)}
+                                            alt={s.label}
+                                            className="size-5"
+                                            loading="lazy"
+                                        />
+                                    </a>
+                                ))}
+                                <Link
+                                    href="/redesorvae"
+                                    className="ml-1 text-xs font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+                                >
+                                    Todas las redes
+                                </Link>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -91,11 +137,8 @@ export default function WelcomeFooter() {
                             </a>
                         </span>
                     </div>
-                    <p className="mt-3 text-xs text-muted-foreground/70">
-                        Powered by{' '}
-                        <span className="font-medium text-muted-foreground/90">
-                            Cloud Byte SAC
-                        </span>
+                    <p className="mt-3 text-xs text-muted-foreground/80">
+                        {ORVAE_LEGAL_NAME} — RUC {ORVAE_RUC}
                     </p>
                 </div>
             </div>
