@@ -19,6 +19,9 @@ export const ORVAE_LEGAL_NAME = 'Cloud Byte SAC';
 /** Slug del producto servicio en admin (debe coincidir con `catalog_products.slug`). */
 export const ORVAE_SERVICIO_SOFTWARE_MEDIDA_SLUG = 'ORVAE-DESARROLLO-SOFTWARE-MEDIDA';
 
+/** Landing / página informativa (catálogo servicios). */
+export const ORVAE_SERVICIO_LANDING_SLUG = 'ORVAE-LANDING-PAGINA-INFORMATIVA';
+
 export const orvaeSocialLinks: OrvaeSocialLink[] = [
     {
         id: 'facebook',
