@@ -29,6 +29,14 @@ export default function Welcome({
                 canonicalPath="/"
             />
 
+            {/* Skip link: visible solo al recibir foco (WCAG 2.1 AA) */}
+            <a
+                href="#main-content"
+                className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-xl focus:border focus:border-[color-mix(in_oklab,var(--state-info)_50%,var(--border))] focus:bg-background focus:px-4 focus:py-2.5 focus:text-sm focus:font-semibold focus:text-foreground focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+            >
+                Saltar al contenido principal
+            </a>
+
             <div className="landing-page relative min-h-screen text-foreground">
                 {/* Textura sutil: profundidad en claro/oscuro sin cargar peso visual */}
                 <div className="landing-grain absolute inset-0 z-0" aria-hidden />
@@ -44,16 +52,16 @@ export default function Welcome({
                     <main id="main-content" className="outline-none">
                     <PageHero
                         id="inicio"
-                        eyebrow="Software desarrollado"
+                        eyebrow="Listo para usar hoy"
                         title={
                             <>
-                                Sistemas desarrollados para{' '}
+                                Empieza a operar{' '}
                                 <span className="bg-gradient-to-br from-foreground via-[var(--o-amber)] to-[var(--o-tech)] bg-clip-text text-transparent dark:from-[var(--o-cream2)]">
-                                    operar
+                                    mañana
                                 </span>
                             </>
                         }
-                        description="Software ya construido y listo para usar: contabilidad, ventas, inventario y más. Elige SaaS, licencia o módulos sueltos con implementación en días o semanas."
+                        description="Sistemas de contabilidad, ventas, inventario y más: ya construidos, probados y listos. Elige SaaS, licencia perpetua o módulos sueltos — en días, no en meses."
                         ctas={getMarketingHeroNavCtas('home')}
                     />
                     <HomeFeaturedServices />

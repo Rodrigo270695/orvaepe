@@ -67,54 +67,67 @@
 
 :root {
     /*
-     * Paleta ORVAE v8 (2 base + 1 acento)
-     * Graphite Blue #29323C · Slate Steel #485563 · Mist Tech #7F95A8
+     * Paleta ORVAE v9 — Azul Eléctrico
+     * Deep Cobalt #1D55E8 · Electric Blue #2D6FFF · Steel Cloud #5B8DB8
+     * Inspirado en el logo: gradiente cobalt→electric sobre fondo oscuro.
      */
-    --o-void: #29323C;
-    --o-dark: #323E4A;
-    --o-dark2: #485563;
-    --o-amber: #485563;
-    --o-amber2: #5D6B79;
-    --o-amber3: #3B4652;
-    --o-tech: #7F95A8;
-    --o-tech2: #A8B9C6;
-    --o-cream: #E4ECF2;
-    --o-cream2: #E4ECF2;
-    --o-warm: #6a7b8c;
-    --o-warm2: #556575;
-    --o-border: rgba(127, 149, 168, 0.3);
-    --o-border2: rgba(127, 149, 168, 0.16);
-    --o-glow: rgba(127, 149, 168, 0.1);
-    --o-success: #4f7a6b;
 
-    /* Hero: efectos que respetan modo claro */
-    --hero-glow-strong: rgba(127, 149, 168, 0.2);
-    --hero-glow-mid: rgba(72, 85, 99, 0.14);
-    --hero-glow-soft: rgba(127, 149, 168, 0.08);
-    --hero-line: rgba(127, 149, 168, 0.44);
-    --hero-card-inset: rgba(255, 255, 255, 0.5);
-    --hero-shadow: rgba(0, 0, 0, 0.05);
+    /* Fondos oscuros (blue-tinted, no grafito) */
+    --o-void: #0D1525;
+    --o-dark: #152040;
+    --o-dark2: #1E2E52;
 
-    /* Mapeo a sistema de diseño de la app (modo claro) */
-    --background: #E4ECF2;
-    --foreground: #323e4a;
-    --card: #E4ECF2;
-    --card-foreground: #323e4a;
-    --popover: #EEF4F8;
-    --popover-foreground: #323e4a;
+    /* Acento de marca — Azul eléctrico (reemplaza el antiguo slate gris) */
+    --o-amber: #1D55E8;
+    --o-amber2: #2D6FFF;
+    --o-amber3: #163DAC;
+
+    /* Escala tech / cloud */
+    --o-tech: #5B8DB8;
+    --o-tech2: #8AAECC;
+
+    /* Superficies claras (ahora distintas entre sí — corrige background=card=muted) */
+    --o-cream: #EAF2FC;
+    --o-cream2: #F4F9FF;
+
+    /* Neutros azulados */
+    --o-warm: #607D95;
+    --o-warm2: #4F6A82;
+
+    /* Bordes y brillos — azul */
+    --o-border: rgba(45, 111, 255, 0.28);
+    --o-border2: rgba(45, 111, 255, 0.15);
+    --o-glow: rgba(29, 85, 232, 0.1);
+    --o-success: #4A9A72;
+
+    /* Hero: brillos eléctricos modo claro */
+    --hero-glow-strong: rgba(29, 85, 232, 0.22);
+    --hero-glow-mid: rgba(45, 111, 255, 0.14);
+    --hero-glow-soft: rgba(91, 141, 184, 0.1);
+    --hero-line: rgba(45, 111, 255, 0.45);
+    --hero-card-inset: rgba(255, 255, 255, 0.55);
+    --hero-shadow: rgba(29, 85, 232, 0.07);
+
+    /* Sistema de diseño modo claro — 3 niveles de superficie diferenciados */
+    --background: #EAF2FC;
+    --foreground: #182640;
+    --card: #F4F9FF;
+    --card-foreground: #182640;
+    --popover: #FAFCFF;
+    --popover-foreground: #182640;
     --primary: var(--o-amber);
-    --primary-foreground: var(--o-cream2);
-    --secondary: #EAF1F6;
-    --secondary-foreground: #3b4652;
-    --muted: #E4ECF2;
-    --muted-foreground: #5d6b79;
-    --accent: #EAF1F6;
-    --accent-foreground: #323e4a;
+    --primary-foreground: #ffffff;
+    --secondary: #DCE9F8;
+    --secondary-foreground: #1E3A6E;
+    --muted: #D8E8F6;
+    --muted-foreground: #4F6A82;
+    --accent: #DCE9F8;
+    --accent-foreground: #0D1525;
     --destructive: #c44536;
     --destructive-foreground: #ffffff;
     --border: var(--o-border2);
     --input: var(--o-border2);
-    --ring: var(--o-tech);
+    --ring: var(--o-amber);
     --chart-1: var(--o-amber);
     --chart-2: var(--o-tech);
     --chart-3: var(--o-amber3);
@@ -125,44 +138,44 @@
      * Dashboard — serie con contraste (tech + éxito + acentos cálidos).
      * Reemplaza el look “todo gris” cuando --chart-* coincide con slate.
      */
-    --dash-series-1: color-mix(in oklab, var(--o-tech) 48%, #0ea5e9 52%);
+    --dash-series-1: color-mix(in oklab, var(--o-amber) 55%, #0ea5e9 45%);
     --dash-series-2: color-mix(in oklab, var(--o-success) 62%, #34d399 38%);
     --dash-series-3: #c9a060;
     --dash-series-4: #8b7ec8;
     --dash-series-5: color-mix(in oklab, var(--destructive) 52%, #fb923c 48%);
-    --dash-series-6: #4a9eb8;
+    --dash-series-6: var(--o-tech2);
     --dash-orders: var(--dash-series-1);
     --dash-revenue: var(--dash-series-2);
-    --dash-grid: color-mix(in oklab, var(--o-tech) 32%, transparent);
-    --dash-tooltip-bg: color-mix(in oklab, var(--card) 92%, var(--o-dark2) 8%);
-    --dash-tooltip-border: color-mix(in oklab, var(--o-tech) 28%, transparent);
+    --dash-grid: color-mix(in oklab, var(--o-amber) 18%, transparent);
+    --dash-tooltip-bg: color-mix(in oklab, var(--card) 94%, var(--o-amber3) 6%);
+    --dash-tooltip-border: color-mix(in oklab, var(--o-amber) 22%, transparent);
 
     --radius: 0.625rem;
-    --sidebar: #E4ECF2;
-    --sidebar-foreground: #485563;
-    --sidebar-primary: #29323C;
+    --sidebar: var(--o-cream);
+    --sidebar-foreground: #1E2D42;
+    --sidebar-primary: var(--o-amber);
     --sidebar-primary-foreground: #ffffff;
-    --sidebar-accent: #EAF1F6;
-    --sidebar-accent-foreground: #29323C;
-    --sidebar-border: rgba(172, 192, 210, 0.5);
-    --sidebar-ring: rgba(192, 120, 40, 0.35);
+    --sidebar-accent: #DCE9F8;
+    --sidebar-accent-foreground: #0D1525;
+    --sidebar-border: rgba(45, 111, 255, 0.22);
+    --sidebar-ring: rgba(29, 85, 232, 0.35);
 
     /* Auth: fondo claro (mantener el mismo patrón que el modo oscuro) */
     --auth-bg-0: var(--o-cream2);
     --auth-bg-1: var(--o-cream);
-    --auth-bg-2: color-mix(in oklab, var(--o-cream) 85%, var(--o-warm) 15%);
-    --auth-bg-3: color-mix(in oklab, var(--o-cream2) 75%, var(--o-warm2) 25%);
+    --auth-bg-2: color-mix(in oklab, var(--o-cream) 82%, var(--o-tech) 18%);
+    --auth-bg-3: color-mix(in oklab, var(--o-cream2) 72%, var(--o-amber) 28%);
     --auth-bg-4: var(--o-cream2);
 
-    --auth-radial-left: rgba(210, 140, 60, 0.12);
-    --auth-radial-right: rgba(210, 140, 60, 0.07);
-    --auth-dot: rgba(210, 140, 60, 0.06);
+    --auth-radial-left: rgba(29, 85, 232, 0.12);
+    --auth-radial-right: rgba(45, 111, 255, 0.07);
+    --auth-dot: rgba(29, 85, 232, 0.06);
 
-    /* Neumorfismo base (modo claro, como referencia light) */
-    --neu-base: #E4ECF2;
-    --shadow-light: rgba(255, 255, 255, 0.97);
-    --shadow-dark: rgba(172, 192, 210, 0.9);
-    --inset-light: rgba(172, 192, 210, 0.9);
+    /* Neumorfismo base (modo claro) */
+    --neu-base: #EAF2FC;
+    --shadow-light: rgba(255, 255, 255, 0.95);
+    --shadow-dark: rgba(160, 195, 230, 0.85);
+    --inset-light: rgba(160, 195, 230, 0.85);
     --inset-dark: rgba(255, 255, 255, 0.95);
     --neu-raised:
         6px 6px 14px var(--shadow-dark),
@@ -185,128 +198,132 @@
      * CTA modo claro: grafito (void→dark) + texto crema (alto contraste sobre fondo claro de página).
      * No usar --o-amber/--o-amber2 como gradiente + --o-void como texto (mismo rango de luminancia).
      */
-    --auth-cta-from: color-mix(in oklab, var(--state-info) 72%, var(--o-dark));
-    --auth-cta-to: color-mix(in oklab, var(--state-success) 78%, var(--o-dark2));
-    --auth-cta-fg: #f4f9fb;
-    --auth-ring: color-mix(in oklab, var(--state-info) 45%, transparent);
-    --auth-link: color-mix(in oklab, var(--state-alert) 86%, var(--o-dark));
-    --auth-link-hover: color-mix(in oklab, var(--state-info) 72%, var(--o-dark2));
-    --auth-icon: color-mix(in oklab, var(--state-info) 58%, var(--o-dark2));
-    --auth-header-icon-bg: color-mix(in oklab, var(--state-info) 18%, transparent);
-    --auth-focus-border: color-mix(in oklab, var(--state-info) 62%, var(--o-dark) 38%);
+    --auth-cta-from: color-mix(in oklab, var(--o-amber) 72%, var(--o-amber3));
+    --auth-cta-to: color-mix(in oklab, var(--o-amber2) 78%, var(--o-tech));
+    --auth-cta-fg: #ffffff;
+    --auth-ring: color-mix(in oklab, var(--o-amber) 45%, transparent);
+    --auth-link: color-mix(in oklab, var(--o-amber) 86%, var(--o-dark));
+    --auth-link-hover: color-mix(in oklab, var(--o-amber2) 72%, var(--o-dark2));
+    --auth-icon: color-mix(in oklab, var(--o-amber) 58%, var(--o-dark2));
+    --auth-header-icon-bg: color-mix(in oklab, var(--o-amber) 14%, transparent);
+    --auth-focus-border: color-mix(in oklab, var(--o-amber) 62%, var(--o-dark) 38%);
 
     /* Landing (modo claro): malla suave, grano ligero, brillos contenidos */
     --landing-bg-mesh: linear-gradient(
         165deg,
         var(--background) 0%,
-        color-mix(in oklab, var(--o-cream) 52%, var(--background)) 38%,
-        color-mix(in oklab, var(--background) 96%, var(--o-warm)) 100%
+        color-mix(in oklab, var(--o-cream) 55%, var(--background)) 38%,
+        color-mix(in oklab, var(--background) 94%, var(--o-amber)) 100%
     );
-    --landing-grain-opacity: 0.034;
-    --landing-orb-a-opacity: 0.3;
-    --landing-orb-b-opacity: 0.24;
-    --landing-flair-shadow: 0 0 22px color-mix(in oklab, var(--o-amber) 18%, transparent);
-    --landing-flair-dot-glow: 0 0 18px color-mix(in oklab, var(--o-amber) 35%, transparent);
+    --landing-grain-opacity: 0.028;
+    --landing-orb-a-opacity: 0.28;
+    --landing-orb-b-opacity: 0.22;
+    --landing-flair-shadow: 0 0 24px color-mix(in oklab, var(--o-amber) 20%, transparent);
+    --landing-flair-dot-glow: 0 0 20px color-mix(in oklab, var(--o-amber2) 38%, transparent);
     --landing-flair-dot-ring: color-mix(in oklab, var(--background) 90%, white);
     --landing-offer-shine-mid: color-mix(in oklab, var(--o-amber) 14%, transparent);
     --landing-surface-1: color-mix(in oklab, var(--background) 92%, white);
     --landing-surface-2: color-mix(in oklab, var(--card) 94%, var(--o-cream));
-    /* Estados UI (alineado al panel administrativo) */
+    /* Estados UI */
     --state-success: #4A9A72;
     --state-alert: #C09040;
     --state-danger: #C05050;
-    --state-info: #4A9EB8;
+    --state-info: #2563EB;
 }
 
 .dark {
-    /* Misma paleta ORVAE; fondos y texto invertidos para modo oscuro */
-    --o-void: #29323C;
-    --o-dark: #323E4A;
-    --o-dark2: #485563;
-    --o-amber: #485563;
-    --o-amber2: #5D6B79;
-    --o-amber3: #3B4652;
-    --o-tech: #7F95A8;
-    --o-tech2: #A8B9C6;
-    --o-cream: #e7edf2;
-    --o-cream2: #f4f7fa;
-    --o-warm: #a2b2bf;
-    --o-warm2: #8899a8;
-    --o-border: rgba(127, 149, 168, 0.4);
-    --o-border2: rgba(127, 149, 168, 0.22);
-    --o-glow: rgba(127, 149, 168, 0.16);
+    /* Paleta ORVAE v9 modo oscuro — Slate Gray + Electric Blue */
+    --o-void: #242B38;
+    --o-dark: #2D3545;
+    --o-dark2: #374255;
 
-    /* Hero: efectos para modo oscuro (Void/Dark Ember + Amber) */
-    --hero-glow-strong: rgba(127, 149, 168, 0.24);
-    --hero-glow-mid: rgba(72, 85, 99, 0.18);
-    --hero-glow-soft: rgba(127, 149, 168, 0.1);
-    --hero-line: rgba(127, 149, 168, 0.5);
-    --hero-card-inset: rgba(255, 255, 255, 0.08);
-    --hero-shadow: rgba(0, 0, 0, 0.25);
+    /* Acento de marca en oscuro — eléctrico brillante */
+    --o-amber: #4A8FFF;
+    --o-amber2: #70AAFF;
+    --o-amber3: #2D68D8;
 
-    /* Modo oscuro usando ORVAE */
+    --o-tech: #7BA8CC;
+    --o-tech2: #A0C4DC;
+    --o-cream: #D0DFF0;
+    --o-cream2: #EDF2FA;
+    --o-warm: #8AABCC;
+    --o-warm2: #6B8DAC;
+    --o-border: rgba(255, 255, 255, 0.12);
+    --o-border2: rgba(255, 255, 255, 0.07);
+    --o-glow: rgba(74, 143, 255, 0.18);
+
+    /* Hero: brillos eléctricos modo oscuro — fluorescente azul */
+    --hero-glow-strong: rgba(74, 143, 255, 0.35);
+    --hero-glow-mid: rgba(45, 104, 216, 0.22);
+    --hero-glow-soft: rgba(74, 143, 255, 0.14);
+    --hero-line: rgba(74, 143, 255, 0.55);
+    --hero-card-inset: rgba(74, 143, 255, 0.1);
+    --hero-shadow: rgba(0, 0, 0, 0.35);
+
+    /* Modo oscuro — deep navy electric */
     --background: var(--o-void);
-    --foreground: var(--o-cream);
+    --foreground: var(--o-cream2);
     --card: var(--o-dark);
-    --card-foreground: var(--o-cream);
+    --card-foreground: var(--o-cream2);
     --popover: var(--o-dark2);
-    --popover-foreground: var(--o-cream);
-    --primary: var(--o-tech);
-    --primary-foreground: var(--o-void);
+    --popover-foreground: var(--o-cream2);
+    --primary: var(--o-amber);
+    --primary-foreground: #ffffff;
     --secondary: var(--o-dark2);
     --secondary-foreground: var(--o-cream);
     --muted: var(--o-dark2);
     --muted-foreground: var(--o-warm);
-    --accent: color-mix(in oklab, var(--o-tech) 24%, var(--o-dark2) 76%);
-    --accent-foreground: #eaf9ff;
+    --accent: color-mix(in oklab, var(--o-amber) 18%, var(--o-dark2) 82%);
+    --accent-foreground: #EAF4FF;
     --destructive: #e45a4b;
     --destructive-foreground: #ffffff;
     --border: var(--o-border);
     --input: var(--o-border);
-    --ring: var(--o-tech);
+    --ring: var(--o-amber);
     --chart-1: var(--o-amber);
     --chart-2: var(--o-tech);
     --chart-3: var(--o-amber3);
     --chart-4: var(--o-warm);
     --chart-5: var(--o-cream);
 
-    --dash-series-1: color-mix(in oklab, var(--o-tech) 42%, #38bdf8 58%);
+    --dash-series-1: color-mix(in oklab, var(--o-amber) 48%, #38bdf8 52%);
     --dash-series-2: color-mix(in oklab, var(--o-success) 55%, #6ee7b7 45%);
     --dash-series-3: #d4a85a;
     --dash-series-4: #a89ae0;
     --dash-series-5: color-mix(in oklab, var(--destructive) 48%, #fdba74 52%);
-    --dash-series-6: #5ec8e0;
+    --dash-series-6: var(--o-tech2);
     --dash-orders: var(--dash-series-1);
     --dash-revenue: var(--dash-series-2);
-    --dash-grid: color-mix(in oklab, var(--o-tech) 22%, transparent);
-    --dash-tooltip-bg: color-mix(in oklab, var(--o-dark) 88%, var(--o-void) 12%);
-    --dash-tooltip-border: color-mix(in oklab, var(--o-tech) 35%, transparent);
+    --dash-grid: rgba(255, 255, 255, 0.07);
+    --dash-tooltip-bg: #2D3545;
+    --dash-tooltip-border: rgba(74, 143, 255, 0.30);
 
+    /* Sidebar admin oscuro — grafito, coherente con el sistema */
     --sidebar: var(--o-dark);
     --sidebar-foreground: var(--o-cream);
-    --sidebar-primary: var(--o-tech);
-    --sidebar-primary-foreground: var(--o-void);
+    --sidebar-primary: var(--o-amber);
+    --sidebar-primary-foreground: #ffffff;
     --sidebar-accent: var(--o-dark2);
-    --sidebar-accent-foreground: var(--o-cream);
+    --sidebar-accent-foreground: var(--o-cream2);
     --sidebar-border: var(--o-border);
-    --sidebar-ring: var(--o-tech);
+    --sidebar-ring: var(--o-amber);
 
-    /* Auth: fondo oscuro (se conserva el look original) */
+    /* Auth: fondo oscuro — deep navy blue */
     --auth-bg-0: var(--o-void);
     --auth-bg-1: var(--o-dark);
-    --auth-bg-2: #1a1411;
+    --auth-bg-2: #0d1832;
     --auth-bg-3: var(--o-dark2);
-    --auth-bg-4: #0e0b08;
+    --auth-bg-4: #060e22;
 
-    --auth-radial-left: rgba(127, 149, 168, 0.16);
-    --auth-radial-right: rgba(72, 85, 99, 0.14);
-    --auth-dot: rgba(127, 149, 168, 0.1);
+    --auth-radial-left: rgba(74, 143, 255, 0.18);
+    --auth-radial-right: rgba(45, 104, 216, 0.12);
+    --auth-dot: rgba(74, 143, 255, 0.1);
 
-    /* Neumorfismo base (modo oscuro, estilo dashboard noir) */
-    --shadow-light: rgba(60, 80, 100, 0.55);
-    --shadow-dark: rgba(12, 18, 22, 0.8);
-    --inset-light: rgba(12, 18, 22, 0.7);
-    --inset-dark: rgba(60, 80, 100, 0.3);
+    /* Neumorfismo base (modo oscuro — navy tech) */
+    --shadow-light: rgba(35, 70, 130, 0.5);
+    --shadow-dark: rgba(6, 12, 30, 0.85);
+    --inset-light: rgba(6, 12, 30, 0.75);
+    --inset-dark: rgba(35, 70, 130, 0.28);
     --neu-raised:
         8px 8px 16px var(--shadow-dark),
         -4px -4px 12px var(--shadow-light);
@@ -323,16 +340,16 @@
         inset 4px 4px 10px var(--inset-light),
         inset -3px -3px 8px var(--inset-dark);
 
-    /* CTA modo oscuro: mismo criterio que --primary (tech + texto void) */
-    --auth-cta-from: color-mix(in oklab, var(--state-info) 74%, var(--o-dark2));
-    --auth-cta-to: color-mix(in oklab, var(--state-success) 70%, var(--o-tech2));
-    --auth-cta-fg: #0f1d21;
-    --auth-ring: color-mix(in oklab, var(--state-info) 55%, transparent);
-    --auth-link: color-mix(in oklab, var(--state-alert) 85%, var(--o-tech2));
-    --auth-link-hover: color-mix(in oklab, var(--state-info) 70%, var(--o-cream2));
-    --auth-icon: color-mix(in oklab, var(--state-info) 56%, var(--o-warm));
-    --auth-header-icon-bg: color-mix(in oklab, var(--state-info) 24%, transparent);
-    --auth-focus-border: color-mix(in oklab, var(--state-info) 62%, white 12%);
+    /* CTA modo oscuro: azul eléctrico brillante */
+    --auth-cta-from: color-mix(in oklab, var(--o-amber) 74%, var(--o-amber3));
+    --auth-cta-to: color-mix(in oklab, var(--o-amber2) 70%, var(--o-tech));
+    --auth-cta-fg: #ffffff;
+    --auth-ring: color-mix(in oklab, var(--o-amber) 55%, transparent);
+    --auth-link: color-mix(in oklab, var(--o-amber2) 85%, var(--o-tech2));
+    --auth-link-hover: color-mix(in oklab, var(--o-amber) 70%, var(--o-cream2));
+    --auth-icon: color-mix(in oklab, var(--o-amber) 56%, var(--o-warm));
+    --auth-header-icon-bg: color-mix(in oklab, var(--o-amber) 20%, transparent);
+    --auth-focus-border: color-mix(in oklab, var(--o-amber) 62%, white 12%);
 
     /* Landing (modo oscuro): más profundidad, brillos tech, grano visible */
     --landing-bg-mesh: linear-gradient(
@@ -344,17 +361,17 @@
     --landing-grain-opacity: 0.06;
     --landing-orb-a-opacity: 0.5;
     --landing-orb-b-opacity: 0.42;
-    --landing-flair-shadow: 0 0 38px color-mix(in oklab, var(--o-tech) 26%, transparent);
-    --landing-flair-dot-glow: 0 0 26px color-mix(in oklab, var(--o-amber) 38%, transparent);
+    --landing-flair-shadow: 0 0 42px color-mix(in oklab, var(--o-amber) 32%, transparent);
+    --landing-flair-dot-glow: 0 0 28px color-mix(in oklab, var(--o-amber2) 45%, transparent);
     --landing-flair-dot-ring: color-mix(in oklab, var(--background) 82%, black);
-    --landing-offer-shine-mid: color-mix(in oklab, var(--o-amber) 24%, transparent);
+    --landing-offer-shine-mid: color-mix(in oklab, var(--o-amber) 28%, transparent);
     --landing-surface-1: color-mix(in oklab, var(--background) 96%, black);
     --landing-surface-2: color-mix(in oklab, var(--card) 90%, var(--o-void));
-    /* Estados UI (modo oscuro, misma familia del admin) */
+    /* Estados UI modo oscuro */
     --state-success: #5FB487;
     --state-alert: #D7A25A;
     --state-danger: #D26A6A;
-    --state-info: #69B4CB;
+    --state-info: #60A5FA;
 }
 
 /* Botón principal en pantallas auth (login, registro, recuperar) */
@@ -396,50 +413,66 @@
     opacity: 0.62;
 }
 
-/* Admin panel only: neumorphism-light palette */
+/* Admin panel only: neumorphism-light palette
+   Jerarquía 3 capas:
+   sidebar/outer (#D8E3EC) → content inset (#E4ECF2) → cards (#F0F5F9)
+*/
 .admin-panel-shell {
     --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
     --font-body: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
     --font-display: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
     --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
 
-    --background: #E4ECF2;
+    /* Base unificada: sidebar y layout mismo color — la profundidad viene solo de las sombras */
+    --background: #DDE8F0;
     --foreground: #29323C;
-    --card: #E4ECF2;
+    --card: #EBF3F8;
     --card-foreground: #29323C;
-    --popover: #EEF4F8;
+    --popover: #EBF3F8;
     --popover-foreground: #29323C;
     --primary: #C07828;
     --primary-foreground: #ffffff;
-    --secondary: #EAF1F6;
+    --secondary: #DDE8F0;
     --secondary-foreground: #485563;
-    --muted: #E4ECF2;
+    --muted: #DDE8F0;
     --muted-foreground: #7A96A8;
-    --accent: #EAF1F6;
+    --accent: #DDE8F0;
     --accent-foreground: #29323C;
-    --border: rgba(172, 192, 210, 0.5);
-    --input: rgba(172, 192, 210, 0.45);
+    --border: rgba(155, 180, 200, 0.55);
+    --input: rgba(155, 180, 200, 0.45);
     --ring: rgba(192, 120, 40, 0.35);
 
-    --sidebar: #E4ECF2;
+    /* Sidebar = mismo tono que background — inset shadow crea la profundidad */
+    --sidebar: #DDE8F0;
     --sidebar-foreground: #485563;
     --sidebar-primary: #29323C;
     --sidebar-primary-foreground: #ffffff;
-    --sidebar-accent: #EAF1F6;
+    --sidebar-accent: #E6EFF6;
     --sidebar-accent-foreground: #29323C;
-    --sidebar-border: rgba(172, 192, 210, 0.5);
+    --sidebar-border: rgba(155, 180, 200, 0.45);
     --sidebar-ring: rgba(192, 120, 40, 0.35);
 
-    --neu-base: #E4ECF2;
-    --shadow-dark: rgba(172, 192, 210, 0.9);
-    --shadow-light: rgba(255, 255, 255, 0.95);
-    --inset-light: rgba(172, 192, 210, 0.9);
-    --inset-dark: rgba(255, 255, 255, 0.95);
-    --neu-raised: 6px 6px 14px var(--shadow-dark), -4px -4px 10px var(--shadow-light);
-    --neu-raised-sm: 4px 4px 9px var(--shadow-dark), -3px -3px 7px var(--shadow-light);
-    --neu-raised-lg: 10px 10px 22px var(--shadow-dark), -6px -6px 16px var(--shadow-light);
-    --neu-raised-hover: 8px 8px 18px var(--shadow-dark), -5px -5px 12px rgba(255, 255, 255, 0.99);
-    --neu-inset: inset 4px 4px 10px var(--inset-light), inset -3px -3px 8px var(--inset-dark);
+    /* Neumorfismo calibrado para base #DDE8F0 */
+    --neu-base: #DDE8F0;
+    --shadow-dark: rgba(150, 175, 198, 0.88);
+    --shadow-light: rgba(255, 255, 255, 0.94);
+    --inset-light: rgba(150, 175, 198, 0.82);
+    --inset-dark: rgba(255, 255, 255, 0.92);
+    --neu-raised:
+        6px 6px 14px var(--shadow-dark),
+        -4px -4px 10px var(--shadow-light);
+    --neu-raised-sm:
+        4px 4px 9px var(--shadow-dark),
+        -3px -3px 7px var(--shadow-light);
+    --neu-raised-lg:
+        10px 10px 22px var(--shadow-dark),
+        -6px -6px 16px var(--shadow-light);
+    --neu-raised-hover:
+        8px 8px 18px var(--shadow-dark),
+        -5px -5px 12px rgba(255, 255, 255, 0.98);
+    --neu-inset:
+        inset 4px 4px 10px var(--inset-light),
+        inset -3px -3px 8px var(--inset-dark);
 
     font-family: var(--font-sans);
     font-size: 14px;
@@ -527,49 +560,55 @@
 }
 
 .dark .admin-panel-shell {
-    --background: #323E4A;
-    --foreground: #C8D8E4;
-    --card: #323E4A;
-    --card-foreground: #C8D8E4;
-    --popover: #323E4A;
-    --popover-foreground: #C8D8E4;
+    /* Base gris slate — mismo tono del sistema general oscuro */
+    --neu-base: #2D3545;
+    --background: #2D3545;
+    --foreground: #D0DFF0;
+    --card: #343D50;
+    --card-foreground: #D0DFF0;
+    --popover: #343D50;
+    --popover-foreground: #D0DFF0;
     --primary: #D28C3C;
-    --primary-foreground: #1E2830;
-    --secondary: #3A4755;
-    --secondary-foreground: #C8D8E4;
-    --muted: #323E4A;
-    --muted-foreground: #6A808F;
-    --accent: #3A4755;
-    --accent-foreground: #B4C8DC;
-    --border: rgba(72, 85, 99, 0.32);
-    --input: rgba(72, 85, 99, 0.28);
+    --primary-foreground: #1A1F28;
+    --secondary: #3B4558;
+    --secondary-foreground: #C0D0E4;
+    --muted: #3B4558;
+    --muted-foreground: #7A90A8;
+    --accent: #3B4558;
+    --accent-foreground: #C0D0E4;
+    --border: rgba(255, 255, 255, 0.10);
+    --input: rgba(255, 255, 255, 0.07);
     --ring: rgba(210, 140, 60, 0.42);
 
-    --sidebar: #323E4A;
-    --sidebar-foreground: #C8D8E4;
+    --sidebar: #2D3545;
+    --sidebar-foreground: #C0D0E4;
     --sidebar-primary: #D28C3C;
-    --sidebar-primary-foreground: #1E2830;
-    --sidebar-accent: #3A4755;
-    --sidebar-accent-foreground: #C8D8E4;
-    --sidebar-border: rgba(72, 85, 99, 0.35);
+    --sidebar-primary-foreground: #1A1F28;
+    --sidebar-accent: #3B4558;
+    --sidebar-accent-foreground: #D0DFF0;
+    --sidebar-border: rgba(255, 255, 255, 0.08);
     --sidebar-ring: rgba(210, 140, 60, 0.45);
 
-    --neu-base: #323E4A;
-    --shadow-dark: rgba(12, 18, 22, 0.8);
-    --shadow-light: rgba(80, 102, 124, 0.6);
-    --inset-light: rgba(12, 18, 22, 0.7);
-    --inset-dark: rgba(60, 80, 100, 0.3);
-    --neu-raised: 8px 8px 16px var(--shadow-dark), -4px -4px 12px var(--shadow-light);
-    --neu-raised-sm: 4px 4px 10px var(--shadow-dark), -3px -3px 8px var(--shadow-light);
-    --neu-raised-lg: 14px 14px 28px var(--shadow-dark), -7px -7px 20px var(--shadow-light);
-    --neu-raised-hover: 10px 10px 20px var(--shadow-dark), -6px -6px 14px rgba(92, 116, 140, 0.66);
-    --neu-inset: inset 4px 4px 10px var(--inset-light), inset -3px -3px 8px var(--inset-dark);
-}
-
-/* Admin dark: contenido y sidebar con el mismo fondo */
-.dark .admin-panel-shell [data-slot='sidebar-inset'] {
-    background: var(--sidebar);
-    box-shadow: none;
+    /* Neumorfismo recalibrado para base gris #2D3545 */
+    --shadow-dark: rgba(10, 14, 22, 0.82);
+    --shadow-light: rgba(65, 85, 120, 0.55);
+    --inset-light: rgba(10, 14, 22, 0.72);
+    --inset-dark: rgba(65, 85, 120, 0.28);
+    --neu-raised:
+        8px 8px 18px var(--shadow-dark),
+        -5px -5px 13px var(--shadow-light);
+    --neu-raised-sm:
+        4px 4px 10px var(--shadow-dark),
+        -3px -3px 8px var(--shadow-light);
+    --neu-raised-lg:
+        14px 14px 30px var(--shadow-dark),
+        -8px -8px 22px var(--shadow-light);
+    --neu-raised-hover:
+        10px 10px 22px var(--shadow-dark),
+        -6px -6px 16px rgba(75, 100, 140, 0.62);
+    --neu-inset:
+        inset 4px 4px 11px var(--inset-light),
+        inset -3px -3px 9px var(--inset-dark);
 }
 
 /* Profundidad del layout admin (contenedor principal) */
@@ -579,8 +618,32 @@
 }
 
 .dark .admin-panel-shell [data-slot='sidebar-inset'] {
-    background: var(--sidebar);
+    background: var(--background);
     box-shadow: var(--neu-inset);
+}
+
+/* Inputs/selects admin — fondo del layout con efecto hundido (inset 3D) */
+.dark .admin-panel-shell input:not([type='checkbox']):not([type='radio']):not([type='range']),
+.dark .admin-panel-shell select,
+.dark .admin-panel-shell textarea,
+.dark .admin-panel-shell [data-slot='input'],
+.dark .admin-panel-shell [data-slot='select-trigger'],
+.dark .admin-panel-shell [data-slot='textarea'] {
+    background-color: #262E3E;
+    box-shadow: var(--neu-inset);
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.dark .admin-panel-shell input:not([type='checkbox']):not([type='radio']):focus,
+.dark .admin-panel-shell select:focus,
+.dark .admin-panel-shell textarea:focus,
+.dark .admin-panel-shell [data-slot='input']:focus-within,
+.dark .admin-panel-shell [data-slot='select-trigger']:focus,
+.dark .admin-panel-shell [data-slot='textarea']:focus-within {
+    border-color: rgba(210, 140, 60, 0.55);
+    box-shadow:
+        var(--neu-inset),
+        0 0 0 2px rgba(210, 140, 60, 0.22);
 }
 
 /* Sidebar admin: ícono ámbar solo en item activo */
@@ -942,3 +1005,17 @@
         opacity: 0.75;
     }
 }
+
+/* ==========================================================================
+   ESCALA DE Z-INDEX — referencia centralizada
+   ==========================================================================
+   z-0        Capas decorativas de fondo (grain, orbs)
+   z-[1]      Contenedor principal sobre el fondo
+   z-10       Contenido relativo dentro de secciones (hero content)
+   z-20       Dropdowns de navegación desktop
+   z-40       Header fijo (navbar)
+   z-50       Botones flotantes (scroll-to-top, appearance toggle)
+   z-[60]     Botón del carrito (sobre capas del navbar)
+   z-[70]     Paneles flotantes sobre el carrito/usuario (cart preview, user menu)
+   z-[100]    Skip link al recibir foco (accesibilidad — siempre encima)
+   ========================================================================== */

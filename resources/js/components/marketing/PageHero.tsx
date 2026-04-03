@@ -228,8 +228,8 @@ export default function PageHero({
                                     <ul className="mt-8 flex flex-wrap gap-2" aria-label="Ventajas destacadas">
                                         {[
                                             'SaaS u on‑prem',
-                                            'Catálogo actualizado',
-                                            'Implementación en semanas',
+                                            'Sin desarrollo a medida',
+                                            'Operativo en semanas',
                                         ].map((chip, index) => (
                                             <li
                                                 key={chip}
@@ -336,11 +336,11 @@ export default function PageHero({
                                 <code>
                                     <span style={{ color: 'var(--state-alert)' }}>$</span> orvae init
                                     {'\n'}
-                                    <span style={{ color: 'var(--state-info)' }}>{'→'}</span> Checking
-                                    catalog...
+                                    <span style={{ color: 'var(--state-info)' }}>{'→'}</span> Verificando
+                                    catálogo...
                                     {'\n'}
-                                    <span className="text-[var(--o-success)]">✓</span> Ready to
-                                    operate
+                                    <span className="text-[var(--o-success)]">✓</span> Listo para
+                                    operar
                                 </code>
                             </pre>
                         </div>

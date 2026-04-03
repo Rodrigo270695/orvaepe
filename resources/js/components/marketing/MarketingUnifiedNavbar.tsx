@@ -9,6 +9,8 @@ import {
     MarketingGlobalSearchProvider,
     MarketingSearchTrigger,
 } from '@/components/marketing/MarketingGlobalSearch';
+import NavCartPreview from '@/components/marketing/NavCartPreview';
+import NavUserMenu from '@/components/marketing/NavUserMenu';
 import {
     clearSoftwareCart,
     getSoftwareCartTotalQty,
@@ -183,15 +185,19 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
         setOpenUserMenu(false);
     };
 
-    // Si el dropdown está abierto y el usuario SÍ hace scroll, lo cerramos
-    // para evitar desalineación.
+    // Cerrar solo si el usuario scrollea más de 60px desde la posición de apertura,
+    // evitando cierres accidentales por micro-desplazamientos al leer el menú.
     useEffect(() => {
         if (!openDropdown && !openMobile && !openUserMenu) {
             return;
         }
 
+        const scrollYWhenOpened = window.scrollY;
+
         const onScroll = () => {
-            closeAll();
+            if (Math.abs(window.scrollY - scrollYWhenOpened) > 60) {
+                closeAll();
+            }
         };
 
         window.addEventListener('scroll', onScroll, { passive: true });
@@ -272,86 +278,17 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
         'absolute left-2 right-2 -bottom-0.5 z-10 h-[3px] rounded-full bg-[linear-gradient(90deg,var(--state-info),var(--state-success),var(--state-alert))] origin-left scale-x-0 transition-transform duration-300 pointer-events-none';
 
     const authActionsDesktop = auth.user ? (
-        (() => {
-            const userDisplay = getUserDisplayName(auth.user.name);
-
-            return (
-                <div className="relative">
-                    <button
-                        type="button"
-                        className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-transparent px-3 py-2 text-sm font-semibold text-[var(--foreground)] transition-colors hover:border-[color-mix(in_oklab,var(--state-info)_48%,transparent)] hover:bg-[color-mix(in_oklab,var(--state-info)_10%,transparent)]"
-                        aria-label={`Cuenta de ${userDisplay.full}`}
-                        aria-haspopup="menu"
-                        aria-expanded={openUserMenu}
-                        onClick={() => {
-                            setOpenDropdown(null);
-                            setOpenMobile(false);
-                            setOpenMobileSection(null);
-                            setOpenUserMenu((v) => !v);
-                        }}
-                    >
-                        <span className="inline-flex size-7 items-center justify-center rounded-full bg-[color-mix(in_oklab,var(--state-info)_18%,transparent)] text-xs font-bold text-[var(--state-info)]">
-                            {userDisplay.short
-                                .split(' ')
-                                .map((p) => p.charAt(0).toUpperCase())
-                                .join('')
-                                .slice(0, 2)}
-                        </span>
-                        <span className="max-w-[10rem] truncate">{userDisplay.short}</span>
-                        <ChevronDown className="size-4 text-[var(--state-info)]" />
-                    </button>
-
-                    {openUserMenu && (
-                        <div
-                            className="absolute right-0 top-full z-[70] w-64 pt-2"
-                            role="menu"
-                            aria-label="Menú de usuario"
-                        >
-                            <div className="rounded-2xl border border-[var(--border)] bg-card/95 p-2 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.35)] backdrop-blur-md">
-                                <div
-                                    className="rounded-2xl border p-2 shadow-[0_24px_60px_-20px_color-mix(in_oklab,var(--state-info)_35%,transparent)] backdrop-blur-md"
-                                    style={{
-                                        borderColor: 'color-mix(in oklab, var(--state-info) 28%, var(--border))',
-                                        background:
-                                            'linear-gradient(165deg, color-mix(in oklab, var(--card) 96%, transparent), color-mix(in oklab, var(--state-info) 8%, var(--card)), color-mix(in oklab, var(--state-success) 6%, var(--card)))',
-                                    }}
-                                >
-                                <div
-                                    className="rounded-xl border px-3 py-2.5"
-                                    style={{
-                                        borderColor: 'color-mix(in oklab, var(--state-info) 22%, var(--border))',
-                                        background:
-                                            'linear-gradient(135deg, color-mix(in oklab, var(--state-info) 14%, transparent), color-mix(in oklab, var(--state-success) 8%, transparent))',
-                                    }}
-                                >
-                                    <p className="truncate text-sm font-semibold text-[var(--foreground)]">{userDisplay.short}</p>
-                                    <p className="truncate text-xs text-[var(--muted-foreground)]">Sesión activa</p>
-                                </div>
-                                <div className="mt-2 space-y-1">
-                                    <Link
-                                        href="/dashboard"
-                                        className="block rounded-lg px-3 py-2 text-sm font-semibold text-[var(--foreground)] transition-colors hover:bg-[color-mix(in_oklab,var(--state-info)_14%,transparent)] hover:text-[color-mix(in_oklab,var(--state-info)_75%,var(--foreground))]"
-                                        onClick={closeAll}
-                                    >
-                                        Ir al panel
-                                    </Link>
-                                    <Link
-                                        href="/logout"
-                                        as="button"
-                                        method="post"
-                                        className="block w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-[var(--foreground)] transition-colors hover:bg-[color-mix(in_oklab,var(--state-danger)_12%,transparent)] hover:text-[color-mix(in_oklab,var(--state-danger)_78%,var(--foreground))]"
-                                        onClick={closeAll}
-                                    >
-                                        Cerrar sesión
-                                    </Link>
-                                </div>
-                            </div>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            );
-        })()
+        <NavUserMenu
+            user={auth.user}
+            open={openUserMenu}
+            onOpenChange={(v) => {
+                setOpenDropdown(null);
+                setOpenMobile(false);
+                setOpenMobileSection(null);
+                setOpenUserMenu(v);
+            }}
+            closeAll={closeAll}
+        />
     ) : (
         <>
             <Link
@@ -715,86 +652,12 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
 
                     <div className="hidden items-center gap-2 md:flex">
                         <MarketingSearchTrigger />
-                        <div className="group/cart relative">
-                            <Link
-                                href="/carrito"
-                                aria-label="Ir al carrito de compras"
-                                title="Ir al carrito. Mayús+clic: vaciar. Pasa el mouse para ver el resumen."
-                                className={[
-                                    'relative z-[60] inline-flex items-center gap-2 rounded-md border border-transparent px-3 py-2 text-sm font-semibold text-[var(--foreground)]',
-                                    'transition-colors hover:border-[color-mix(in_oklab,var(--state-info)_48%,transparent)] hover:bg-[color-mix(in_oklab,var(--state-info)_10%,transparent)]',
-                                    'transform-gpu',
-                                    cartBump ? 'animate-pulse scale-105' : '',
-                                ].join(' ')}
-                                onClick={(e) => {
-                                    if (e.shiftKey) {
-                                        e.preventDefault();
-                                        clearSoftwareCart();
-                                        setCartCount(0);
-                                        setCartLines([]);
-                                    }
-                                }}
-                            >
-                                <ShoppingCart className="size-4 text-[var(--state-info)]" />
-                                {cartCount > 0 && (
-                                    <span className="min-w-6 rounded-full px-2 py-0.5 text-center text-xs font-bold text-[var(--primary-foreground)]"
-                                        style={{
-                                            background:
-                                                'linear-gradient(135deg, color-mix(in oklab, var(--state-success) 88%, var(--state-info)), color-mix(in oklab, var(--state-info) 72%, var(--state-success)))',
-                                        }}
-                                    >
-                                        {cartCount}
-                                    </span>
-                                )}
-                            </Link>
-
-                            <div
-                                className="pointer-events-none invisible absolute right-0 top-full z-[70] w-[min(20rem,calc(100vw-2rem))] pt-2 opacity-0 transition-all duration-200 group-hover/cart:pointer-events-auto group-hover/cart:visible group-hover/cart:opacity-100"
-                                role="region"
-                                aria-label="Resumen del carrito"
-                            >
-                                <div className="max-h-[min(70vh,22rem)] overflow-y-auto rounded-2xl border border-[var(--border)] bg-card/95 p-3 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.35)] backdrop-blur-md">
-                                    {cartLines.length === 0 ? (
-                                        <p className="px-2 py-4 text-center text-sm text-[var(--muted-foreground)]">
-                                            Tu carrito está vacío
-                                        </p>
-                                    ) : (
-                                        <ul className="space-y-2">
-                                            {cartLines.map((line) => (
-                                                <li
-                                                    key={`${line.systemSlug}:${line.planId}`}
-                                                    className="rounded-xl border border-[color-mix(in_oklab,var(--border)_90%,transparent)] bg-background/60 px-3 py-2"
-                                                >
-                                                    <p className="truncate text-sm font-semibold text-[var(--foreground)]">
-                                                        {line.systemName ?? line.systemSlug}
-                                                    </p>
-                                                    <p className="truncate text-xs text-[var(--muted-foreground)]">
-                                                        {line.planLabel ?? line.planId}
-                                                    </p>
-                                                    <p className="mt-1 text-xs font-medium tabular-nums text-[var(--foreground)]">
-                                                        ×{line.qty}
-                                                        {line.priceText ? (
-                                                            <span className="ml-2 text-[var(--muted-foreground)]">
-                                                                · {line.priceText}
-                                                            </span>
-                                                        ) : null}
-                                                    </p>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    )}
-                                    <div className="mt-2 border-t border-[color-mix(in_oklab,var(--border)_70%,transparent)] pt-2">
-                                        <Link
-                                            href="/carrito"
-                                            className="block w-full rounded-lg px-2 py-2 text-center text-sm font-semibold text-[var(--primary)] underline-offset-4 hover:bg-[color-mix(in_oklab,var(--primary)_8%,transparent)] hover:underline"
-                                        >
-                                            Ver el carrito
-                                        </Link>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
+                        <NavCartPreview
+                            cartCount={cartCount}
+                            cartLines={cartLines}
+                            cartBump={cartBump}
+                            onClear={() => { setCartCount(0); setCartLines([]); }}
+                        />
                         {authActionsDesktop}
                     </div>
 
@@ -803,21 +666,12 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                         <Link
                             href="/carrito"
                             aria-label="Ir al carrito de compras"
-                            title="Ir al carrito. Mantén pulsado Mayús y toca para vaciar."
                             className={[
                                 'relative inline-flex items-center gap-1 rounded-md border border-transparent px-2.5 py-2 text-[var(--foreground)]',
                                 'transition-colors hover:border-[color-mix(in_oklab,var(--state-info)_48%,transparent)] hover:bg-[color-mix(in_oklab,var(--state-info)_10%,transparent)]',
                                 'transform-gpu',
                                 cartBump ? 'animate-pulse scale-105' : '',
                             ].join(' ')}
-                            onClick={(e) => {
-                                if (e.shiftKey) {
-                                    e.preventDefault();
-                                    clearSoftwareCart();
-                                    setCartCount(0);
-                                    setCartLines([]);
-                                }
-                            }}
                         >
                             <ShoppingCart className="size-[1.35rem] text-[var(--state-info)]" />
                             {cartCount > 0 && (
@@ -1018,6 +872,55 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                                     Contacto
                                 </Link>
                             </div>
+
+                            {/* Resumen del carrito en móvil (visible solo si hay ítems) */}
+                            {cartLines.length > 0 && (
+                                <div className="mt-4 rounded-xl border border-[color-mix(in_oklab,var(--border)_80%,transparent)] bg-[color-mix(in_oklab,var(--muted)_25%,transparent)] p-3">
+                                    <div className="mb-2 flex items-center justify-between">
+                                        <p className="text-xs font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+                                            Carrito ({cartCount})
+                                        </p>
+                                        <button
+                                            type="button"
+                                            className="rounded-md px-2 py-0.5 text-xs text-[var(--muted-foreground)] transition-colors hover:bg-[color-mix(in_oklab,var(--state-danger)_10%,transparent)] hover:text-[color-mix(in_oklab,var(--state-danger)_78%,var(--foreground))]"
+                                            onClick={() => {
+                                                clearSoftwareCart();
+                                                setCartCount(0);
+                                                setCartLines([]);
+                                            }}
+                                        >
+                                            Vaciar
+                                        </button>
+                                    </div>
+                                    <ul className="space-y-1.5">
+                                        {cartLines.slice(0, 3).map((line) => (
+                                            <li
+                                                key={`${line.systemSlug}:${line.planId}`}
+                                                className="flex items-start justify-between gap-2 text-xs"
+                                            >
+                                                <span className="truncate font-medium text-[var(--foreground)]">
+                                                    {line.systemName ?? line.systemSlug}
+                                                </span>
+                                                <span className="shrink-0 tabular-nums text-[var(--muted-foreground)]">
+                                                    ×{line.qty}
+                                                </span>
+                                            </li>
+                                        ))}
+                                        {cartLines.length > 3 && (
+                                            <li className="text-xs text-[var(--muted-foreground)]">
+                                                +{cartLines.length - 3} más…
+                                            </li>
+                                        )}
+                                    </ul>
+                                    <Link
+                                        href="/carrito"
+                                        className="mt-2 block w-full rounded-lg px-2 py-2 text-center text-sm font-semibold text-[var(--primary)] hover:bg-[color-mix(in_oklab,var(--primary)_8%,transparent)] hover:underline"
+                                        onClick={closeAll}
+                                    >
+                                        Ver el carrito
+                                    </Link>
+                                </div>
+                            )}
 
                             <div className="mt-4 grid gap-2">{authActionsMobile}</div>
                         </div>
