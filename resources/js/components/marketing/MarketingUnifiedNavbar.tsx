@@ -1,8 +1,6 @@
-/* eslint-disable */
-
 import { Link, usePage } from '@inertiajs/react';
 import { ChevronDown, Menu, ShoppingCart, X } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { type KeyboardEvent, useEffect, useRef, useState } from 'react';
 
 import { marketingPreciosLinks, marketingServiciosSectionLinks } from '@/constants/marketingNavLinks';
 import {
@@ -249,6 +247,14 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
     }, [pathname]);
 
     useEffect(() => {
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') closeAll();
+        };
+        document.addEventListener('keydown', onKeyDown);
+        return () => document.removeEventListener('keydown', onKeyDown);
+    }, []);
+
+    useEffect(() => {
         if (!openDropdown && !openMobile && !openUserMenu) {
             return;
         }
@@ -272,8 +278,57 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
         };
     }, [openDropdown, openMobile, openUserMenu]);
 
+    const handleNavKeyDown = (
+        e: KeyboardEvent<HTMLDivElement>,
+        isOpen: boolean,
+        openFn: () => void,
+    ) => {
+        if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(e.key)) return;
+
+        const getMenuItems = () =>
+            Array.from(
+                e.currentTarget.querySelectorAll<HTMLElement>(
+                    '[role="menu"] a[href], [role="menu"] button:not([disabled])',
+                ),
+            );
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (!isOpen) {
+                openFn();
+                const el = e.currentTarget;
+                requestAnimationFrame(() => {
+                    el.querySelector<HTMLElement>('[role="menu"] a[href], [role="menu"] button')?.focus();
+                });
+                return;
+            }
+            const items = getMenuItems();
+            const idx = items.indexOf(document.activeElement as HTMLElement);
+            items[idx === -1 ? 0 : Math.min(idx + 1, items.length - 1)]?.focus();
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (!isOpen) return;
+            const items = getMenuItems();
+            const idx = items.indexOf(document.activeElement as HTMLElement);
+            if (idx <= 0) {
+                e.currentTarget.querySelector<HTMLElement>('button')?.focus();
+            } else {
+                items[idx - 1]?.focus();
+            }
+        } else if (e.key === 'Home') {
+            e.preventDefault();
+            if (isOpen) getMenuItems()[0]?.focus();
+        } else if (e.key === 'End') {
+            e.preventDefault();
+            if (isOpen) {
+                const items = getMenuItems();
+                items[items.length - 1]?.focus();
+            }
+        }
+    };
+
     const topLinkClass =
-        'relative inline-flex cursor-pointer items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold transition-all duration-200 hover:bg-[color-mix(in_oklab,var(--state-info)_26%,var(--background))] hover:text-[color-mix(in_oklab,var(--state-info)_86%,var(--foreground))] hover:shadow-[0_6px_18px_-10px_color-mix(in_oklab,var(--state-info)_55%,transparent)]';
+        'relative inline-flex cursor-pointer items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold transition-all duration-200 hover:bg-[color-mix(in_oklab,var(--state-info)_26%,var(--background))] hover:text-[color-mix(in_oklab,var(--state-info)_86%,var(--foreground))] hover:shadow-[0_6px_18px_-10px_color-mix(in_oklab,var(--state-info)_55%,transparent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_oklab,var(--state-info)_60%,transparent)] focus-visible:ring-offset-1';
     const activeUnderline =
         'absolute left-2 right-2 -bottom-0.5 z-10 h-[3px] rounded-full bg-[linear-gradient(90deg,var(--state-info),var(--state-success),var(--state-alert))] origin-left scale-x-0 transition-transform duration-300 pointer-events-none';
 
@@ -400,11 +455,18 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
         );
     };
 
-    const renderDesktopDropdown = (_key: Exclude<DropdownKey, null>, links: { label: string; href: string }[]) => {
+    const renderDesktopDropdown = (_key: Exclude<DropdownKey, null>, links: { label: string; href: string }[], isOpen: boolean, panelId?: string) => {
         const [first, ...rest] = links;
         return (
             <div
-                className="absolute left-0 top-full z-20 mt-3 w-72 rounded-2xl border p-2 backdrop-blur-xl"
+                id={panelId}
+                className={[
+                    'absolute left-0 top-full z-20 mt-3 w-72 rounded-2xl border p-2 backdrop-blur-xl',
+                    'origin-top transition-all duration-200 ease-out',
+                    isOpen
+                        ? 'pointer-events-auto visible translate-y-0 scale-100 opacity-100'
+                        : 'pointer-events-none invisible -translate-y-2 scale-95 opacity-0',
+                ].join(' ')}
                 style={{
                     borderColor: 'color-mix(in oklab, var(--state-info) 20%, var(--border))',
                     background:
@@ -433,10 +495,19 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
         groups: { categoryLabel: string; items: { label: string; href: string }[] }[],
         categoryBaseHref: string,
         ariaLabel: string,
+        isOpen: boolean,
+        panelId?: string,
     ) => {
         return (
             <div
-                className="absolute left-0 top-full z-20 mt-3 w-80 rounded-2xl border p-2 backdrop-blur-xl"
+                id={panelId}
+                className={[
+                    'absolute left-0 top-full z-20 mt-3 w-80 rounded-2xl border p-2 backdrop-blur-xl',
+                    'origin-top transition-all duration-200 ease-out',
+                    isOpen
+                        ? 'pointer-events-auto visible translate-y-0 scale-100 opacity-100'
+                        : 'pointer-events-none invisible -translate-y-2 scale-95 opacity-0',
+                ].join(' ')}
                 style={{
                     borderColor: 'color-mix(in oklab, var(--state-info) 20%, var(--border))',
                     background:
@@ -494,11 +565,11 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
         <div ref={rootRef}>
             <header
                 className={[
-                    'fixed inset-x-0 top-0 z-40 w-full transition-[box-shadow,background-color,border-color] duration-300 ease-out',
+                    'fixed inset-x-0 top-0 z-40 w-full transition-[box-shadow,background-color,border-color,backdrop-filter] duration-500 ease-out',
                     'border-b',
                     scrolled
-                        ? 'border-[color-mix(in_oklab,var(--state-info)_22%,var(--border))] bg-background/95 shadow-[0_8px_30px_-12px_color-mix(in_oklab,var(--foreground)_24%,transparent),0_1px_0_0_color-mix(in_oklab,var(--state-info)_18%,transparent)] backdrop-blur-md'
-                        : 'border-[color-mix(in_oklab,var(--state-info)_14%,var(--border))] bg-background/88 shadow-[0_1px_0_0_color-mix(in_oklab,var(--state-info)_10%,transparent)]',
+                        ? 'border-[color-mix(in_oklab,var(--state-info)_18%,var(--border))] bg-background/50 shadow-[0_8px_32px_-12px_color-mix(in_oklab,var(--foreground)_18%,transparent),0_1px_0_0_color-mix(in_oklab,var(--state-info)_14%,transparent)] backdrop-blur-2xl'
+                        : 'border-[color-mix(in_oklab,var(--state-info)_14%,var(--border))] bg-background/92 shadow-[0_1px_0_0_color-mix(in_oklab,var(--state-info)_10%,transparent)] backdrop-blur-sm',
                 ].join(' ')}
             >
                 <div
@@ -554,7 +625,15 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                             />
                         </Link>
 
-                        <div className="relative">
+                        <div
+                            className="relative"
+                            onKeyDown={(e) =>
+                                handleNavKeyDown(e, openDropdown === 'software', () => {
+                                    setOpenUserMenu(false);
+                                    setOpenDropdown('software');
+                                })
+                            }
+                        >
                             <button
                                 type="button"
                                 className={cx(
@@ -568,15 +647,25 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                                     setOpenDropdown((v) => (v === 'software' ? null : 'software'));
                                 }}
                                 aria-expanded={openDropdown === 'software'}
+                                aria-haspopup="true"
+                                aria-controls="dropdown-software"
                             >
                                 Software
-                                <ChevronDown className="size-4 text-[var(--o-amber)]" />
+                                <ChevronDown className={cx('size-4 text-[var(--o-amber)] transition-transform duration-200', openDropdown === 'software' ? 'rotate-180' : '')} />
                                 <span className={activeUnderline} style={{ transform: activeTop === 'software' ? 'scaleX(1)' : 'scaleX(0)' }} />
                             </button>
-                            {openDropdown === 'software' && renderDesktopDropdown('software', softwareLinks)}
+                            {renderDesktopDropdown('software', softwareLinks, openDropdown === 'software', 'dropdown-software')}
                         </div>
 
-                        <div className="relative">
+                        <div
+                            className="relative"
+                            onKeyDown={(e) =>
+                                handleNavKeyDown(e, openDropdown === 'precios', () => {
+                                    setOpenUserMenu(false);
+                                    setOpenDropdown('precios');
+                                })
+                            }
+                        >
                             <button
                                 type="button"
                                 className={cx(
@@ -590,20 +679,31 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                                     setOpenDropdown((v) => (v === 'precios' ? null : 'precios'));
                                 }}
                                 aria-expanded={openDropdown === 'precios'}
+                                aria-haspopup="true"
+                                aria-controls="dropdown-precios"
                             >
                                 Licencias
-                                <ChevronDown className="size-4 text-[var(--o-amber)]" />
+                                <ChevronDown className={cx('size-4 text-[var(--o-amber)] transition-transform duration-200', openDropdown === 'precios' ? 'rotate-180' : '')} />
                                 <span className={activeUnderline} style={{ transform: activeTop === 'precios' ? 'scaleX(1)' : 'scaleX(0)' }} />
                             </button>
-                            {openDropdown === 'precios' &&
-                                renderGroupedCategoryDropdown(
-                                    licenseNavGroups,
-                                    '/licencias',
-                                    'Menú desplegable de licencias',
-                                )}
+                            {renderGroupedCategoryDropdown(
+                                licenseNavGroups,
+                                '/licencias',
+                                'Menú desplegable de licencias',
+                                openDropdown === 'precios',
+                                'dropdown-precios',
+                            )}
                         </div>
 
-                        <div className="relative">
+                        <div
+                            className="relative"
+                            onKeyDown={(e) =>
+                                handleNavKeyDown(e, openDropdown === 'servicios', () => {
+                                    setOpenUserMenu(false);
+                                    setOpenDropdown('servicios');
+                                })
+                            }
+                        >
                             <button
                                 type="button"
                                 className={cx(
@@ -617,17 +717,20 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                                     setOpenDropdown((v) => (v === 'servicios' ? null : 'servicios'));
                                 }}
                                 aria-expanded={openDropdown === 'servicios'}
+                                aria-haspopup="true"
+                                aria-controls="dropdown-servicios"
                             >
                                 Servicios
-                                <ChevronDown className="size-4 text-[var(--o-amber)]" />
+                                <ChevronDown className={cx('size-4 text-[var(--o-amber)] transition-transform duration-200', openDropdown === 'servicios' ? 'rotate-180' : '')} />
                                 <span className={activeUnderline} style={{ transform: activeTop === 'servicios' ? 'scaleX(1)' : 'scaleX(0)' }} />
                             </button>
-                            {openDropdown === 'servicios' &&
-                                renderGroupedCategoryDropdown(
-                                    serviceNavGroups,
-                                    '/servicios',
-                                    'Menú desplegable de servicios',
-                                )}
+                            {renderGroupedCategoryDropdown(
+                                serviceNavGroups,
+                                '/servicios',
+                                'Menú desplegable de servicios',
+                                openDropdown === 'servicios',
+                                'dropdown-servicios',
+                            )}
                         </div>
 
                         <Link
@@ -703,7 +806,7 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                 </div>
 
                 {openMobile && (
-                    <div className="border-t border-[var(--border)] bg-card md:hidden">
+                    <div className="animate-in slide-in-from-top-2 fade-in-0 duration-200 border-t border-[var(--border)] bg-card md:hidden">
                         <div className="mx-auto flex w-full max-w-6xl flex-col px-4 py-4">
                             <div className="flex flex-col gap-1">
                                 <Link
@@ -720,146 +823,155 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                                 <button
                                     type="button"
                                     className={cx(
-                                        'flex w-full cursor-pointer items-center justify-between gap-2 rounded-xl px-3 py-3 text-left text-sm font-semibold hover:bg-[color-mix(in_oklab,var(--o-amber)_10%,transparent)] touch-manipulation',
+                                        'flex w-full cursor-pointer items-center justify-between gap-2 rounded-xl px-3 py-3 text-left text-sm font-semibold hover:bg-[color-mix(in_oklab,var(--o-amber)_10%,transparent)] touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_oklab,var(--state-info)_60%,transparent)] focus-visible:ring-offset-1',
                                         activeTop === 'software' ? 'text-[var(--state-info)]' : 'text-[var(--foreground)]',
                                     )}
                                     onClick={() =>
                                         setOpenMobileSection((v) => (v === 'software' ? null : 'software'))
                                     }
+                                    aria-expanded={openMobileSection === 'software'}
                                 >
                                     <span className="min-w-0 flex-1">Software desarrollado</span>
                                     <ChevronDown
-                                        className="size-4 shrink-0 pointer-events-none text-[var(--o-amber)]"
+                                        className={cx('size-4 shrink-0 pointer-events-none text-[var(--o-amber)] transition-transform duration-200', openMobileSection === 'software' ? 'rotate-180' : '')}
                                         aria-hidden
                                     />
                                 </button>
-                                {openMobileSection === 'software' && (
-                                    <div className="grid gap-1 px-1 pb-2">
-                                        {softwareLinks.map((l, i) => (
-                                            <span key={l.href}>
-                                                {i === 1 && (
-                                                    <div className="my-1.5 border-t border-[color-mix(in_oklab,var(--o-amber)_25%,var(--border))]" aria-hidden />
-                                                )}
-                                                {l.href.startsWith('#') ? (
-                                                    <a
-                                                        href={l.href}
-                                                        className={i === 0 ? 'cursor-pointer rounded-xl px-3 py-2 text-sm font-semibold text-[var(--foreground)] hover:bg-[color-mix(in_oklab,var(--o-amber)_12%,transparent)] dark:hover:bg-[color-mix(in_oklab,var(--state-info)_26%,var(--background))] dark:hover:text-[color-mix(in_oklab,var(--state-info)_88%,var(--foreground))]' : 'cursor-pointer rounded-xl px-3 py-1.5 text-xs font-medium text-[var(--foreground)]/75 hover:text-[var(--o-amber)] hover:bg-[color-mix(in_oklab,var(--o-amber)_8%,transparent)] dark:hover:bg-[color-mix(in_oklab,var(--state-info)_26%,var(--background))] dark:hover:text-[color-mix(in_oklab,var(--state-info)_88%,var(--foreground))]'}
-                                                        onClick={closeAll}
-                                                    >
-                                                        {l.label}
-                                                    </a>
-                                                ) : (
-                                                    <Link
-                                                        href={l.href}
-                                                        className={i === 0 ? 'cursor-pointer rounded-xl px-3 py-2 text-sm font-semibold text-[var(--foreground)] hover:bg-[color-mix(in_oklab,var(--o-amber)_12%,transparent)] dark:hover:bg-[color-mix(in_oklab,var(--state-info)_26%,var(--background))] dark:hover:text-[color-mix(in_oklab,var(--state-info)_88%,var(--foreground))]' : 'cursor-pointer rounded-xl px-3 py-1.5 text-xs font-medium text-[var(--foreground)]/75 hover:text-[var(--o-amber)] hover:bg-[color-mix(in_oklab,var(--o-amber)_8%,transparent)] dark:hover:bg-[color-mix(in_oklab,var(--state-info)_26%,var(--background))] dark:hover:text-[color-mix(in_oklab,var(--state-info)_88%,var(--foreground))]'}
-                                                    >
-                                                        {l.label}
-                                                    </Link>
-                                                )}
-                                            </span>
-                                        ))}
+                                <div className={cx('grid transition-all duration-300 ease-in-out', openMobileSection === 'software' ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0')}>
+                                    <div className="min-h-0 overflow-hidden">
+                                        <div className="grid gap-1 px-1 pb-2 pt-0.5">
+                                            {softwareLinks.map((l, i) => (
+                                                <span key={l.href}>
+                                                    {i === 1 && (
+                                                        <div className="my-1.5 border-t border-[color-mix(in_oklab,var(--o-amber)_25%,var(--border))]" aria-hidden />
+                                                    )}
+                                                    {l.href.startsWith('#') ? (
+                                                        <a
+                                                            href={l.href}
+                                                            className={i === 0 ? 'cursor-pointer rounded-xl px-3 py-2 text-sm font-semibold text-[var(--foreground)] hover:bg-[color-mix(in_oklab,var(--o-amber)_12%,transparent)] dark:hover:bg-[color-mix(in_oklab,var(--state-info)_26%,var(--background))] dark:hover:text-[color-mix(in_oklab,var(--state-info)_88%,var(--foreground))]' : 'cursor-pointer rounded-xl px-3 py-1.5 text-xs font-medium text-[var(--foreground)]/75 hover:text-[var(--o-amber)] hover:bg-[color-mix(in_oklab,var(--o-amber)_8%,transparent)] dark:hover:bg-[color-mix(in_oklab,var(--state-info)_26%,var(--background))] dark:hover:text-[color-mix(in_oklab,var(--state-info)_88%,var(--foreground))]'}
+                                                            onClick={closeAll}
+                                                        >
+                                                            {l.label}
+                                                        </a>
+                                                    ) : (
+                                                        <Link
+                                                            href={l.href}
+                                                            className={i === 0 ? 'cursor-pointer rounded-xl px-3 py-2 text-sm font-semibold text-[var(--foreground)] hover:bg-[color-mix(in_oklab,var(--o-amber)_12%,transparent)] dark:hover:bg-[color-mix(in_oklab,var(--state-info)_26%,var(--background))] dark:hover:text-[color-mix(in_oklab,var(--state-info)_88%,var(--foreground))]' : 'cursor-pointer rounded-xl px-3 py-1.5 text-xs font-medium text-[var(--foreground)]/75 hover:text-[var(--o-amber)] hover:bg-[color-mix(in_oklab,var(--o-amber)_8%,transparent)] dark:hover:bg-[color-mix(in_oklab,var(--state-info)_26%,var(--background))] dark:hover:text-[color-mix(in_oklab,var(--state-info)_88%,var(--foreground))]'}
+                                                        >
+                                                            {l.label}
+                                                        </Link>
+                                                    )}
+                                                </span>
+                                            ))}
+                                        </div>
                                     </div>
-                                )}
+                                </div>
 
                                 <button
                                     type="button"
                                     className={cx(
-                                        'flex w-full cursor-pointer items-center justify-between gap-2 rounded-xl px-3 py-3 text-left text-sm font-semibold hover:bg-[color-mix(in_oklab,var(--o-amber)_10%,transparent)] touch-manipulation',
+                                        'flex w-full cursor-pointer items-center justify-between gap-2 rounded-xl px-3 py-3 text-left text-sm font-semibold hover:bg-[color-mix(in_oklab,var(--o-amber)_10%,transparent)] touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_oklab,var(--state-info)_60%,transparent)] focus-visible:ring-offset-1',
                                         activeTop === 'precios' ? 'text-[var(--state-info)]' : 'text-[var(--foreground)]',
                                     )}
                                     onClick={() =>
                                         setOpenMobileSection((v) => (v === 'precios' ? null : 'precios'))
                                     }
+                                    aria-expanded={openMobileSection === 'precios'}
                                 >
                                     <span className="min-w-0 flex-1">Licencias</span>
                                     <ChevronDown
-                                        className="size-4 shrink-0 pointer-events-none text-[var(--o-amber)]"
+                                        className={cx('size-4 shrink-0 pointer-events-none text-[var(--o-amber)] transition-transform duration-200', openMobileSection === 'precios' ? 'rotate-180' : '')}
                                         aria-hidden
                                     />
                                 </button>
-                                {openMobileSection === 'precios' && (
-                                    <div className="grid gap-1 px-1 pb-2">
-                                        {licenseNavGroups.map((group, groupIndex) => (
-                                            <div key={`${group.categoryLabel}-${groupIndex}`} className="grid gap-1">
-                                                {groupIndex > 0 && (
-                                                    <div className="my-1.5 border-t border-[color-mix(in_oklab,var(--o-amber)_25%,var(--border))]" aria-hidden />
-                                                )}
-                                                <Link
-                                                    href="/licencias"
-                                                    className="block cursor-pointer rounded-xl px-3 py-1 text-sm font-semibold text-[var(--foreground)] transition-colors hover:bg-[color-mix(in_oklab,var(--o-amber)_12%,transparent)] dark:hover:bg-[color-mix(in_oklab,var(--state-info)_26%,var(--background))] dark:hover:text-[color-mix(in_oklab,var(--state-info)_88%,var(--foreground))]"
-                                                    onClick={closeAll}
-                                                >
-                                                    {group.categoryLabel}
-                                                </Link>
-                                                <div
-                                                    className="mb-1 border-t border-[color-mix(in_oklab,var(--state-info)_24%,var(--border))]"
-                                                    aria-hidden
-                                                />
-                                                {group.items.map((item) => (
+                                <div className={cx('grid transition-all duration-300 ease-in-out', openMobileSection === 'precios' ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0')}>
+                                    <div className="min-h-0 overflow-hidden">
+                                        <div className="grid gap-1 px-1 pb-2 pt-0.5">
+                                            {licenseNavGroups.map((group, groupIndex) => (
+                                                <div key={`${group.categoryLabel}-${groupIndex}`} className="grid gap-1">
+                                                    {groupIndex > 0 && (
+                                                        <div className="my-1.5 border-t border-[color-mix(in_oklab,var(--o-amber)_25%,var(--border))]" aria-hidden />
+                                                    )}
                                                     <Link
-                                                        key={item.href}
-                                                        href={item.href}
-                                                        className="cursor-pointer rounded-xl px-3 py-1.5 text-xs font-medium text-[var(--foreground)]/75 hover:bg-[color-mix(in_oklab,var(--o-amber)_8%,transparent)] hover:text-[var(--o-amber)] dark:hover:bg-[color-mix(in_oklab,var(--state-info)_26%,var(--background))] dark:hover:text-[color-mix(in_oklab,var(--state-info)_88%,var(--foreground))]"
+                                                        href="/licencias"
+                                                        className="block cursor-pointer rounded-xl px-3 py-1 text-sm font-semibold text-[var(--foreground)] transition-colors hover:bg-[color-mix(in_oklab,var(--o-amber)_12%,transparent)] dark:hover:bg-[color-mix(in_oklab,var(--state-info)_26%,var(--background))] dark:hover:text-[color-mix(in_oklab,var(--state-info)_88%,var(--foreground))]"
+                                                        onClick={closeAll}
                                                     >
-                                                        {item.label}
+                                                        {group.categoryLabel}
                                                     </Link>
-                                                ))}
-                                            </div>
-                                        ))}
+                                                    <div
+                                                        className="mb-1 border-t border-[color-mix(in_oklab,var(--state-info)_24%,var(--border))]"
+                                                        aria-hidden
+                                                    />
+                                                    {group.items.map((item) => (
+                                                        <Link
+                                                            key={item.href}
+                                                            href={item.href}
+                                                            className="cursor-pointer rounded-xl px-3 py-1.5 text-xs font-medium text-[var(--foreground)]/75 hover:bg-[color-mix(in_oklab,var(--o-amber)_8%,transparent)] hover:text-[var(--o-amber)] dark:hover:bg-[color-mix(in_oklab,var(--state-info)_26%,var(--background))] dark:hover:text-[color-mix(in_oklab,var(--state-info)_88%,var(--foreground))]"
+                                                        >
+                                                            {item.label}
+                                                        </Link>
+                                                    ))}
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
-                                )}
+                                </div>
 
                                 <button
                                     type="button"
                                     className={cx(
-                                        'flex w-full cursor-pointer items-center justify-between gap-2 rounded-xl px-3 py-3 text-left text-sm font-semibold hover:bg-[color-mix(in_oklab,var(--o-amber)_10%,transparent)] touch-manipulation',
+                                        'flex w-full cursor-pointer items-center justify-between gap-2 rounded-xl px-3 py-3 text-left text-sm font-semibold hover:bg-[color-mix(in_oklab,var(--o-amber)_10%,transparent)] touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_oklab,var(--state-info)_60%,transparent)] focus-visible:ring-offset-1',
                                         activeTop === 'servicios' ? 'text-[var(--state-info)]' : 'text-[var(--foreground)]',
                                     )}
                                     onClick={() =>
                                         setOpenMobileSection((v) => (v === 'servicios' ? null : 'servicios'))
                                     }
+                                    aria-expanded={openMobileSection === 'servicios'}
                                 >
                                     <span className="min-w-0 flex-1">Servicios</span>
                                     <ChevronDown
-                                        className="size-4 shrink-0 pointer-events-none text-[var(--o-amber)]"
+                                        className={cx('size-4 shrink-0 pointer-events-none text-[var(--o-amber)] transition-transform duration-200', openMobileSection === 'servicios' ? 'rotate-180' : '')}
                                         aria-hidden
                                     />
                                 </button>
-                                {openMobileSection === 'servicios' && (
-                                    <div className="grid gap-1 px-1 pb-2">
-                                        {serviceNavGroups.map((group, groupIndex) => (
-                                            <div key={`${group.categoryLabel}-${groupIndex}`} className="grid gap-1">
-                                                {groupIndex > 0 && (
-                                                    <div
-                                                        className="my-1.5 border-t border-[color-mix(in_oklab,var(--o-amber)_25%,var(--border))]"
-                                                        aria-hidden
-                                                    />
-                                                )}
-                                                <Link
-                                                    href="/servicios"
-                                                    className="block cursor-pointer rounded-xl px-3 py-1 text-sm font-semibold text-[var(--foreground)] transition-colors hover:bg-[color-mix(in_oklab,var(--o-amber)_12%,transparent)] dark:hover:bg-[color-mix(in_oklab,var(--state-info)_26%,var(--background))] dark:hover:text-[color-mix(in_oklab,var(--state-info)_88%,var(--foreground))]"
-                                                    onClick={closeAll}
-                                                >
-                                                    {group.categoryLabel}
-                                                </Link>
-                                                <div
-                                                    className="mb-1 border-t border-[color-mix(in_oklab,var(--state-info)_24%,var(--border))]"
-                                                    aria-hidden
-                                                />
-                                                {group.items.map((item) => (
+                                <div className={cx('grid transition-all duration-300 ease-in-out', openMobileSection === 'servicios' ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0')}>
+                                    <div className="min-h-0 overflow-hidden">
+                                        <div className="grid gap-1 px-1 pb-2 pt-0.5">
+                                            {serviceNavGroups.map((group, groupIndex) => (
+                                                <div key={`${group.categoryLabel}-${groupIndex}`} className="grid gap-1">
+                                                    {groupIndex > 0 && (
+                                                        <div
+                                                            className="my-1.5 border-t border-[color-mix(in_oklab,var(--o-amber)_25%,var(--border))]"
+                                                            aria-hidden
+                                                        />
+                                                    )}
                                                     <Link
-                                                        key={item.href}
-                                                        href={item.href}
-                                                        className="cursor-pointer rounded-xl px-3 py-1.5 text-xs font-medium text-[var(--foreground)]/75 hover:bg-[color-mix(in_oklab,var(--o-amber)_8%,transparent)] hover:text-[var(--o-amber)] dark:hover:bg-[color-mix(in_oklab,var(--state-info)_26%,var(--background))] dark:hover:text-[color-mix(in_oklab,var(--state-info)_88%,var(--foreground))]"
+                                                        href="/servicios"
+                                                        className="block cursor-pointer rounded-xl px-3 py-1 text-sm font-semibold text-[var(--foreground)] transition-colors hover:bg-[color-mix(in_oklab,var(--o-amber)_12%,transparent)] dark:hover:bg-[color-mix(in_oklab,var(--state-info)_26%,var(--background))] dark:hover:text-[color-mix(in_oklab,var(--state-info)_88%,var(--foreground))]"
                                                         onClick={closeAll}
                                                     >
-                                                        {item.label}
+                                                        {group.categoryLabel}
                                                     </Link>
-                                                ))}
-                                            </div>
-                                        ))}
+                                                    <div
+                                                        className="mb-1 border-t border-[color-mix(in_oklab,var(--state-info)_24%,var(--border))]"
+                                                        aria-hidden
+                                                    />
+                                                    {group.items.map((item) => (
+                                                        <Link
+                                                            key={item.href}
+                                                            href={item.href}
+                                                            className="cursor-pointer rounded-xl px-3 py-1.5 text-xs font-medium text-[var(--foreground)]/75 hover:bg-[color-mix(in_oklab,var(--o-amber)_8%,transparent)] hover:text-[var(--o-amber)] dark:hover:bg-[color-mix(in_oklab,var(--state-info)_26%,var(--background))] dark:hover:text-[color-mix(in_oklab,var(--state-info)_88%,var(--foreground))]"
+                                                            onClick={closeAll}
+                                                        >
+                                                            {item.label}
+                                                        </Link>
+                                                    ))}
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
-                                )}
+                                </div>
 
                                 <Link
                                     href="/contacto"
