@@ -17,6 +17,10 @@ type Props = {
     priceLine?: string;
     /** Línea pequeña bajo el precio (disclaimer). */
     priceCaption?: string;
+    /** Checkout en curso (deshabilita “Ir a pagar”). */
+    payInProgress?: boolean;
+    /** Mensaje de error de pasarela o red. */
+    payError?: string | null;
     onPay: () => void;
     onAdd: () => void;
     addedCount: number;
@@ -30,6 +34,8 @@ export default function SoftwareDetailPlanSelectionPanel({
     whatsappHref,
     priceLine,
     priceCaption,
+    payInProgress = false,
+    payError = null,
     onPay,
     onAdd,
     addedCount,
@@ -137,7 +143,7 @@ export default function SoftwareDetailPlanSelectionPanel({
                         <>
                             <button
                                 type="button"
-                                disabled={!planSelected}
+                                disabled={!planSelected || payInProgress}
                                 className={cn(
                                     'inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border px-5 py-3.5 text-sm font-semibold',
                                     'border-[color-mix(in_oklab,var(--border)_75%,transparent)]',
@@ -146,7 +152,7 @@ export default function SoftwareDetailPlanSelectionPanel({
                                     'hover:shadow-[0_0_28px_-6px_color-mix(in_oklab,var(--state-info)_32%,transparent)]',
                                     'active:scale-[0.98]',
                                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-background',
-                                    !planSelected && 'pointer-events-none opacity-45',
+                                    (!planSelected || payInProgress) && 'pointer-events-none opacity-45',
                                 )}
                                 style={{
                                     borderColor: 'color-mix(in oklab, var(--state-info) 35%, var(--border))',
@@ -154,7 +160,7 @@ export default function SoftwareDetailPlanSelectionPanel({
                                 onClick={onPay}
                             >
                                 <CreditCard className="size-4 opacity-90" aria-hidden />
-                                Ir a pagar
+                                {payInProgress ? 'Conectando…' : 'Ir a pagar'}
                             </button>
                             <button
                                 type="button"
@@ -185,6 +191,12 @@ export default function SoftwareDetailPlanSelectionPanel({
                     )}
                 </div>
             </div>
+
+            {payError?.trim() ? (
+                <p className="relative z-10 mt-6 text-sm leading-relaxed text-[var(--state-danger)]" role="alert">
+                    {payError}
+                </p>
+            ) : null}
 
             {purchaseEnabled && addedCount > 0 ? (
                 <div

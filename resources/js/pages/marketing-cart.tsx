@@ -13,6 +13,7 @@ import {
     type SkuPriceRow,
 } from '@/lib/cartPricing';
 import { getCsrfToken } from '@/lib/csrf';
+import { postMarketingCheckout } from '@/lib/marketingCheckout';
 import {
     clearSoftwareCart,
     readCartCoupon,
@@ -375,46 +376,23 @@ export default function MarketingCart() {
 
         setCheckoutLoading(true);
         try {
-            const res = await fetch('/checkout/paypal', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Accept: 'application/json',
-                    'X-CSRF-TOKEN': getCsrfToken(),
-                    'X-Requested-With': 'XMLHttpRequest',
-                },
-                credentials: 'same-origin',
-                body: JSON.stringify({
-                    lines: lines.map((l) => ({ plan_id: l.planId, qty: l.qty })),
-                    coupon_code: appliedCoupon,
-                }),
+            const result = await postMarketingCheckout({
+                gateway: 'paypal',
+                lines: lines.map((l) => ({ plan_id: l.planId, qty: l.qty })),
+                coupon_code: appliedCoupon,
             });
 
-            const data = (await res.json()) as {
-                message?: string;
-                approval_url?: string;
-            };
-
-            if (res.status === 401) {
+            if (result.kind === 'unauthorized') {
                 window.location.href = '/login';
                 return;
             }
 
-            if (!res.ok) {
-                setCheckoutError(
-                    typeof data.message === 'string'
-                        ? data.message
-                        : 'No se pudo iniciar el pago.',
-                );
+            if (result.kind === 'redirect') {
+                window.location.href = result.approvalUrl;
                 return;
             }
 
-            if (typeof data.approval_url === 'string' && data.approval_url !== '') {
-                window.location.href = data.approval_url;
-                return;
-            }
-
-            setCheckoutError('Respuesta inesperada del servidor.');
+            setCheckoutError(result.message);
         } catch {
             setCheckoutError('Error de red. Inténtalo de nuevo.');
         } finally {
@@ -430,46 +408,23 @@ export default function MarketingCart() {
 
         setCheckoutLoading(true);
         try {
-            const res = await fetch('/checkout/paypal/simulate', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Accept: 'application/json',
-                    'X-CSRF-TOKEN': getCsrfToken(),
-                    'X-Requested-With': 'XMLHttpRequest',
-                },
-                credentials: 'same-origin',
-                body: JSON.stringify({
-                    lines: lines.map((l) => ({ plan_id: l.planId, qty: l.qty })),
-                    coupon_code: appliedCoupon,
-                }),
+            const result = await postMarketingCheckout({
+                gateway: 'paypal_simulate',
+                lines: lines.map((l) => ({ plan_id: l.planId, qty: l.qty })),
+                coupon_code: appliedCoupon,
             });
 
-            const data = (await res.json()) as {
-                message?: string;
-                approval_url?: string;
-            };
-
-            if (res.status === 401) {
+            if (result.kind === 'unauthorized') {
                 window.location.href = '/login';
                 return;
             }
 
-            if (!res.ok) {
-                setCheckoutError(
-                    typeof data.message === 'string'
-                        ? data.message
-                        : 'No se pudo iniciar el pago de prueba.',
-                );
+            if (result.kind === 'redirect') {
+                window.location.href = result.approvalUrl;
                 return;
             }
 
-            if (typeof data.approval_url === 'string' && data.approval_url !== '') {
-                window.location.href = data.approval_url;
-                return;
-            }
-
-            setCheckoutError('Respuesta inesperada del servidor.');
+            setCheckoutError(result.message);
         } catch {
             setCheckoutError('Error de red. Inténtalo de nuevo.');
         } finally {
@@ -485,46 +440,23 @@ export default function MarketingCart() {
 
         setCheckoutLoading(true);
         try {
-            const res = await fetch('/checkout/mercadopago', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Accept: 'application/json',
-                    'X-CSRF-TOKEN': getCsrfToken(),
-                    'X-Requested-With': 'XMLHttpRequest',
-                },
-                credentials: 'same-origin',
-                body: JSON.stringify({
-                    lines: lines.map((l) => ({ plan_id: l.planId, qty: l.qty })),
-                    coupon_code: appliedCoupon,
-                }),
+            const result = await postMarketingCheckout({
+                gateway: 'mercadopago',
+                lines: lines.map((l) => ({ plan_id: l.planId, qty: l.qty })),
+                coupon_code: appliedCoupon,
             });
 
-            const data = (await res.json()) as {
-                message?: string;
-                approval_url?: string;
-            };
-
-            if (res.status === 401) {
+            if (result.kind === 'unauthorized') {
                 window.location.href = '/login';
                 return;
             }
 
-            if (!res.ok) {
-                setCheckoutError(
-                    typeof data.message === 'string'
-                        ? data.message
-                        : 'No se pudo iniciar el pago con Mercado Pago.',
-                );
+            if (result.kind === 'redirect') {
+                window.location.href = result.approvalUrl;
                 return;
             }
 
-            if (typeof data.approval_url === 'string' && data.approval_url !== '') {
-                window.location.href = data.approval_url;
-                return;
-            }
-
-            setCheckoutError('Respuesta inesperada del servidor.');
+            setCheckoutError(result.message);
         } catch {
             setCheckoutError('Error de red. Inténtalo de nuevo.');
         } finally {

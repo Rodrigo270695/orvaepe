@@ -81,6 +81,8 @@ class HandleInertiaRequests extends Middleware
             'contact' => [
                 'whatsapp_e164' => (string) config('contact.whatsapp_e164'),
             ],
+            'paypalSimulateCheckout' => config('paypal.simulate_checkout') && app()->environment('local'),
+            'mercadoPagoEnabled' => trim((string) config('mercadopago.access_token')) !== '',
             'staffUnreadNotificationsCount' => fn () => $request->user()?->hasRole('superadmin')
                 ? Notification::query()->whereNull('read_at')->count()
                 : 0,

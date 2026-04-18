@@ -10,6 +10,8 @@ export default function SoftwareDetailStickyPurchaseBar({
     planReady,
     purchaseEnabled = true,
     whatsappHref,
+    payInProgress = false,
+    payError = null,
     onPay,
     onAdd,
 }: {
@@ -19,6 +21,8 @@ export default function SoftwareDetailStickyPurchaseBar({
     planReady: boolean;
     purchaseEnabled?: boolean;
     whatsappHref?: string;
+    payInProgress?: boolean;
+    payError?: string | null;
     onPay: () => void;
     onAdd: () => void;
 }) {
@@ -65,6 +69,12 @@ export default function SoftwareDetailStickyPurchaseBar({
                         ) : null}
                     </div>
 
+                    {payError?.trim() ? (
+                        <p className="text-xs leading-relaxed text-[var(--state-danger)]" role="alert">
+                            {payError}
+                        </p>
+                    ) : null}
+
                     <div className="flex flex-shrink-0 items-stretch gap-2">
                         {showConsultation && whatsappHref ? (
                             <a
@@ -85,7 +95,7 @@ export default function SoftwareDetailStickyPurchaseBar({
                             <>
                                 <button
                                     type="button"
-                                    disabled={!planReady}
+                                    disabled={!planReady || payInProgress}
                                     className={cn(
                                         'inline-flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl border px-3 py-2.5 text-sm font-semibold',
                                         'border-[color-mix(in_oklab,var(--border)_80%,transparent)]',
@@ -94,7 +104,7 @@ export default function SoftwareDetailStickyPurchaseBar({
                                         'hover:bg-[color-mix(in_oklab,var(--state-info)_10%,transparent)]',
                                         'active:scale-[0.98]',
                                         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-background',
-                                        !planReady && 'pointer-events-none opacity-45',
+                                        (!planReady || payInProgress) && 'pointer-events-none opacity-45',
                                     )}
                                     style={{
                                         borderColor: 'color-mix(in oklab, var(--state-info) 34%, var(--border))',
@@ -102,7 +112,7 @@ export default function SoftwareDetailStickyPurchaseBar({
                                     onClick={onPay}
                                 >
                                     <CreditCard className="size-3.5 shrink-0 opacity-90" aria-hidden />
-                                    Ir a pagar
+                                    {payInProgress ? 'Conectando…' : 'Ir a pagar'}
                                 </button>
                                 <button
                                     type="button"

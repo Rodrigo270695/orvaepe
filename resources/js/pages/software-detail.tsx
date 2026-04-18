@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { usePage } from '@inertiajs/react';
 
@@ -21,7 +21,11 @@ import {
 } from '@/lib/cartPricing';
 import { buildWhatsAppHref, WHATSAPP_E164 } from '@/lib/whatsapp';
 import { normalizeModuleDisplayName } from '@/lib/normalizeModuleDisplayName';
-import { readSoftwareCart, writeSoftwareCart } from '@/lib/softwareCartStorage';
+import {
+    defaultMarketingCheckoutGateway,
+    postMarketingCheckout,
+} from '@/lib/marketingCheckout';
+import { readCartCoupon, readSoftwareCart, writeSoftwareCart } from '@/lib/softwareCartStorage';
 import {
     Dialog,
     DialogContent,
@@ -80,6 +84,8 @@ type SoftwareDetailPageProps = {
     canRegister?: boolean;
     system?: SoftwareSystem | null;
     contact?: { whatsapp_e164?: string };
+    mercadoPagoEnabled?: boolean;
+    paypalSimulateCheckout?: boolean;
 };
 
 export default function SoftwareDetail() {
@@ -91,7 +97,15 @@ export default function SoftwareDetail() {
     ] as const;
 
     const page = usePage<SoftwareDetailPageProps & { seo: SeoDefaults }>();
-    const { system: systemFromServer, seo, contact } = page.props;
+    const {
+        system: systemFromServer,
+        seo,
+        contact,
+        mercadoPagoEnabled: mercadoPagoEnabledProp,
+        paypalSimulateCheckout: paypalSimulateCheckoutProp,
+    } = page.props;
+    const mercadoPagoEnabled = Boolean(mercadoPagoEnabledProp);
+    const paypalSimulateCheckout = Boolean(paypalSimulateCheckoutProp);
     const whatsappE164 =
         contact?.whatsapp_e164?.replace(/\D/g, '') || WHATSAPP_E164;
     const { url } = page;
@@ -137,10 +151,16 @@ export default function SoftwareDetail() {
     const [addedCount, setAddedCount] = useState(0);
     const [showDemoPassword, setShowDemoPassword] = useState(false);
     const [specImagePreviewUrl, setSpecImagePreviewUrl] = useState<string | null>(null);
+    const [checkoutLoading, setCheckoutLoading] = useState(false);
+    const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
     useEffect(() => {
         setSelectedPlanId(null);
     }, [systemSlug]);
+
+    useEffect(() => {
+        setCheckoutError(null);
+    }, [selectedPlanId]);
 
     const selectedPlan: SoftwarePricingPlan | null = useMemo(() => {
         if (!system) {
@@ -245,6 +265,56 @@ export default function SoftwareDetail() {
         window.setTimeout(() => setAddedCount(0), 2000);
     };
 
+    const purchaseEnabled = Boolean(selectedPlan && planHasPurchasablePrice(selectedPlan));
+
+    const handleStartCheckout = useCallback(async () => {
+        if (!selectedPlan || !purchaseEnabled) {
+            return;
+        }
+
+        setCheckoutError(null);
+        setCheckoutLoading(true);
+
+        try {
+            const gateway = defaultMarketingCheckoutGateway({
+                mercadoPagoEnabled,
+                paypalSimulateCheckout,
+            });
+            const stored = readCartCoupon();
+            const couponCode =
+                stored && typeof stored.code === 'string' && stored.code.trim() !== ''
+                    ? stored.code.trim()
+                    : null;
+
+            const result = await postMarketingCheckout({
+                gateway,
+                lines: [{ plan_id: selectedPlan.id, qty: 1 }],
+                coupon_code: couponCode,
+            });
+
+            if (result.kind === 'unauthorized') {
+                window.location.href = '/login';
+                return;
+            }
+
+            if (result.kind === 'redirect') {
+                window.location.href = result.approvalUrl;
+                return;
+            }
+
+            setCheckoutError(result.message);
+        } catch {
+            setCheckoutError('Error de red. Inténtalo de nuevo.');
+        } finally {
+            setCheckoutLoading(false);
+        }
+    }, [
+        selectedPlan,
+        purchaseEnabled,
+        mercadoPagoEnabled,
+        paypalSimulateCheckout,
+    ]);
+
     const softwareApplicationLd = useMemo((): Record<string, unknown> | undefined => {
         if (!system) {
             return undefined;
@@ -295,8 +365,6 @@ export default function SoftwareDetail() {
 
         return base;
     }, [system, seo.siteUrl]);
-
-    const purchaseEnabled = Boolean(selectedPlan && planHasPurchasablePrice(selectedPlan));
 
     const consultationWhatsAppHref = useMemo(() => {
         if (!system || !selectedPlan) {
@@ -653,11 +721,8 @@ export default function SoftwareDetail() {
                                                     key={`${step}-${i}`}
                                                     stepIndex={i + 1}
                                                 >
-                                                    <p className="text-sm font-bold leading-snug text-[var(--foreground)]">
+                                                    <p className="text-base font-bold leading-relaxed text-[var(--foreground)] sm:text-lg">
                                                         {step}
-                                                    </p>
-                                                    <p className="mt-2 text-xs leading-relaxed text-[var(--muted-foreground)]">
-                                                        Documentación y trazabilidad para que tu equipo adopte sin fricción.
                                                     </p>
                                                 </SoftwareDetailGlassCard>
                                             ))}
@@ -780,17 +845,18 @@ export default function SoftwareDetail() {
                                                     key={`${normalizeModuleDisplayName(m.name)}-${i}`}
                                                 >
                                                     <p
-                                                        className="text-sm font-semibold"
+                                                        className="text-base font-semibold leading-relaxed sm:text-lg"
                                                         style={{
                                                             color: `color-mix(in oklab, ${semanticAccents[i % semanticAccents.length]} 82%, var(--foreground))`,
                                                         }}
                                                     >
                                                         {normalizeModuleDisplayName(m.name)}
                                                     </p>
-                                                    <p className="mt-2 text-xs leading-relaxed text-[var(--muted-foreground)]">
-                                                        {m.description ??
-                                                            'Se entrega con documentación y trazabilidad para una implementación ordenada.'}
-                                                    </p>
+                                                    {m.description ? (
+                                                        <p className="mt-3 text-sm leading-relaxed text-[var(--muted-foreground)] sm:text-base">
+                                                            {m.description}
+                                                        </p>
+                                                    ) : null}
                                                 </SoftwareDetailGlassCard>
                                             ))}
                                         </div>
@@ -815,7 +881,7 @@ export default function SoftwareDetail() {
                             id="planes"
                             eyebrow="Planes"
                             title="Modelos de venta y entrega"
-                            description="Selecciona el modelo que encaje con tu operación. El pago en línea se integrará después."
+                            description="Selecciona el modelo que encaje con tu operación. El pago se completa en la pasarela (Mercado Pago o PayPal, según configuración)."
                         >
                             <div className="relative">
                                 <GeometricBackground variant="rings" opacity={0.05} />
@@ -862,8 +928,10 @@ export default function SoftwareDetail() {
                                             }
                                             priceLine={selectionPriceLine}
                                             priceCaption="Precio de lista · impuestos al confirmar en la pasarela"
+                                            payInProgress={checkoutLoading}
+                                            payError={checkoutError}
                                             onPay={() => {
-                                                alert('Checkout pendiente: integra pasarela de pagos');
+                                                void handleStartCheckout();
                                             }}
                                             onAdd={onAddToCart}
                                             addedCount={addedCount}
@@ -922,8 +990,10 @@ export default function SoftwareDetail() {
                         planReady
                         purchaseEnabled={purchaseEnabled}
                         whatsappHref={consultationWhatsAppHref || undefined}
+                        payInProgress={checkoutLoading}
+                        payError={checkoutError}
                         onPay={() => {
-                            alert('Checkout pendiente: integra pasarela de pagos');
+                            void handleStartCheckout();
                         }}
                         onAdd={onAddToCart}
                     />

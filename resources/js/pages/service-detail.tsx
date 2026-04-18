@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { usePage } from '@inertiajs/react';
 
@@ -21,7 +21,12 @@ import {
 } from '@/lib/cartPricing';
 import { buildWhatsAppHref, WHATSAPP_E164 } from '@/lib/whatsapp';
 import { normalizeModuleDisplayName } from '@/lib/normalizeModuleDisplayName';
+import {
+    defaultMarketingCheckoutGateway,
+    postMarketingCheckout,
+} from '@/lib/marketingCheckout';
 import { addMarketingCatalogSkuToCart } from '@/lib/oemCart';
+import { readCartCoupon } from '@/lib/softwareCartStorage';
 import {
     Dialog,
     DialogContent,
@@ -76,6 +81,8 @@ type ServiceDetailPageProps = {
     canRegister?: boolean;
     system?: SoftwareSystem | null;
     contact?: { whatsapp_e164?: string };
+    mercadoPagoEnabled?: boolean;
+    paypalSimulateCheckout?: boolean;
 };
 
 export default function ServiceDetail() {
@@ -87,7 +94,15 @@ export default function ServiceDetail() {
     ] as const;
 
     const page = usePage<ServiceDetailPageProps & { seo: SeoDefaults }>();
-    const { system: systemFromServer, seo, contact } = page.props;
+    const {
+        system: systemFromServer,
+        seo,
+        contact,
+        mercadoPagoEnabled: mercadoPagoEnabledProp,
+        paypalSimulateCheckout: paypalSimulateCheckoutProp,
+    } = page.props;
+    const mercadoPagoEnabled = Boolean(mercadoPagoEnabledProp);
+    const paypalSimulateCheckout = Boolean(paypalSimulateCheckoutProp);
     const whatsappE164 =
         contact?.whatsapp_e164?.replace(/\D/g, '') || WHATSAPP_E164;
     const { url } = page;
@@ -138,10 +153,16 @@ export default function ServiceDetail() {
     const [addedCount, setAddedCount] = useState(0);
     const [showDemoPassword, setShowDemoPassword] = useState(false);
     const [specImagePreviewUrl, setSpecImagePreviewUrl] = useState<string | null>(null);
+    const [checkoutLoading, setCheckoutLoading] = useState(false);
+    const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
     useEffect(() => {
         setSelectedPlanId(null);
     }, [systemSlug]);
+
+    useEffect(() => {
+        setCheckoutError(null);
+    }, [selectedPlanId]);
 
     const visiblePlans = useMemo((): SoftwarePricingPlan[] => {
         if (!system) {
@@ -295,6 +316,54 @@ export default function ServiceDetail() {
     }, [system, seo.siteUrl, visiblePlans]);
 
     const purchaseEnabled = Boolean(selectedPlan && planHasPurchasablePrice(selectedPlan));
+
+    const handleStartCheckout = useCallback(async () => {
+        if (!selectedPlan || !purchaseEnabled) {
+            return;
+        }
+
+        setCheckoutError(null);
+        setCheckoutLoading(true);
+
+        try {
+            const gateway = defaultMarketingCheckoutGateway({
+                mercadoPagoEnabled,
+                paypalSimulateCheckout,
+            });
+            const stored = readCartCoupon();
+            const couponCode =
+                stored && typeof stored.code === 'string' && stored.code.trim() !== ''
+                    ? stored.code.trim()
+                    : null;
+
+            const result = await postMarketingCheckout({
+                gateway,
+                lines: [{ plan_id: selectedPlan.id, qty: 1 }],
+                coupon_code: couponCode,
+            });
+
+            if (result.kind === 'unauthorized') {
+                window.location.href = '/login';
+                return;
+            }
+
+            if (result.kind === 'redirect') {
+                window.location.href = result.approvalUrl;
+                return;
+            }
+
+            setCheckoutError(result.message);
+        } catch {
+            setCheckoutError('Error de red. Inténtalo de nuevo.');
+        } finally {
+            setCheckoutLoading(false);
+        }
+    }, [
+        selectedPlan,
+        purchaseEnabled,
+        mercadoPagoEnabled,
+        paypalSimulateCheckout,
+    ]);
 
     const consultationWhatsAppHref = useMemo(() => {
         if (!system || !selectedPlan) {
@@ -860,8 +929,10 @@ export default function ServiceDetail() {
                                             }
                                             priceLine={selectionPriceLine}
                                             priceCaption="Precio de lista · impuestos al confirmar en la pasarela"
+                                            payInProgress={checkoutLoading}
+                                            payError={checkoutError}
                                             onPay={() => {
-                                                alert('Checkout pendiente: integra pasarela de pagos');
+                                                void handleStartCheckout();
                                             }}
                                             onAdd={onAddToCart}
                                             addedCount={addedCount}
@@ -929,8 +1000,10 @@ export default function ServiceDetail() {
                         planReady
                         purchaseEnabled={purchaseEnabled}
                         whatsappHref={consultationWhatsAppHref || undefined}
+                        payInProgress={checkoutLoading}
+                        payError={checkoutError}
                         onPay={() => {
-                            alert('Checkout pendiente: integra pasarela de pagos');
+                            void handleStartCheckout();
                         }}
                         onAdd={onAddToCart}
                     />

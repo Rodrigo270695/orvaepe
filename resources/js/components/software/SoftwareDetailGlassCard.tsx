@@ -44,7 +44,7 @@ export default function SoftwareDetailGlassCard({
             <div className="relative flex gap-4">
                 {stepIndex !== undefined && (
                     <div
-                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[color-mix(in_oklab,var(--state-alert)_35%,var(--border))] bg-[color-mix(in_oklab,var(--state-alert)_10%,transparent)] font-[family-name:var(--font-mono)] text-sm font-bold text-[var(--state-alert)]"
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[color-mix(in_oklab,var(--state-alert)_35%,var(--border))] bg-[color-mix(in_oklab,var(--state-alert)_10%,transparent)] font-[family-name:var(--font-mono)] text-base font-bold text-[var(--state-alert)]"
                         aria-hidden
                     >
                         {stepIndex}
