@@ -848,4 +848,95 @@ Un **ticket** es el contenedor del caso; los **mensajes** forman el hilo (client
 
 *Enlaces útiles oficiales: [Orientación SUNAT — emisor electrónico](https://orientacion.sunat.gob.pe/01condiciones-para-ser-emisor-electronico-y-para-emitir-comprobantes-electronicos), [CPE — información general / OSE](https://cpe.sunat.gob.pe/informacion_general/operador_servicios_electronicos).*
 
+---
+
+## Ventas — Cotizaciones / presupuestos (`quotes`, `quote_lines`)
+
+Presupuesto **previo** al pedido (`orders`): la vista de cotización en tu sistema lista y edita `quotes`, con ítems en `quote_lines`. No depende de que exista un **cliente dado de alta** en tu backoffice: muchas ventas B2B empiezan con RUC y razón social capturados solo en la cotización (el alta en web puede venir después).
+
+Cuando el cliente acepta, conviertes a `orders` + `order_lines` (o clonas líneas) y guardas `converted_order_id`.
+
+**Orden sugerido de migración:** después de `users`, `catalog_skus` y `orders` (por la FK opcional `converted_order_id` → `orders.id`; si prefieres, crea `quotes` sin esa FK y añádela en una migración posterior).
+
+### Cliente registrado vs no registrado (y Perú)
+
+- Si **`user_id`** no es null: puedes **precargar** razón social / RUC desde `user_profiles` (o la fuente fiscal que uses), pero la UI de cotización debe permitir **corregir solo para este documento** sin crear “ficha de cliente” en otro módulo.
+- Si **`user_id`** es null (lead / cliente solo cotización): los campos **`customer_*`** siguientes son los que usa el PDF y, más adelante, el borrador de factura; en aplicación sueles **validar obligatorios** al pasar a `sent` (razón social + tipo/número de documento mínimo).
+
+Documento del cliente (SUNAT / facturación): conviene alinear **tipo de documento** con catálogo de identidad (ej. `6` RUC, `1` DNI) como en tus líneas fiscales, aunque el valor lo guardes como string.
+
+### `quotes`
+
+| Campo | Tipo | Notas |
+|-------|------|--------|
+| `id` | uuid | PK |
+| `quote_number` | string | Único; correlativo legible (ej. `COT-2026-00042`) |
+| `user_id` | bigint | Nullable, FK → `users` — si el cliente ya tiene cuenta; si no, null |
+| `created_by` | bigint | Nullable, FK → `users` — vendedor/staff que arma la cotización |
+| `status` | string | ej. `draft`, `sent`, `viewed`, `accepted`, `rejected`, `expired`, `converted` |
+| `currency` | string | ISO 4217 (3); en Perú lo típico es `PEN` (coherente con `catalog_skus` / pedidos) |
+| `subtotal` | decimal(12,2) | Base imponible / valor de venta según cómo calcules en UI (ver nota IGV abajo) |
+| `discount_total` | decimal(12,2) | Default 0 — suma de descuentos de cabecera **más** líneas, o solo cabecera; define una regla única en el backend |
+| `tax_total` | decimal(12,2) | Default 0 — en Perú normalmente **IGV** cuando corresponde |
+| `grand_total` | decimal(12,2) | Total al cliente |
+| `title` | string | Nullable; asunto interno o título visible al cliente |
+| `customer_legal_name` | string | Nullable; **razón social** o nombre completo del destinatario (obligatorio en reglas de negocio si `user_id` null y envías cotización formal) |
+| `customer_document_type` | string | Nullable; ej. código SUNAT de tipo de documento de identidad (`6` RUC, `1` DNI, etc.) |
+| `customer_document_number` | string | Nullable; RUC (11) / DNI (8) / otro según tipo |
+| `customer_email` | string | Nullable |
+| `customer_phone` | string | Nullable |
+| `customer_address` | text | Nullable; dirección fiscal o de contacto en PDF |
+| `customer_snapshot` | jsonb | Nullable; **complemento** (cargo, referencia, ubigeo, “atención a…”) sin sustituir RUC/razón social si ya van en columnas |
+| `billing_snapshot` | jsonb | Nullable; copia fiscal útil al convertir a pedido o emitir CPE (misma filosofía que `orders.billing_snapshot`) |
+| `notes_customer` | text | Nullable; términos visibles al cliente en PDF/UI |
+| `notes_internal` | text | Nullable; solo backoffice |
+| `valid_until` | date o timestamp | Nullable; caducidad comercial de la oferta |
+| `sent_at` | timestamp | Nullable |
+| `responded_at` | timestamp | Nullable; aceptación/rechazo explícito si lo registras |
+| `converted_order_id` | uuid | Nullable, FK → `orders` — pedido generado desde esta cotización |
+| `public_share_token` | string | Nullable, único; token opaco para enlace “ver cotización” sin login (opcional) |
+| `metadata` | jsonb | Nullable (origen, campaña, idioma, etc.) |
+| `created_at`, `updated_at` | timestamp | |
+
+Índices recomendados: `(user_id, status)`, `(status, created_at)`, `valid_until`, `converted_order_id`, `public_share_token` único parcial donde no sea null; búsqueda por RUC: `(customer_document_type, customer_document_number)` si filtras cotizaciones por documento.
+
+### `quote_lines`
+
+Cada línea puede venir de **catálogo** (`catalog_sku_id`) o ser **ad-hoc** (sin SKU: servicio único, fee, texto libre). El **precio unitario** y los flags fiscales son los de **esta cotización**, no los del catálogo: al agregar desde SKU, la UI copia `list_price`, `tax_included`, `igv_applies` del SKU y el usuario puede **cambiar solo aquí** (no modifica `catalog_skus`).
+
+| Campo | Tipo | Notas |
+|-------|------|--------|
+| `id` | uuid | PK |
+| `quote_id` | uuid | FK → `quotes` (recomendado `cascadeOnDelete`) |
+| `catalog_sku_id` | uuid | Nullable, FK → `catalog_skus` — null = línea manual; si no null, `restrictOnDelete` (como `order_lines`) |
+| `catalog_product_id` | uuid | Nullable, FK → `catalog_products` — opcional; útil en informes si el SKU es null pero el ítem sigue un producto |
+| `product_name_snapshot` | string | Título visible (producto o concepto) |
+| `sku_name_snapshot` | string | Nullable en líneas manuales; en catálogo, nombre de la variante |
+| `quantity` | unsigned int | Default 1 |
+| `unit_price` | decimal(12,2) | **Precio cotizado** en esta línea (puede ≠ `catalog_skus.list_price`) |
+| `tax_included` | boolean | Default false; alineado a `catalog_skus.tax_included` al insertar, editable — indica si `unit_price` **ya incluye** IGV o va **sin** IGV |
+| `igv_applies` | boolean | Default true; alineado a `catalog_skus.igv_applies` al insertar, editable — **Perú**: si false, ítem exonerado/inafecto/no gravado según tu política (detalle fino puede ir en `metadata` con código de tipo de afectación SUNAT cuando exista) |
+| `tax_rate` | decimal(8,4) | Nullable; tasa IGV cuando aplica (ej. `0.18`); si `igv_applies = false`, típicamente `0` o null |
+| `line_discount` | decimal(12,2) | Default 0 — descuento **en monto** sobre la línea (antes o después de IGV según regla que fijes y documentes en el servicio de cálculo) |
+| `line_discount_percent` | decimal(5,2) | Nullable; si la UI captura %, puedes persistirlo y derivar `line_discount`, o dejar solo uno en BD y calcular el otro en app |
+| `tax_amount` | decimal(12,2) | Default 0 — IGV de la línea (o 0) |
+| `line_total` | decimal(12,2) | Total línea al cliente (coherente con cabecera) |
+| `sort_order` | unsigned int | Nullable; orden en PDF/UI |
+| `metadata` | jsonb | Nullable (código SUNAT producto, tipo de afectación del IGV, glosas, etc.) |
+| `created_at`, `updated_at` | timestamp | |
+
+**Cálculo IGV (Perú):** centraliza en un servicio: según `tax_included` e `igv_applies` obtienes base imponible e IGV (tasa por defecto 18% mientras norma vigente lo sea), luego aplicas `line_discount` según la convención elegida (lo más claro para B2B es precio sin IGV + IGV al final, o todo explícito en PDF). Los totales de `quotes` deben ser la **suma** de líneas ± descuento de cabecera si lo usas.
+
+Índices: `(quote_id)`, `(catalog_sku_id)` parcial donde no sea null.
+
+### Flujo mínimo en producto
+
+1. Staff crea `quotes` en `draft`: elige cliente con cuenta (**`user_id`**) o deja sin cuenta y completa **`customer_legal_name`**, **`customer_document_type`**, **`customer_document_number`**, contacto.  
+2. Agrega `quote_lines`: desde catálogo (rellena snapshots y precio/IGV desde SKU, luego **edita** precio, descuento, aplica o no IGV) o línea manual (`catalog_sku_id` null).  
+3. `sent` + PDF o enlace con `public_share_token` (si aplica).  
+4. Aceptación → creas `orders` / `order_lines`, copias snapshots y decisión fiscal que necesite el checkout/factura, marcas `status = converted` y `converted_order_id`.  
+5. Rechazo o paso de `valid_until` → `rejected` / `expired` sin pedido.
+
+---
+
 

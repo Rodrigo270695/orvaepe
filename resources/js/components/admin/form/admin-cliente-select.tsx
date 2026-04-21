@@ -11,6 +11,17 @@ export type ClienteUserOption = {
     id: number;
     name: string;
     email: string;
+    lastname?: string | null;
+    document_number?: string | null;
+    profile?: {
+        legal_name: string | null;
+        company_name: string | null;
+        ruc: string | null;
+        billing_email: string | null;
+        phone: string | null;
+        address: string | null;
+        city: string | null;
+    } | null;
 };
 
 type Props = {
@@ -43,11 +54,25 @@ export default function AdminClienteSelect({
 }: Props) {
     const options = React.useMemo<SearchableSelectOption[]>(
         () =>
-            users.map((u) => ({
-                value: String(u.id),
-                label: `${u.name} (${u.email})`,
-                searchTerms: [u.name, u.email],
-            })),
+            users.map((u) => {
+                const displayName =
+                    [u.name, u.lastname].filter(Boolean).join(' ').trim() ||
+                    u.name;
+                const terms = [
+                    u.name,
+                    u.lastname,
+                    u.email,
+                    u.document_number,
+                    u.profile?.ruc,
+                    u.profile?.legal_name,
+                    u.profile?.company_name,
+                ].filter((x): x is string => Boolean(x && String(x).trim()));
+                return {
+                    value: String(u.id),
+                    label: `${displayName} (${u.email})`,
+                    searchTerms: terms,
+                };
+            }),
         [users],
     );
 

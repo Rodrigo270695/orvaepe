@@ -38,6 +38,7 @@ use App\Http\Controllers\Marketing\MarketingSoftwareDetailController;
 use App\Http\Controllers\Marketing\ResolveCartSkuPricesController;
 use App\Http\Controllers\Marketing\ValidateMarketingCouponController;
 use App\Http\Controllers\Sales\OrdersController;
+use App\Http\Controllers\Sales\QuotesController;
 use App\Http\Controllers\Seo\RobotsController;
 use App\Http\Controllers\Seo\SitemapController;
 use App\Http\Controllers\Sunat\CompanyLegalProfilesController;
@@ -318,6 +319,27 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Ventas — Pagos (pasarela; tabla `payments` cuando se integre el gateway)
         Route::get('panel/ventas-pagos', [VentasPagosController::class, 'index'])
             ->name('panel.ventas-pagos.index');
+
+        Route::get('panel/ventas-cotizaciones', [QuotesController::class, 'index'])
+            ->name('panel.ventas-cotizaciones.index');
+
+        Route::get('panel/ventas-cotizaciones/create', [QuotesController::class, 'create'])
+            ->name('panel.ventas-cotizaciones.create');
+
+        Route::post('panel/ventas-cotizaciones', [QuotesController::class, 'store'])
+            ->name('panel.ventas-cotizaciones.store');
+
+        Route::get('panel/ventas-cotizaciones/{quote}/pdf', [QuotesController::class, 'pdf'])
+            ->name('panel.ventas-cotizaciones.pdf');
+
+        Route::post('panel/ventas-cotizaciones/{quote}/send-email', [QuotesController::class, 'sendEmail'])
+            ->name('panel.ventas-cotizaciones.send-email');
+
+        Route::delete('panel/ventas-cotizaciones/{quote}', [QuotesController::class, 'destroy'])
+            ->name('panel.ventas-cotizaciones.destroy');
+
+        Route::get('panel/ventas-cotizaciones/{quote}', [QuotesController::class, 'show'])
+            ->name('panel.ventas-cotizaciones.show');
 
         Route::get('panel/ventas-suscripciones', [SubscriptionsController::class, 'index'])
             ->name('panel.ventas-suscripciones.index');

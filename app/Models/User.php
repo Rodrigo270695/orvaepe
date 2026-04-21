@@ -78,4 +78,24 @@ class User extends Authenticatable
     {
         return $this->hasMany(Notification::class);
     }
+
+    /**
+     * Cotizaciones donde este usuario es el cliente (cuenta registrada).
+     *
+     * @return HasMany<Quote, $this>
+     */
+    public function quotes(): HasMany
+    {
+        return $this->hasMany(Quote::class, 'user_id');
+    }
+
+    /**
+     * Cotizaciones creadas por este usuario (staff / vendedor).
+     *
+     * @return HasMany<Quote, $this>
+     */
+    public function quotesAuthored(): HasMany
+    {
+        return $this->hasMany(Quote::class, 'created_by');
+    }
 }

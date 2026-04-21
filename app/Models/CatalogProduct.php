@@ -66,5 +66,12 @@ class CatalogProduct extends Model
     {
         return $this->hasMany(SoftwareRelease::class, 'catalog_product_id');
     }
-}
 
+    /**
+     * @return HasMany<QuoteLine, $this>
+     */
+    public function quoteLines(): HasMany
+    {
+        return $this->hasMany(QuoteLine::class, 'catalog_product_id');
+    }
+}

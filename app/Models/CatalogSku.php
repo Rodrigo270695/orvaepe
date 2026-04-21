@@ -92,5 +92,12 @@ class CatalogSku extends Model
     {
         return $this->hasMany(LicenseKey::class, 'catalog_sku_id');
     }
-}
 
+    /**
+     * @return HasMany<QuoteLine, $this>
+     */
+    public function quoteLines(): HasMany
+    {
+        return $this->hasMany(QuoteLine::class, 'catalog_sku_id');
+    }
+}

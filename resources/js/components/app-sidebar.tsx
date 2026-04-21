@@ -7,6 +7,7 @@ import {
     CreditCard,
     GitBranch,
     FileSearch,
+    FileText,
     KeyRound,
     LayoutGrid,
     LifeBuoy,
@@ -123,6 +124,11 @@ const adminSections: NavSidebarSection[] = [
                         title: 'Órdenes',
                         href: panelPath('ventas-ordenes'),
                         icon: ShoppingCart,
+                    },
+                    {
+                        title: 'Cotizaciones',
+                        href: panelPath('ventas-cotizaciones'),
+                        icon: FileText,
                     },
                     {
                         title: 'Pagos',

@@ -18,6 +18,7 @@ export const panelSectionLabels: Record<string, string> = {
     'catalogo-releases': 'Versiones y releases',
     // Ventas
     'ventas-ordenes': 'Órdenes',
+    'ventas-cotizaciones': 'Cotizaciones',
     'ventas-pagos': 'Pagos',
     'ventas-facturas': 'Facturas',
     'ventas-suscripciones': 'Suscripciones',
