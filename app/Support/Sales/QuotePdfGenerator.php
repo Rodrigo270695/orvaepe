@@ -6,10 +6,22 @@ use App\Models\CompanyLegalProfile;
 use App\Models\Quote;
 use App\Support\Users\StaffDisplayName;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
 final class QuotePdfGenerator
 {
+    /** Tamaño máximo del archivo de logo leído del disco (bytes). Logos mayores se reducen con GD si existe. */
+    private const LOGO_READ_MAX_BYTES = 2_500_000;
+
+    /** Objetivo máximo de ancho/alto en píxeles del bitmap embebido (la vista PDF muestra ~48px de alto). */
+    private const LOGO_EMBED_MAX_WIDTH = 420;
+
+    private const LOGO_EMBED_MAX_HEIGHT = 140;
+
+    /** DPI más bajo = menos trabajo de DomPDF; 72 suele verse bien en A4 para cotizaciones. */
+    private const DOMPDF_DPI = 72;
+
     public static function loadQuoteForPdf(Quote $quote): void
     {
         $quote->load([
@@ -33,21 +45,7 @@ final class QuotePdfGenerator
             ->orderBy('created_at')
             ->first();
 
-        $logoDataUri = null;
-        if ($issuer && $issuer->logo_path && Storage::disk('public')->exists($issuer->logo_path)) {
-            $bytes = Storage::disk('public')->get($issuer->logo_path);
-            $ext = strtolower(pathinfo($issuer->logo_path, PATHINFO_EXTENSION));
-            $mime = match ($ext) {
-                'png' => 'image/png',
-                'jpg', 'jpeg' => 'image/jpeg',
-                'gif' => 'image/gif',
-                'webp' => 'image/webp',
-                default => null,
-            };
-            if ($mime !== null) {
-                $logoDataUri = 'data:'.$mime.';base64,'.base64_encode($bytes);
-            }
-        }
+        $logoDataUri = self::issuerLogoDataUri($issuer);
 
         $issuerLegalName = $issuer?->legal_name ?? '—';
         $issuerRuc = $issuer?->ruc ?? '—';
@@ -192,8 +190,132 @@ final class QuotePdfGenerator
         $viewData = self::viewData($quote);
         $pdf = Pdf::loadView('pdf.quote', $viewData);
         $pdf->setPaper('a4', 'portrait');
+        $pdf->setOption('dpi', self::DOMPDF_DPI);
+        $pdf->setOption('isRemoteEnabled', false);
 
         return $pdf->output();
+    }
+
+    private static function issuerLogoDataUri(?CompanyLegalProfile $issuer): ?string
+    {
+        if ($issuer === null || $issuer->logo_path === null || trim($issuer->logo_path) === '') {
+            return null;
+        }
+
+        $disk = Storage::disk('public');
+        $path = $issuer->logo_path;
+
+        if (! $disk->exists($path)) {
+            return null;
+        }
+
+        $mtime = 0;
+        try {
+            $mtime = $disk->lastModified($path);
+        } catch (\Throwable) {
+        }
+
+        $cacheKey = 'quote.pdf.logo.'.md5($path).'|'.$mtime;
+
+        return Cache::remember($cacheKey, 3600, function () use ($disk, $path): ?string {
+            $bytes = $disk->get($path);
+            if (! is_string($bytes) || $bytes === '') {
+                return null;
+            }
+
+            if (strlen($bytes) > self::LOGO_READ_MAX_BYTES) {
+                return null;
+            }
+
+            $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+
+            return self::bytesToEmbeddedLogoDataUri($bytes, $ext);
+        });
+    }
+
+    private static function bytesToEmbeddedLogoDataUri(string $bytes, string $ext): ?string
+    {
+        $mime = match ($ext) {
+            'png' => 'image/png',
+            'jpg', 'jpeg' => 'image/jpeg',
+            'gif' => 'image/gif',
+            'webp' => 'image/webp',
+            default => null,
+        };
+
+        if ($mime === null) {
+            return null;
+        }
+
+        if (extension_loaded('gd') && function_exists('imagecreatefromstring')) {
+            $optimized = self::downscaleImageBytesForPdf($bytes, $ext);
+            if ($optimized !== null) {
+                [$outMime, $outBytes] = $optimized;
+
+                return 'data:'.$outMime.';base64,'.base64_encode($outBytes);
+            }
+        }
+
+        if (strlen($bytes) > 400_000) {
+            return null;
+        }
+
+        return 'data:'.$mime.';base64,'.base64_encode($bytes);
+    }
+
+    /**
+     * @return array{0: string, 1: string}|null [mime, binary]
+     */
+    private static function downscaleImageBytesForPdf(string $bytes, string $ext): ?array
+    {
+        $im = @imagecreatefromstring($bytes);
+        if ($im === false) {
+            return null;
+        }
+
+        $w = imagesx($im);
+        $h = imagesy($im);
+        if ($w < 1 || $h < 1) {
+            imagedestroy($im);
+
+            return null;
+        }
+
+        $work = $im;
+        $scale = min(self::LOGO_EMBED_MAX_WIDTH / $w, self::LOGO_EMBED_MAX_HEIGHT / $h, 1.0);
+        if ($scale < 1.0) {
+            $nw = max(1, (int) round($w * $scale));
+            $nh = max(1, (int) round($h * $scale));
+            $scaled = imagescale($im, $nw, $nh, IMG_BILINEAR_FIXED);
+            if ($scaled !== false) {
+                imagedestroy($im);
+                $work = $scaled;
+            }
+        }
+
+        try {
+            ob_start();
+            if ($ext === 'png' || $ext === 'gif') {
+                imagesavealpha($work, true);
+                imagepng($work, null, 6);
+                $outMime = 'image/png';
+            } elseif ($ext === 'webp' && function_exists('imagewebp')) {
+                imagewebp($work, null, 82);
+                $outMime = 'image/webp';
+            } else {
+                imagejpeg($work, null, 82);
+                $outMime = 'image/jpeg';
+            }
+
+            $out = ob_get_clean();
+            if (! is_string($out) || $out === '') {
+                return null;
+            }
+
+            return [$outMime, $out];
+        } finally {
+            imagedestroy($work);
+        }
     }
 
     public static function attachmentFilename(Quote $quote): string
