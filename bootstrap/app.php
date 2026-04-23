@@ -79,6 +79,22 @@ return Application::configure(basePath: dirname(__DIR__))
                 return null;
             }
 
+            // Siempre que pintamos la página de error Inertia, dejamos rastro aquí:
+            // report() a veces no escribe (LOG_CHANNEL, permisos) y reportable puede no ejecutarse.
+            if ($status === 500) {
+                $payload = sprintf(
+                    "[%s] HTTP 500 (render handler) | %s: %s | %s:%d\n%s\n\n",
+                    now()->toIso8601String(),
+                    $e::class,
+                    $e->getMessage(),
+                    $e->getFile(),
+                    $e->getLine(),
+                    $e->getTraceAsString()
+                );
+                error_log('[ORVAE render-500] '.$e::class.': '.$e->getMessage().' @ '.$e->getFile().':'.$e->getLine());
+                @file_put_contents(storage_path('logs/orvae-fallback.log'), $payload, FILE_APPEND | LOCK_EX);
+            }
+
             try {
                 return Inertia::render("errors/{$status}")
                     ->toResponse($request)
