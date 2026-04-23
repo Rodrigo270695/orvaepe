@@ -30,7 +30,7 @@ export default function AccesoClientesToolbar({ totalUsers }: Props) {
                     <span className="font-mono font-semibold text-foreground">
                         {totalUsers}
                     </span>{' '}
-                    en el rango y filtros actuales
+                    en los filtros actuales
                 </div>
             </div>
         </NeuCardRaised>

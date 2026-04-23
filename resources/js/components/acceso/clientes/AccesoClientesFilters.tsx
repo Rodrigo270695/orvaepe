@@ -1,17 +1,12 @@
-import VentasOrdenesDateRangeFilter from '@/components/sales/orders/VentasOrdenesDateRangeFilter';
 import VentasSuscripcionesSearch from '@/components/sales/subscriptions/VentasSuscripcionesSearch';
 
 type Props = {
     initialQuery: string;
-    initialDateFrom: string;
-    initialDateTo: string;
     className?: string;
 };
 
 export default function AccesoClientesFilters({
     initialQuery,
-    initialDateFrom,
-    initialDateTo,
     className,
 }: Props) {
     return (
@@ -21,16 +16,13 @@ export default function AccesoClientesFilters({
                 className ?? '',
             ].join(' ')}
         >
-            <div className="w-full min-w-0 max-w-sm sm:w-auto">
+            <div className="w-full min-w-0 max-w-md sm:w-auto">
                 <VentasSuscripcionesSearch
                     initialQuery={initialQuery}
+                    wide
                     placeholder="Cliente, correo o N° documento…"
                 />
             </div>
-            <VentasOrdenesDateRangeFilter
-                initialDateFrom={initialDateFrom}
-                initialDateTo={initialDateTo}
-            />
         </div>
     );
 }

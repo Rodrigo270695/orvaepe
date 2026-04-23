@@ -12,8 +12,6 @@ import { formatClientFullName } from '@/components/sales/orders/orderDisplay';
 type Props = {
     users: any;
     initialQuery: string;
-    initialDateFrom: string;
-    initialDateTo: string;
     initialSortBy: string;
     initialSortDir: 'asc' | 'desc';
 };
@@ -35,8 +33,6 @@ function formatDateTime(iso: string) {
 export default function AccesoClientesIndex({
     users,
     initialQuery,
-    initialDateFrom,
-    initialDateTo,
     initialSortBy,
     initialSortDir,
 }: Props) {
@@ -81,7 +77,7 @@ export default function AccesoClientesIndex({
     );
 
     const emptyState =
-        'No hay usuarios cliente en este rango. Ajusta fechas o búsqueda o registra cuentas con rol client.';
+        'No hay usuarios cliente con los filtros actuales. Ajusta la búsqueda o registra cuentas con rol client.';
 
     const columns: AdminCrudTableColumn<ClientUserRow>[] = [
         {
@@ -159,8 +155,6 @@ export default function AccesoClientesIndex({
             renderAboveTable={() => (
                 <AccesoClientesFilters
                     initialQuery={initialQuery}
-                    initialDateFrom={initialDateFrom}
-                    initialDateTo={initialDateTo}
                     className="mt-1"
                 />
             )}

@@ -26,21 +26,6 @@ class ClientUsersController extends Controller
             $sortDir = 'desc';
         }
 
-        $dateFrom = trim((string) $request->query('date_from', ''));
-        $dateTo = trim((string) $request->query('date_to', ''));
-        $datePattern = '/^\d{4}-\d{2}-\d{2}$/';
-        $validFrom = $dateFrom !== '' && preg_match($datePattern, $dateFrom);
-        $validTo = $dateTo !== '' && preg_match($datePattern, $dateTo);
-
-        if (! $validFrom || ! $validTo) {
-            $params = array_merge($request->query(), [
-                'date_from' => now()->startOfMonth()->format('Y-m-d'),
-                'date_to' => now()->endOfMonth()->format('Y-m-d'),
-            ]);
-
-            return redirect()->route('panel.acceso-clientes.index', $params);
-        }
-
         $query = User::query()
             ->role('client')
             ->select([
@@ -66,9 +51,6 @@ class ClientUsersController extends Controller
             });
         }
 
-        $query->whereDate('created_at', '>=', $dateFrom);
-        $query->whereDate('created_at', '<=', $dateTo);
-
         $allowedSortBy = [
             'name',
             'email',
@@ -92,8 +74,6 @@ class ClientUsersController extends Controller
             'users' => $users,
             'filters' => [
                 'q' => $q,
-                'date_from' => $dateFrom,
-                'date_to' => $dateTo,
                 'sort_by' => $sortBy,
                 'sort_dir' => $sortDir,
             ],

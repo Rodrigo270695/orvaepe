@@ -10,8 +10,6 @@ type Props = {
     users: any;
     filters?: {
         q?: string;
-        date_from?: string;
-        date_to?: string;
         sort_by?: string;
         sort_dir?: 'asc' | 'desc';
     };
@@ -32,8 +30,6 @@ export default function AccesoClientesPage({ users, filters }: Props) {
                 <AccesoClientesIndex
                     users={users}
                     initialQuery={filters?.q ?? ''}
-                    initialDateFrom={filters?.date_from ?? ''}
-                    initialDateTo={filters?.date_to ?? ''}
                     initialSortBy={filters?.sort_by ?? 'created_at'}
                     initialSortDir={filters?.sort_dir ?? 'desc'}
                 />
