@@ -14,7 +14,7 @@ const footerNav = [
     { href: '/software', label: 'Software' },
     { href: '/licencias', label: 'Precios' },
     { href: '/servicios', label: 'Servicios' },
-    { href: '/privacidad', label: 'Privacidad' },
+    { href: '/privacidad', label: 'Privacidad', newTab: true },
     { href: '#contacto', label: 'Contacto', isAnchor: true },
     { href: '/', label: 'Inicio' },
 ] as const;
@@ -88,13 +88,25 @@ export default function WelcomeFooter() {
                                         {item.label}
                                     </a>
                                 ) : (
-                                    <Link
-                                        key={item.href}
-                                        href={item.href}
-                                        className="rounded-lg py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-[color-mix(in_oklab,var(--foreground)_4%,transparent)] hover:text-[var(--o-amber)] dark:hover:text-[var(--o-tech2)]"
-                                    >
-                                        {item.label}
-                                    </Link>
+                                    item.newTab ? (
+                                        <a
+                                            key={item.href}
+                                            href={item.href}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="rounded-lg py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-[color-mix(in_oklab,var(--foreground)_4%,transparent)] hover:text-[var(--o-amber)] dark:hover:text-[var(--o-tech2)]"
+                                        >
+                                            {item.label}
+                                        </a>
+                                    ) : (
+                                        <Link
+                                            key={item.href}
+                                            href={item.href}
+                                            className="rounded-lg py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-[color-mix(in_oklab,var(--foreground)_4%,transparent)] hover:text-[var(--o-amber)] dark:hover:text-[var(--o-tech2)]"
+                                        >
+                                            {item.label}
+                                        </Link>
+                                    )
                                 ),
                             )}
                             <a

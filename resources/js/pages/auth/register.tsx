@@ -309,6 +309,8 @@ export default function Register() {
                                     Acepto la{' '}
                                     <TextLink
                                         href="/privacidad"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
                                         className="font-medium text-[var(--auth-link)] hover:text-[var(--auth-link-hover)]"
                                     >
                                         Política de privacidad
