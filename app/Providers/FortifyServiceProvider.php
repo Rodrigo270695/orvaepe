@@ -4,9 +4,11 @@ namespace App\Providers;
 
 use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
+use App\Fortify\ResilientLoginRateLimiter;
 use App\Http\Responses\LoginResponse;
 use App\Http\Responses\RegisterResponse;
 use App\Models\User;
+use Illuminate\Cache\RateLimiter as CacheRateLimiter;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
@@ -20,6 +22,7 @@ use Laravel\Fortify\Contracts\LoginResponse as LoginResponseContract;
 use Laravel\Fortify\Contracts\RegisterResponse as RegisterResponseContract;
 use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
+use Laravel\Fortify\LoginRateLimiter;
 
 class FortifyServiceProvider extends ServiceProvider
 {
@@ -28,6 +31,10 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->app->bind(LoginRateLimiter::class, function ($app): LoginRateLimiter {
+            return new ResilientLoginRateLimiter($app->make(CacheRateLimiter::class));
+        });
+
         $this->app->singleton(LoginResponseContract::class, LoginResponse::class);
         $this->app->singleton(RegisterResponseContract::class, RegisterResponse::class);
     }
