@@ -307,14 +307,14 @@ export default function Register() {
                                 />
                                 <span className="text-xs leading-relaxed text-[var(--muted-foreground)]">
                                     Acepto la{' '}
-                                    <TextLink
+                                    <a
                                         href="/privacidad"
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="font-medium text-[var(--auth-link)] hover:text-[var(--auth-link-hover)]"
+                                        className="font-medium text-[var(--auth-link)] underline decoration-[var(--auth-link)]/35 underline-offset-4 hover:text-[var(--auth-link-hover)] hover:decoration-[var(--auth-link-hover)]"
                                     >
                                         Política de privacidad
-                                    </TextLink>
+                                    </a>
                                     .
                                 </span>
                             </label>
