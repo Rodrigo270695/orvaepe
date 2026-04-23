@@ -13,7 +13,6 @@ use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Spatie\Permission\Middleware\RoleMiddleware;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
-use Throwable;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
