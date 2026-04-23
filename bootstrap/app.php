@@ -68,6 +68,12 @@ return Application::configure(basePath: dirname(__DIR__))
                 return null;
             }
 
+            // ValidationException no implementa HttpExceptionInterface; si no la excluimos,
+            // el código de abajo asume status 500 y rompe el flujo 422 de Inertia (login, forms, etc.).
+            if ($e instanceof ValidationException) {
+                return null;
+            }
+
             if ($request->expectsJson()) {
                 return null;
             }
