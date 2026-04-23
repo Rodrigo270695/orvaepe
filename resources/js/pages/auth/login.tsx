@@ -1,4 +1,4 @@
-import { Form, Head } from '@inertiajs/react';
+import { Form, Head, usePage } from '@inertiajs/react';
 import { Eye, EyeOff, Lock, ShieldCheck, User } from 'lucide-react';
 import { useState } from 'react';
 import InputError from '@/components/input-error';
@@ -10,6 +10,24 @@ import { inertiaFormProps } from '@/lib/inertia-form-props';
 
 const inputUnderlineClassName =
     'w-full border-0 border-b border-[var(--o-border2)] bg-transparent py-3 pl-9 pr-3 font-[family-name:var(--font-body)] text-sm text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:border-[var(--auth-focus-border)] focus:outline-none transition-colors duration-150';
+
+/** Errores de validación pueden llegar en props de página (redirect) o en el estado del Form (422). */
+function fieldError(
+    formMessage: string | undefined,
+    pageValue: unknown,
+): string | undefined {
+    if (formMessage) {
+        return formMessage;
+    }
+    if (typeof pageValue === 'string' && pageValue.length > 0) {
+        return pageValue;
+    }
+    if (Array.isArray(pageValue) && typeof pageValue[0] === 'string') {
+        return pageValue[0];
+    }
+
+    return undefined;
+}
 
 type Props = {
     status?: string;
@@ -23,6 +41,7 @@ export default function Login({
     canRegister,
 }: Props) { 
     const [showPassword, setShowPassword] = useState(false);
+    const pageErrors = usePage().props.errors;
 
     return (
         <AuthOrvaeLoginLayout
@@ -38,7 +57,7 @@ export default function Login({
                 resetOnSuccess={['password']}
                 className="flex flex-col gap-6"
             >
-                {({ processing, errors }) => (
+                {({ processing, errors: formErrors }) => (
                     <div className="relative flex flex-col gap-8">
                         {/* Card header: título + subtítulo */}
                         <div className="flex flex-col gap-3">
@@ -75,7 +94,10 @@ export default function Login({
                                         />
                                     </div>
                                     <InputError
-                                        message={errors.login}
+                                        message={fieldError(
+                                            formErrors.login,
+                                            pageErrors?.login,
+                                        )}
                                         className="font-mono text-xs text-[var(--state-danger)]"
                                     />
                                 </div>
@@ -131,7 +153,10 @@ export default function Login({
                                         </button>
                                     </div>
                                     <InputError
-                                        message={errors.password}
+                                        message={fieldError(
+                                            formErrors.password,
+                                            pageErrors?.password,
+                                        )}
                                         className="font-mono text-xs text-[var(--state-danger)]"
                                     />
                                 </div>

@@ -8,15 +8,17 @@ use App\Http\Responses\LoginResponse;
 use App\Http\Responses\RegisterResponse;
 use App\Models\User;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
-use Laravel\Fortify\Features;
 use Laravel\Fortify\Contracts\LoginResponse as LoginResponseContract;
 use Laravel\Fortify\Contracts\RegisterResponse as RegisterResponseContract;
+use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
 
 class FortifyServiceProvider extends ServiceProvider
@@ -63,13 +65,21 @@ class FortifyServiceProvider extends ServiceProvider
                 return null;
             }
 
-            $user = User::query()
-                ->where(function ($q) use ($login): void {
-                    $q->where('username', $login)
-                        ->orWhere('document_number', $login)
-                        ->orWhere('email', $login);
-                })
-                ->first();
+            try {
+                $user = User::query()
+                    ->where(function ($q) use ($login): void {
+                        $q->where('username', $login)
+                            ->orWhere('document_number', $login)
+                            ->orWhere('email', $login);
+                    })
+                    ->first();
+            } catch (QueryException $e) {
+                report($e);
+
+                throw ValidationException::withMessages([
+                    Fortify::username() => [trans('auth.failed')],
+                ]);
+            }
 
             if (! $user) {
                 return null;

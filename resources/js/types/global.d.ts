@@ -20,6 +20,8 @@ declare module '@inertiajs/core' {
             seo: SeoDefaults;
             /** Notificaciones sin leer (tabla `notifications`, rol superadmin) */
             staffUnreadNotificationsCount?: number;
+            /** Errores de validación (sesión / respuesta Inertia) */
+            errors?: Record<string, string | string[]>;
             [key: string]: unknown;
         };
     }
