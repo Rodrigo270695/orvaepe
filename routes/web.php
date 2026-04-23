@@ -45,10 +45,10 @@ use App\Http\Controllers\Sunat\CompanyLegalProfilesController;
 use App\Http\Controllers\Sunat\DigitalCertificatesController;
 use App\Http\Controllers\Sunat\InvoiceDocumentSequencesController;
 use App\Http\Controllers\Sunat\SunatEmitterSettingsController;
-use App\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RedirectClientUsersFromStaffArea;
 use App\Models\ShowcaseClient;
+use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -103,6 +103,11 @@ Route::get('/servicios/{service}', [MarketingServiceDetailController::class, 'sh
 Route::get('/contacto', [MarketingContactController::class, 'show'])->name('marketing-contact');
 Route::post('/contacto', [MarketingContactController::class, 'store'])->name('marketing-contact.store');
 Route::get('/licencias', MarketingLicensesController::class)->name('marketing-licenses');
+Route::get('/privacidad', function () use ($canRegister) {
+    return Inertia::render('public/privacy-policy', [
+        'canRegister' => $canRegister,
+    ]);
+})->name('public.privacy-policy');
 Route::get('/redesorvae', function () {
     return Inertia::render('public/redesorvae');
 })->name('public.redesorvae');

@@ -14,6 +14,7 @@ const footerNav = [
     { href: '/software', label: 'Software' },
     { href: '/licencias', label: 'Precios' },
     { href: '/servicios', label: 'Servicios' },
+    { href: '/privacidad', label: 'Privacidad' },
     { href: '#contacto', label: 'Contacto', isAnchor: true },
     { href: '/', label: 'Inicio' },
 ] as const;

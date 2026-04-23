@@ -297,11 +297,32 @@ export default function Register() {
                                 Crear cuenta
                             </Button>
 
+                            <label className="mt-1 flex items-start gap-3">
+                                <input
+                                    type="checkbox"
+                                    name="accept_privacy"
+                                    required
+                                    tabIndex={10}
+                                    className="mt-0.5 size-4 rounded border-[var(--o-border2)] bg-transparent text-[var(--auth-cta-from)] focus:ring-[var(--auth-ring)]"
+                                />
+                                <span className="text-xs leading-relaxed text-[var(--muted-foreground)]">
+                                    Acepto la{' '}
+                                    <TextLink
+                                        href="/privacidad"
+                                        className="font-medium text-[var(--auth-link)] hover:text-[var(--auth-link-hover)]"
+                                    >
+                                        Política de privacidad
+                                    </TextLink>
+                                    .
+                                </span>
+                            </label>
+                            <InputError message={errors.accept_privacy} className="mt-1" />
+
                             <div className="text-center text-sm text-muted-foreground">
                                 ¿Ya tienes una cuenta?{' '}
                                 <TextLink
                                     href="/login"
-                                    tabIndex={10}
+                                    tabIndex={11}
                                     className="font-medium text-[var(--auth-link)] hover:text-[var(--auth-link-hover)]"
                                 >
                                     Inicia sesión

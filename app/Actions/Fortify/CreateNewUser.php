@@ -18,7 +18,7 @@ class CreateNewUser implements CreatesNewUsers
     /**
      * Validate and create a newly registered user.
      *
-     * @param  array<string, string>  $input
+     * @param  array<string, mixed>  $input
      */
     public function create(array $input): User
     {
@@ -29,26 +29,37 @@ class CreateNewUser implements CreatesNewUsers
 
         $data = $input + ['username' => $username];
 
-        Validator::make($data, [
-            'name' => $this->nameRules(),
-            'lastname' => ['required', 'string', 'max:255'],
-            'email' => $this->emailRules(null),
-            'password' => $this->passwordRules(),
-            'document_number' => [
-                'required',
-                'string',
-                'max:20',
-                'regex:/^[0-9]{8}$|^[0-9]{11}$/',
+        Validator::make(
+            $data,
+            [
+                'name' => $this->nameRules(),
+                'lastname' => ['required', 'string', 'max:255'],
+                'email' => $this->emailRules(null),
+                'password' => $this->passwordRules(),
+                'document_number' => [
+                    'required',
+                    'string',
+                    'max:20',
+                    'regex:/^[0-9]{8}$|^[0-9]{11}$/',
+                ],
+                'phone' => ['nullable', 'string', 'size:9', 'regex:/^9[0-9]{8}$/'],
+                'username' => [
+                    'required',
+                    'string',
+                    'max:255',
+                    'regex:/^[a-zA-Z0-9_.-]+$/',
+                    Rule::unique(User::class, 'username'),
+                ],
+                'accept_privacy' => ['required', 'accepted'],
             ],
-            'phone' => ['nullable', 'string', 'size:9', 'regex:/^9[0-9]{8}$/'],
-            'username' => [
-                'required',
-                'string',
-                'max:255',
-                'regex:/^[a-zA-Z0-9_.-]+$/',
-                Rule::unique(User::class, 'username'),
+            [
+                'accept_privacy.required' => 'Debes aceptar la política de privacidad.',
+                'accept_privacy.accepted' => 'Debes aceptar la política de privacidad.',
             ],
-        ])->validate();
+            [
+                'accept_privacy' => 'política de privacidad',
+            ],
+        )->validate();
 
         $user = User::create([
             'username' => $username,
