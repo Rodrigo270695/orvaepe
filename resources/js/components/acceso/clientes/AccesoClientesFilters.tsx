@@ -16,7 +16,7 @@ export default function AccesoClientesFilters({
                 className ?? '',
             ].join(' ')}
         >
-            <div className="w-full min-w-0 max-w-md sm:w-auto">
+            <div className="w-full min-w-0 max-w-lg sm:w-auto">
                 <VentasSuscripcionesSearch
                     initialQuery={initialQuery}
                     wide
