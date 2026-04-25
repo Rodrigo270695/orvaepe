@@ -350,13 +350,24 @@ class QuotesController extends Controller
             abort(403);
         }
 
-        $email = strtolower(trim($request->validated()['email']));
+        $validated = $request->validated();
+        $email = strtolower(trim($validated['email']));
+        $ccEmails = collect($validated['cc_emails'] ?? [])
+            ->filter(fn ($x) => is_string($x) && trim($x) !== '')
+            ->map(fn (string $x) => strtolower(trim($x)))
+            ->unique()
+            ->values()
+            ->all();
 
         $pdfBinary = QuotePdfGenerator::pdfBinary($quote);
         $pdfName = QuotePdfGenerator::attachmentFilename($quote);
 
         try {
-            Mail::to($email)->send(new QuoteSentToCustomerMail($quote, $pdfBinary, $pdfName));
+            $mailer = Mail::to($email);
+            if (! empty($ccEmails)) {
+                $mailer->cc($ccEmails);
+            }
+            $mailer->send(new QuoteSentToCustomerMail($quote, $pdfBinary, $pdfName));
         } catch (\Throwable $e) {
             report($e);
 
@@ -379,7 +390,10 @@ class QuotesController extends Controller
 
         return back()->with(
             'toast',
-            AdminFlashToast::success('Cotización enviada a '.$email.'.'),
+            AdminFlashToast::success(
+                'Cotización enviada a '.$email
+                .(! empty($ccEmails) ? ' (CC: '.implode(', ', $ccEmails).').' : '.')
+            ),
         );
     }
 

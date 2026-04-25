@@ -1,5 +1,5 @@
 import { useForm } from '@inertiajs/react';
-import { Send } from 'lucide-react';
+import { Plus, Send, Trash2 } from 'lucide-react';
 import * as React from 'react';
 
 import AdminUnderlineInput from '@/components/admin/form/admin-underline-input';
@@ -33,16 +33,18 @@ export default function VentasCotizacionSendEmailModal({
 }: Props) {
     const sendForm = useForm({
         email: defaultEmail,
+        cc_emails: [] as string[],
     });
 
     React.useEffect(() => {
-        sendForm.setDefaults({ email: defaultEmail });
+        sendForm.setDefaults({ email: defaultEmail, cc_emails: [] });
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [defaultEmail]);
 
     React.useEffect(() => {
         if (open) {
             sendForm.setData('email', defaultEmail);
+            sendForm.setData('cc_emails', []);
             sendForm.clearErrors();
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps -- al abrir / cambiar cotización
@@ -53,10 +55,35 @@ export default function VentasCotizacionSendEmailModal({
         if (!canSend || !quoteId) {
             return;
         }
+        const normalizedCc = sendForm.data.cc_emails
+            .map((x) => x.trim().toLowerCase())
+            .filter((x) => x !== '');
         sendForm.post(panel.ventasCotizaciones.sendEmail.url(quoteId), {
             preserveScroll: true,
+            data: {
+                email: sendForm.data.email,
+                cc_emails: normalizedCc,
+            },
             onSuccess: () => onOpenChange(false),
         });
+    };
+
+    const addCcEmail = () => {
+        sendForm.setData('cc_emails', [...sendForm.data.cc_emails, '']);
+    };
+
+    const updateCcEmail = (index: number, value: string) => {
+        sendForm.setData(
+            'cc_emails',
+            sendForm.data.cc_emails.map((row, i) => (i === index ? value : row)),
+        );
+    };
+
+    const removeCcEmail = (index: number) => {
+        sendForm.setData(
+            'cc_emails',
+            sendForm.data.cc_emails.filter((_, i) => i !== index),
+        );
     };
 
     return (
@@ -70,7 +97,7 @@ export default function VentasCotizacionSendEmailModal({
                 <div
                     className={cn(
                         '-mx-2 flex gap-3 rounded-xl border border-[#4A80B8]/40',
-                        'bg-gradient-to-br from-[#4A80B8]/14 via-[#5A9AD0]/10 to-[#4A80B8]/8',
+                        'bg-linear-to-br from-[#4A80B8]/14 via-[#5A9AD0]/10 to-[#4A80B8]/8',
                         'p-3 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.45)]',
                         'dark:border-[#4A80B8]/50 dark:from-[#4A80B8]/20 dark:via-[#4A80B8]/12 dark:to-[#4A80B8]/8',
                     )}
@@ -119,6 +146,78 @@ export default function VentasCotizacionSendEmailModal({
                         disabled={!canSend}
                     />
                     <InputError message={sendForm.errors.email} />
+                </div>
+                <div className="space-y-2 rounded-xl border border-border/60 p-3 neumorph-inset">
+                    <div className="flex items-center justify-between gap-3">
+                        <div>
+                            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                Copias (CC)
+                            </p>
+                            <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">
+                                Opcional. Agrega uno o varios correos para copia.
+                            </p>
+                        </div>
+                        <NeuButtonInset
+                            type="button"
+                            onClick={addCcEmail}
+                            disabled={!canSend || sendForm.processing}
+                            className="cursor-pointer text-xs"
+                        >
+                            <Plus className="size-3.5" />
+                            Agregar copia
+                        </NeuButtonInset>
+                    </div>
+                    {sendForm.data.cc_emails.length > 0 ? (
+                        <div className="space-y-2">
+                            {sendForm.data.cc_emails.map((ccEmail, index) => (
+                                <div key={index} className="flex items-end gap-2">
+                                    <div className="flex-1 space-y-1.5">
+                                        <AdminUnderlineLabel
+                                            htmlFor={`send_quote_cc_${index}`}
+                                        >
+                                            Correo CC {index + 1}
+                                        </AdminUnderlineLabel>
+                                        <AdminUnderlineInput
+                                            id={`send_quote_cc_${index}`}
+                                            name={`cc_emails[${index}]`}
+                                            type="email"
+                                            value={ccEmail}
+                                            onChange={(e) =>
+                                                updateCcEmail(index, e.target.value)
+                                            }
+                                            autoComplete="off"
+                                            placeholder="copia@empresa.com"
+                                            disabled={!canSend}
+                                        />
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => removeCcEmail(index)}
+                                        disabled={!canSend || sendForm.processing}
+                                        className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl border border-border/50 text-muted-foreground transition-colors hover:border-[#C05050]/40 hover:text-[#C05050] disabled:cursor-not-allowed disabled:opacity-40"
+                                        aria-label={`Quitar correo CC ${index + 1}`}
+                                    >
+                                        <Trash2 className="size-4" />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-[11px] text-muted-foreground">
+                            Sin copias por ahora.
+                        </p>
+                    )}
+                    <InputError message={sendForm.errors.cc_emails} />
+                    {sendForm.data.cc_emails.map((_, index) => (
+                        <InputError
+                            key={`cc_err_${index}`}
+                            message={
+                                (sendForm.errors as Record<string, string>)[
+                                    `cc_emails.${index}`
+                                ]
+                            }
+                        />
+                    ))}
                 </div>
                 <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
                     <NeuButtonInset
