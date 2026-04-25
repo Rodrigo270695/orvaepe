@@ -21,6 +21,9 @@ export type { SkuPickOption } from '@/components/admin/form/admin-sku-search-sel
 
 type Line = {
     catalog_sku_id: string;
+    manual_code: string;
+    manual_name: string;
+    manual_igv_applies: boolean;
     quantity: number;
     /** Precio unitario cotizado (texto para el input; al elegir SKU se rellena con el listado). */
     unit_price: string;
@@ -67,6 +70,9 @@ export default function VentasCotizacionCreateForm({
         lines: [
             {
                 catalog_sku_id: '',
+                manual_code: '',
+                manual_name: '',
+                manual_igv_applies: true,
                 quantity: 1,
                 unit_price: '',
                 line_discount: '0',
@@ -178,6 +184,9 @@ export default function VentasCotizacionCreateForm({
                     ld === '' ? 0 : Number.parseFloat(ld.replace(',', '.'));
                 return {
                     catalog_sku_id: l.catalog_sku_id.trim(),
+                    manual_code: l.manual_code.trim(),
+                    manual_name: l.manual_name.trim(),
+                    manual_igv_applies: Boolean(l.manual_igv_applies),
                     quantity: Number(l.quantity),
                     unit_price: Number.isFinite(unitPrice) ? unitPrice : 0,
                     line_discount: Number.isFinite(lineDisc) ? lineDisc : 0,
@@ -192,6 +201,9 @@ export default function VentasCotizacionCreateForm({
             ...data.lines,
             {
                 catalog_sku_id: '',
+                manual_code: '',
+                manual_name: '',
+                manual_igv_applies: true,
                 quantity: 1,
                 unit_price: '',
                 line_discount: '0',
@@ -211,6 +223,9 @@ export default function VentasCotizacionCreateForm({
                         ? String(lp)
                         : '';
             }
+            patch.manual_code = '';
+            patch.manual_name = '';
+            patch.manual_igv_applies = true;
         } else {
             patch.unit_price = '';
             patch.line_discount = '0';
@@ -489,9 +504,9 @@ export default function VentasCotizacionCreateForm({
                             Líneas
                         </h2>
                         <p className="mt-1 max-w-xl text-[11px] text-muted-foreground">
-                            Busca el SKU y ajusta precio o descuento por línea
-                            (el listado solo sugiere el precio de catálogo; IGV
-                            según el SKU).
+                            Puedes usar SKU del catálogo o una línea manual
+                            temporal (no se guarda en catálogo). En línea manual
+                            defines si aplica IGV.
                         </p>
                     </div>
                     <NeuButtonRaised
@@ -523,9 +538,66 @@ export default function VentasCotizacionCreateForm({
                                             `lines.${index}.catalog_sku_id`
                                         ]
                                     }
-                                    required
+                                    required={false}
                                 />
                             </div>
+                            {!line.catalog_sku_id ? (
+                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                    <div className="space-y-1.5">
+                                        <AdminUnderlineLabel
+                                            htmlFor={`cotiz_line_manual_code_${index}`}
+                                        >
+                                            Código manual
+                                        </AdminUnderlineLabel>
+                                        <AdminUnderlineInput
+                                            id={`cotiz_line_manual_code_${index}`}
+                                            name={`lines[${index}][manual_code]`}
+                                            value={line.manual_code}
+                                            onChange={(e) =>
+                                                updateLine(index, {
+                                                    manual_code: e.target.value,
+                                                })
+                                            }
+                                            placeholder="Ej. SKU-MANUAL-001"
+                                            autoComplete="off"
+                                        />
+                                        <InputError
+                                            message={
+                                                (errors as Record<string, string>)[
+                                                    `lines.${index}.manual_code`
+                                                ]
+                                            }
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <AdminUnderlineLabel
+                                            htmlFor={`cotiz_line_manual_name_${index}`}
+                                            required
+                                        >
+                                            Nombre comercial manual
+                                        </AdminUnderlineLabel>
+                                        <AdminUnderlineInput
+                                            id={`cotiz_line_manual_name_${index}`}
+                                            name={`lines[${index}][manual_name]`}
+                                            value={line.manual_name}
+                                            onChange={(e) =>
+                                                updateLine(index, {
+                                                    manual_name: e.target.value,
+                                                })
+                                            }
+                                            placeholder="Ej. Plan Emprendedor mensual"
+                                            autoComplete="off"
+                                        />
+                                        <InputError
+                                            message={
+                                                (errors as Record<string, string>)[
+                                                    `lines.${index}.manual_name`
+                                                ]
+                                            }
+                                        />
+                                    </div>
+                                </div>
+                            ) : null}
                             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                                 <div className="space-y-1.5">
                                     <AdminUnderlineLabel
@@ -648,6 +720,31 @@ export default function VentasCotizacionCreateForm({
                                     </button>
                                 </div>
                             </div>
+                            {!line.catalog_sku_id ? (
+                                <div className="flex flex-wrap items-center gap-4 rounded-lg border border-border/50 bg-black/5 px-3 py-2 text-[11px] dark:bg-black/20">
+                                    <label className="inline-flex cursor-pointer items-center gap-2">
+                                        <input
+                                            type="checkbox"
+                                            checked={line.manual_igv_applies}
+                                            onChange={(e) =>
+                                                updateLine(index, {
+                                                    manual_igv_applies:
+                                                        e.target.checked,
+                                                })
+                                            }
+                                            className="size-4 rounded border-border"
+                                        />
+                                        <span className="text-foreground">
+                                            Aplica IGV (solo para esta cotización)
+                                        </span>
+                                    </label>
+                                </div>
+                            ) : (
+                                <p className="text-[10px] leading-snug text-muted-foreground">
+                                    En SKU registrado, el IGV usa la configuración del
+                                    catálogo.
+                                </p>
+                            )}
                         </div>
                     ))}
                 </div>
@@ -664,9 +761,9 @@ export default function VentasCotizacionCreateForm({
                     {processing ? 'Guardando…' : 'Crear cotización'}
                 </NeuButtonRaised>
                 <p className="text-[11px] leading-relaxed text-muted-foreground sm:max-w-md">
-                    Precio y descuento son por línea; el IGV sigue la
-                    configuración del SKU. La moneda del SKU debe coincidir con
-                    la moneda de la cotización.
+                    Precio y descuento son por línea. Si eliges SKU del catálogo,
+                    usa su configuración de IGV y moneda; si no eliges SKU, se
+                    crea una línea manual temporal para esta cotización.
                 </p>
             </div>
         </form>

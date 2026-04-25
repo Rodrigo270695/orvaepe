@@ -172,7 +172,11 @@ class QuotesController extends Controller
         $currency = strtoupper($data['currency']);
         $data['currency'] = $currency;
 
-        $skuIds = collect($linesInput)->pluck('catalog_sku_id')->unique()->values();
+        $skuIds = collect($linesInput)
+            ->pluck('catalog_sku_id')
+            ->filter(fn ($id) => is_string($id) && trim($id) !== '')
+            ->unique()
+            ->values();
         $skus = CatalogSku::query()
             ->with('product:id,name')
             ->whereIn('id', $skuIds)
@@ -180,7 +184,21 @@ class QuotesController extends Controller
             ->keyBy('id');
 
         foreach ($linesInput as $index => $line) {
-            $sku = $skus->get($line['catalog_sku_id']);
+            $catalogSkuId = is_string($line['catalog_sku_id'] ?? null)
+                ? trim($line['catalog_sku_id'])
+                : '';
+
+            if ($catalogSkuId === '') {
+                $manualName = trim((string) ($line['manual_name'] ?? ''));
+                if ($manualName === '') {
+                    throw ValidationException::withMessages([
+                        "lines.{$index}.manual_name" => 'Ingresa el nombre para la línea manual.',
+                    ]);
+                }
+                continue;
+            }
+
+            $sku = $skus->get($catalogSkuId);
             if ($sku === null) {
                 throw ValidationException::withMessages([
                     "lines.{$index}.catalog_sku_id" => 'SKU no encontrado.',
@@ -206,12 +224,15 @@ class QuotesController extends Controller
             $igvRate = (float) config('sales.igv_rate', 0.18);
             $lineRows = [];
             $sortOrder = 0;
-            foreach ($linesInput as $line) {
-                $sku = $skus->get($line['catalog_sku_id']);
+            foreach ($linesInput as $lineIndex => $line) {
+                $catalogSkuId = is_string($line['catalog_sku_id'] ?? null)
+                    ? trim($line['catalog_sku_id'])
+                    : '';
+                $sku = $catalogSkuId !== '' ? $skus->get($catalogSkuId) : null;
                 $qty = (int) $line['quantity'];
                 $unit = isset($line['unit_price'])
                     ? (float) $line['unit_price']
-                    : (float) $sku->list_price;
+                    : (float) ($sku?->list_price ?? 0.0);
                 if ($unit < 0) {
                     $unit = 0.0;
                 }
@@ -222,8 +243,10 @@ class QuotesController extends Controller
                     $lineDiscountInput = 0.0;
                 }
 
-                $taxIncluded = (bool) $sku->tax_included;
-                $igvApplies = (bool) ($sku->igv_applies ?? true);
+                $taxIncluded = $sku !== null ? (bool) $sku->tax_included : false;
+                $igvApplies = $sku !== null
+                    ? (bool) ($sku->igv_applies ?? true)
+                    : (bool) ($line['manual_igv_applies'] ?? true);
 
                 $amounts = PeruIgvLineCalculator::forLine(
                     $qty,
@@ -268,12 +291,20 @@ class QuotesController extends Controller
                 $taxTotal += $taxLine;
                 $discountTotal += $lineDiscountApplied;
 
-                $productName = $sku->product?->name ?? '—';
+                $manualName = trim((string) ($line['manual_name'] ?? ''));
+                $manualCode = trim((string) ($line['manual_code'] ?? ''));
+                $productName = $sku?->product?->name ?? 'SKU manual';
+                $skuNameSnapshot = $sku?->name;
+                if ($sku === null) {
+                    $productName = $manualName !== '' ? $manualName : 'SKU manual';
+                    $skuNameSnapshot = $manualCode !== '' ? 'Código: '.$manualCode : 'Línea manual';
+                }
+
                 $lineRows[] = [
-                    'catalog_sku_id' => $sku->id,
-                    'catalog_product_id' => $sku->catalog_product_id,
+                    'catalog_sku_id' => $sku?->id,
+                    'catalog_product_id' => $sku?->catalog_product_id,
                     'product_name_snapshot' => $productName,
-                    'sku_name_snapshot' => $sku->name,
+                    'sku_name_snapshot' => $skuNameSnapshot,
                     'quantity' => $qty,
                     'unit_price' => round($unit, 2),
                     'tax_included' => $taxIncluded,
@@ -286,6 +317,10 @@ class QuotesController extends Controller
                     'sort_order' => $sortOrder++,
                     'metadata' => [
                         'igv_rate' => $igvApplies ? $igvRate : null,
+                        'line_kind' => $sku === null ? 'manual' : 'catalog',
+                        'manual_code' => $sku === null ? ($manualCode !== '' ? $manualCode : null) : null,
+                        'manual_name' => $sku === null ? ($manualName !== '' ? $manualName : null) : null,
+                        'line_input_index' => $lineIndex,
                     ],
                 ];
             }

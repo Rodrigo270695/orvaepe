@@ -44,6 +44,31 @@ class QuoteStoreRequest extends FormRequest
         if ($userId === '' || $userId === null) {
             $this->merge(['user_id' => null]);
         }
+
+        $lines = $this->input('lines');
+        if (is_array($lines)) {
+            $normalized = [];
+            foreach ($lines as $line) {
+                if (! is_array($line)) {
+                    $normalized[] = $line;
+                    continue;
+                }
+
+                $catalogSkuId = $line['catalog_sku_id'] ?? null;
+                $manualCode = $line['manual_code'] ?? null;
+                $manualName = $line['manual_name'] ?? null;
+
+                $normalized[] = array_merge($line, [
+                    'catalog_sku_id' => is_string($catalogSkuId) && trim($catalogSkuId) !== '' ? trim($catalogSkuId) : null,
+                    'manual_code' => is_string($manualCode) && trim($manualCode) !== '' ? trim($manualCode) : null,
+                    'manual_name' => is_string($manualName) && trim($manualName) !== '' ? trim($manualName) : null,
+                    'manual_igv_applies' => array_key_exists('manual_igv_applies', $line)
+                        ? filter_var($line['manual_igv_applies'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true
+                        : true,
+                ]);
+            }
+            $this->merge(['lines' => $normalized]);
+        }
     }
 
     public function rules(): array
@@ -81,7 +106,10 @@ class QuoteStoreRequest extends FormRequest
             'title' => ['nullable', 'string', 'max:255'],
             'notes_internal' => ['nullable', 'string'],
             'lines' => ['required', 'array', 'min:1'],
-            'lines.*.catalog_sku_id' => ['required', 'uuid', 'exists:catalog_skus,id'],
+            'lines.*.catalog_sku_id' => ['nullable', 'uuid', 'exists:catalog_skus,id'],
+            'lines.*.manual_code' => ['nullable', 'string', 'max:120'],
+            'lines.*.manual_name' => ['nullable', 'string', 'max:255'],
+            'lines.*.manual_igv_applies' => ['nullable', 'boolean'],
             'lines.*.quantity' => ['required', 'integer', 'min:1'],
             'lines.*.unit_price' => ['required', 'numeric', 'min:0'],
             'lines.*.line_discount' => ['nullable', 'numeric', 'min:0'],
