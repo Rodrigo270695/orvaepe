@@ -33,6 +33,10 @@ export function quoteCanDelete(status: string): boolean {
     return status === 'draft';
 }
 
+export function quoteCanEdit(status: string): boolean {
+    return status === 'draft';
+}
+
 export function quoteCanSendEmail(status: string): boolean {
     return status !== 'converted';
 }

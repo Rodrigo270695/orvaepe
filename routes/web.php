@@ -334,6 +334,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('panel/ventas-cotizaciones', [QuotesController::class, 'store'])
             ->name('panel.ventas-cotizaciones.store');
 
+        Route::get('panel/ventas-cotizaciones/{quote}/edit', [QuotesController::class, 'edit'])
+            ->name('panel.ventas-cotizaciones.edit');
+
+        Route::patch('panel/ventas-cotizaciones/{quote}', [QuotesController::class, 'update'])
+            ->name('panel.ventas-cotizaciones.update');
+
         Route::get('panel/ventas-cotizaciones/{quote}/pdf', [QuotesController::class, 'pdf'])
             ->name('panel.ventas-cotizaciones.pdf');
 

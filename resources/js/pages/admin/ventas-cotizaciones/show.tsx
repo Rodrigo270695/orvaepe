@@ -1,5 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
-import { ArrowLeft, FileDown, FileText, Mail } from 'lucide-react';
+import { ArrowLeft, FileDown, FileText, Mail, Pencil } from 'lucide-react';
 import * as React from 'react';
 
 import { quoteStatusLabel } from '@/components/sales/quotes/quoteDisplay';
@@ -173,6 +173,15 @@ export default function VentasCotizacionShowPage({
                             </div>
                         </div>
                         <div className="flex shrink-0 flex-col gap-2 self-stretch sm:flex-row sm:items-center sm:self-auto">
+                            {quote.status === 'draft' ? (
+                                <Link
+                                    href={`/panel/ventas-cotizaciones/${quote.id}/edit`}
+                                    className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-[#4A80B8]/35 bg-[#4A80B8]/10 px-3 py-2 text-xs font-medium text-[#4A80B8] transition-colors hover:bg-[#4A80B8]/18"
+                                >
+                                    <Pencil className="size-4" />
+                                    Editar
+                                </Link>
+                            ) : null}
                             <a
                                 href={panel.ventasCotizaciones.pdf.url(quote.id)}
                                 target="_blank"

@@ -1,10 +1,11 @@
 import { Link } from '@inertiajs/react';
-import { Eye, FileDown, Mail, Trash2 } from 'lucide-react';
+import { Eye, FileDown, Mail, Pencil, Trash2 } from 'lucide-react';
 
 import {
     formatQuoteClientDocument,
     formatQuoteClientName,
     quoteCanDelete,
+    quoteCanEdit,
     quoteCanSendEmail,
     quoteStatusBadgeClass,
     quoteStatusLabel,
@@ -113,6 +114,16 @@ export default function VentasCotizacionesMobileCards({
                         >
                             <Eye className="size-4 text-[#4A80B8]/60 transition-colors group-hover:text-[#4A80B8]" />
                         </Link>
+                        {quoteCanEdit(row.status) ? (
+                            <Link
+                                href={`/panel/ventas-cotizaciones/${row.id}/edit`}
+                                prefetch
+                                className="group inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4A80B8]/30"
+                                aria-label="Editar cotización"
+                            >
+                                <Pencil className="size-4 text-[#4A80B8]/60 transition-colors group-hover:text-[#4A80B8]" />
+                            </Link>
+                        ) : null}
                         <a
                             href={panel.ventasCotizaciones.pdf.url(row.id)}
                             target="_blank"

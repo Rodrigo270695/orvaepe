@@ -115,6 +115,33 @@ class QuotesController extends Controller
 
     public function create(): InertiaResponse
     {
+        [$usersForSelect, $skusForSelect] = $this->quoteFormOptions();
+
+        return Inertia::render('admin/ventas-cotizaciones/create', [
+            'usersForSelect' => $usersForSelect,
+            'skusForSelect' => $skusForSelect,
+        ]);
+    }
+
+    public function edit(Quote $quote): InertiaResponse
+    {
+        if ($quote->status !== Quote::STATUS_DRAFT) {
+            abort(403);
+        }
+
+        [$usersForSelect, $skusForSelect] = $this->quoteFormOptions();
+
+        $quote->load(['lines' => fn ($q) => $q->orderBy('sort_order')->orderBy('created_at')]);
+
+        return Inertia::render('admin/ventas-cotizaciones/edit', [
+            'usersForSelect' => $usersForSelect,
+            'skusForSelect' => $skusForSelect,
+            'quote' => $quote,
+        ]);
+    }
+
+    private function quoteFormOptions(): array
+    {
         $usersForSelect = User::query()
             ->role('client')
             ->with('profile')
@@ -157,10 +184,7 @@ class QuotesController extends Controller
                 'list_price' => (string) $s->list_price,
             ]);
 
-        return Inertia::render('admin/ventas-cotizaciones/create', [
-            'usersForSelect' => $usersForSelect,
-            'skusForSelect' => $skusForSelect,
-        ]);
+        return [$usersForSelect, $skusForSelect];
     }
 
     public function store(QuoteStoreRequest $request): RedirectResponse
@@ -172,166 +196,13 @@ class QuotesController extends Controller
         $currency = strtoupper($data['currency']);
         $data['currency'] = $currency;
 
-        $skuIds = collect($linesInput)
-            ->pluck('catalog_sku_id')
-            ->filter(fn ($id) => is_string($id) && trim($id) !== '')
-            ->unique()
-            ->values();
-        $skus = CatalogSku::query()
-            ->with('product:id,name')
-            ->whereIn('id', $skuIds)
-            ->get()
-            ->keyBy('id');
+        $lineRows = $this->buildQuoteLineRows($linesInput, $currency);
 
-        foreach ($linesInput as $index => $line) {
-            $catalogSkuId = is_string($line['catalog_sku_id'] ?? null)
-                ? trim($line['catalog_sku_id'])
-                : '';
-
-            if ($catalogSkuId === '') {
-                $manualName = trim((string) ($line['manual_name'] ?? ''));
-                if ($manualName === '') {
-                    throw ValidationException::withMessages([
-                        "lines.{$index}.manual_name" => 'Ingresa el nombre para la línea manual.',
-                    ]);
-                }
-                continue;
-            }
-
-            $sku = $skus->get($catalogSkuId);
-            if ($sku === null) {
-                throw ValidationException::withMessages([
-                    "lines.{$index}.catalog_sku_id" => 'SKU no encontrado.',
-                ]);
-            }
-            if (! $sku->is_active) {
-                throw ValidationException::withMessages([
-                    "lines.{$index}.catalog_sku_id" => 'El SKU no está activo.',
-                ]);
-            }
-            if (strtoupper((string) $sku->currency) !== $currency) {
-                throw ValidationException::withMessages([
-                    "lines.{$index}.catalog_sku_id" => 'La moneda del SKU debe coincidir con la moneda de la cotización ('.$currency.').',
-                ]);
-            }
-        }
-
-        $quote = DB::transaction(function () use ($data, $linesInput, $skus, $request, $currency) {
-            $subtotal = 0.0;
-            $discountTotal = 0.0;
-            $taxTotal = 0.0;
-
-            $igvRate = (float) config('sales.igv_rate', 0.18);
-            $lineRows = [];
-            $sortOrder = 0;
-            foreach ($linesInput as $lineIndex => $line) {
-                $catalogSkuId = is_string($line['catalog_sku_id'] ?? null)
-                    ? trim($line['catalog_sku_id'])
-                    : '';
-                $sku = $catalogSkuId !== '' ? $skus->get($catalogSkuId) : null;
-                $qty = (int) $line['quantity'];
-                $unit = isset($line['unit_price'])
-                    ? (float) $line['unit_price']
-                    : (float) ($sku?->list_price ?? 0.0);
-                if ($unit < 0) {
-                    $unit = 0.0;
-                }
-                $lineDiscountInput = isset($line['line_discount'])
-                    ? (float) $line['line_discount']
-                    : 0.0;
-                if ($lineDiscountInput < 0) {
-                    $lineDiscountInput = 0.0;
-                }
-
-                $taxIncluded = $sku !== null ? (bool) $sku->tax_included : false;
-                $igvApplies = $sku !== null
-                    ? (bool) ($sku->igv_applies ?? true)
-                    : (bool) ($line['manual_igv_applies'] ?? true);
-
-                $amounts = PeruIgvLineCalculator::forLine(
-                    $qty,
-                    $unit,
-                    $taxIncluded,
-                    $igvApplies ? $igvRate : null,
-                    $igvApplies,
-                );
-
-                $baseLine = $amounts->baseLine;
-                $taxLine = $amounts->taxLine;
-                $lineTotal = $amounts->lineTotal;
-                $lineDiscountRequested = min(
-                    max(0.0, $lineDiscountInput),
-                    $amounts->lineTotal,
-                );
-
-                $lineDiscountApplied = 0.0;
-                if ($lineDiscountRequested > 0) {
-                    if ($igvApplies && ! $taxIncluded) {
-                        $d = min($lineDiscountRequested, $amounts->baseLine);
-                        $baseLine = max(0.0, round($amounts->baseLine - $d, 2));
-                        $taxLine = round($baseLine * $igvRate, 2);
-                        $lineTotal = round($baseLine + $taxLine, 2);
-                        $lineDiscountApplied = round($d, 2);
-                    } elseif ($igvApplies && $taxIncluded) {
-                        $d = min($lineDiscountRequested, $amounts->lineTotal);
-                        $lineTotal = max(0.0, round($amounts->lineTotal - $d, 2));
-                        $baseLine = round($lineTotal / (1 + $igvRate), 2);
-                        $taxLine = round($lineTotal - $baseLine, 2);
-                        $lineDiscountApplied = round($d, 2);
-                    } else {
-                        $d = min($lineDiscountRequested, $amounts->lineTotal);
-                        $lineTotal = max(0.0, round($amounts->lineTotal - $d, 2));
-                        $baseLine = $lineTotal;
-                        $taxLine = 0.0;
-                        $lineDiscountApplied = round($d, 2);
-                    }
-                }
-
-                $subtotal += $baseLine;
-                $taxTotal += $taxLine;
-                $discountTotal += $lineDiscountApplied;
-
-                $manualName = trim((string) ($line['manual_name'] ?? ''));
-                $manualCode = trim((string) ($line['manual_code'] ?? ''));
-                $productName = $sku?->product?->name ?? 'SKU manual';
-                $skuNameSnapshot = $sku?->name;
-                if ($sku === null) {
-                    $productName = $manualName !== '' ? $manualName : 'SKU manual';
-                    $skuNameSnapshot = $manualCode !== '' ? 'Código: '.$manualCode : 'Línea manual';
-                }
-
-                $lineRows[] = [
-                    'catalog_sku_id' => $sku?->id,
-                    'catalog_product_id' => $sku?->catalog_product_id,
-                    'product_name_snapshot' => $productName,
-                    'sku_name_snapshot' => $skuNameSnapshot,
-                    'quantity' => $qty,
-                    'unit_price' => round($unit, 2),
-                    'tax_included' => $taxIncluded,
-                    'igv_applies' => $igvApplies,
-                    'tax_rate' => $igvApplies ? $igvRate : null,
-                    'line_discount' => $lineDiscountApplied,
-                    'line_discount_percent' => null,
-                    'tax_amount' => $taxLine,
-                    'line_total' => $lineTotal,
-                    'sort_order' => $sortOrder++,
-                    'metadata' => [
-                        'igv_rate' => $igvApplies ? $igvRate : null,
-                        'line_kind' => $sku === null ? 'manual' : 'catalog',
-                        'manual_code' => $sku === null ? ($manualCode !== '' ? $manualCode : null) : null,
-                        'manual_name' => $sku === null ? ($manualName !== '' ? $manualName : null) : null,
-                        'line_input_index' => $lineIndex,
-                    ],
-                ];
-            }
-
-            $subtotal = round($subtotal, 2);
-            $discountTotal = round($discountTotal, 2);
-            $taxTotal = round($taxTotal, 2);
-            $grandTotal = round(
-                array_sum(array_column($lineRows, 'line_total')),
-                2,
-            );
+        $quote = DB::transaction(function () use ($data, $request, $currency, $lineRows) {
+            $subtotal = round(array_sum(array_column($lineRows, 'base_amount')), 2);
+            $discountTotal = round(array_sum(array_column($lineRows, 'line_discount')), 2);
+            $taxTotal = round(array_sum(array_column($lineRows, 'tax_amount')), 2);
+            $grandTotal = round(array_sum(array_column($lineRows, 'line_total')), 2);
 
             $quote = Quote::create([
                 'quote_number' => Quote::generateQuoteNumber(),
@@ -363,10 +234,62 @@ class QuotesController extends Controller
             ]);
 
             foreach ($lineRows as $row) {
+                unset($row['base_amount']);
                 QuoteLine::create(array_merge($row, ['quote_id' => $quote->id]));
             }
 
             return $quote;
+        });
+
+        return redirect()->route('panel.ventas-cotizaciones.show', $quote);
+    }
+
+    public function update(QuoteStoreRequest $request, Quote $quote): RedirectResponse
+    {
+        if ($quote->status !== Quote::STATUS_DRAFT) {
+            abort(403);
+        }
+
+        $data = $request->validated();
+        $linesInput = $data['lines'];
+        unset($data['lines']);
+
+        $currency = strtoupper($data['currency']);
+        $data['currency'] = $currency;
+
+        $lineRows = $this->buildQuoteLineRows($linesInput, $currency);
+
+        DB::transaction(function () use ($quote, $request, $data, $currency, $lineRows): void {
+            $subtotal = round(array_sum(array_column($lineRows, 'base_amount')), 2);
+            $discountTotal = round(array_sum(array_column($lineRows, 'line_discount')), 2);
+            $taxTotal = round(array_sum(array_column($lineRows, 'tax_amount')), 2);
+            $grandTotal = round(array_sum(array_column($lineRows, 'line_total')), 2);
+
+            $quote->update([
+                'user_id' => $data['user_id'] ?? null,
+                'created_by' => $quote->created_by ?? $request->user()?->id,
+                'status' => $data['status'],
+                'currency' => $currency,
+                'subtotal' => $subtotal,
+                'discount_total' => $discountTotal,
+                'tax_total' => $taxTotal,
+                'grand_total' => $grandTotal,
+                'title' => $data['title'] ?? null,
+                'customer_legal_name' => $data['customer_legal_name'] ?? null,
+                'customer_document_type' => $data['customer_document_type'] ?? null,
+                'customer_document_number' => $data['customer_document_number'] ?? null,
+                'customer_email' => $data['customer_email'] ?? null,
+                'customer_phone' => $data['customer_phone'] ?? null,
+                'customer_address' => $data['customer_address'] ?? null,
+                'notes_internal' => $data['notes_internal'] ?? null,
+                'sent_at' => ($data['status'] ?? '') === Quote::STATUS_SENT ? ($quote->sent_at ?? now()) : null,
+            ]);
+
+            $quote->lines()->delete();
+            foreach ($lineRows as $row) {
+                unset($row['base_amount']);
+                QuoteLine::create(array_merge($row, ['quote_id' => $quote->id]));
+            }
         });
 
         return redirect()->route('panel.ventas-cotizaciones.show', $quote);
@@ -470,5 +393,155 @@ class QuotesController extends Controller
         $fromUser = trim((string) ($quote->user?->email ?? ''));
 
         return $fromUser;
+    }
+
+    private function buildQuoteLineRows(array $linesInput, string $currency): array
+    {
+        $skuIds = collect($linesInput)
+            ->pluck('catalog_sku_id')
+            ->filter(fn ($id) => is_string($id) && trim($id) !== '')
+            ->unique()
+            ->values();
+        $skus = CatalogSku::query()
+            ->with('product:id,name')
+            ->whereIn('id', $skuIds)
+            ->get()
+            ->keyBy('id');
+
+        foreach ($linesInput as $index => $line) {
+            $catalogSkuId = is_string($line['catalog_sku_id'] ?? null)
+                ? trim($line['catalog_sku_id'])
+                : '';
+
+            if ($catalogSkuId === '') {
+                $manualName = trim((string) ($line['manual_name'] ?? ''));
+                if ($manualName === '') {
+                    throw ValidationException::withMessages([
+                        "lines.{$index}.manual_name" => 'Ingresa el nombre para la línea manual.',
+                    ]);
+                }
+                continue;
+            }
+
+            $sku = $skus->get($catalogSkuId);
+            if ($sku === null) {
+                throw ValidationException::withMessages([
+                    "lines.{$index}.catalog_sku_id" => 'SKU no encontrado.',
+                ]);
+            }
+            if (! $sku->is_active) {
+                throw ValidationException::withMessages([
+                    "lines.{$index}.catalog_sku_id" => 'El SKU no está activo.',
+                ]);
+            }
+            if (strtoupper((string) $sku->currency) !== $currency) {
+                throw ValidationException::withMessages([
+                    "lines.{$index}.catalog_sku_id" => 'La moneda del SKU debe coincidir con la moneda de la cotización ('.$currency.').',
+                ]);
+            }
+        }
+
+        $igvRate = (float) config('sales.igv_rate', 0.18);
+        $lineRows = [];
+        $sortOrder = 0;
+        foreach ($linesInput as $lineIndex => $line) {
+            $catalogSkuId = is_string($line['catalog_sku_id'] ?? null)
+                ? trim($line['catalog_sku_id'])
+                : '';
+            $sku = $catalogSkuId !== '' ? $skus->get($catalogSkuId) : null;
+            $qty = (int) $line['quantity'];
+            $unit = isset($line['unit_price'])
+                ? (float) $line['unit_price']
+                : (float) ($sku?->list_price ?? 0.0);
+            if ($unit < 0) {
+                $unit = 0.0;
+            }
+            $lineDiscountInput = isset($line['line_discount'])
+                ? (float) $line['line_discount']
+                : 0.0;
+            if ($lineDiscountInput < 0) {
+                $lineDiscountInput = 0.0;
+            }
+
+            $taxIncluded = $sku !== null ? (bool) $sku->tax_included : false;
+            $igvApplies = $sku !== null
+                ? (bool) ($sku->igv_applies ?? true)
+                : (bool) ($line['manual_igv_applies'] ?? true);
+
+            $amounts = PeruIgvLineCalculator::forLine(
+                $qty,
+                $unit,
+                $taxIncluded,
+                $igvApplies ? $igvRate : null,
+                $igvApplies,
+            );
+
+            $baseLine = $amounts->baseLine;
+            $taxLine = $amounts->taxLine;
+            $lineTotal = $amounts->lineTotal;
+            $lineDiscountRequested = min(
+                max(0.0, $lineDiscountInput),
+                $amounts->lineTotal,
+            );
+
+            $lineDiscountApplied = 0.0;
+            if ($lineDiscountRequested > 0) {
+                if ($igvApplies && ! $taxIncluded) {
+                    $d = min($lineDiscountRequested, $amounts->baseLine);
+                    $baseLine = max(0.0, round($amounts->baseLine - $d, 2));
+                    $taxLine = round($baseLine * $igvRate, 2);
+                    $lineTotal = round($baseLine + $taxLine, 2);
+                    $lineDiscountApplied = round($d, 2);
+                } elseif ($igvApplies && $taxIncluded) {
+                    $d = min($lineDiscountRequested, $amounts->lineTotal);
+                    $lineTotal = max(0.0, round($amounts->lineTotal - $d, 2));
+                    $baseLine = round($lineTotal / (1 + $igvRate), 2);
+                    $taxLine = round($lineTotal - $baseLine, 2);
+                    $lineDiscountApplied = round($d, 2);
+                } else {
+                    $d = min($lineDiscountRequested, $amounts->lineTotal);
+                    $lineTotal = max(0.0, round($amounts->lineTotal - $d, 2));
+                    $baseLine = $lineTotal;
+                    $taxLine = 0.0;
+                    $lineDiscountApplied = round($d, 2);
+                }
+            }
+
+            $manualName = trim((string) ($line['manual_name'] ?? ''));
+            $manualCode = trim((string) ($line['manual_code'] ?? ''));
+            $productName = $sku?->product?->name ?? 'SKU manual';
+            $skuNameSnapshot = $sku?->name;
+            if ($sku === null) {
+                $productName = $manualName !== '' ? $manualName : 'SKU manual';
+                $skuNameSnapshot = $manualCode !== '' ? 'Código: '.$manualCode : 'Línea manual';
+            }
+
+            $lineRows[] = [
+                'catalog_sku_id' => $sku?->id,
+                'catalog_product_id' => $sku?->catalog_product_id,
+                'product_name_snapshot' => $productName,
+                'sku_name_snapshot' => $skuNameSnapshot,
+                'quantity' => $qty,
+                'unit_price' => round($unit, 2),
+                'tax_included' => $taxIncluded,
+                'igv_applies' => $igvApplies,
+                'tax_rate' => $igvApplies ? $igvRate : null,
+                'line_discount' => $lineDiscountApplied,
+                'line_discount_percent' => null,
+                'tax_amount' => $taxLine,
+                'line_total' => $lineTotal,
+                'sort_order' => $sortOrder++,
+                'base_amount' => $baseLine,
+                'metadata' => [
+                    'igv_rate' => $igvApplies ? $igvRate : null,
+                    'line_kind' => $sku === null ? 'manual' : 'catalog',
+                    'manual_code' => $sku === null ? ($manualCode !== '' ? $manualCode : null) : null,
+                    'manual_name' => $sku === null ? ($manualName !== '' ? $manualName : null) : null,
+                    'line_input_index' => $lineIndex,
+                ],
+            ];
+        }
+
+        return $lineRows;
     }
 }

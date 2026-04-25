@@ -31,9 +31,28 @@ type Line = {
     line_discount: string;
 };
 
+type FormShape = {
+    user_id: string;
+    customer_legal_name: string;
+    customer_document_type: string;
+    customer_document_number: string;
+    customer_email: string;
+    customer_phone: string;
+    customer_address: string;
+    title: string;
+    currency: string;
+    status: string;
+    notes_internal: string;
+    lines: Line[];
+};
+
 type Props = {
     usersForSelect: ClienteUserOption[];
     skusForSelect: SkuPickOption[];
+    initialData?: FormShape;
+    submitUrl?: string;
+    submitMethod?: 'post' | 'patch';
+    submitLabel?: string;
 };
 
 function inferDocumentType(doc: string): '6' | '1' {
@@ -54,8 +73,12 @@ function buildAddress(p: NonNullable<ClienteUserOption['profile']>): string {
 export default function VentasCotizacionCreateForm({
     usersForSelect,
     skusForSelect,
+    initialData,
+    submitUrl,
+    submitMethod = 'post',
+    submitLabel,
 }: Props) {
-    const form = useForm({
+    const defaultData: FormShape = {
         user_id: '',
         customer_legal_name: '',
         customer_document_type: '6',
@@ -78,7 +101,8 @@ export default function VentasCotizacionCreateForm({
                 line_discount: '0',
             },
         ] as Line[],
-    });
+    };
+    const form = useForm<FormShape>(initialData ?? defaultData);
 
     const { data, setData, post, processing, errors } = form;
 
@@ -193,7 +217,12 @@ export default function VentasCotizacionCreateForm({
                 };
             }),
         }));
-        post(panel.ventasCotizaciones.store.url());
+        const action = submitUrl ?? panel.ventasCotizaciones.store.url();
+        if (submitMethod === 'patch') {
+            form.patch(action);
+            return;
+        }
+        post(action);
     };
 
     const addLine = () => {
@@ -758,7 +787,9 @@ export default function VentasCotizacionCreateForm({
                     className="cursor-pointer"
                 >
                     <FileText className="size-4 text-[#4A9A72]" />
-                    {processing ? 'Guardando…' : 'Crear cotización'}
+                    {processing
+                        ? 'Guardando…'
+                        : submitLabel ?? 'Crear cotización'}
                 </NeuButtonRaised>
                 <p className="text-[11px] leading-relaxed text-muted-foreground sm:max-w-md">
                     Precio y descuento son por línea. Si eliges SKU del catálogo,
