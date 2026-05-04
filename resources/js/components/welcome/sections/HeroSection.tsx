@@ -99,7 +99,7 @@ export default function HeroSection() {
                             <ul className="mt-5 space-y-3">
                                 {[
                                     'SLA documentado con penalidades reales',
-                                    'Uptime público en status.orvae.com',
+                                    'Uptime público en status.orvae.pe',
                                     'Historial de versiones y changelog público',
                                     'Contratos simples en español sin cláusulas ocultas',
                                 ].map((t) => (

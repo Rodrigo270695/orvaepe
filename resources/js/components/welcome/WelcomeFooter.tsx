@@ -248,12 +248,12 @@ export default function WelcomeFooter() {
                         <span className="text-muted-foreground/90">
                             SLA · Uptime · Changelog en{' '}
                             <a
-                                href="https://status.orvae.com"
+                                href="https://status.orvae.pe"
                                 target="_blank"
                                 rel="noreferrer"
                                 className="font-medium transition-colors hover:text-[var(--o-amber)] hover:underline dark:hover:text-[var(--o-tech2)]"
                             >
-                                status.orvae.com
+                                status.orvae.pe
                             </a>
                         </span>
                     </div>
