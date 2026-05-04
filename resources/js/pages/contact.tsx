@@ -2,6 +2,7 @@ import { Form, usePage } from '@inertiajs/react';
 import {
     Boxes,
     Building2,
+    MapPin,
     Code2,
     FileSpreadsheet,
     HelpCircle,
@@ -35,6 +36,12 @@ import WelcomeFooter from '@/components/welcome/WelcomeFooter';
 import { inertiaFormProps } from '@/lib/inertia-form-props';
 import { cn } from '@/lib/utils';
 import { marketingSeo } from '@/marketing/seoCopy';
+import {
+    ORVAE_FISCAL_ADDRESS,
+    ORVAE_LEGAL_NAME,
+    ORVAE_PUBLIC_PHONE_DISPLAY,
+    ORVAE_RUC,
+} from '@/marketing/orvaeContact';
 
 type ProductOption = { value: string; label: string };
 
@@ -42,6 +49,7 @@ type PageProps = {
     canRegister?: boolean;
     productOptions?: ProductOption[];
     flash?: { status?: string | null; toast?: unknown };
+    contact?: { fiscal_address?: string; public_phone_display?: string };
 };
 
 const inputClassName = cn(
@@ -91,7 +99,9 @@ const selectItemClassName = cn(
 );
 
 export default function Contact() {
-    const { productOptions = [], flash, canRegister = true } = usePage<PageProps>().props;
+    const { productOptions = [], flash, canRegister = true, contact } = usePage<PageProps>().props;
+    const fiscalAddress = contact?.fiscal_address?.trim() || ORVAE_FISCAL_ADDRESS;
+    const phoneDisplay = contact?.public_phone_display?.trim() || ORVAE_PUBLIC_PHONE_DISPLAY;
     const status = flash?.status;
     const [productInterest, setProductInterest] = useState('');
     const semanticAccents = [
@@ -147,6 +157,39 @@ export default function Contact() {
                             />
                         </ScrollReveal>
                         <div className="landing-section-flair mx-4 px-4" aria-hidden />
+
+                        <section
+                            className="mx-auto max-w-3xl px-4 pb-4 pt-1 sm:px-6 sm:pb-6"
+                            aria-label="Datos de la empresa"
+                        >
+                            <div
+                                className="space-y-4 rounded-2xl border px-5 py-6 text-sm leading-relaxed text-muted-foreground shadow-sm sm:px-8 sm:py-7"
+                                style={{
+                                    borderColor:
+                                        'color-mix(in oklab, var(--state-info) 26%, var(--border))',
+                                    background:
+                                        'color-mix(in oklab, var(--state-info) 6%, var(--card))',
+                                }}
+                            >
+                                <p className="text-base font-semibold tracking-tight text-foreground">
+                                    {ORVAE_LEGAL_NAME} · RUC {ORVAE_RUC}
+                                </p>
+                                <p className="flex gap-3">
+                                    <MapPin
+                                        className="mt-0.5 size-4 shrink-0 text-[color-mix(in_oklab,var(--state-info)_80%,var(--muted-foreground))]"
+                                        aria-hidden
+                                    />
+                                    <span className="min-w-0">{fiscalAddress}</span>
+                                </p>
+                                <p className="flex items-start gap-3">
+                                    <Phone
+                                        className="mt-0.5 size-4 shrink-0 text-[color-mix(in_oklab,var(--state-success)_80%,var(--muted-foreground))]"
+                                        aria-hidden
+                                    />
+                                    <span className="text-foreground">{phoneDisplay}</span>
+                                </p>
+                            </div>
+                        </section>
 
                         <section id="contacto-form" className="relative py-12 sm:py-16">
                             <GeometricBackground variant="grid-dots" opacity={0.05} />

@@ -116,6 +116,10 @@ return [
         '/servicios' => ['priority' => '0.9', 'changefreq' => 'monthly'],
         '/contacto' => ['priority' => '0.85', 'changefreq' => 'monthly'],
         '/licencias' => ['priority' => '0.85', 'changefreq' => 'monthly'],
+        '/privacidad' => ['priority' => '0.55', 'changefreq' => 'yearly'],
+        '/terminos-y-condiciones' => ['priority' => '0.6', 'changefreq' => 'yearly'],
+        '/politica-de-cambios-y-devoluciones' => ['priority' => '0.6', 'changefreq' => 'yearly'],
+        '/libro-de-reclamaciones' => ['priority' => '0.65', 'changefreq' => 'monthly'],
     ],
 
 ];

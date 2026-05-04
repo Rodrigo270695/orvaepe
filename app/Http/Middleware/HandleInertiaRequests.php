@@ -80,6 +80,8 @@ class HandleInertiaRequests extends Middleware
             'serviceNavGroups' => MarketingServicesNavGroups::all(),
             'contact' => [
                 'whatsapp_e164' => (string) config('contact.whatsapp_e164'),
+                'fiscal_address' => (string) config('contact.fiscal_address'),
+                'public_phone_display' => (string) config('contact.public_phone_display'),
             ],
             'paypalSimulateCheckout' => config('paypal.simulate_checkout') && app()->environment('local'),
             'mercadoPagoEnabled' => trim((string) config('mercadopago.access_token')) !== '',

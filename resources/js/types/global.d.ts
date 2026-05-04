@@ -15,7 +15,11 @@ declare module '@inertiajs/core' {
             /** Dropdown Servicios: categoría (admin) → productos con ancla /servicios#slug */
             serviceNavGroups?: { categoryLabel: string; items: { label: string; href: string }[] }[];
             /** WhatsApp catálogo (wa.me/{e164}) */
-            contact?: { whatsapp_e164: string };
+            contact?: {
+                whatsapp_e164: string;
+                fiscal_address?: string;
+                public_phone_display?: string;
+            };
             /** Metadatos y URLs para SEO (manifest, OG, JSON-LD) */
             seo: SeoDefaults;
             /** Notificaciones sin leer (tabla `notifications`, rol superadmin) */

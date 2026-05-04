@@ -28,6 +28,7 @@ use App\Http\Controllers\Checkout\CheckoutPayPalController;
 use App\Http\Controllers\Checkout\PayPalWebhookController;
 use App\Http\Controllers\Client\ClientPortalController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Marketing\ComplaintBookController;
 use App\Http\Controllers\Marketing\MarketingCartController;
 use App\Http\Controllers\Marketing\MarketingContactController;
 use App\Http\Controllers\Marketing\MarketingLicensesController;
@@ -108,6 +109,20 @@ Route::get('/privacidad', function () use ($canRegister) {
         'canRegister' => $canRegister,
     ]);
 })->name('public.privacy-policy');
+Route::get('/terminos-y-condiciones', function () use ($canRegister) {
+    return Inertia::render('public/terms-and-conditions', [
+        'canRegister' => $canRegister,
+    ]);
+})->name('public.terms');
+Route::get('/politica-de-cambios-y-devoluciones', function () use ($canRegister) {
+    return Inertia::render('public/refund-policy', [
+        'canRegister' => $canRegister,
+    ]);
+})->name('public.refund-policy');
+Route::get('/libro-de-reclamaciones', [ComplaintBookController::class, 'show'])->name('public.complaint-book');
+Route::post('/libro-de-reclamaciones', [ComplaintBookController::class, 'store'])
+    ->middleware('throttle:10,1')
+    ->name('public.complaint-book.store');
 Route::get('/redesorvae', function () {
     return Inertia::render('public/redesorvae');
 })->name('public.redesorvae');

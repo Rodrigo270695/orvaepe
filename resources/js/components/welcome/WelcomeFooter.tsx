@@ -1,10 +1,12 @@
-import { Link } from '@inertiajs/react';
-import { ArrowUpRight, LayoutGrid, Mail, MessageCircle } from 'lucide-react';
+import { Link, usePage } from '@inertiajs/react';
+import { ArrowUpRight, LayoutGrid, Mail, MapPin, MessageCircle, Phone } from 'lucide-react';
 
 import { whatsAppHref } from '@/lib/whatsapp';
 import {
     ORVAE_CONTACT_EMAIL,
+    ORVAE_FISCAL_ADDRESS,
     ORVAE_LEGAL_NAME,
+    ORVAE_PUBLIC_PHONE_DISPLAY,
     ORVAE_RUC,
     orvaeSocialLinks,
     simpleIconUrl,
@@ -14,12 +16,35 @@ const footerNav = [
     { href: '/software', label: 'Software' },
     { href: '/licencias', label: 'Precios' },
     { href: '/servicios', label: 'Servicios' },
+    { href: '/terminos-y-condiciones', label: 'Términos' },
+    { href: '/politica-de-cambios-y-devoluciones', label: 'Cambios y devoluciones' },
+    { href: '/libro-de-reclamaciones', label: 'Libro de reclamaciones' },
     { href: '/privacidad', label: 'Privacidad', newTab: true },
     { href: '#contacto', label: 'Contacto', isAnchor: true },
     { href: '/', label: 'Inicio' },
 ] as const;
 
+type SharedContact = {
+    fiscal_address?: string;
+    public_phone_display?: string;
+};
+
+function telHrefFromDisplay(phone: string): string {
+    const digits = phone.replace(/\D/g, '');
+    if (!digits) {
+        return '';
+    }
+    const e164 = digits.startsWith('51') ? digits : `51${digits}`;
+
+    return `tel:+${e164}`;
+}
+
 export default function WelcomeFooter() {
+    const contact = (usePage().props as { contact?: SharedContact }).contact;
+    const fiscalAddress = contact?.fiscal_address?.trim() || ORVAE_FISCAL_ADDRESS;
+    const phoneDisplay = contact?.public_phone_display?.trim() || ORVAE_PUBLIC_PHONE_DISPLAY;
+    const telHref = telHrefFromDisplay(phoneDisplay);
+
     return (
         <footer
             className={[
@@ -173,6 +198,41 @@ export default function WelcomeFooter() {
                                 Página de redes ORVAE
                                 <ArrowUpRight className="size-3.5" aria-hidden />
                             </Link>
+                            <div className="mt-5 space-y-3 border-t border-[color-mix(in_oklab,var(--foreground)_10%,var(--border))] pt-4 text-xs leading-relaxed text-muted-foreground">
+                                <p className="flex gap-2">
+                                    <MapPin
+                                        className="mt-0.5 size-4 shrink-0 text-[color-mix(in_oklab,var(--state-info)_80%,var(--muted-foreground))]"
+                                        aria-hidden
+                                    />
+                                    <span>
+                                        <span className="font-semibold text-foreground">Domicilio fiscal</span>
+                                        <br />
+                                        {fiscalAddress}
+                                    </span>
+                                </p>
+                                {phoneDisplay ? (
+                                    <p className="flex items-start gap-2">
+                                        <Phone
+                                            className="mt-0.5 size-4 shrink-0 text-[color-mix(in_oklab,var(--state-success)_80%,var(--muted-foreground))]"
+                                            aria-hidden
+                                        />
+                                        <span>
+                                            <span className="font-semibold text-foreground">Teléfono</span>
+                                            <br />
+                                            {telHref ? (
+                                                <a
+                                                    href={telHref}
+                                                    className="font-medium text-[color-mix(in_oklab,var(--state-info)_88%,var(--foreground))] underline-offset-4 hover:underline"
+                                                >
+                                                    {phoneDisplay}
+                                                </a>
+                                            ) : (
+                                                phoneDisplay
+                                            )}
+                                        </span>
+                                    </p>
+                                ) : null}
+                            </div>
                         </div>
                     </div>
                 </div>

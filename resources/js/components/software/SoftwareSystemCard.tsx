@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Layers } from 'lucide-react';
 
 import type { SoftwareSystem } from '@/marketplace/softwareCatalog';
 
@@ -48,6 +48,9 @@ export default function SoftwareSystemCard({ system, accent = 'var(--state-info)
               ? String(planAny.precioAhora)
               : undefined);
 
+    const coverUrl =
+        system.images?.find((u) => typeof u === 'string' && u.trim() !== '')?.trim() ?? null;
+
     return (
         <article
             className="group relative overflow-hidden rounded-2xl border border-[var(--border)] bg-card/75 p-6 backdrop-blur-md shadow-sm transition-all duration-300 hover:border-[color-mix(in_oklab,var(--primary)_28%,var(--border))] hover:bg-card/90 hover:shadow-[0_20px_50px_-12px_color-mix(in_oklab,var(--foreground)_12%,transparent)]"
@@ -65,6 +68,30 @@ export default function SoftwareSystemCard({ system, accent = 'var(--state-info)
                 }}
                 aria-hidden
             />
+
+            <div className="mb-4 overflow-hidden rounded-xl border border-[color-mix(in_oklab,var(--border)_65%,transparent)] bg-[color-mix(in_oklab,var(--muted)_35%,transparent)]">
+                {coverUrl ? (
+                    <img
+                        src={coverUrl}
+                        alt={system.name}
+                        className="aspect-[2/1] w-full object-cover"
+                        loading="lazy"
+                    />
+                ) : (
+                    <div
+                        className="flex aspect-[2/1] w-full items-center justify-center"
+                        style={{
+                            background: `linear-gradient(135deg, color-mix(in oklab, ${accent} 22%, var(--muted)) 0%, color-mix(in oklab, var(--card) 88%, transparent) 100%)`,
+                        }}
+                        aria-hidden
+                    >
+                        <Layers
+                            className="size-14 text-[color-mix(in_oklab,var(--foreground)_35%,transparent)]"
+                            strokeWidth={1.25}
+                        />
+                    </div>
+                )}
+            </div>
 
             <div className="flex items-start justify-between gap-4">
                 <div>

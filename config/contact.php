@@ -17,6 +17,39 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Domicilio fiscal (SUNAT) — visible en web para clientes y pasarelas de pago
+    |--------------------------------------------------------------------------
+    */
+
+    'fiscal_address' => (string) env(
+        'ORVAE_FISCAL_ADDRESS',
+        'MZA. D LOTE. 19 P.J. SANTA TRINIDAD LAMBAYEQUE - CHICLAYO - CHICLAYO',
+    ),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Teléfono legible (ej. +51 976 809 804). Si vacío, se deduce del WhatsApp.
+    |--------------------------------------------------------------------------
+    */
+
+    'public_phone_display' => (static function (): string {
+        $custom = trim((string) env('ORVAE_PUBLIC_PHONE_DISPLAY', ''));
+        if ($custom !== '') {
+            return $custom;
+        }
+
+        $digits = preg_replace('/\D+/', '', (string) env('CONTACT_WHATSAPP_E164', '51976809804'));
+        if (str_starts_with($digits, '51') && strlen($digits) >= 11) {
+            $n = substr($digits, 2);
+
+            return '+51 '.substr($n, 0, 3).' '.substr($n, 3, 3).' '.substr($n, 6);
+        }
+
+        return $digits !== '' ? '+'.$digits : '';
+    })(),
+
+    /*
+    |--------------------------------------------------------------------------
     | Destino de los mensajes del formulario /contacto
     |--------------------------------------------------------------------------
     */

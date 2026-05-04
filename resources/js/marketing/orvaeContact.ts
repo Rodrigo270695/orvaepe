@@ -14,7 +14,17 @@ export const ORVAE_CONTACT_EMAIL = 'ventas@orvae.pe';
 
 export const ORVAE_RUC = '20611148217';
 
-export const ORVAE_LEGAL_NAME = 'Cloud Byte SAC';
+export const ORVAE_LEGAL_NAME = 'CLOUDBYTE S.A.C.';
+
+/** Domicilio fiscal registrado en SUNAT (ORVAE opera bajo esta razón social). */
+export const ORVAE_FISCAL_ADDRESS =
+    'MZA. D LOTE. 19 P.J. SANTA TRINIDAD LAMBAYEQUE - CHICLAYO - CHICLAYO';
+
+/**
+ * Teléfono de contacto legible (debe coincidir con `config/contact.php` o props de Inertia).
+ * Valor por defecto alineado al WhatsApp de ejemplo del proyecto.
+ */
+export const ORVAE_PUBLIC_PHONE_DISPLAY = '+51 976 809 804';
 
 /** Slug del producto servicio en admin (debe coincidir con `catalog_products.slug`). */
 export const ORVAE_SERVICIO_SOFTWARE_MEDIDA_SLUG = 'ORVAE-DESARROLLO-SOFTWARE-MEDIDA';

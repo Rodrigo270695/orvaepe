@@ -6,6 +6,8 @@ import AppearanceFloatingRailToggle from '@/components/welcome/AppearanceFloatin
 import GeometricBackground from '@/components/welcome/GeometricBackground';
 import ScrollToTopButton from '@/components/welcome/ScrollToTopButton';
 import WelcomeFooter from '@/components/welcome/WelcomeFooter';
+import { Link } from '@inertiajs/react';
+
 import { ORVAE_CONTACT_EMAIL } from '@/marketing/orvaeContact';
 
 type PageProps = {
@@ -115,6 +117,14 @@ export default function PrivacyPolicyPage() {
                                     <p>
                                         Puedes solicitar acceso, rectificación, cancelación u oposición al tratamiento de tus
                                         datos, según la normativa aplicable, escribiendo a nuestro canal oficial de contacto.
+                                        Para reclamos vinculados al servicio también está disponible el{' '}
+                                        <Link
+                                            href="/libro-de-reclamaciones"
+                                            className="font-medium text-[color-mix(in_oklab,var(--state-info)_88%,var(--foreground))] underline underline-offset-4"
+                                        >
+                                            libro de reclamaciones virtual
+                                        </Link>
+                                        .
                                     </p>
                                 </section>
 
