@@ -8,6 +8,9 @@ use App\Models\CatalogSku;
 use App\Models\Order;
 use App\Models\OrderLine;
 use App\Models\User;
+use App\Services\Checkout\OrderPaidEntitlementProvisioner;
+use App\Services\Checkout\OrderPaidLicenseProvisioner;
+use App\Services\Checkout\OrderPaidSubscriptionProvisioner;
 use App\Support\Sales\PeruIgvLineCalculator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -134,7 +137,12 @@ class OrdersController extends Controller
         ]);
     }
 
-    public function store(OrderStoreRequest $request): RedirectResponse
+    public function store(
+        OrderStoreRequest $request,
+        OrderPaidSubscriptionProvisioner $subscriptionProvisioner,
+        OrderPaidEntitlementProvisioner $entitlementProvisioner,
+        OrderPaidLicenseProvisioner $licenseProvisioner,
+    ): RedirectResponse
     {
         $data = $request->validated();
         $linesInput = $data['lines'];
@@ -243,6 +251,13 @@ class OrdersController extends Controller
 
             return $order;
         });
+
+        if ($order->status === Order::STATUS_PAID) {
+            $freshOrder = $order->fresh(['lines.sku.product', 'user', 'payments']);
+            $subscriptionProvisioner->provision($freshOrder);
+            $entitlementProvisioner->provision($freshOrder);
+            $licenseProvisioner->provision($freshOrder);
+        }
 
         return redirect()->route('panel.ventas-ordenes.show', $order);
     }
