@@ -223,12 +223,20 @@ class AulaVirtualPlanProvisioner
             ->latest('created_at')
             ->first();
 
+        $url = is_string($academyUrl) ? $academyUrl : null;
+        $slug = is_string($tenantSlug) ? $tenantSlug : null;
+
         if ($subscription instanceof Subscription) {
             $metadata = is_array($subscription->metadata) ? $subscription->metadata : [];
-            $metadata['aula_virtual_academy_url'] = is_string($academyUrl) ? $academyUrl : null;
-            $metadata['aula_virtual_tenant_slug'] = is_string($tenantSlug) ? $tenantSlug : null;
+            $metadata['aula_virtual_academy_url'] = $url;
+            $metadata['aula_virtual_tenant_slug'] = $slug;
             $subscription->forceFill(['metadata' => $metadata])->save();
         }
+
+        $snapshot = is_array($order->billing_snapshot) ? $order->billing_snapshot : [];
+        $snapshot['aula_virtual_academy_url'] = $url;
+        $snapshot['aula_virtual_tenant_slug'] = $slug;
+        $order->forceFill(['billing_snapshot' => $snapshot])->save();
     }
 
     private function notifyAcademyAccess(Order $order, mixed $academyUrl, mixed $tenantSlug): void
