@@ -23,10 +23,10 @@ class NotificationsController extends Controller
             $sortDir = 'desc';
         }
 
-        $perPage = (int) $request->query('per_page', 25);
+        $perPage = (int) $request->query('per_page', 50);
         $allowedPerPage = [10, 15, 20, 25, 30, 40, 50];
         if (! in_array($perPage, $allowedPerPage, true)) {
-            $perPage = 25;
+            $perPage = 50;
         }
 
         $dateFrom = trim((string) $request->query('date_from', ''));
@@ -34,15 +34,7 @@ class NotificationsController extends Controller
         $datePattern = '/^\d{4}-\d{2}-\d{2}$/';
         $validFrom = $dateFrom !== '' && preg_match($datePattern, $dateFrom);
         $validTo = $dateTo !== '' && preg_match($datePattern, $dateTo);
-
-        if (! $validFrom || ! $validTo) {
-            $params = array_merge($request->query(), [
-                'date_from' => now()->startOfMonth()->format('Y-m-d'),
-                'date_to' => now()->endOfMonth()->format('Y-m-d'),
-            ]);
-
-            return redirect()->route('panel.acceso-notificaciones.index', $params);
-        }
+        $filterByDateRange = $validFrom && $validTo;
 
         $query = Notification::query()
             ->with(['user:id,name,lastname,email']);
@@ -57,8 +49,10 @@ class NotificationsController extends Controller
             });
         }
 
-        $query->whereDate('created_at', '>=', $dateFrom);
-        $query->whereDate('created_at', '<=', $dateTo);
+        if ($filterByDateRange) {
+            $query->whereDate('created_at', '>=', $dateFrom);
+            $query->whereDate('created_at', '<=', $dateTo);
+        }
 
         if ($status !== '') {
             $query->where('status', $status);
