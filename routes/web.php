@@ -38,6 +38,7 @@ use App\Http\Controllers\Marketing\MarketingSoftwareController;
 use App\Http\Controllers\Marketing\MarketingSoftwareDetailController;
 use App\Http\Controllers\Marketing\ResolveCartSkuPricesController;
 use App\Http\Controllers\Marketing\ValidateMarketingCouponController;
+use App\Http\Controllers\Sales\LookupSunatRucController;
 use App\Http\Controllers\Sales\OrdersController;
 use App\Http\Controllers\Sales\QuotesController;
 use App\Http\Controllers\Seo\RobotsController;
@@ -348,6 +349,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::post('panel/ventas-cotizaciones', [QuotesController::class, 'store'])
             ->name('panel.ventas-cotizaciones.store');
+
+        Route::post('panel/ventas-cotizaciones/lookup-ruc', LookupSunatRucController::class)
+            ->name('panel.ventas-cotizaciones.lookup-ruc');
 
         Route::get('panel/ventas-cotizaciones/{quote}/edit', [QuotesController::class, 'edit'])
             ->name('panel.ventas-cotizaciones.edit');

@@ -1,5 +1,13 @@
 import { useForm } from '@inertiajs/react';
-import { FileText, Info, Plus, Sparkles, Trash2 } from 'lucide-react';
+import {
+    Building2,
+    FileText,
+    Info,
+    Loader2,
+    Plus,
+    Sparkles,
+    Trash2,
+} from 'lucide-react';
 import * as React from 'react';
 
 import AdminClienteSelect, {
@@ -14,6 +22,7 @@ import AdminUnderlineLabel from '@/components/admin/form/admin-underline-label';
 import AdminUnderlineSelect from '@/components/admin/form/admin-underline-select';
 import { NeuButtonRaised } from '@/components/ui/neu-button-raised';
 import { NeuCardRaised } from '@/components/ui/neu-card-raised';
+import { getCsrfToken } from '@/lib/csrf';
 import { cn } from '@/lib/utils';
 import panel from '@/routes/panel';
 
@@ -123,6 +132,10 @@ export default function VentasCotizacionCreateForm({
     }, [skusForSelect]);
 
     const [billingFromClient, setBillingFromClient] = React.useState(false);
+    const [rucLookupLoading, setRucLookupLoading] = React.useState(false);
+    const [rucLookupError, setRucLookupError] = React.useState<string | null>(
+        null,
+    );
 
     const applyClientProfile = React.useCallback(
         (userId: string) => {
@@ -285,6 +298,66 @@ export default function VentasCotizacionCreateForm({
         }
     };
 
+    const lookupRucSunat = async () => {
+        setRucLookupError(null);
+        const digits = data.customer_document_number.replace(/\D/g, '');
+        if (digits.length !== 11) {
+            setRucLookupError('El RUC debe tener 11 dígitos.');
+            return;
+        }
+        setRucLookupLoading(true);
+        try {
+            const res = await fetch(panel.ventasCotizaciones.lookupRuc.url(), {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': getCsrfToken(),
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: JSON.stringify({ ruc: digits }),
+            });
+            const json = (await res.json().catch(() => ({}))) as {
+                legal_name?: string;
+                address?: string;
+                message?: string;
+                errors?: { ruc?: string[] };
+            };
+
+            if (!res.ok) {
+                const fromErrors = json.errors?.ruc?.[0];
+                const msg =
+                    (typeof fromErrors === 'string' && fromErrors) ||
+                    (typeof json.message === 'string' ? json.message : '') ||
+                    'No se pudo consultar el RUC.';
+                setRucLookupError(msg);
+                return;
+            }
+
+            const name =
+                typeof json.legal_name === 'string'
+                    ? json.legal_name.trim()
+                    : '';
+            const addr =
+                typeof json.address === 'string' ? json.address.trim() : '';
+
+            if (!name || !addr) {
+                setRucLookupError(
+                    'La respuesta no incluye razón social o dirección.',
+                );
+                return;
+            }
+
+            markBillingManual();
+            setData('customer_document_type', '6');
+            setData('customer_document_number', digits);
+            setData('customer_legal_name', name);
+            setData('customer_address', addr);
+        } finally {
+            setRucLookupLoading(false);
+        }
+    };
+
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
             <NeuCardRaised className="rounded-xl p-4 md:p-5">
@@ -373,6 +446,7 @@ export default function VentasCotizacionCreateForm({
                             value={data.customer_document_type}
                             onValueChange={(v) => {
                                 markBillingManual();
+                                setRucLookupError(null);
                                 setData('customer_document_type', v);
                             }}
                             options={[
@@ -386,20 +460,46 @@ export default function VentasCotizacionCreateForm({
                         <AdminUnderlineLabel htmlFor="customer_document_number">
                             Nº documento
                         </AdminUnderlineLabel>
-                        <AdminUnderlineInput
-                            id="customer_document_number"
-                            name="customer_document_number"
-                            value={data.customer_document_number}
-                            onChange={(e) => {
-                                markBillingManual();
-                                setData(
-                                    'customer_document_number',
-                                    e.target.value,
-                                );
-                            }}
-                            placeholder="11 dígitos (RUC) u 8 (DNI)"
-                            autoComplete="off"
-                        />
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
+                            <div className="min-w-0 flex-1">
+                                <AdminUnderlineInput
+                                    id="customer_document_number"
+                                    name="customer_document_number"
+                                    value={data.customer_document_number}
+                                    onChange={(e) => {
+                                        markBillingManual();
+                                        setRucLookupError(null);
+                                        setData(
+                                            'customer_document_number',
+                                            e.target.value,
+                                        );
+                                    }}
+                                    placeholder="11 dígitos (RUC) u 8 (DNI)"
+                                    autoComplete="off"
+                                />
+                            </div>
+                            {data.customer_document_type === '6' ? (
+                                <NeuButtonRaised
+                                    type="button"
+                                    onClick={() => void lookupRucSunat()}
+                                    disabled={rucLookupLoading}
+                                    className="h-10 shrink-0 cursor-pointer gap-1.5 px-3 text-[11px] sm:mt-px"
+                                    title="Consultar razón social y dirección en SUNAT (apiperu.dev)"
+                                >
+                                    {rucLookupLoading ? (
+                                        <Loader2 className="size-3.5 animate-spin" />
+                                    ) : (
+                                        <Building2 className="size-3.5 text-[#4A80B8]" />
+                                    )}
+                                    Consultar SUNAT
+                                </NeuButtonRaised>
+                            ) : null}
+                        </div>
+                        {rucLookupError ? (
+                            <p className="text-[11px] text-[#C05050]">
+                                {rucLookupError}
+                            </p>
+                        ) : null}
                         <InputError message={errors.customer_document_number} />
                     </div>
                     <div className="space-y-1.5">

@@ -43,4 +43,12 @@ return [
         'gateway_enabled' => env('PAYMENTS_GATEWAY_ENABLED', false),
     ],
 
+    /*
+    | Consulta RUC SUNAT vía apiperu.dev (cotizaciones / datos fiscales).
+    */
+    'apiperu' => [
+        'base_url' => env('APIPERU_BASE_URL', 'https://apiperu.dev/api'),
+        'token' => env('APIPERU_TOKEN'),
+    ],
+
 ];
