@@ -7,6 +7,8 @@ use App\Models\Order;
 use App\Models\Subscription;
 use App\Models\SubscriptionItem;
 use App\Services\Access\SubscriptionEntitlementSyncService;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Crea suscripción automática desde checkout para SKUs de pago recurrente.
@@ -16,11 +18,12 @@ final class OrderPaidSubscriptionProvisioner
 {
     public function __construct(
         private readonly SubscriptionEntitlementSyncService $entitlementSync,
+        private readonly AulaVirtualPlanProvisioner $aulaVirtualProvisioner,
     ) {}
 
     public function provision(Order $order): void
     {
-        $order->loadMissing(['lines.sku']);
+        $order->loadMissing(['user', 'lines.sku.product']);
 
         $recurringLines = $order->lines->filter(function ($line): bool {
             $sku = $line->sku;
@@ -85,6 +88,26 @@ final class OrderPaidSubscriptionProvisioner
         }
 
         $this->entitlementSync->sync($subscription->fresh());
+
+        /** @var CatalogSku|null $primaryRecurringSku */
+        $primaryRecurringSku = $recurringLines
+            ->sortByDesc(fn ($line) => (float) $line->line_total)
+            ->first()?->sku;
+
+        if ($primaryRecurringSku instanceof CatalogSku) {
+            $periodEnd = $subscription->current_period_end;
+            DB::afterCommit(function () use ($order, $primaryRecurringSku, $periodEnd): void {
+                try {
+                    $this->aulaVirtualProvisioner->provision($order->fresh(['user', 'payments']), $primaryRecurringSku, $periodEnd);
+                } catch (\Throwable $e) {
+                    Log::warning('aulavirtual.provision_exception', [
+                        'order_id' => $order->id,
+                        'order_number' => $order->order_number,
+                        'exception' => $e->getMessage(),
+                    ]);
+                }
+            });
+        }
     }
 
     private function isRecurringSku(CatalogSku $sku): bool

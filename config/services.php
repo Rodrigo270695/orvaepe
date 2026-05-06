@@ -51,4 +51,13 @@ return [
         'token' => env('APIPERU_TOKEN'),
     ],
 
+    /*
+    | Integración SaaS ORVAE -> Aula Virtual (provisión de tenant/plan tras pago).
+    */
+    'aulavirtual' => [
+        'enabled' => env('AULAVIRTUAL_PROVISIONING_ENABLED', false),
+        'provision_url' => env('AULAVIRTUAL_PROVISION_URL'),
+        'hmac_secret' => env('AULAVIRTUAL_PROVISION_HMAC_SECRET'),
+    ],
+
 ];
