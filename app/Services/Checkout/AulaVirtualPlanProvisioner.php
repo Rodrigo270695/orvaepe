@@ -104,22 +104,35 @@ class AulaVirtualPlanProvisioner
             ->asJson()
             ->post($url, $payload);
 
-        if ($response->successful()) {
-            Log::info('aulavirtual.provision_success', [
+        if (! $response->successful()) {
+            Log::warning('aulavirtual.provision_failed', [
                 'order_id' => $order->id,
                 'order_number' => $order->order_number,
                 'plan_slug' => $planSlug,
+                'status' => $response->status(),
+                'response' => Str::limit((string) $response->body(), 1000),
             ]);
 
             return;
         }
 
-        Log::warning('aulavirtual.provision_failed', [
+        $body = $response->json();
+        $academyUrl = is_array($body) ? ($body['academy_url'] ?? null) : null;
+        $tenantSlug = is_array($body) ? ($body['tenant_slug'] ?? null) : null;
+
+        if ($academyUrl || $tenantSlug) {
+            $metadata = is_array($order->billing_snapshot) ? $order->billing_snapshot : [];
+            $metadata['aula_virtual_academy_url'] = $academyUrl;
+            $metadata['aula_virtual_tenant_slug'] = $tenantSlug;
+            $order->forceFill(['billing_snapshot' => $metadata])->save();
+        }
+
+        Log::info('aulavirtual.provision_success', [
             'order_id' => $order->id,
             'order_number' => $order->order_number,
             'plan_slug' => $planSlug,
-            'status' => $response->status(),
-            'response' => Str::limit((string) $response->body(), 1000),
+            'academy_url' => $academyUrl,
+            'tenant_slug' => $tenantSlug,
         ]);
     }
 

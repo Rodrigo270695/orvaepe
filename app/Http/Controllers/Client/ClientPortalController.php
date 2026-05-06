@@ -318,12 +318,15 @@ class ClientPortalController extends Controller
             ->orderByDesc('created_at')
             ->get()
             ->map(static function (Subscription $sub): array {
+                $metadata = is_array($sub->metadata) ? $sub->metadata : [];
+
                 return [
                     'id' => $sub->id,
                     'status' => $sub->status,
                     'current_period_start' => $sub->current_period_start?->toIso8601String(),
                     'current_period_end' => $sub->current_period_end?->toIso8601String(),
                     'cancel_at_period_end' => (bool) $sub->cancel_at_period_end,
+                    'academy_url' => $metadata['aula_virtual_academy_url'] ?? null,
                     'items' => $sub->items->map(static function ($item): array {
                         return [
                             'sku_code' => $item->catalogSku?->code,
