@@ -320,6 +320,7 @@ export default function VentasCotizacionCreateForm({
             const json = (await res.json().catch(() => ({}))) as {
                 legal_name?: string;
                 address?: string;
+                phone?: string;
                 message?: string;
                 errors?: { ruc?: string[] };
             };
@@ -353,6 +354,12 @@ export default function VentasCotizacionCreateForm({
             setData('customer_document_number', digits);
             setData('customer_legal_name', name);
             setData('customer_address', addr);
+
+            const phone =
+                typeof json.phone === 'string' ? json.phone.trim() : '';
+            if (phone !== '') {
+                setData('customer_phone', phone);
+            }
         } finally {
             setRucLookupLoading(false);
         }

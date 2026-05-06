@@ -87,11 +87,45 @@ class LookupSunatRucController extends Controller
             );
         }
 
-        return response()->json([
+        $phone = '';
+        foreach (['telefono', 'telefono_celular', 'telefono_fijo', 'celular', 'numero_celular'] as $key) {
+            $candidate = $data[$key] ?? null;
+            if (! is_string($candidate)) {
+                continue;
+            }
+            $candidate = trim($candidate);
+            if ($candidate !== '') {
+                $phone = $candidate;
+                break;
+            }
+        }
+
+        if ($phone === '') {
+            $many = $data['telefonos'] ?? null;
+            if (is_string($many)) {
+                $phone = trim($many);
+            } elseif (is_array($many)) {
+                foreach ($many as $item) {
+                    if (is_string($item) && trim($item) !== '') {
+                        $phone = trim($item);
+                        break;
+                    }
+                }
+            }
+        }
+
+        $out = [
             'legal_name' => $legalName,
             'address' => $address,
             'estado' => is_string($data['estado'] ?? null) ? $data['estado'] : null,
             'condicion' => is_string($data['condicion'] ?? null) ? $data['condicion'] : null,
-        ]);
+        ];
+
+        /** Consulta SUNAT habitual no incluye teléfono; si la API lo envía en otro campo, se reusa aquí. */
+        if ($phone !== '') {
+            $out['phone'] = $phone;
+        }
+
+        return response()->json($out);
     }
 }
