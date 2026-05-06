@@ -16,6 +16,7 @@ type QuoteLineEdit = {
     unit_price: string;
     line_discount: string;
     igv_applies?: boolean;
+    tax_included?: boolean;
     metadata?: Record<string, unknown> | null;
     product_name_snapshot?: string | null;
 };
@@ -88,6 +89,11 @@ export default function VentasCotizacionEditPage({
                           typeof line.igv_applies === 'boolean'
                               ? line.igv_applies
                               : true;
+                      const manualTaxIncluded =
+                          line.catalog_sku_id === null &&
+                          typeof line.tax_included === 'boolean'
+                              ? line.tax_included
+                              : false;
 
                       return {
                           catalog_sku_id: line.catalog_sku_id ?? '',
@@ -96,6 +102,7 @@ export default function VentasCotizacionEditPage({
                               manualNameMeta !== ''
                                   ? manualNameMeta
                                   : manualNameSnapshot,
+                          manual_tax_included: manualTaxIncluded,
                           manual_igv_applies: manualIgvApplies,
                           quantity: Number(line.quantity ?? 1) || 1,
                           unit_price: line.unit_price ?? '0',
@@ -103,15 +110,16 @@ export default function VentasCotizacionEditPage({
                       };
                   })
                 : [
-                      {
-                          catalog_sku_id: '',
-                          manual_code: '',
-                          manual_name: '',
-                          manual_igv_applies: true,
-                          quantity: 1,
-                          unit_price: '',
-                          line_discount: '0',
-                      },
+                  {
+                      catalog_sku_id: '',
+                      manual_code: '',
+                      manual_name: '',
+                      manual_tax_included: false,
+                      manual_igv_applies: true,
+                      quantity: 1,
+                      unit_price: '',
+                      line_discount: '0',
+                  },
                   ],
     };
 

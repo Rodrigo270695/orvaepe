@@ -51,6 +51,7 @@ class QuoteStoreRequest extends FormRequest
             foreach ($lines as $line) {
                 if (! is_array($line)) {
                     $normalized[] = $line;
+
                     continue;
                 }
 
@@ -65,6 +66,9 @@ class QuoteStoreRequest extends FormRequest
                     'manual_igv_applies' => array_key_exists('manual_igv_applies', $line)
                         ? filter_var($line['manual_igv_applies'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true
                         : true,
+                    'manual_tax_included' => array_key_exists('manual_tax_included', $line)
+                        ? filter_var($line['manual_tax_included'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? false
+                        : false,
                 ]);
             }
             $this->merge(['lines' => $normalized]);
@@ -110,6 +114,7 @@ class QuoteStoreRequest extends FormRequest
             'lines.*.manual_code' => ['nullable', 'string', 'max:120'],
             'lines.*.manual_name' => ['nullable', 'string', 'max:255'],
             'lines.*.manual_igv_applies' => ['nullable', 'boolean'],
+            'lines.*.manual_tax_included' => ['nullable', 'boolean'],
             'lines.*.quantity' => ['required', 'integer', 'min:1'],
             'lines.*.unit_price' => ['required', 'numeric', 'min:0'],
             'lines.*.line_discount' => ['nullable', 'numeric', 'min:0'],

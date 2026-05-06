@@ -434,6 +434,7 @@ class QuotesController extends Controller
                         "lines.{$index}.manual_name" => 'Ingresa el nombre para la línea manual.',
                     ]);
                 }
+
                 continue;
             }
 
@@ -477,10 +478,17 @@ class QuotesController extends Controller
                 $lineDiscountInput = 0.0;
             }
 
-            $taxIncluded = $sku !== null ? (bool) $sku->tax_included : false;
             $igvApplies = $sku !== null
                 ? (bool) ($sku->igv_applies ?? true)
                 : (bool) ($line['manual_igv_applies'] ?? true);
+
+            $taxIncluded = $sku !== null
+                ? (bool) $sku->tax_included
+                : (bool) ($line['manual_tax_included'] ?? false);
+
+            if (! $igvApplies) {
+                $taxIncluded = false;
+            }
 
             $amounts = PeruIgvLineCalculator::forLine(
                 $qty,

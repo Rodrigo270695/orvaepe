@@ -32,6 +32,8 @@ type Line = {
     catalog_sku_id: string;
     manual_code: string;
     manual_name: string;
+    /** Precio unitario ingresado incluye IGV (como en catálogo SKU «Precio incluye IGV»). */
+    manual_tax_included: boolean;
     manual_igv_applies: boolean;
     quantity: number;
     /** Precio unitario cotizado (texto para el input; al elegir SKU se rellena con el listado). */
@@ -104,6 +106,7 @@ export default function VentasCotizacionCreateForm({
                 catalog_sku_id: '',
                 manual_code: '',
                 manual_name: '',
+                manual_tax_included: false,
                 manual_igv_applies: true,
                 quantity: 1,
                 unit_price: '',
@@ -223,6 +226,7 @@ export default function VentasCotizacionCreateForm({
                     catalog_sku_id: l.catalog_sku_id.trim(),
                     manual_code: l.manual_code.trim(),
                     manual_name: l.manual_name.trim(),
+                    manual_tax_included: Boolean(l.manual_tax_included),
                     manual_igv_applies: Boolean(l.manual_igv_applies),
                     quantity: Number(l.quantity),
                     unit_price: Number.isFinite(unitPrice) ? unitPrice : 0,
@@ -245,6 +249,7 @@ export default function VentasCotizacionCreateForm({
                 catalog_sku_id: '',
                 manual_code: '',
                 manual_name: '',
+                manual_tax_included: false,
                 manual_igv_applies: true,
                 quantity: 1,
                 unit_price: '',
@@ -268,9 +273,12 @@ export default function VentasCotizacionCreateForm({
             patch.manual_code = '';
             patch.manual_name = '';
             patch.manual_igv_applies = true;
+            patch.manual_tax_included = false;
         } else {
             patch.unit_price = '';
             patch.line_discount = '0';
+            patch.manual_igv_applies = true;
+            patch.manual_tax_included = false;
         }
         updateLine(index, patch);
     };
@@ -641,8 +649,9 @@ export default function VentasCotizacionCreateForm({
                         </h2>
                         <p className="mt-1 max-w-xl text-[11px] text-muted-foreground">
                             Puedes usar SKU del catálogo o una línea manual
-                            temporal (no se guarda en catálogo). En línea manual
-                            defines si aplica IGV.
+                            temporal (no se guarda en catálogo). En línea manual,
+                            igual que en el formulario de SKU: «Precio incluye
+                            IGV» y «Aplica IGV».
                         </p>
                     </div>
                     <NeuButtonRaised
@@ -857,23 +866,76 @@ export default function VentasCotizacionCreateForm({
                                 </div>
                             </div>
                             {!line.catalog_sku_id ? (
-                                <div className="flex flex-wrap items-center gap-4 rounded-lg border border-border/50 bg-black/5 px-3 py-2 text-[11px] dark:bg-black/20">
-                                    <label className="inline-flex cursor-pointer items-center gap-2">
-                                        <input
-                                            type="checkbox"
-                                            checked={line.manual_igv_applies}
-                                            onChange={(e) =>
-                                                updateLine(index, {
-                                                    manual_igv_applies:
-                                                        e.target.checked,
-                                                })
-                                            }
-                                            className="size-4 rounded border-border"
-                                        />
+                                <div className="rounded-lg border border-border/50 bg-black/5 text-[11px] dark:bg-black/20">
+                                    <div className="grid grid-cols-1 gap-3 p-3 sm:grid-cols-2">
+                                        <label
+                                            className={cn(
+                                                'inline-flex cursor-pointer items-center gap-2',
+                                                !line.manual_igv_applies &&
+                                                    'cursor-not-allowed opacity-50',
+                                            )}
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={
+                                                    line.manual_igv_applies &&
+                                                    line.manual_tax_included
+                                                }
+                                                disabled={
+                                                    !line.manual_igv_applies
+                                                }
+                                                onChange={(e) =>
+                                                    updateLine(index, {
+                                                        manual_tax_included:
+                                                            e.target.checked,
+                                                    })
+                                                }
+                                                className="size-4 rounded border-border disabled:cursor-not-allowed"
+                                            />
+                                            <span className="font-mono text-[9px] font-normal uppercase tracking-[0.14em] text-muted-foreground">
+                                                Precio incluye IGV
+                                            </span>
+                                        </label>
+                                        <label className="inline-flex cursor-pointer items-center gap-2">
+                                            <input
+                                                type="checkbox"
+                                                checked={
+                                                    line.manual_igv_applies
+                                                }
+                                                onChange={(e) => {
+                                                    const on = e.target.checked;
+                                                    updateLine(index, {
+                                                        manual_igv_applies: on,
+                                                        ...(on
+                                                            ? {}
+                                                            : {
+                                                                  manual_tax_included:
+                                                                      false,
+                                                              }),
+                                                    });
+                                                }}
+                                                className="size-4 rounded border-border"
+                                            />
+                                            <span className="font-mono text-[9px] font-normal uppercase tracking-[0.14em] text-muted-foreground">
+                                                Aplica IGV
+                                            </span>
+                                        </label>
+                                    </div>
+                                    <p className="border-t border-border/40 px-3 py-2 text-[10px] leading-snug text-muted-foreground">
+                                        Si «Precio incluye IGV» está activo,
+                                        cantidad × precio unitario es el{' '}
                                         <span className="text-foreground">
-                                            Aplica IGV (solo para esta cotización)
+                                            total con impuesto
                                         </span>
-                                    </label>
+                                        ; el backend reparte base e IGV según
+                                        la tasa configurada (
+                                        <code className="rounded bg-muted px-0.5 font-mono">
+                                            SALES_IGV_RATE
+                                        </code>
+                                        , por defecto 18&nbsp;%). Si «Aplica IGV»
+                                        está desmarcado, no hay impuesto en la
+                                        línea.
+                                    </p>
                                 </div>
                             ) : (
                                 <p className="text-[10px] leading-snug text-muted-foreground">
@@ -899,9 +961,9 @@ export default function VentasCotizacionCreateForm({
                         : submitLabel ?? 'Crear cotización'}
                 </NeuButtonRaised>
                 <p className="text-[11px] leading-relaxed text-muted-foreground sm:max-w-md">
-                    Precio y descuento son por línea. Si eliges SKU del catálogo,
-                    usa su configuración de IGV y moneda; si no eliges SKU, se
-                    crea una línea manual temporal para esta cotización.
+                    Precio y descuento son por línea. Con SKU, el IGV sigue el
+                    catálogo; en línea manual podés marcar precio con IGV
+                    incluido o excluido, igual que al crear el SKU.
                 </p>
             </div>
         </form>
