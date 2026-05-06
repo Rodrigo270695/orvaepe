@@ -79,6 +79,7 @@ class AulaVirtualPlanProvisioner
             ],
             'subscription' => [
                 'plan_slug' => $planSlug,
+                'target_role' => $this->resolveTargetRole($sku, $planSlug),
                 'status' => 'active',
                 'amount_paid' => (string) $order->grand_total,
                 'currency' => (string) $order->currency,
@@ -201,6 +202,24 @@ class AulaVirtualPlanProvisioner
         $slug = Str::slug($localPart);
 
         return $slug !== '' ? Str::limit($slug, 100, '') : 'academia-'.Str::lower(Str::random(8));
+    }
+
+    private function resolveTargetRole(CatalogSku $sku, string $planSlug): string
+    {
+        $metadata = is_array($sku->metadata) ? $sku->metadata : [];
+        $candidate = $metadata['saas_target_role'] ?? $metadata['target_role'] ?? null;
+
+        if (is_string($candidate)) {
+            $normalized = strtolower(trim($candidate));
+            if (in_array($normalized, ['tenant_owner', 'instructor', 'student'], true)) {
+                return $normalized;
+            }
+        }
+
+        return match ($planSlug) {
+            'free', 'starter', 'pro', 'business' => 'tenant_owner',
+            default => 'tenant_owner',
+        };
     }
 
     private function resolvePaymentMethod(Order $order): string
