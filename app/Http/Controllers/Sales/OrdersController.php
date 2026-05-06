@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Services\Checkout\OrderPaidEntitlementProvisioner;
 use App\Services\Checkout\OrderPaidLicenseProvisioner;
 use App\Services\Checkout\OrderPaidSubscriptionProvisioner;
+use App\Support\AdminFlashToast;
 use App\Support\Sales\PeruIgvLineCalculator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -259,7 +260,17 @@ class OrdersController extends Controller
             $licenseProvisioner->provision($freshOrder);
         }
 
-        return redirect()->route('panel.ventas-ordenes.show', $order);
+        return redirect()
+            ->route('panel.ventas-ordenes.show', $order)
+            ->with(
+                'toast',
+                AdminFlashToast::success(
+                    'Pedido creado correctamente',
+                    $order->status === Order::STATUS_PAID
+                        ? 'La orden quedó pagada y se ejecutó la provisión correspondiente.'
+                        : 'La orden quedó registrada y pendiente de pago.',
+                ),
+            );
     }
 
     public function destroy(Order $order): RedirectResponse
