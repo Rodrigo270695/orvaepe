@@ -3,14 +3,21 @@
 namespace App\Services\Checkout;
 
 use App\Models\CatalogSku;
+use App\Models\Notification;
 use App\Models\Order;
+use App\Models\Subscription;
 use App\Models\User;
+use App\Services\Notifications\NotificationSender;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class AulaVirtualPlanProvisioner
 {
+    public function __construct(
+        private readonly NotificationSender $notificationSender,
+    ) {}
+
     public function provision(Order $order, CatalogSku $sku, ?\DateTimeInterface $periodEnd = null): void
     {
         if (! $this->isEnabled()) {
@@ -121,10 +128,8 @@ class AulaVirtualPlanProvisioner
         $tenantSlug = is_array($body) ? ($body['tenant_slug'] ?? null) : null;
 
         if ($academyUrl || $tenantSlug) {
-            $metadata = is_array($order->billing_snapshot) ? $order->billing_snapshot : [];
-            $metadata['aula_virtual_academy_url'] = $academyUrl;
-            $metadata['aula_virtual_tenant_slug'] = $tenantSlug;
-            $order->forceFill(['billing_snapshot' => $metadata])->save();
+            $this->persistAcademyAccess($order, $academyUrl, $tenantSlug);
+            $this->notifyAcademyAccess($order, $academyUrl, $tenantSlug);
         }
 
         Log::info('aulavirtual.provision_success', [
@@ -208,5 +213,76 @@ class AulaVirtualPlanProvisioner
     private function isEnabled(): bool
     {
         return (bool) config('services.aulavirtual.enabled', false);
+    }
+
+    private function persistAcademyAccess(Order $order, mixed $academyUrl, mixed $tenantSlug): void
+    {
+        $subscription = Subscription::query()
+            ->where('user_id', $order->user_id)
+            ->where('metadata->checkout_order_id', $order->id)
+            ->latest('created_at')
+            ->first();
+
+        if ($subscription instanceof Subscription) {
+            $metadata = is_array($subscription->metadata) ? $subscription->metadata : [];
+            $metadata['aula_virtual_academy_url'] = is_string($academyUrl) ? $academyUrl : null;
+            $metadata['aula_virtual_tenant_slug'] = is_string($tenantSlug) ? $tenantSlug : null;
+            $subscription->forceFill(['metadata' => $metadata])->save();
+        }
+    }
+
+    private function notifyAcademyAccess(Order $order, mixed $academyUrl, mixed $tenantSlug): void
+    {
+        $academyUrl = is_string($academyUrl) ? trim($academyUrl) : '';
+        if ($academyUrl === '') {
+            return;
+        }
+
+        $user = $order->user;
+        if (! $user instanceof User) {
+            return;
+        }
+
+        $subject = 'Tu acceso a Aula Virtual está listo';
+        $message = "✅ *Aula Virtual activada*\n"
+            .'📦 Pedido: '.$order->order_number."\n"
+            .'🔗 URL de acceso: '.$academyUrl."\n"
+            .'👤 Usuario: '.$user->email."\n"
+            ."🔐 Contraseña: usa «Olvidaste tu contraseña» para crearla.\n\n"
+            .'Si no recibiste correo, entra a '.$academyUrl.'/forgot-password';
+
+        Notification::query()->create([
+            'user_id' => $user->id,
+            'type' => 'aulavirtual.access.customer',
+            'channel' => 'in_app',
+            'subject' => $subject,
+            'message' => $message,
+            'data' => [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'academy_url' => $academyUrl,
+                'tenant_slug' => is_string($tenantSlug) ? $tenantSlug : null,
+            ],
+            'status' => 'sent',
+            'sent_at' => now(),
+        ]);
+
+        $emailNotification = Notification::query()->create([
+            'user_id' => $user->id,
+            'type' => 'aulavirtual.access.customer',
+            'channel' => 'email',
+            'subject' => $subject,
+            'message' => $message,
+            'data' => [
+                'email_to' => $user->email,
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'academy_url' => $academyUrl,
+                'tenant_slug' => is_string($tenantSlug) ? $tenantSlug : null,
+            ],
+            'status' => 'pending',
+        ]);
+
+        $this->notificationSender->send($emailNotification);
     }
 }
