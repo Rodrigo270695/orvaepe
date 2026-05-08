@@ -16,6 +16,17 @@ const CHECKOUT_URLS: Record<MarketingCheckoutGateway, string> = {
 };
 
 export type MarketingCheckoutPostResult =
+    | {
+          kind: 'culqi_inline';
+          orderId: string;
+          orderNumber: string;
+          amountCents: number;
+          currency: string;
+          email: string;
+          publicKey: string;
+          checkoutScriptUrl: string;
+          commerceName: string;
+      }
     | { kind: 'redirect'; approvalUrl: string }
     | { kind: 'unauthorized' }
     | { kind: 'error'; message: string; httpStatus: number };
@@ -52,10 +63,23 @@ export async function postMarketingCheckout(params: {
         return { kind: 'unauthorized' };
     }
 
-    let data: { message?: string; approval_url?: string } = {};
+    let data: {
+        message?: string;
+        approval_url?: string;
+        inline_checkout?: {
+            order_id?: string;
+            order_number?: string;
+            amount_cents?: number;
+            currency?: string;
+            email?: string;
+            public_key?: string;
+            checkout_script_url?: string;
+            commerce_name?: string;
+        };
+    } = {};
 
     try {
-        data = (await res.json()) as { message?: string; approval_url?: string };
+        data = (await res.json()) as typeof data;
     } catch {
         data = {};
     }
@@ -68,6 +92,40 @@ export async function postMarketingCheckout(params: {
                     ? data.message
                     : 'No se pudo iniciar el pago.',
             httpStatus: res.status,
+        };
+    }
+
+    const inline = data.inline_checkout;
+    if (
+        inline &&
+        typeof inline.order_id === 'string' &&
+        inline.order_id !== '' &&
+        typeof inline.order_number === 'string' &&
+        inline.order_number !== '' &&
+        typeof inline.amount_cents === 'number' &&
+        Number.isFinite(inline.amount_cents) &&
+        typeof inline.currency === 'string' &&
+        inline.currency !== '' &&
+        typeof inline.email === 'string' &&
+        inline.email !== '' &&
+        typeof inline.public_key === 'string' &&
+        inline.public_key !== '' &&
+        typeof inline.checkout_script_url === 'string' &&
+        inline.checkout_script_url !== ''
+    ) {
+        return {
+            kind: 'culqi_inline',
+            orderId: inline.order_id,
+            orderNumber: inline.order_number,
+            amountCents: inline.amount_cents,
+            currency: inline.currency,
+            email: inline.email,
+            publicKey: inline.public_key,
+            checkoutScriptUrl: inline.checkout_script_url,
+            commerceName:
+                typeof inline.commerce_name === 'string' && inline.commerce_name !== ''
+                    ? inline.commerce_name
+                    : 'ORVAE',
         };
     }
 

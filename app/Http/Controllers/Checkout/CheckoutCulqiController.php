@@ -53,6 +53,16 @@ class CheckoutCulqiController extends Controller
         return response()->json([
             'approval_url' => route('checkout.culqi.show', ['order' => $order->id], true),
             'order_number' => $order->order_number,
+            'inline_checkout' => [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'amount_cents' => (int) round(((float) $order->grand_total) * 100),
+                'currency' => (string) $order->currency,
+                'email' => (string) $user->email,
+                'public_key' => (string) config('culqi.public_key'),
+                'checkout_script_url' => (string) config('culqi.checkout_script_url', 'https://js.culqi.com/checkout-js'),
+                'commerce_name' => (string) config('app.name', 'ORVAE'),
+            ],
         ]);
     }
 

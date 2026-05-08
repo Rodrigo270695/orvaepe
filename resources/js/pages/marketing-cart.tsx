@@ -35,6 +35,24 @@ function formatMoneyAmount(amount: number, currency: string): string {
     return `${formatPenValue(amount)} ${currency}`;
 }
 
+type CulqiWindow = Window & {
+    Culqi?: {
+        publicKey?: string;
+        token?: { id?: string };
+        error?: { user_message?: string };
+        settings?: (config: unknown) => void;
+        options?: (config: unknown) => void;
+        open?: () => void;
+    };
+    CulqiCheckout?: new (publicKey: string, config: unknown) => {
+        open: () => void;
+        token?: { id?: string };
+        error?: { user_message?: string };
+        culqi?: () => void;
+    };
+    culqi?: () => void;
+};
+
 type CartPageProps = {
     auth?: { user?: { name?: string } | null };
     flash?: { status?: string | null; toast?: unknown };
@@ -381,6 +399,107 @@ export default function MarketingCart() {
 
             if (result.kind === 'unauthorized') {
                 window.location.href = '/login';
+                return;
+            }
+
+            if (result.kind === 'culqi_inline') {
+                const submitChargeForm = (tokenId: string) => {
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = `/checkout/culqi/${result.orderId}/charge`;
+
+                    const csrfInput = document.createElement('input');
+                    csrfInput.type = 'hidden';
+                    csrfInput.name = '_token';
+                    csrfInput.value = getCsrfToken();
+
+                    const tokenInput = document.createElement('input');
+                    tokenInput.type = 'hidden';
+                    tokenInput.name = 'token_id';
+                    tokenInput.value = tokenId;
+
+                    form.appendChild(csrfInput);
+                    form.appendChild(tokenInput);
+                    document.body.appendChild(form);
+                    form.submit();
+                };
+
+                const existingScript = document.querySelector<HTMLScriptElement>(
+                    `script[src="${result.checkoutScriptUrl}"]`,
+                );
+
+                if (!existingScript) {
+                    await new Promise<void>((resolve, reject) => {
+                        const script = document.createElement('script');
+                        script.src = result.checkoutScriptUrl;
+                        script.async = true;
+                        script.onload = () => resolve();
+                        script.onerror = () => reject(new Error('No se pudo cargar el script de Culqi.'));
+                        document.body.appendChild(script);
+                    });
+                }
+
+                const config = {
+                    settings: {
+                        title: result.commerceName,
+                        currency: result.currency,
+                        amount: result.amountCents,
+                    },
+                    client: {
+                        email: result.email,
+                    },
+                    options: {
+                        lang: 'es',
+                        installments: true,
+                        paymentMethods: {
+                            tarjeta: true,
+                            yape: true,
+                            billetera: true,
+                            bancaMovil: true,
+                            agente: true,
+                            cuotealo: true,
+                        },
+                    },
+                };
+
+                const culqiWindow = window as CulqiWindow;
+                if (culqiWindow.Culqi && culqiWindow.Culqi.open) {
+                    culqiWindow.Culqi.publicKey = result.publicKey;
+                    culqiWindow.Culqi.settings?.(config.settings);
+                    culqiWindow.Culqi.options?.(config.options);
+
+                    culqiWindow.culqi = () => {
+                        if (culqiWindow.Culqi?.token?.id) {
+                            submitChargeForm(culqiWindow.Culqi.token.id);
+                            return;
+                        }
+                        const userMessage =
+                            culqiWindow.Culqi?.error?.user_message ??
+                            'No se pudo generar el token de pago.';
+                        setCheckoutError(userMessage);
+                    };
+
+                    culqiWindow.Culqi.open();
+                    return;
+                }
+
+                if (culqiWindow.CulqiCheckout) {
+                    const instance = new culqiWindow.CulqiCheckout(result.publicKey, config);
+                    instance.culqi = () => {
+                        if (instance.token?.id) {
+                            submitChargeForm(instance.token.id);
+                            return;
+                        }
+
+                        const userMessage =
+                            instance.error?.user_message ?? 'No se pudo generar el token de pago.';
+                        setCheckoutError(userMessage);
+                    };
+                    instance.open();
+                    return;
+                }
+
+                setCheckoutError('La librería de Culqi no está disponible en esta página.');
                 return;
             }
 
@@ -908,7 +1027,7 @@ export default function MarketingCart() {
                                             : 'Pagar con Culqi'}
                                     </button>
                                     <p className="mt-2 text-center text-xs text-[var(--muted-foreground)]">
-                                        Serás redirigido a la vista de checkout para completar tu pago con Culqi.
+                                        Al continuar se abrirá el modal de Culqi para completar tu pago.
                                     </p>
                                 </>
                             )}
