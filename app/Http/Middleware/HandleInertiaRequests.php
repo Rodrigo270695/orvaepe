@@ -85,6 +85,8 @@ class HandleInertiaRequests extends Middleware
             ],
             'paypalSimulateCheckout' => config('paypal.simulate_checkout') && app()->environment('local'),
             'mercadoPagoEnabled' => trim((string) config('mercadopago.access_token')) !== '',
+            'culqiEnabled' => trim((string) config('culqi.public_key')) !== ''
+                && trim((string) config('culqi.secret_key')) !== '',
             'staffUnreadNotificationsCount' => fn () => $request->user()?->hasRole('superadmin')
                 ? Notification::query()->whereNull('read_at')->count()
                 : 0,

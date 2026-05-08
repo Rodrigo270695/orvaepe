@@ -24,6 +24,8 @@ use App\Http\Controllers\Catalog\CouponsController;
 use App\Http\Controllers\Catalog\SoftwareReleaseAssetsController;
 use App\Http\Controllers\Catalog\SoftwareReleasesController;
 use App\Http\Controllers\Checkout\CheckoutMercadoPagoController;
+use App\Http\Controllers\Checkout\CheckoutCulqiController;
+use App\Http\Controllers\Checkout\CulqiWebhookController;
 use App\Http\Controllers\Checkout\CheckoutPayPalController;
 use App\Http\Controllers\Checkout\PayPalWebhookController;
 use App\Http\Controllers\Client\ClientPortalController;
@@ -132,8 +134,14 @@ Route::match(['GET', 'POST'], '/webhooks/mercadopago', [CheckoutMercadoPagoContr
     ->name('webhooks.mercadopago');
 Route::post('/webhooks/paypal', [PayPalWebhookController::class, 'handle'])
     ->name('webhooks.paypal');
+Route::post('/webhooks/culqi', [CulqiWebhookController::class, 'handle'])
+    ->name('webhooks.culqi');
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    Route::post('/checkout/culqi', [CheckoutCulqiController::class, 'store'])->name('checkout.culqi.store');
+    Route::get('/checkout/culqi/{order}', [CheckoutCulqiController::class, 'show'])->name('checkout.culqi.show');
+    Route::post('/checkout/culqi/{order}/charge', [CheckoutCulqiController::class, 'charge'])->name('checkout.culqi.charge');
+
     Route::post('/checkout/mercadopago', [CheckoutMercadoPagoController::class, 'store'])->name('checkout.mercadopago.store');
     Route::get('/checkout/mercadopago/return', [CheckoutMercadoPagoController::class, 'handleReturn'])->name('checkout.mercadopago.return');
     Route::get('/checkout/mercadopago/cancel', [CheckoutMercadoPagoController::class, 'cancel'])->name('checkout.mercadopago.cancel');

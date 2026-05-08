@@ -3,11 +3,13 @@ import { getCsrfToken } from '@/lib/csrf';
 export type MarketingCheckoutLinePayload = { plan_id: string; qty: number };
 
 export type MarketingCheckoutGateway =
+    | 'culqi'
     | 'mercadopago'
     | 'paypal'
     | 'paypal_simulate';
 
 const CHECKOUT_URLS: Record<MarketingCheckoutGateway, string> = {
+    culqi: '/checkout/culqi',
     mercadopago: '/checkout/mercadopago',
     paypal: '/checkout/paypal',
     paypal_simulate: '/checkout/paypal/simulate',
@@ -81,7 +83,14 @@ export async function postMarketingCheckout(params: {
 }
 
 /** Pasarela por defecto en detalle de producto (Perú: MP si está configurado). */
-export function defaultMarketingCheckoutGateway(opts: {
+export function defaultMarketingCheckoutGateway(_opts: {
+    mercadoPagoEnabled: boolean;
+    paypalSimulateCheckout: boolean;
+}): MarketingCheckoutGateway {
+    return 'culqi';
+}
+
+export function legacyDefaultMarketingCheckoutGateway(opts: {
     mercadoPagoEnabled: boolean;
     paypalSimulateCheckout: boolean;
 }): MarketingCheckoutGateway {

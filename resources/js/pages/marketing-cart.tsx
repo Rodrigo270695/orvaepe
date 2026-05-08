@@ -38,14 +38,12 @@ function formatMoneyAmount(amount: number, currency: string): string {
 type CartPageProps = {
     auth?: { user?: { name?: string } | null };
     flash?: { status?: string | null; toast?: unknown };
-    paypalSimulateCheckout?: boolean;
-    mercadoPagoEnabled?: boolean;
     /** Tasa IGV (ej. 0.18), alineada a config/sales */
     salesIgvRate?: number;
 };
 
 export default function MarketingCart() {
-    const { auth, flash, paypalSimulateCheckout, mercadoPagoEnabled, salesIgvRate } = usePage<CartPageProps>().props;
+    const { auth, flash, salesIgvRate } = usePage<CartPageProps>().props;
     const [lines, setLines] = useState<SoftwareCartItem[]>([]);
     const [mounted, setMounted] = useState(false);
     const [couponInput, setCouponInput] = useState('');
@@ -59,7 +57,6 @@ export default function MarketingCart() {
     const [skuPricesLoading, setSkuPricesLoading] = useState(false);
     const [checkoutLoading, setCheckoutLoading] = useState(false);
     const [checkoutError, setCheckoutError] = useState<string | null>(null);
-    const [selectedGateway, setSelectedGateway] = useState<'paypal' | 'mercadopago'>('paypal');
 
     const linesKeyRef = useRef<string | undefined>(undefined);
     const skipNextInvalidationRef = useRef(true);
@@ -368,7 +365,7 @@ export default function MarketingCart() {
         sync();
     };
 
-    const startPayPalCheckout = async () => {
+    const startCulqiCheckout = async () => {
         setCheckoutError(null);
         if (lines.length === 0 || totalPayable === null) {
             return;
@@ -377,71 +374,7 @@ export default function MarketingCart() {
         setCheckoutLoading(true);
         try {
             const result = await postMarketingCheckout({
-                gateway: 'paypal',
-                lines: lines.map((l) => ({ plan_id: l.planId, qty: l.qty })),
-                coupon_code: appliedCoupon,
-            });
-
-            if (result.kind === 'unauthorized') {
-                window.location.href = '/login';
-                return;
-            }
-
-            if (result.kind === 'redirect') {
-                window.location.href = result.approvalUrl;
-                return;
-            }
-
-            setCheckoutError(result.message);
-        } catch {
-            setCheckoutError('Error de red. Inténtalo de nuevo.');
-        } finally {
-            setCheckoutLoading(false);
-        }
-    };
-
-    const startPayPalSimulateCheckout = async () => {
-        setCheckoutError(null);
-        if (lines.length === 0 || totalPayable === null) {
-            return;
-        }
-
-        setCheckoutLoading(true);
-        try {
-            const result = await postMarketingCheckout({
-                gateway: 'paypal_simulate',
-                lines: lines.map((l) => ({ plan_id: l.planId, qty: l.qty })),
-                coupon_code: appliedCoupon,
-            });
-
-            if (result.kind === 'unauthorized') {
-                window.location.href = '/login';
-                return;
-            }
-
-            if (result.kind === 'redirect') {
-                window.location.href = result.approvalUrl;
-                return;
-            }
-
-            setCheckoutError(result.message);
-        } catch {
-            setCheckoutError('Error de red. Inténtalo de nuevo.');
-        } finally {
-            setCheckoutLoading(false);
-        }
-    };
-
-    const startMercadoPagoCheckout = async () => {
-        setCheckoutError(null);
-        if (lines.length === 0 || totalPayable === null) {
-            return;
-        }
-
-        setCheckoutLoading(true);
-        try {
-            const result = await postMarketingCheckout({
-                gateway: 'mercadopago',
+                gateway: 'culqi',
                 lines: lines.map((l) => ({ plan_id: l.planId, qty: l.qty })),
                 coupon_code: appliedCoupon,
             });
@@ -955,35 +888,10 @@ export default function MarketingCart() {
                                     href="/login"
                                     className="mt-6 flex w-full cursor-pointer items-center justify-center rounded-xl border border-[color-mix(in_oklab,var(--primary)_40%,var(--border))] bg-transparent px-4 py-3 text-sm font-semibold text-[var(--foreground)] transition-colors hover:bg-[color-mix(in_oklab,var(--primary)_8%,transparent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                                 >
-                                    Inicia sesión para pagar con PayPal o Mercado Pago
+                                    Inicia sesión para pagar con Culqi
                                 </Link>
                             ) : (
                                 <>
-                                    <div className="mt-6 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                                        <button
-                                            type="button"
-                                            className={`rounded-xl border px-3 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] ${
-                                                selectedGateway === 'paypal'
-                                                    ? 'border-[var(--primary)] bg-[color-mix(in_oklab,var(--primary)_12%,transparent)] text-[var(--foreground)]'
-                                                    : 'border-[var(--border)] bg-background/70 text-[var(--muted-foreground)] hover:text-[var(--foreground)]'
-                                            }`}
-                                            onClick={() => setSelectedGateway('paypal')}
-                                        >
-                                            PayPal
-                                        </button>
-                                        <button
-                                            type="button"
-                                            className={`rounded-xl border px-3 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] ${
-                                                selectedGateway === 'mercadopago'
-                                                    ? 'border-[var(--primary)] bg-[color-mix(in_oklab,var(--primary)_12%,transparent)] text-[var(--foreground)]'
-                                                    : 'border-[var(--border)] bg-background/70 text-[var(--muted-foreground)] hover:text-[var(--foreground)]'
-                                            }`}
-                                            onClick={() => setSelectedGateway('mercadopago')}
-                                        >
-                                            Mercado Pago
-                                        </button>
-                                    </div>
-
                                     <button
                                         type="button"
                                         disabled={
@@ -993,42 +901,15 @@ export default function MarketingCart() {
                                             lines.length === 0
                                         }
                                         className="mt-6 w-full cursor-pointer rounded-xl bg-[linear-gradient(120deg,var(--state-info),var(--state-success))] px-4 py-3 text-sm font-semibold text-[color-mix(in_oklab,white_95%,var(--foreground))] transition-colors hover:brightness-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--state-info)] focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-60"
-                                        onClick={() =>
-                                            void (selectedGateway === 'mercadopago'
-                                                ? startMercadoPagoCheckout()
-                                                : startPayPalCheckout())
-                                        }
+                                        onClick={() => void startCulqiCheckout()}
                                     >
                                         {checkoutLoading
-                                            ? selectedGateway === 'mercadopago'
-                                                ? 'Conectando con Mercado Pago…'
-                                                : 'Conectando con PayPal…'
-                                            : selectedGateway === 'mercadopago'
-                                              ? 'Pagar con Mercado Pago'
-                                              : 'Pagar con PayPal'}
+                                            ? 'Abriendo checkout de Culqi…'
+                                            : 'Pagar con Culqi'}
                                     </button>
                                     <p className="mt-2 text-center text-xs text-[var(--muted-foreground)]">
-                                        {selectedGateway === 'mercadopago'
-                                            ? 'Mercado Pago Checkout Pro: serás redirigido para completar el pago.'
-                                            : 'PayPal puede cobrar en USD; el pedido se registra en PEN.'}
+                                        Serás redirigido a la vista de checkout para completar tu pago con Culqi.
                                     </p>
-                                    {paypalSimulateCheckout && selectedGateway === 'paypal' ? (
-                                        <button
-                                            type="button"
-                                            disabled={
-                                                checkoutLoading ||
-                                                skuPricesLoading ||
-                                                totalPayable === null ||
-                                                lines.length === 0
-                                            }
-                                            className="mt-3 w-full cursor-pointer rounded-xl border border-[color-mix(in_oklab,var(--primary)_40%,var(--border))] bg-transparent px-4 py-3 text-sm font-semibold text-[var(--foreground)] transition-colors hover:bg-[color-mix(in_oklab,var(--primary)_8%,transparent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-60"
-                                            onClick={() => void startPayPalSimulateCheckout()}
-                                        >
-                                            {checkoutLoading
-                                                ? 'Procesando…'
-                                                : 'Pago de prueba (sin PayPal)'}
-                                        </button>
-                                    ) : null}
                                 </>
                             )}
                             <p className="mt-2 text-center text-xs text-[var(--muted-foreground)]">

@@ -25,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: [
             'webhooks/mercadopago',
             'webhooks/paypal',
+            'webhooks/culqi',
         ]);
 
         $middleware->alias([

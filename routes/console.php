@@ -2,6 +2,7 @@
 
 use App\Services\Payments\PayPalClient;
 use App\Services\Payments\MercadoPagoClient;
+use App\Services\Payments\CulqiClient;
 use App\Services\Access\SubscriptionEntitlementSyncService;
 use App\Services\Notifications\ExpiringAccessNotifier;
 use App\Services\WhatsApp\UltraMsgClient;
@@ -33,6 +34,8 @@ Artisan::command('mercadopago:test-connection', function (MercadoPagoClient $mp)
         // Hacemos una llamada ligera para validar el access token.
         // Usamos un ID obviamente inválido solo para comprobar autenticación.
         $mp->getPayment('test-connection-invalid-id');
+
+        return 0;
     } catch (\RuntimeException $e) {
         // Si la autenticación es válida, Mercado Pago responderá 404 (u otro error de recurso),
         // pero nuestro cliente ya habrá lanzado una RuntimeException con el mensaje HTTP.
@@ -53,6 +56,19 @@ Artisan::command('mercadopago:test-connection', function (MercadoPagoClient $mp)
         return 1;
     }
 })->purpose('Comprueba MP_ACCESS_TOKEN contra la API de Mercado Pago');
+
+Artisan::command('culqi:test-connection', function (CulqiClient $culqi): int {
+    try {
+        $culqi->ping();
+        $this->info('Culqi: conexión OK (secret key configurada).');
+
+        return 0;
+    } catch (Throwable $e) {
+        $this->error($e->getMessage());
+
+        return 1;
+    }
+})->purpose('Comprueba CULQI_SECRET_KEY contra la API de Culqi');
 
 Artisan::command('ultramsg:test-send', function (UltraMsgClient $ultraMsg): int {
     try {
