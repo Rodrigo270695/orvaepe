@@ -19,6 +19,7 @@ final class OrderPaidSubscriptionProvisioner
     public function __construct(
         private readonly SubscriptionEntitlementSyncService $entitlementSync,
         private readonly AulaVirtualPlanProvisioner $aulaVirtualProvisioner,
+        private readonly VetSaaSPlanProvisioner $vetsaasProvisioner,
     ) {}
 
     public function provision(Order $order): void
@@ -97,10 +98,22 @@ final class OrderPaidSubscriptionProvisioner
         if ($primaryRecurringSku instanceof CatalogSku) {
             $periodEnd = $subscription->current_period_end;
             DB::afterCommit(function () use ($order, $primaryRecurringSku, $periodEnd): void {
+                $freshOrder = $order->fresh(['user', 'payments']);
+
                 try {
-                    $this->aulaVirtualProvisioner->provision($order->fresh(['user', 'payments']), $primaryRecurringSku, $periodEnd);
+                    $this->aulaVirtualProvisioner->provision($freshOrder, $primaryRecurringSku, $periodEnd);
                 } catch (\Throwable $e) {
                     Log::warning('aulavirtual.provision_exception', [
+                        'order_id' => $order->id,
+                        'order_number' => $order->order_number,
+                        'exception' => $e->getMessage(),
+                    ]);
+                }
+
+                try {
+                    $this->vetsaasProvisioner->provision($freshOrder, $primaryRecurringSku, $periodEnd);
+                } catch (\Throwable $e) {
+                    Log::warning('vetsaas.provision_exception', [
                         'order_id' => $order->id,
                         'order_number' => $order->order_number,
                         'exception' => $e->getMessage(),

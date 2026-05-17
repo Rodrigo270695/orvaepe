@@ -5,13 +5,25 @@ namespace App\Http\Controllers\Checkout;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\Payment;
+use App\Models\User;
 use App\Models\WebhookEvent;
+use App\Services\Checkout\OrderPaidEntitlementProvisioner;
+use App\Services\Checkout\OrderPaidLicenseProvisioner;
+use App\Services\Checkout\OrderPaidNotifier;
+use App\Services\Checkout\OrderPaidSubscriptionProvisioner;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class CulqiWebhookController extends Controller
 {
+    public function __construct(
+        private readonly OrderPaidNotifier $notifier,
+        private readonly OrderPaidSubscriptionProvisioner $subscriptionProvisioner,
+        private readonly OrderPaidEntitlementProvisioner $entitlementProvisioner,
+        private readonly OrderPaidLicenseProvisioner $licenseProvisioner,
+    ) {}
+
     public function handle(Request $request): JsonResponse
     {
         if (! $this->passesBasicAuth($request)) {
@@ -78,6 +90,8 @@ class CulqiWebhookController extends Controller
             return;
         }
 
+        $wasPaid = $order->status === Order::STATUS_PAID;
+
         DB::transaction(function () use ($order, $user, $chargeId, $payload): void {
             $existing = Payment::query()->where('gateway_payment_id', $chargeId)->first();
             if ($existing !== null) {
@@ -108,6 +122,17 @@ class CulqiWebhookController extends Controller
                 'paid_at' => now(),
             ]);
         });
+
+        if (! $wasPaid && $order->fresh()?->status === Order::STATUS_PAID) {
+            $freshOrder = $order->fresh(['user', 'lines.sku.product', 'payments']);
+            if ($freshOrder && $user instanceof User) {
+                $this->notifier->notifyCustomer($freshOrder, $user);
+                $this->notifier->notifyAdmin($freshOrder, $user);
+                $this->subscriptionProvisioner->provision($freshOrder);
+                $this->entitlementProvisioner->provision($freshOrder);
+                $this->licenseProvisioner->provision($freshOrder);
+            }
+        }
     }
 
     /**

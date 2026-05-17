@@ -60,4 +60,13 @@ return [
         'hmac_secret' => env('AULAVIRTUAL_PROVISION_HMAC_SECRET'),
     ],
 
+    /*
+    | Integración ORVAE -> VetSaaS (provisión de clínica tras pago).
+    */
+    'vetsaas' => [
+        'enabled' => env('VETSAAS_PROVISIONING_ENABLED', false),
+        'provision_url' => env('VETSAAS_PROVISION_URL'),
+        'hmac_secret' => env('VETSAAS_PROVISION_HMAC_SECRET', env('ORVAE_PROVISION_HMAC_SECRET')),
+    ],
+
 ];
