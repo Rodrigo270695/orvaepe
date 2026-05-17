@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\Subscription;
 use App\Models\SubscriptionItem;
 use App\Services\Access\SubscriptionEntitlementSyncService;
+use App\Support\Checkout\SaasCatalogSku;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -28,7 +29,11 @@ final class OrderPaidSubscriptionProvisioner
 
         $recurringLines = $order->lines->filter(function ($line): bool {
             $sku = $line->sku;
-            return $sku instanceof CatalogSku && $this->isRecurringSku($sku);
+            if (! $sku instanceof CatalogSku) {
+                return false;
+            }
+
+            return $this->isRecurringSku($sku) || SaasCatalogSku::isSaasSubscription($sku);
         })->values();
 
         if ($recurringLines->isEmpty()) {
@@ -90,37 +95,44 @@ final class OrderPaidSubscriptionProvisioner
 
         $this->entitlementSync->sync($subscription->fresh());
 
-        /** @var CatalogSku|null $primaryRecurringSku */
-        $primaryRecurringSku = $recurringLines
-            ->sortByDesc(fn ($line) => (float) $line->line_total)
-            ->first()?->sku;
+        $periodEnd = $subscription->current_period_end;
 
-        if ($primaryRecurringSku instanceof CatalogSku) {
-            $periodEnd = $subscription->current_period_end;
-            DB::afterCommit(function () use ($order, $primaryRecurringSku, $periodEnd): void {
-                $freshOrder = $order->fresh(['user', 'payments']);
+        DB::afterCommit(function () use ($order, $recurringLines, $periodEnd): void {
+            $freshOrder = $order->fresh(['user', 'payments', 'lines.sku.product']);
 
-                try {
-                    $this->aulaVirtualProvisioner->provision($freshOrder, $primaryRecurringSku, $periodEnd);
-                } catch (\Throwable $e) {
-                    Log::warning('aulavirtual.provision_exception', [
-                        'order_id' => $order->id,
-                        'order_number' => $order->order_number,
-                        'exception' => $e->getMessage(),
-                    ]);
+            foreach ($recurringLines as $line) {
+                $sku = $line->sku;
+                if (! $sku instanceof CatalogSku) {
+                    continue;
                 }
 
-                try {
-                    $this->vetsaasProvisioner->provision($freshOrder, $primaryRecurringSku, $periodEnd);
-                } catch (\Throwable $e) {
-                    Log::warning('vetsaas.provision_exception', [
-                        'order_id' => $order->id,
-                        'order_number' => $order->order_number,
-                        'exception' => $e->getMessage(),
-                    ]);
+                if (SaasCatalogSku::isAulaVirtual($sku)) {
+                    try {
+                        $this->aulaVirtualProvisioner->provision($freshOrder, $sku, $periodEnd);
+                    } catch (\Throwable $e) {
+                        Log::warning('aulavirtual.provision_exception', [
+                            'order_id' => $order->id,
+                            'order_number' => $order->order_number,
+                            'sku_code' => $sku->code,
+                            'exception' => $e->getMessage(),
+                        ]);
+                    }
                 }
-            });
-        }
+
+                if (SaasCatalogSku::isVetsaas($sku)) {
+                    try {
+                        $this->vetsaasProvisioner->provision($freshOrder, $sku, $periodEnd);
+                    } catch (\Throwable $e) {
+                        Log::warning('vetsaas.provision_exception', [
+                            'order_id' => $order->id,
+                            'order_number' => $order->order_number,
+                            'sku_code' => $sku->code,
+                            'exception' => $e->getMessage(),
+                        ]);
+                    }
+                }
+            }
+        });
     }
 
     private function isRecurringSku(CatalogSku $sku): bool

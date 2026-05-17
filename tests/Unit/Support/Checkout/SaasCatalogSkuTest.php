@@ -27,6 +27,16 @@ test('detects aulavirtual sku by metadata', function (): void {
         ->and(SaasCatalogSku::isVetsaas($sku))->toBeFalse();
 });
 
+test('detects vetsaas sku by code without metadata', function (): void {
+    $sku = new CatalogSku([
+        'code' => 'Vetsaas-free-mensual',
+        'name' => 'Vetsaas — Plan Free',
+        'sale_model' => 'one_time',
+    ]);
+
+    expect(SaasCatalogSku::isVetsaas($sku))->toBeTrue();
+});
+
 test('zero total checkout requires all saas skus', function (): void {
     $vetsaas = new CatalogSku([
         'metadata' => ['saas_product' => 'vetsaas'],

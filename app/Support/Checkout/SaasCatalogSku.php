@@ -21,10 +21,20 @@ final class SaasCatalogSku
             return true;
         }
 
+        $haystack = strtolower(implode(' ', array_filter([
+            (string) ($sku->code ?? ''),
+            (string) ($sku->name ?? ''),
+            (string) ($sku->product?->name ?? ''),
+        ])));
+
+        if (str_contains($haystack, 'vetsaas') || str_contains($haystack, 'vet-saas')) {
+            return true;
+        }
+
         $saleModel = strtolower(trim((string) $sku->sale_model));
 
         return $saleModel === 'saas_subscription'
-            && str_contains(strtolower((string) ($sku->code ?? '')), 'vet');
+            && str_contains($haystack, 'vet');
     }
 
     public static function isAulaVirtual(CatalogSku $sku): bool

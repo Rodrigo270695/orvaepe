@@ -24,7 +24,19 @@ class VetSaaSPlanProvisioner
 
     public function provision(Order $order, CatalogSku $sku, ?\DateTimeInterface $periodEnd = null): void
     {
-        if (! $this->isEnabled() || ! SaasCatalogSku::isVetsaas($sku)) {
+        if (! SaasCatalogSku::isVetsaas($sku)) {
+            $this->noteSnapshot($order, ['vetsaas_provision_skipped' => 'sku_no_es_vetsaas']);
+
+            return;
+        }
+
+        if (! $this->isEnabled()) {
+            $this->noteSnapshot($order, ['vetsaas_provision_skipped' => 'VETSAAS_PROVISIONING_ENABLED=false']);
+            Log::warning('vetsaas.provision_skipped_disabled', [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+            ]);
+
             return;
         }
 
@@ -32,6 +44,7 @@ class VetSaaSPlanProvisioner
         $secret = (string) config('services.vetsaas.hmac_secret');
 
         if ($url === '' || $secret === '') {
+            $this->noteSnapshot($order, ['vetsaas_provision_skipped' => 'falta_url_o_hmac_secret']);
             Log::warning('vetsaas.provision_skipped_missing_config', [
                 'order_id' => $order->id,
                 'order_number' => $order->order_number,
@@ -42,11 +55,17 @@ class VetSaaSPlanProvisioner
 
         $user = $order->user;
         if (! $user instanceof User) {
+            $this->noteSnapshot($order, ['vetsaas_provision_skipped' => 'pedido_sin_usuario']);
+
             return;
         }
 
         $planSlug = $this->resolvePlanSlug($sku);
         if ($planSlug === null) {
+            $this->noteSnapshot($order, [
+                'vetsaas_provision_skipped' => 'plan_slug_no_mapeado',
+                'sku_code' => $sku->code,
+            ]);
             Log::info('vetsaas.provision_skipped_unmapped_plan', [
                 'order_id' => $order->id,
                 'sku_code' => $sku->code,
@@ -81,6 +100,13 @@ class VetSaaSPlanProvisioner
             ],
         ];
 
+        Log::info('vetsaas.provision_request', [
+            'order_id' => $order->id,
+            'order_number' => $order->order_number,
+            'plan_slug' => $planSlug,
+            'tenant_slug' => $tenantSlug,
+        ]);
+
         $response = OrvaeSignedHttpClient::post(
             $url,
             $payload,
@@ -90,6 +116,13 @@ class VetSaaSPlanProvisioner
         );
 
         if (! $response->successful()) {
+            $this->noteSnapshot($order, [
+                'vetsaas_provision_error' => [
+                    'http_status' => $response->status(),
+                    'body' => Str::limit((string) $response->body(), 2000),
+                    'at' => now()->toIso8601String(),
+                ],
+            ]);
             Log::warning('vetsaas.provision_failed', [
                 'order_id' => $order->id,
                 'status' => $response->status(),
@@ -102,6 +135,12 @@ class VetSaaSPlanProvisioner
         $json = $response->json();
         $loginUrl = is_array($json) ? ($json['login_url'] ?? $json['academy_url'] ?? null) : null;
         $tenantSlugResp = is_array($json) ? ($json['tenant_slug'] ?? $json['tenant']['slug'] ?? null) : null;
+
+        if ((! is_string($loginUrl) || $loginUrl === '') && is_string($tenantSlugResp) && $tenantSlugResp !== '') {
+            $scheme = (string) config('services.vetsaas.tenant_scheme', 'https');
+            $domain = (string) config('services.vetsaas.tenant_domain', 'vetsaas.orvae.pe');
+            $loginUrl = sprintf('%s://%s.%s/login', $scheme, $tenantSlugResp, $domain);
+        }
 
         if ($loginUrl || $tenantSlugResp) {
             $this->persistAccess($order, $loginUrl, $tenantSlugResp, $temporaryPassword);
@@ -174,6 +213,15 @@ class VetSaaSPlanProvisioner
         return (bool) config('services.vetsaas.enabled', false);
     }
 
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function noteSnapshot(Order $order, array $data): void
+    {
+        $snapshot = is_array($order->billing_snapshot) ? $order->billing_snapshot : [];
+        $order->forceFill(['billing_snapshot' => array_merge($snapshot, $data)])->save();
+    }
+
     private function persistAccess(Order $order, mixed $loginUrl, mixed $tenantSlug, string $temporaryPassword): void
     {
         $subscription = Subscription::query()
@@ -194,6 +242,7 @@ class VetSaaSPlanProvisioner
         }
 
         $snapshot = is_array($order->billing_snapshot) ? $order->billing_snapshot : [];
+        unset($snapshot['vetsaas_provision_error'], $snapshot['vetsaas_provision_skipped']);
         $snapshot['vetsaas_login_url'] = $url;
         $snapshot['vetsaas_tenant_slug'] = $slug;
         $snapshot['vetsaas_login_email'] = $order->user?->email;
