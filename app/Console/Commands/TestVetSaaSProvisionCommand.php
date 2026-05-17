@@ -41,11 +41,7 @@ class TestVetSaaSProvisionCommand extends Command
             return self::SUCCESS;
         }
 
-        $order = Order::query()
-            ->with(['user', 'lines.sku', 'payments'])
-            ->where('id', $ref)
-            ->orWhere('order_number', $ref)
-            ->first();
+        $order = $this->findOrder($ref);
 
         if ($order === null) {
             $this->error("Pedido no encontrado: {$ref}");
@@ -76,8 +72,37 @@ class TestVetSaaSProvisionCommand extends Command
             return self::SUCCESS;
         }
 
-        $this->warn('Provisión ejecutada pero no hay vetsaas_login_url en billing_snapshot. Revisa storage/logs/laravel.log (vetsaas.provision_failed).');
+        if (isset($snapshot['vetsaas_provision_skipped'])) {
+            $this->error('Provisión omitida: '.$snapshot['vetsaas_provision_skipped']);
+        }
+
+        if (isset($snapshot['vetsaas_provision_error']) && is_array($snapshot['vetsaas_provision_error'])) {
+            $err = $snapshot['vetsaas_provision_error'];
+            $this->error('Error API VetSaaS HTTP '.($err['http_status'] ?? '?'));
+            $this->line((string) ($err['body'] ?? ''));
+        }
+
+        $this->warn('Sin vetsaas_login_url en billing_snapshot. Revisa storage/logs/laravel.log (vetsaas.provision_*).');
 
         return self::FAILURE;
+    }
+
+    private function findOrder(string $ref): ?Order
+    {
+        $query = Order::query()->with(['user', 'lines.sku', 'payments']);
+
+        if ($this->looksLikeUuid($ref)) {
+            return $query->where('id', $ref)->first();
+        }
+
+        return $query->where('order_number', $ref)->first();
+    }
+
+    private function looksLikeUuid(string $value): bool
+    {
+        return preg_match(
+            '/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i',
+            $value,
+        ) === 1;
     }
 }
