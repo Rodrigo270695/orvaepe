@@ -9,6 +9,8 @@ use App\Models\Payment;
 use App\Models\User;
 use App\Models\WebhookEvent;
 use App\Services\Audit\AuditLogger;
+use App\Services\Checkout\FreeSaasCheckoutHandler;
+use App\Services\Checkout\OrderCheckoutFinalizer;
 use App\Services\Checkout\OrderFromCartLinesBuilder;
 use App\Services\Checkout\OrderPaidEntitlementProvisioner;
 use App\Services\Checkout\OrderPaidLicenseProvisioner;
@@ -27,6 +29,7 @@ class CheckoutMercadoPagoController extends Controller
         StorePayPalCheckoutRequest $request,
         OrderFromCartLinesBuilder $builder,
         MercadoPagoClient $mercadoPago,
+        FreeSaasCheckoutHandler $freeSaasCheckout,
     ): JsonResponse {
         $user = $request->user();
         if (! $user->hasRole('client') && ! $user->hasRole('superadmin')) {
@@ -45,6 +48,11 @@ class CheckoutMercadoPagoController extends Controller
         $couponCode = $couponCode === '' ? null : $couponCode;
 
         $order = $builder->createPendingOrder($user, $lines, $couponCode);
+
+        if ($response = $freeSaasCheckout->tryFinalizeAndRespond($order, $user)) {
+            return $response;
+        }
+
         Log::info('mercadopago.checkout_start', [
             'order_number' => $order->order_number,
             'order_id' => $order->id,

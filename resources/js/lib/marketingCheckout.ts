@@ -27,6 +27,11 @@ export type MarketingCheckoutPostResult =
           checkoutScriptUrl: string;
           commerceName: string;
       }
+    | {
+          kind: 'free_completed';
+          orderNumber: string;
+          message: string;
+      }
     | { kind: 'redirect'; approvalUrl: string }
     | { kind: 'unauthorized' }
     | { kind: 'error'; message: string; httpStatus: number };
@@ -65,6 +70,9 @@ export async function postMarketingCheckout(params: {
 
     let data: {
         message?: string;
+        free_checkout?: boolean;
+        completed?: boolean;
+        order_number?: string;
         approval_url?: string;
         inline_checkout?: {
             order_id?: string;
@@ -92,6 +100,22 @@ export async function postMarketingCheckout(params: {
                     ? data.message
                     : 'No se pudo iniciar el pago.',
             httpStatus: res.status,
+        };
+    }
+
+    if (
+        data.free_checkout === true &&
+        data.completed === true &&
+        typeof data.order_number === 'string' &&
+        data.order_number !== ''
+    ) {
+        return {
+            kind: 'free_completed',
+            orderNumber: data.order_number,
+            message:
+                typeof data.message === 'string' && data.message.trim() !== ''
+                    ? data.message
+                    : 'Pedido confirmado. Revisa tu correo con el acceso.',
         };
     }
 

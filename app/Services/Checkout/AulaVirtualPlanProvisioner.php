@@ -3,24 +3,23 @@
 namespace App\Services\Checkout;
 
 use App\Models\CatalogSku;
-use App\Models\Notification;
 use App\Models\Order;
 use App\Models\Subscription;
 use App\Models\User;
-use App\Services\Notifications\NotificationSender;
-use Illuminate\Support\Facades\Http;
+use App\Support\Checkout\SaasCatalogSku;
+use App\Support\Http\OrvaeSignedHttpClient;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class AulaVirtualPlanProvisioner
 {
     public function __construct(
-        private readonly NotificationSender $notificationSender,
+        private readonly SaasProvisionAccessNotifier $accessNotifier,
     ) {}
 
     public function provision(Order $order, CatalogSku $sku, ?\DateTimeInterface $periodEnd = null): void
     {
-        if (! $this->isEnabled()) {
+        if (! $this->isEnabled() || ! SaasCatalogSku::isAulaVirtual($sku)) {
             return;
         }
 
@@ -60,7 +59,6 @@ class AulaVirtualPlanProvisioner
 
         $tenantName = $this->resolveTenantName($user);
         $tenantSlug = $this->resolveTenantSlug($tenantName, $user->email);
-        $timestamp = now()->timestamp;
 
         $payload = [
             'external_order_id' => (string) $order->id,
@@ -90,27 +88,14 @@ class AulaVirtualPlanProvisioner
             ],
         ];
 
-        $body = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-        if (! is_string($body)) {
-            Log::warning('aulavirtual.provision_skipped_json_error', [
-                'order_id' => $order->id,
-                'order_number' => $order->order_number,
-            ]);
-
-            return;
-        }
-
-        $signature = hash_hmac('sha256', $timestamp.'.'.$body, $secret);
-
-        $response = Http::timeout(15)
-            ->retry(2, 300)
-            ->withHeaders([
-                'X-Orvae-Timestamp' => (string) $timestamp,
-                'X-Orvae-Signature' => $signature,
-                'X-Idempotency-Key' => 'order:'.$order->id,
-            ])
-            ->asJson()
-            ->post($url, $payload);
+        $response = OrvaeSignedHttpClient::post(
+            $url,
+            $payload,
+            $secret,
+            'order:'.$order->id,
+            timeoutSeconds: 15,
+            retryDelayMs: 300,
+        );
 
         if (! $response->successful()) {
             Log::warning('aulavirtual.provision_failed', [
@@ -130,7 +115,14 @@ class AulaVirtualPlanProvisioner
 
         if ($academyUrl || $tenantSlug) {
             $this->persistAcademyAccess($order, $academyUrl, $tenantSlug);
-            $this->notifyAcademyAccess($order, $academyUrl, $tenantSlug);
+            $this->accessNotifier->notify(
+                $order,
+                'aulavirtual',
+                is_string($academyUrl) ? $academyUrl : '',
+                is_string($tenantSlug) ? $tenantSlug : null,
+                (string) $user->email,
+                null,
+            );
         }
 
         Log::info('aulavirtual.provision_success', [
@@ -258,58 +250,4 @@ class AulaVirtualPlanProvisioner
         $order->forceFill(['billing_snapshot' => $snapshot])->save();
     }
 
-    private function notifyAcademyAccess(Order $order, mixed $academyUrl, mixed $tenantSlug): void
-    {
-        $academyUrl = is_string($academyUrl) ? trim($academyUrl) : '';
-        if ($academyUrl === '') {
-            return;
-        }
-
-        $user = $order->user;
-        if (! $user instanceof User) {
-            return;
-        }
-
-        $subject = 'Tu acceso a Aula Virtual está listo';
-        $message = "✅ *Aula Virtual activada*\n"
-            .'📦 Pedido: '.$order->order_number."\n"
-            .'🔗 URL de acceso: '.$academyUrl."\n"
-            .'👤 Usuario: '.$user->email."\n"
-            ."🔐 Contraseña: usa «Olvidaste tu contraseña» para crearla.\n\n"
-            .'Si no recibiste correo, entra a '.$academyUrl.'/forgot-password';
-
-        Notification::query()->create([
-            'user_id' => $user->id,
-            'type' => 'aulavirtual.access.customer',
-            'channel' => 'in_app',
-            'subject' => $subject,
-            'message' => $message,
-            'data' => [
-                'order_id' => $order->id,
-                'order_number' => $order->order_number,
-                'academy_url' => $academyUrl,
-                'tenant_slug' => is_string($tenantSlug) ? $tenantSlug : null,
-            ],
-            'status' => 'sent',
-            'sent_at' => now(),
-        ]);
-
-        $emailNotification = Notification::query()->create([
-            'user_id' => $user->id,
-            'type' => 'aulavirtual.access.customer',
-            'channel' => 'email',
-            'subject' => $subject,
-            'message' => $message,
-            'data' => [
-                'email_to' => $user->email,
-                'order_id' => $order->id,
-                'order_number' => $order->order_number,
-                'academy_url' => $academyUrl,
-                'tenant_slug' => is_string($tenantSlug) ? $tenantSlug : null,
-            ],
-            'status' => 'pending',
-        ]);
-
-        $this->notificationSender->send($emailNotification);
-    }
 }

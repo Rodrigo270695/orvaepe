@@ -7,6 +7,7 @@ use App\Http\Requests\Checkout\StorePayPalCheckoutRequest;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\User;
+use App\Services\Checkout\FreeSaasCheckoutHandler;
 use App\Services\Checkout\OrderFromCartLinesBuilder;
 use App\Services\Checkout\OrderPaidEntitlementProvisioner;
 use App\Services\Checkout\OrderPaidLicenseProvisioner;
@@ -27,6 +28,7 @@ class CheckoutPayPalController extends Controller
         StorePayPalCheckoutRequest $request,
         OrderFromCartLinesBuilder $builder,
         PayPalClient $paypal,
+        FreeSaasCheckoutHandler $freeSaasCheckout,
     ): JsonResponse {
         $user = $request->user();
         if (! $user->hasRole('client') && ! $user->hasRole('superadmin')) {
@@ -45,6 +47,10 @@ class CheckoutPayPalController extends Controller
         $couponCode = $couponCode === '' ? null : $couponCode;
 
         $order = $builder->createPendingOrder($user, $lines, $couponCode);
+
+        if ($response = $freeSaasCheckout->tryFinalizeAndRespond($order, $user)) {
+            return $response;
+        }
 
         $returnUrl = route('checkout.paypal.return', [], true);
         $cancelUrl = route('checkout.paypal.cancel', ['order' => $order->id], true);

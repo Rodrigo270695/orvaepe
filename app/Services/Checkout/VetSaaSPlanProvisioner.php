@@ -5,12 +5,11 @@ declare(strict_types=1);
 namespace App\Services\Checkout;
 
 use App\Models\CatalogSku;
-use App\Models\Notification;
 use App\Models\Order;
 use App\Models\Subscription;
 use App\Models\User;
-use App\Services\Notifications\NotificationSender;
-use Illuminate\Support\Facades\Http;
+use App\Support\Checkout\SaasCatalogSku;
+use App\Support\Http\OrvaeSignedHttpClient;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -20,12 +19,12 @@ use Illuminate\Support\Str;
 class VetSaaSPlanProvisioner
 {
     public function __construct(
-        private readonly NotificationSender $notificationSender,
+        private readonly SaasProvisionAccessNotifier $accessNotifier,
     ) {}
 
     public function provision(Order $order, CatalogSku $sku, ?\DateTimeInterface $periodEnd = null): void
     {
-        if (! $this->isEnabled() || ! $this->isVetsaasSku($sku)) {
+        if (! $this->isEnabled() || ! SaasCatalogSku::isVetsaas($sku)) {
             return;
         }
 
@@ -58,7 +57,7 @@ class VetSaaSPlanProvisioner
 
         $tenantName = $this->resolveTenantName($user);
         $tenantSlug = $this->resolveTenantSlug($tenantName, $user->email);
-        $timestamp = now()->timestamp;
+        $temporaryPassword = Str::password(16);
 
         $payload = [
             'external_order_id' => (string) $order->id,
@@ -71,7 +70,7 @@ class VetSaaSPlanProvisioner
             'admin_nombres' => trim((string) ($user->name ?? '')) ?: 'Administrador',
             'admin_apellidos' => trim((string) ($user->lastname ?? '')) ?: 'Clínica',
             'admin_email' => (string) $user->email,
-            'admin_password' => Str::password(16),
+            'admin_password' => $temporaryPassword,
             'canal_adquisicion' => 'orvae',
             'payment' => [
                 'monto' => (float) $order->grand_total,
@@ -82,22 +81,13 @@ class VetSaaSPlanProvisioner
             ],
         ];
 
-        $body = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-        if (! is_string($body)) {
-            return;
-        }
-
-        $signature = hash_hmac('sha256', $timestamp.'.'.$body, $secret);
-
-        $response = Http::timeout(30)
-            ->retry(2, 500)
-            ->withHeaders([
-                'X-Orvae-Timestamp' => (string) $timestamp,
-                'X-Orvae-Signature' => $signature,
-                'X-Idempotency-Key' => 'order:'.$order->id,
-            ])
-            ->asJson()
-            ->post($url, $payload);
+        $response = OrvaeSignedHttpClient::post(
+            $url,
+            $payload,
+            $secret,
+            'order:'.$order->id,
+            timeoutSeconds: 30,
+        );
 
         if (! $response->successful()) {
             Log::warning('vetsaas.provision_failed', [
@@ -114,8 +104,15 @@ class VetSaaSPlanProvisioner
         $tenantSlugResp = is_array($json) ? ($json['tenant_slug'] ?? $json['tenant']['slug'] ?? null) : null;
 
         if ($loginUrl || $tenantSlugResp) {
-            $this->persistAccess($order, $loginUrl, $tenantSlugResp);
-            $this->notifyAccess($order, $loginUrl, $tenantSlugResp);
+            $this->persistAccess($order, $loginUrl, $tenantSlugResp, $temporaryPassword);
+            $this->accessNotifier->notify(
+                $order,
+                'vetsaas',
+                is_string($loginUrl) ? $loginUrl : '',
+                is_string($tenantSlugResp) ? $tenantSlugResp : null,
+                (string) $user->email,
+                $temporaryPassword,
+            );
         }
 
         Log::info('vetsaas.provision_success', [
@@ -125,38 +122,15 @@ class VetSaaSPlanProvisioner
         ]);
     }
 
-    private function isVetsaasSku(CatalogSku $sku): bool
-    {
-        $metadata = is_array($sku->metadata) ? $sku->metadata : [];
-        $product = strtolower(trim((string) ($metadata['saas_product'] ?? '')));
-
-        if (in_array($product, ['vetsaas', 'vet-saas', 'veterinaria'], true)) {
-            return true;
-        }
-
-        $saleModel = strtolower(trim((string) $sku->sale_model));
-
-        return $saleModel === 'saas_subscription'
-            && str_contains(strtolower((string) ($sku->code ?? '')), 'vet');
-    }
-
     private function resolvePlanSlug(CatalogSku $sku): ?string
     {
-        $metadata = is_array($sku->metadata) ? $sku->metadata : [];
-        $candidates = [
-            $metadata['vetsaas_plan_slug'] ?? null,
-            $metadata['saas_plan_slug'] ?? null,
-            $metadata['plan_slug'] ?? null,
-            $sku->code ?? null,
-        ];
-
-        foreach ($candidates as $candidate) {
+        foreach (SaasCatalogSku::planSlugCandidates($sku) as $candidate) {
             if (! is_string($candidate)) {
                 continue;
             }
 
-            $normalized = strtolower(trim($candidate));
-            if ($normalized !== '') {
+            $normalized = SaasCatalogSku::normalizePlanSlug($sku, $candidate);
+            if ($normalized !== null) {
                 return $normalized;
             }
         }
@@ -200,7 +174,7 @@ class VetSaaSPlanProvisioner
         return (bool) config('services.vetsaas.enabled', false);
     }
 
-    private function persistAccess(Order $order, mixed $loginUrl, mixed $tenantSlug): void
+    private function persistAccess(Order $order, mixed $loginUrl, mixed $tenantSlug, string $temporaryPassword): void
     {
         $subscription = Subscription::query()
             ->where('user_id', $order->user_id)
@@ -215,63 +189,15 @@ class VetSaaSPlanProvisioner
             $metadata = is_array($subscription->metadata) ? $subscription->metadata : [];
             $metadata['vetsaas_login_url'] = $url;
             $metadata['vetsaas_tenant_slug'] = $slug;
+            $metadata['vetsaas_initial_password_sent'] = true;
             $subscription->forceFill(['metadata' => $metadata])->save();
         }
 
         $snapshot = is_array($order->billing_snapshot) ? $order->billing_snapshot : [];
         $snapshot['vetsaas_login_url'] = $url;
         $snapshot['vetsaas_tenant_slug'] = $slug;
+        $snapshot['vetsaas_login_email'] = $order->user?->email;
+        $snapshot['vetsaas_temporary_password'] = $temporaryPassword;
         $order->forceFill(['billing_snapshot' => $snapshot])->save();
-    }
-
-    private function notifyAccess(Order $order, mixed $loginUrl, mixed $tenantSlug): void
-    {
-        $loginUrl = is_string($loginUrl) ? trim($loginUrl) : '';
-        if ($loginUrl === '') {
-            return;
-        }
-
-        $user = $order->user;
-        if (! $user instanceof User) {
-            return;
-        }
-
-        $subject = 'Tu clínica VetSaaS está lista';
-        $message = "✅ *VetSaaS activado*\n"
-            .'📦 Pedido: '.$order->order_number."\n"
-            .'🔗 Acceso: '.$loginUrl."\n"
-            .'👤 Usuario: '.$user->email."\n"
-            ."🔐 Debes definir tu contraseña en el primer ingreso (enlace «Olvidé mi contraseña» si aplica).\n";
-
-        Notification::query()->create([
-            'user_id' => $user->id,
-            'type' => 'vetsaas.access.customer',
-            'channel' => 'in_app',
-            'subject' => $subject,
-            'message' => $message,
-            'data' => [
-                'order_id' => $order->id,
-                'login_url' => $loginUrl,
-                'tenant_slug' => is_string($tenantSlug) ? $tenantSlug : null,
-            ],
-            'status' => 'sent',
-            'sent_at' => now(),
-        ]);
-
-        $emailNotification = Notification::query()->create([
-            'user_id' => $user->id,
-            'type' => 'vetsaas.access.customer',
-            'channel' => 'email',
-            'subject' => $subject,
-            'message' => $message,
-            'data' => [
-                'email_to' => $user->email,
-                'order_id' => $order->id,
-                'login_url' => $loginUrl,
-            ],
-            'status' => 'pending',
-        ]);
-
-        $this->notificationSender->send($emailNotification);
     }
 }

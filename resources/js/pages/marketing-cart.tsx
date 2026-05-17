@@ -402,6 +402,11 @@ export default function MarketingCart() {
                 return;
             }
 
+            if (result.kind === 'free_completed') {
+                window.location.href = `/carrito?status=${encodeURIComponent(result.message)}`;
+                return;
+            }
+
             if (result.kind === 'culqi_inline') {
                 const submitChargeForm = (tokenId: string) => {
                     const form = document.createElement('form');
@@ -1023,11 +1028,17 @@ export default function MarketingCart() {
                                         onClick={() => void startCulqiCheckout()}
                                     >
                                         {checkoutLoading
-                                            ? 'Abriendo checkout de Culqi…'
-                                            : 'Pagar con Culqi'}
+                                            ? totalPayable !== null && totalPayable.amount <= 0
+                                                ? 'Activando tu plan…'
+                                                : 'Abriendo checkout de Culqi…'
+                                            : totalPayable !== null && totalPayable.amount <= 0
+                                              ? 'Activar plan gratuito'
+                                              : 'Pagar con Culqi'}
                                     </button>
                                     <p className="mt-2 text-center text-xs text-[var(--muted-foreground)]">
-                                        Al continuar se abrirá el modal de Culqi para completar tu pago.
+                                        {totalPayable !== null && totalPayable.amount <= 0
+                                            ? 'Confirmaremos tu pedido sin cobro y te enviaremos el acceso por correo.'
+                                            : 'Al continuar se abrirá el modal de Culqi para completar tu pago.'}
                                     </p>
                                 </>
                             )}

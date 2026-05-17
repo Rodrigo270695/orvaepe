@@ -7,6 +7,7 @@ use App\Models\Coupon;
 use App\Models\Order;
 use App\Models\OrderLine;
 use App\Models\User;
+use App\Support\Checkout\SaasCatalogSku;
 use App\Support\Sales\PeruIgvLineCalculator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -167,13 +168,17 @@ final class OrderFromCartLinesBuilder
         $discountTotal = round($discountTotal, 2);
         $grandTotal = round(max(0.0, $lineTotalSum - $discountTotal), 2);
 
-        if ($grandTotal <= 0) {
+        if ($grandTotal <= 0 && ! SaasCatalogSku::collectionQualifiesForZeroTotalCheckout($skus->values())) {
             throw ValidationException::withMessages([
                 'lines' => 'El total a pagar debe ser mayor a cero.',
             ]);
         }
 
-        return DB::transaction(function () use ($user, $lineRows, $subtotal, $taxTotal, $discountTotal, $grandTotal, $currency, $coupon) {
+        $notesInternal = $grandTotal <= 0
+            ? 'Checkout marketing (plan SaaS gratuito)'
+            : 'Checkout marketing (carrito)';
+
+        return DB::transaction(function () use ($user, $lineRows, $subtotal, $taxTotal, $discountTotal, $grandTotal, $currency, $coupon, $notesInternal) {
             $order = Order::create([
                 'order_number' => Order::generateOrderNumber(),
                 'user_id' => $user->id,
@@ -185,7 +190,7 @@ final class OrderFromCartLinesBuilder
                 'grand_total' => $grandTotal,
                 'coupon_id' => $coupon?->id,
                 'billing_snapshot' => null,
-                'notes_internal' => 'Checkout PayPal (marketing)',
+                'notes_internal' => $notesInternal,
                 'placed_at' => null,
             ]);
 

@@ -5,18 +5,14 @@ namespace App\Http\Controllers\Checkout;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Checkout\StorePayPalCheckoutRequest;
 use App\Models\Order;
-use App\Models\Payment;
 use App\Models\User;
+use App\Services\Checkout\FreeSaasCheckoutHandler;
+use App\Services\Checkout\OrderCheckoutFinalizer;
 use App\Services\Checkout\OrderFromCartLinesBuilder;
-use App\Services\Checkout\OrderPaidEntitlementProvisioner;
-use App\Services\Checkout\OrderPaidLicenseProvisioner;
-use App\Services\Checkout\OrderPaidSubscriptionProvisioner;
-use App\Services\Notifications\OrderPaidNotifier;
 use App\Services\Payments\CulqiClient;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -25,18 +21,13 @@ class CheckoutCulqiController extends Controller
     public function store(
         StorePayPalCheckoutRequest $request,
         OrderFromCartLinesBuilder $builder,
+        FreeSaasCheckoutHandler $freeSaasCheckout,
     ): JsonResponse {
         $user = $request->user();
         if (! $user->hasRole('client') && ! $user->hasRole('superadmin')) {
             return response()->json([
                 'message' => 'Solo cuentas con rol cliente (o superadmin en pruebas) pueden pagar aquí. Usa el panel de ventas para otros casos.',
             ], 403);
-        }
-
-        if (! $this->culqiEnabled()) {
-            return response()->json([
-                'message' => 'Culqi no está configurado todavía. Revisa llaves en .env.',
-            ], 422);
         }
 
         $data = $request->validated();
@@ -49,6 +40,18 @@ class CheckoutCulqiController extends Controller
         $couponCode = $couponCode === '' ? null : $couponCode;
 
         $order = $builder->createPendingOrder($user, $lines, $couponCode);
+
+        if ($response = $freeSaasCheckout->tryFinalizeAndRespond($order, $user)) {
+            return $response;
+        }
+
+        if (! $this->culqiEnabled()) {
+            $order->delete();
+
+            return response()->json([
+                'message' => 'Culqi no está configurado todavía. Revisa llaves en .env.',
+            ], 422);
+        }
 
         return response()->json([
             'approval_url' => route('checkout.culqi.show', ['order' => $order->id], true),
@@ -108,10 +111,7 @@ class CheckoutCulqiController extends Controller
         Request $request,
         Order $order,
         CulqiClient $culqi,
-        OrderPaidNotifier $notifier,
-        OrderPaidEntitlementProvisioner $entitlementProvisioner,
-        OrderPaidSubscriptionProvisioner $subscriptionProvisioner,
-        OrderPaidLicenseProvisioner $licenseProvisioner,
+        OrderCheckoutFinalizer $checkoutFinalizer,
     ): RedirectResponse {
         $user = $request->user();
         if ($order->user_id !== $user->id) {
@@ -192,17 +192,13 @@ class CheckoutCulqiController extends Controller
                 ->with('status', $message);
         }
 
-        $this->finalizeOrderAsPaid(
+        $checkoutFinalizer->finalizeAsPaid(
             $order,
             $user,
-            $gatewayPaymentId,
             'culqi',
+            $gatewayPaymentId,
             $payload,
             $charge,
-            $notifier,
-            $entitlementProvisioner,
-            $subscriptionProvisioner,
-            $licenseProvisioner,
         );
 
         return redirect()
@@ -235,64 +231,4 @@ class CheckoutCulqiController extends Controller
         return $outcomeType === 'venta_exitosa';
     }
 
-    /**
-     * @param  array<string, mixed>  $rawRequest
-     * @param  array<string, mixed>  $rawResponse
-     */
-    private function finalizeOrderAsPaid(
-        Order $order,
-        User $user,
-        string $gatewayPaymentId,
-        string $gateway,
-        array $rawRequest,
-        array $rawResponse,
-        OrderPaidNotifier $notifier,
-        OrderPaidEntitlementProvisioner $entitlementProvisioner,
-        OrderPaidSubscriptionProvisioner $subscriptionProvisioner,
-        OrderPaidLicenseProvisioner $licenseProvisioner,
-    ): void {
-        DB::transaction(function () use ($order, $user, $gatewayPaymentId, $gateway, $rawRequest, $rawResponse, $notifier, $entitlementProvisioner, $subscriptionProvisioner, $licenseProvisioner) {
-            $existing = Payment::query()->where('gateway_payment_id', $gatewayPaymentId)->first();
-
-            if ($existing !== null) {
-                if ($order->status !== Order::STATUS_PAID) {
-                    $order->update([
-                        'status' => Order::STATUS_PAID,
-                        'placed_at' => now(),
-                    ]);
-                }
-
-                return;
-            }
-
-            $order->update([
-                'status' => Order::STATUS_PAID,
-                'placed_at' => now(),
-            ]);
-
-            Payment::query()->create([
-                'order_id' => $order->id,
-                'user_id' => $user->id,
-                'gateway' => $gateway,
-                'gateway_payment_id' => $gatewayPaymentId,
-                'amount' => $order->grand_total,
-                'currency' => $order->currency,
-                'status' => 'completed',
-                'raw_request' => $rawRequest,
-                'raw_response' => $rawResponse,
-                'paid_at' => now(),
-            ]);
-
-            $order->refresh();
-            $order->coupon?->increment('used_count');
-
-            $notifier->notifyCustomer($order, $user);
-            $notifier->notifyAdmin($order, $user);
-
-            $freshOrder = $order->fresh();
-            $subscriptionProvisioner->provision($freshOrder);
-            $entitlementProvisioner->provision($freshOrder);
-            $licenseProvisioner->provision($freshOrder);
-        });
-    }
 }

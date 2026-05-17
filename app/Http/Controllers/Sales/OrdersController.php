@@ -8,9 +8,7 @@ use App\Models\CatalogSku;
 use App\Models\Order;
 use App\Models\OrderLine;
 use App\Models\User;
-use App\Services\Checkout\OrderPaidEntitlementProvisioner;
-use App\Services\Checkout\OrderPaidLicenseProvisioner;
-use App\Services\Checkout\OrderPaidSubscriptionProvisioner;
+use App\Services\Checkout\OrderCheckoutFinalizer;
 use App\Support\AdminFlashToast;
 use App\Support\Sales\PeruIgvLineCalculator;
 use Illuminate\Http\RedirectResponse;
@@ -140,9 +138,7 @@ class OrdersController extends Controller
 
     public function store(
         OrderStoreRequest $request,
-        OrderPaidSubscriptionProvisioner $subscriptionProvisioner,
-        OrderPaidEntitlementProvisioner $entitlementProvisioner,
-        OrderPaidLicenseProvisioner $licenseProvisioner,
+        OrderCheckoutFinalizer $checkoutFinalizer,
     ): RedirectResponse
     {
         $data = $request->validated();
@@ -254,10 +250,15 @@ class OrdersController extends Controller
         });
 
         if ($order->status === Order::STATUS_PAID) {
-            $freshOrder = $order->fresh(['lines.sku.product', 'user', 'payments']);
-            $subscriptionProvisioner->provision($freshOrder);
-            $entitlementProvisioner->provision($freshOrder);
-            $licenseProvisioner->provision($freshOrder);
+            $customer = User::query()->findOrFail($order->user_id);
+            $checkoutFinalizer->finalizeAsPaid(
+                $order->fresh(['lines.sku.product', 'user', 'payments']),
+                $customer,
+                'manual',
+                'manual:'.$order->id,
+                ['source' => 'sales_panel'],
+                ['completed' => true],
+            );
         }
 
         return redirect()
