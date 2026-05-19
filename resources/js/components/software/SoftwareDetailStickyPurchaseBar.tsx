@@ -8,6 +8,8 @@ export default function SoftwareDetailStickyPurchaseBar({
     selectedPlanLabel,
     priceLine,
     planReady,
+    webCheckoutEnabled = false,
+    isFreeSubscription = false,
     purchaseEnabled = true,
     whatsappHref,
     payInProgress = false,
@@ -19,6 +21,8 @@ export default function SoftwareDetailStickyPurchaseBar({
     /** Una línea corta de precio (opcional). */
     priceLine?: string;
     planReady: boolean;
+    webCheckoutEnabled?: boolean;
+    isFreeSubscription?: boolean;
     purchaseEnabled?: boolean;
     whatsappHref?: string;
     payInProgress?: boolean;
@@ -27,7 +31,9 @@ export default function SoftwareDetailStickyPurchaseBar({
     onAdd: () => void;
 }) {
     const hasPrice = Boolean(priceLine?.trim());
-    const showConsultation = planReady && !purchaseEnabled;
+    const showConsultation = planReady && !webCheckoutEnabled;
+    const showFreeActivation = planReady && isFreeSubscription;
+    const showPaidCheckout = planReady && webCheckoutEnabled && !isFreeSubscription;
 
     return (
         <div className="fixed inset-x-0 bottom-0 z-50 md:hidden">
@@ -66,6 +72,10 @@ export default function SoftwareDetailStickyPurchaseBar({
                             >
                                 {priceLine}
                             </p>
+                        ) : showFreeActivation ? (
+                            <p className="mt-1 text-sm font-semibold text-[color-mix(in_oklab,var(--state-success)_70%,var(--foreground))]">
+                                Gratis · sin pasarela
+                            </p>
                         ) : null}
                     </div>
 
@@ -91,7 +101,30 @@ export default function SoftwareDetailStickyPurchaseBar({
                                 <MessageCircle className="size-4 shrink-0" strokeWidth={2} aria-hidden />
                                 WhatsApp
                             </a>
-                        ) : (
+                        ) : showFreeActivation ? (
+                            <button
+                                type="button"
+                                disabled={!planReady || payInProgress}
+                                className={cn(
+                                    'inline-flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-xl px-3 py-2.5 text-sm font-semibold',
+                                    'text-[var(--primary-foreground)]',
+                                    'shadow-[0_4px_22px_-6px_color-mix(in_oklab,var(--state-success)_50%,transparent)]',
+                                    'transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]',
+                                    'hover:brightness-[1.07]',
+                                    'active:scale-[0.98]',
+                                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+                                    (!planReady || payInProgress) && 'pointer-events-none opacity-45',
+                                )}
+                                style={{
+                                    background:
+                                        'linear-gradient(135deg, color-mix(in oklab, var(--state-success) 92%, var(--state-info)), color-mix(in oklab, var(--state-info) 72%, var(--state-success)))',
+                                }}
+                                onClick={onPay}
+                            >
+                                {payInProgress ? 'Activando…' : 'Activar gratis'}
+                                <Sparkles className="size-3.5" aria-hidden />
+                            </button>
+                        ) : showPaidCheckout ? (
                             <>
                                 <button
                                     type="button"
@@ -116,7 +149,7 @@ export default function SoftwareDetailStickyPurchaseBar({
                                 </button>
                                 <button
                                     type="button"
-                                    disabled={!planReady}
+                                    disabled={!planReady || !purchaseEnabled}
                                     className={cn(
                                         'inline-flex flex-[1.15] cursor-pointer items-center justify-center gap-1.5 rounded-xl px-3 py-2.5 text-sm font-semibold',
                                         'text-[var(--primary-foreground)]',
@@ -125,7 +158,7 @@ export default function SoftwareDetailStickyPurchaseBar({
                                         'hover:brightness-[1.07]',
                                         'active:scale-[0.98]',
                                         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-background',
-                                        !planReady && 'pointer-events-none opacity-45',
+                                        (!planReady || !purchaseEnabled) && 'pointer-events-none opacity-45',
                                     )}
                                     style={{
                                         background:
@@ -137,7 +170,7 @@ export default function SoftwareDetailStickyPurchaseBar({
                                     <Sparkles className="size-3.5" aria-hidden />
                                 </button>
                             </>
-                        )}
+                        ) : null}
                     </div>
                 </div>
             </div>

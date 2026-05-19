@@ -123,6 +123,22 @@ export function planHasPurchasablePrice(p: SoftwarePricingPlan): boolean {
     return n !== null && n > 0;
 }
 
+/** Plan SaaS sin cobro (lista en 0 o flag explícito). */
+export function planIsFreeSubscription(p: SoftwarePricingPlan): boolean {
+    if (p.isFreeSubscription === true) {
+        return true;
+    }
+
+    const n = planNumericUnitPricePen(p);
+
+    return n !== null && n <= 0;
+}
+
+/** Checkout en web: planes de pago o activación gratuita (sin pasarela). */
+export function planAllowsWebCheckout(p: SoftwarePricingPlan): boolean {
+    return planIsFreeSubscription(p) || planHasPurchasablePrice(p);
+}
+
 export function parsePenUnitFromPriceText(text: string | undefined): number | null {
     if (!text?.trim()) {
         return null;

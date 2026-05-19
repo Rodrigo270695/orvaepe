@@ -18,6 +18,11 @@ export type SoftwarePricingPlan = {
     // Texto opcional para indicar si el plan es mensual, código fuente o por periodos.
     saleModelLabel?: string;
     saleModel?: 'codigo_fuente' | 'mensual' | 'periodos' | string;
+    /** Código SKU del catálogo (ej. vetsaas-pro-mensual). */
+    planCode?: string;
+    billingInterval?: 'monthly' | 'annual' | 'one_time' | 'custom' | string | null;
+    /** Plan recurrente con precio de lista 0 (activación sin pasarela). */
+    isFreeSubscription?: boolean;
     highlights: string[];
 };
 

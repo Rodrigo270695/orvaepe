@@ -6,7 +6,7 @@ import type { SeoDefaults } from '@/components/seo/SeoHead';
 import MarketingLayout from '@/components/marketing/MarketingLayout';
 import { marketingSeo } from '@/marketing/seoCopy';
 import SoftwareDetailGlassCard from '@/components/software/SoftwareDetailGlassCard';
-import SoftwareDetailPlanCard from '@/components/software/SoftwareDetailPlanCard';
+import SoftwareDetailPlansPicker from '@/components/software/SoftwareDetailPlansPicker';
 import SoftwareDetailSection from '@/components/software/SoftwareDetailSection';
 import SoftwareDetailPlanSelectionPanel from '@/components/software/SoftwareDetailPlanSelectionPanel';
 import SoftwareDetailStickyPurchaseBar from '@/components/software/SoftwareDetailStickyPurchaseBar';
@@ -15,7 +15,9 @@ import GeometricBackground from '@/components/welcome/GeometricBackground';
 import ScrollReveal from '@/components/welcome/ScrollReveal';
 import ScrollToTopButton from '@/components/welcome/ScrollToTopButton';
 import {
+    planAllowsWebCheckout,
     planHasPurchasablePrice,
+    planIsFreeSubscription,
     planNumericUnitPricePen,
     parsePenUnitFromPriceText,
 } from '@/lib/cartPricing';
@@ -266,9 +268,30 @@ export default function SoftwareDetail() {
     };
 
     const purchaseEnabled = Boolean(selectedPlan && planHasPurchasablePrice(selectedPlan));
+    const webCheckoutEnabled = Boolean(selectedPlan && planAllowsWebCheckout(selectedPlan));
+    const isFreeSubscription = Boolean(selectedPlan && planIsFreeSubscription(selectedPlan));
+
+    const plansSectionDescription = useMemo(() => {
+        if (!system) {
+            return '';
+        }
+
+        const hasFree = system.pricingPlans.some((p) => planIsFreeSubscription(p));
+        const hasPaid = system.pricingPlans.some((p) => planHasPurchasablePrice(p));
+
+        if (hasFree && !hasPaid) {
+            return 'Elige tu plan y activa la suscripción gratuita sin pasar por una pasarela de pago.';
+        }
+
+        if (hasFree && hasPaid) {
+            return 'Compara planes con el interruptor mensual o anual. Los de pago se completan en Mercado Pago o PayPal; el plan gratuito se activa al instante sin pasarela.';
+        }
+
+        return 'Selecciona el plan y el ciclo mensual o anual. El pago se completa en la pasarela (Mercado Pago o PayPal, según configuración).';
+    }, [system]);
 
     const handleStartCheckout = useCallback(async () => {
-        if (!selectedPlan || !purchaseEnabled) {
+        if (!selectedPlan || !webCheckoutEnabled) {
             return;
         }
 
@@ -297,6 +320,11 @@ export default function SoftwareDetail() {
                 return;
             }
 
+            if (result.kind === 'free_completed') {
+                window.location.href = `/carrito?status=${encodeURIComponent(result.message)}`;
+                return;
+            }
+
             if (result.kind === 'redirect') {
                 window.location.href = result.approvalUrl;
                 return;
@@ -310,7 +338,7 @@ export default function SoftwareDetail() {
         }
     }, [
         selectedPlan,
-        purchaseEnabled,
+        webCheckoutEnabled,
         mercadoPagoEnabled,
         paypalSimulateCheckout,
     ]);
@@ -378,12 +406,36 @@ export default function SoftwareDetail() {
     }, [system, selectedPlan, whatsappE164]);
 
     const selectionPriceLine = useMemo(() => {
-        if (!selectedPlan || !purchaseEnabled) {
+        if (!selectedPlan) {
+            return undefined;
+        }
+
+        if (isFreeSubscription) {
+            return 'Gratis';
+        }
+
+        if (!purchaseEnabled) {
             return undefined;
         }
 
         return getPlanPriceNow(selectedPlan) ?? selectedPlan.priceText;
-    }, [selectedPlan, purchaseEnabled]);
+    }, [selectedPlan, purchaseEnabled, isFreeSubscription]);
+
+    const selectionPriceCaption = useMemo(() => {
+        if (!selectedPlan) {
+            return undefined;
+        }
+
+        if (isFreeSubscription) {
+            return 'Activación directa · sin Mercado Pago ni PayPal';
+        }
+
+        if (purchaseEnabled) {
+            return 'Precio de lista · impuestos al confirmar en la pasarela';
+        }
+
+        return undefined;
+    }, [selectedPlan, isFreeSubscription, purchaseEnabled]);
 
     if (!system) {
         return (
@@ -881,35 +933,17 @@ export default function SoftwareDetail() {
                             id="planes"
                             eyebrow="Planes"
                             title="Modelos de venta y entrega"
-                            description="Selecciona el modelo que encaje con tu operación. El pago se completa en la pasarela (Mercado Pago o PayPal, según configuración)."
+                            description={plansSectionDescription}
                         >
                             <div className="relative">
                                 <GeometricBackground variant="rings" opacity={0.05} />
                                 <div className="relative z-10">
-                                    <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-                                        {system.pricingPlans.map((p, i) => {
-                                            const isActive = (selectedPlan?.id ?? p.id) === p.id;
-                                            const planPriceBefore = getPlanPriceBefore(p);
-                                            const planPriceNow = getPlanPriceNow(p);
-                                            const saleModelLabel = inferSaleModelLabel(p);
-                                            const accent =
-                                                semanticAccents[i % semanticAccents.length];
-
-                                            return (
-                                                <SoftwareDetailPlanCard
-                                                    key={p.id}
-                                                    plan={p}
-                                                    isActive={isActive}
-                                                    accent={accent}
-                                                    saleModelLabel={saleModelLabel}
-                                                    planPriceBefore={planPriceBefore}
-                                                    planPriceNow={planPriceNow}
-                                                    showPriceAmount={planHasPurchasablePrice(p)}
-                                                    onChoose={() => setSelectedPlanId(p.id)}
-                                                />
-                                            );
-                                        })}
-                                    </div>
+                                    <SoftwareDetailPlansPicker
+                                        plans={system.pricingPlans}
+                                        selectedPlanId={selectedPlan?.id ?? selectedPlanId}
+                                        onSelectPlanId={setSelectedPlanId}
+                                        semanticAccents={semanticAccents}
+                                    />
 
                                     <div className="mt-10">
                                         <SoftwareDetailPlanSelectionPanel
@@ -917,6 +951,8 @@ export default function SoftwareDetail() {
                                                 selectedPlan ? 'Selección actual' : 'Siguiente paso'
                                             }
                                             planSelected={Boolean(selectedPlan)}
+                                            webCheckoutEnabled={webCheckoutEnabled}
+                                            isFreeSubscription={isFreeSubscription}
                                             purchaseEnabled={purchaseEnabled}
                                             whatsappHref={
                                                 consultationWhatsAppHref || undefined
@@ -927,7 +963,7 @@ export default function SoftwareDetail() {
                                                     : 'Elige un plan para continuar con el carrito o el checkout.'
                                             }
                                             priceLine={selectionPriceLine}
-                                            priceCaption="Precio de lista · impuestos al confirmar en la pasarela"
+                                            priceCaption={selectionPriceCaption}
                                             payInProgress={checkoutLoading}
                                             payError={checkoutError}
                                             onPay={() => {
@@ -988,6 +1024,8 @@ export default function SoftwareDetail() {
                         selectedPlanLabel={`${selectedPlan.label} · ${inferSaleModelLabel(selectedPlan)}`}
                         priceLine={selectionPriceLine}
                         planReady
+                        webCheckoutEnabled={webCheckoutEnabled}
+                        isFreeSubscription={isFreeSubscription}
                         purchaseEnabled={purchaseEnabled}
                         whatsappHref={consultationWhatsAppHref || undefined}
                         payInProgress={checkoutLoading}

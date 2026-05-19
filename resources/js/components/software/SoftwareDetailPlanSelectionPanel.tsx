@@ -9,15 +9,19 @@ type Props = {
     selectionTitle: string;
     /** Hay un plan elegido (aunque no tenga precio en texto). */
     planSelected: boolean;
+    /** Checkout en web (plan de pago o activación gratuita). */
+    webCheckoutEnabled?: boolean;
+    /** Suscripción SaaS sin cobro (sin pasarela). */
+    isFreeSubscription?: boolean;
     /** Si es false (precio 0 / solo cotización), se ocultan pago y carrito. */
     purchaseEnabled?: boolean;
-    /** Enlace wa.me cuando `purchaseEnabled` es false. */
+    /** Enlace wa.me cuando no hay checkout web. */
     whatsappHref?: string;
     /** Texto de precio (ej. desde catálogo / SKU). */
     priceLine?: string;
     /** Línea pequeña bajo el precio (disclaimer). */
     priceCaption?: string;
-    /** Checkout en curso (deshabilita “Ir a pagar”). */
+    /** Checkout en curso (deshabilita acciones). */
     payInProgress?: boolean;
     /** Mensaje de error de pasarela o red. */
     payError?: string | null;
@@ -30,6 +34,8 @@ export default function SoftwareDetailPlanSelectionPanel({
     eyebrow,
     selectionTitle,
     planSelected,
+    webCheckoutEnabled = false,
+    isFreeSubscription = false,
     purchaseEnabled = true,
     whatsappHref,
     priceLine,
@@ -41,7 +47,9 @@ export default function SoftwareDetailPlanSelectionPanel({
     addedCount,
 }: Props) {
     const hasPrice = Boolean(priceLine?.trim());
-    const showConsultation = planSelected && !purchaseEnabled;
+    const showConsultation = planSelected && !webCheckoutEnabled;
+    const showFreeActivation = planSelected && isFreeSubscription;
+    const showPaidCheckout = planSelected && webCheckoutEnabled && !isFreeSubscription;
 
     return (
         <div
@@ -96,6 +104,11 @@ export default function SoftwareDetailPlanSelectionPanel({
                         <p className="text-sm leading-relaxed text-[var(--muted-foreground)]">
                             Este plan no tiene precio publicado en la web. Te cotizamos el alcance según tu proyecto.
                         </p>
+                    ) : showFreeActivation ? (
+                        <p className="text-sm leading-relaxed text-[var(--muted-foreground)]">
+                            Activación directa: no pasarás por Mercado Pago ni PayPal. Al confirmar, procesamos tu
+                            suscripción gratuita.
+                        </p>
                     ) : hasPrice ? (
                         <div className="pt-1">
                             <p
@@ -139,7 +152,31 @@ export default function SoftwareDetailPlanSelectionPanel({
                             <MessageCircle className="size-4 shrink-0" strokeWidth={2} aria-hidden />
                             Contactar por WhatsApp
                         </a>
-                    ) : (
+                    ) : showFreeActivation ? (
+                        <button
+                            type="button"
+                            disabled={!planSelected || payInProgress}
+                            className={cn(
+                                'inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl px-5 py-3.5 text-sm font-semibold',
+                                'text-[var(--primary-foreground)]',
+                                'shadow-[0_6px_28px_-6px_color-mix(in_oklab,var(--state-success)_55%,transparent),inset_0_1px_0_0_color-mix(in_oklab,var(--primary-foreground)_16%,transparent)]',
+                                'transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]',
+                                'hover:brightness-[1.08]',
+                                'active:scale-[0.98]',
+                                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+                                (!planSelected || payInProgress) && 'pointer-events-none opacity-45',
+                                'sm:w-auto xl:w-auto',
+                            )}
+                            style={{
+                                background:
+                                    'linear-gradient(135deg, color-mix(in oklab, var(--state-success) 92%, var(--state-info)), color-mix(in oklab, var(--state-info) 72%, var(--state-success)))',
+                            }}
+                            onClick={onPay}
+                        >
+                            <Sparkles className="size-4 opacity-95" aria-hidden />
+                            {payInProgress ? 'Activando…' : 'Activar suscripción gratis'}
+                        </button>
+                    ) : showPaidCheckout ? (
                         <>
                             <button
                                 type="button"
@@ -164,7 +201,7 @@ export default function SoftwareDetailPlanSelectionPanel({
                             </button>
                             <button
                                 type="button"
-                                disabled={!planSelected}
+                                disabled={!planSelected || !purchaseEnabled}
                                 className={cn(
                                     'inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl px-5 py-3.5 text-sm font-semibold',
                                     'text-[var(--primary-foreground)]',
@@ -176,7 +213,7 @@ export default function SoftwareDetailPlanSelectionPanel({
                                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-background',
                                     addedCount > 0 &&
                                         'ring-2 ring-[color-mix(in_oklab,var(--primary)_38%,transparent)] ring-offset-2 ring-offset-[color-mix(in_oklab,var(--background)_80%,transparent)]',
-                                    !planSelected && 'pointer-events-none opacity-45',
+                                    (!planSelected || !purchaseEnabled) && 'pointer-events-none opacity-45',
                                 )}
                                 style={{
                                     background:
@@ -188,7 +225,7 @@ export default function SoftwareDetailPlanSelectionPanel({
                                 <Sparkles className="size-4 opacity-95" aria-hidden />
                             </button>
                         </>
-                    )}
+                    ) : null}
                 </div>
             </div>
 

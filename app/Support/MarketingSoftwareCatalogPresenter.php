@@ -751,14 +751,20 @@ final class MarketingSoftwareCatalogPresenter
         $tax = $sku->tax_included ? ' (incl. imp.)' : '';
         $recurring = self::billingIntervalSuffix($sku->billing_interval);
 
+        $listPrice = (float) $sku->list_price;
+        $isRecurring = in_array($sku->sale_model, ['saas_subscription', 'service_subscription'], true);
+
         return [
             'id' => $sku->id,
             'label' => $sku->name,
+            'planCode' => $sku->code,
             'priceText' => $price.' '.$currency.$recurring.$tax,
-            'listPrice' => (float) $sku->list_price,
+            'listPrice' => $listPrice,
             'currency' => $currency,
             'saleModel' => $sku->sale_model,
             'saleModelLabel' => self::saleModelLabel($sku->sale_model),
+            'billingInterval' => $sku->billing_interval,
+            'isFreeSubscription' => $isRecurring && $listPrice <= 0,
             'highlights' => self::highlightsFromSku($sku),
         ];
     }
