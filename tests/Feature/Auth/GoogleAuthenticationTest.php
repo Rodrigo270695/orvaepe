@@ -51,6 +51,32 @@ test('google redirect requires guest and sends user to google', function () {
         ->assertRedirect('https://accounts.google.com/o/oauth2/auth');
 });
 
+test('google redirect with popup flag stores session', function () {
+    $provider = Mockery::mock(Provider::class);
+    $provider->shouldReceive('redirect')->andReturn(redirect('https://accounts.google.com/o/oauth2/auth'));
+
+    Socialite::shouldReceive('driver')->with('google')->andReturn($provider);
+
+    $this->get(route('auth.google.redirect', ['popup' => 1]))
+        ->assertRedirect('https://accounts.google.com/o/oauth2/auth')
+        ->assertSessionHas('google_oauth_popup', true);
+});
+
+test('google callback in popup mode returns close view', function () {
+    $provider = Mockery::mock(Provider::class);
+    $provider->shouldReceive('user')->andReturn(mockGoogleUser());
+
+    Socialite::shouldReceive('driver')->with('google')->andReturn($provider);
+
+    $this->withSession(['google_oauth_popup' => true])
+        ->get(route('auth.google.callback'))
+        ->assertOk()
+        ->assertViewIs('auth.google-oauth-popup')
+        ->assertViewHas('status', 'success');
+
+    $this->assertAuthenticated();
+});
+
 test('google callback creates client and redirects to complete profile', function () {
     $provider = Mockery::mock(Provider::class);
     $provider->shouldReceive('user')->andReturn(mockGoogleUser());

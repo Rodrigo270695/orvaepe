@@ -81,10 +81,7 @@ export default function Register({ googleOAuthEnabled = false }: Props) {
 
             {googleOAuthEnabled && (
                 <div className="flex flex-col gap-4">
-                    <GoogleSignInButton
-                        href="/auth/google/redirect"
-                        label="Registrarse con Google"
-                    />
+                    <GoogleSignInButton label="Registrarse con Google" />
                     <div className="flex items-center gap-3">
                         <span className="h-px flex-1 bg-[var(--o-border2)]" />
                         <span className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-widest text-[var(--muted-foreground)]">

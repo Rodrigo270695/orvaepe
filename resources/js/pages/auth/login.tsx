@@ -1,6 +1,6 @@
 import { Form, Head, usePage } from '@inertiajs/react';
 import { Eye, EyeOff, Lock, ShieldCheck, User } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import InputError from '@/components/input-error';
 import TextLink from '@/components/text-link';
 import GoogleSignInButton from '@/components/auth/google-sign-in-button';
@@ -44,7 +44,19 @@ export default function Login({
     googleOAuthEnabled = false,
 }: Props) { 
     const [showPassword, setShowPassword] = useState(false);
+    const [googleError, setGoogleError] = useState<string | null>(null);
     const pageErrors = usePage().props.errors;
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const message = params.get('google_error');
+        if (message) {
+            setGoogleError(message);
+            params.delete('google_error');
+            const next = `${window.location.pathname}${params.toString() ? `?${params}` : ''}`;
+            window.history.replaceState({}, '', next);
+        }
+    }, []);
 
     return (
         <AuthOrvaeLoginLayout
@@ -74,9 +86,15 @@ export default function Login({
                             </div>
                         </div>
 
+                            {googleError && (
+                                <div className="rounded-sm border border-[color-mix(in_oklab,var(--state-danger)_35%,transparent)] bg-[color-mix(in_oklab,var(--state-danger)_12%,transparent)] px-4 py-3 font-[family-name:var(--font-mono)] text-xs text-[var(--state-danger)]">
+                                    {googleError}
+                                </div>
+                            )}
+
                             {googleOAuthEnabled && (
                                 <>
-                                    <GoogleSignInButton href="/auth/google/redirect" />
+                                    <GoogleSignInButton />
                                     <div className="flex items-center gap-3">
                                         <span className="h-px flex-1 bg-[var(--o-border2)]" />
                                         <span className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-widest text-[var(--muted-foreground)]">

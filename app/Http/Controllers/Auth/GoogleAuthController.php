@@ -12,6 +12,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use Illuminate\View\View;
 use Inertia\Inertia;
 use Inertia\Response;
 use Laravel\Socialite\Facades\Socialite;
@@ -19,23 +20,32 @@ use Symfony\Component\HttpFoundation\Response as HttpResponse;
 
 class GoogleAuthController extends Controller
 {
-    public function redirect(Request $request): RedirectResponse|HttpResponse
+    public function redirect(Request $request): RedirectResponse|HttpResponse|View
     {
         if (! GoogleOAuth::isConfigured()) {
-            return redirect()
-                ->route('login')
-                ->withErrors(['login' => 'El inicio de sesión con Google no está configurado.']);
+            return $this->oauthError($request, 'El inicio de sesión con Google no está configurado.');
         }
 
-        return Socialite::driver('google')->redirect();
+        if ($request->boolean('popup')) {
+            $request->session()->put('google_oauth_popup', true);
+        }
+
+        try {
+            return Socialite::driver('google')->redirect();
+        } catch (\Throwable $e) {
+            report($e);
+
+            return $this->oauthError(
+                $request,
+                'No se pudo iniciar la conexión con Google. Revisa la configuración del servidor.',
+            );
+        }
     }
 
-    public function callback(Request $request): RedirectResponse
+    public function callback(Request $request): RedirectResponse|HttpResponse|View
     {
         if (! GoogleOAuth::isConfigured()) {
-            return redirect()
-                ->route('login')
-                ->withErrors(['login' => 'El inicio de sesión con Google no está configurado.']);
+            return $this->oauthError($request, 'El inicio de sesión con Google no está configurado.');
         }
 
         try {
@@ -43,34 +53,46 @@ class GoogleAuthController extends Controller
         } catch (\Throwable $e) {
             report($e);
 
-            return redirect()
-                ->route('login')
-                ->withErrors(['login' => 'No se pudo completar el inicio de sesión con Google. Intenta de nuevo.']);
+            return $this->oauthError(
+                $request,
+                'No se pudo completar el inicio de sesión con Google. Intenta de nuevo.',
+            );
         }
 
         $googleId = (string) $googleUser->getId();
         $email = Str::lower((string) $googleUser->getEmail());
 
         if ($email === '') {
-            return redirect()
-                ->route('login')
-                ->withErrors(['login' => 'Google no proporcionó un correo electrónico válido.']);
+            return $this->oauthError($request, 'Google no proporcionó un correo electrónico válido.');
         }
 
         $user = User::query()->where('google_id', $googleId)->first();
 
         if ($user) {
-            return $this->loginAndRedirect($user);
+            return $this->loginAndRedirect($request, $user);
         }
 
         $existingByEmail = User::query()->where('email', $email)->first();
 
         if ($existingByEmail) {
-            return redirect()
-                ->route('login')
-                ->withErrors([
-                    'login' => 'Ya existe una cuenta con este correo. Inicia sesión con tu usuario y contraseña.',
-                ]);
+            if (filled($existingByEmail->google_id)) {
+                return $this->loginAndRedirect($request, $existingByEmail);
+            }
+
+            if (filled($existingByEmail->password)) {
+                return $this->oauthError(
+                    $request,
+                    'Ya existe una cuenta con este correo. Inicia sesión con tu usuario y contraseña.',
+                );
+            }
+
+            $existingByEmail->forceFill([
+                'google_id' => $googleId,
+                'avatar' => $googleUser->getAvatar() ?? $existingByEmail->avatar,
+                'email_verified_at' => $existingByEmail->email_verified_at ?? now(),
+            ])->save();
+
+            return $this->loginAndRedirect($request, $existingByEmail);
         }
 
         [$name, $lastname] = $this->splitName((string) ($googleUser->getName() ?: $googleUser->getNickname() ?: 'Usuario'));
@@ -98,7 +120,7 @@ class GoogleAuthController extends Controller
 
         $user->assignRole('client');
 
-        return $this->loginAndRedirect($user);
+        return $this->loginAndRedirect($request, $user);
     }
 
     public function showComplete(Request $request): Response|RedirectResponse
@@ -131,15 +153,37 @@ class GoogleAuthController extends Controller
         return redirect()->intended(AuthRedirect::homeFor($user->fresh()));
     }
 
-    private function loginAndRedirect(User $user): RedirectResponse
+    private function loginAndRedirect(Request $request, User $user): RedirectResponse|View
     {
         Auth::login($user, remember: true);
 
-        if ($user->needsProfileCompletion()) {
-            return redirect()->route('auth.google.complete');
+        $redirect = $user->needsProfileCompletion()
+            ? redirect()->route('auth.google.complete')
+            : redirect()->intended(AuthRedirect::homeFor($user));
+
+        return $this->finishOAuth($request, $redirect);
+    }
+
+    private function oauthError(Request $request, string $message): RedirectResponse|View
+    {
+        return $this->finishOAuth(
+            $request,
+            redirect()->route('login')->withErrors(['login' => $message]),
+            $message,
+        );
+    }
+
+    private function finishOAuth(Request $request, RedirectResponse $redirect, ?string $error = null): RedirectResponse|View
+    {
+        if ($request->session()->pull('google_oauth_popup')) {
+            return view('auth.google-oauth-popup', [
+                'status' => $error ? 'error' : 'success',
+                'redirectTo' => $error ? route('login') : $redirect->getTargetUrl(),
+                'error' => $error,
+            ]);
         }
 
-        return redirect()->intended(AuthRedirect::homeFor($user));
+        return $redirect;
     }
 
     /**

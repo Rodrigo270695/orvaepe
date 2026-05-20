@@ -1,21 +1,142 @@
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
+
+const POPUP_FEATURES = 'width=520,height=640,left=100,top=80,scrollbars=yes,resizable=yes';
+const MESSAGE_TYPE = 'orvae:google-oauth';
+
+type OAuthMessage = {
+    type: typeof MESSAGE_TYPE;
+    status: 'success' | 'error';
+    redirectTo?: string | null;
+    error?: string | null;
+};
+
 type Props = {
-    href: string;
     label?: string;
 };
 
 export default function GoogleSignInButton({
-    href,
     label = 'Continuar con Google',
 }: Props) {
+    const [busy, setBusy] = useState(false);
+    const popupRef = useRef<Window | null>(null);
+    const overlayId = useId();
+
+    const cleanup = useCallback(() => {
+        setBusy(false);
+        popupRef.current = null;
+    }, []);
+
+    useEffect(() => {
+        const onMessage = (event: MessageEvent) => {
+            if (event.origin !== window.location.origin) {
+                return;
+            }
+
+            const data = event.data as OAuthMessage | undefined;
+
+            if (!data || data.type !== MESSAGE_TYPE) {
+                return;
+            }
+
+            cleanup();
+            popupRef.current?.close();
+
+            if (data.status === 'success' && data.redirectTo) {
+                window.location.assign(data.redirectTo);
+                return;
+            }
+
+            const params = new URLSearchParams();
+            if (data.error) {
+                params.set('google_error', data.error);
+            }
+            const query = params.toString();
+            window.location.assign(query ? `/login?${query}` : '/login');
+        };
+
+        window.addEventListener('message', onMessage);
+
+        return () => window.removeEventListener('message', onMessage);
+    }, [cleanup]);
+
+    useEffect(() => {
+        if (!busy) {
+            return;
+        }
+
+        const interval = window.setInterval(() => {
+            if (popupRef.current?.closed) {
+                cleanup();
+            }
+        }, 400);
+
+        return () => window.clearInterval(interval);
+    }, [busy, cleanup]);
+
+    const openPopup = () => {
+        const url = `/auth/google/redirect?popup=1`;
+        const popup = window.open(url, 'orvae-google-oauth', POPUP_FEATURES);
+
+        if (!popup) {
+            window.alert(
+                'Permite ventanas emergentes para este sitio e intenta de nuevo.',
+            );
+            return;
+        }
+
+        popupRef.current = popup;
+        setBusy(true);
+    };
+
     return (
-        <a
-            href={href}
-            data-test="google-sign-in-button"
-            className="flex w-full cursor-pointer items-center justify-center gap-3 rounded-xl border border-[var(--o-border2)] bg-[color-mix(in_oklab,var(--card)_72%,transparent)] px-4 py-3 font-[family-name:var(--font-body)] text-sm font-medium text-[var(--foreground)] transition-colors duration-150 hover:border-[var(--auth-focus-border)] hover:bg-[color-mix(in_oklab,var(--card)_88%,transparent)]"
-        >
-            <GoogleIcon />
-            <span>{label}</span>
-        </a>
+        <>
+            {busy && (
+                <div
+                    id={overlayId}
+                    className="fixed inset-0 z-[200] flex items-center justify-center bg-[color-mix(in_oklab,#1c1410_55%,transparent)] backdrop-blur-sm"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby={`${overlayId}-title`}
+                >
+                    <div className="mx-4 flex max-w-sm flex-col items-center gap-4 rounded-2xl border border-[var(--o-border2)] bg-[var(--card)] px-8 py-7 shadow-2xl">
+                        <span className="size-9 animate-spin rounded-full border-2 border-[var(--auth-cta-from)] border-t-transparent" />
+                        <div className="text-center">
+                            <p
+                                id={`${overlayId}-title`}
+                                className="font-[family-name:var(--font-display)] text-sm font-semibold text-[var(--foreground)]"
+                            >
+                                Conectando con Google
+                            </p>
+                            <p className="mt-1 font-[family-name:var(--font-body)] text-xs text-[var(--muted-foreground)]">
+                                Completa el acceso en la ventana emergente. Si no
+                                existe cuenta, se creará automáticamente.
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                popupRef.current?.close();
+                                cleanup();
+                            }}
+                            className="font-[family-name:var(--font-body)] text-xs text-[var(--auth-link)] underline-offset-4 hover:underline"
+                        >
+                            Cancelar
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            <button
+                type="button"
+                onClick={openPopup}
+                disabled={busy}
+                data-test="google-sign-in-button"
+                className="flex w-full cursor-pointer items-center justify-center gap-3 rounded-xl border border-[var(--o-border2)] bg-[color-mix(in_oklab,var(--card)_72%,transparent)] px-4 py-3 font-[family-name:var(--font-body)] text-sm font-medium text-[var(--foreground)] transition-colors duration-150 hover:border-[var(--auth-focus-border)] hover:bg-[color-mix(in_oklab,var(--card)_88%,transparent)] disabled:cursor-default disabled:opacity-60"
+            >
+                <GoogleIcon />
+                <span>{label}</span>
+            </button>
+        </>
     );
 }
 
