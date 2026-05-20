@@ -24,6 +24,10 @@ class DashboardMetricsService
 {
     private const CHART_DAYS = 14;
 
+    public function __construct(
+        private readonly SaasTenantsDashboardService $saasTenants,
+    ) {}
+
     /**
      * @return array{
      *     kpis: array,
@@ -32,6 +36,7 @@ class DashboardMetricsService
      *     revenueByLine: array,
      *     paymentsByGateway: array,
      *     subscriptionsByStatus: array,
+     *     saasPanels: array,
      * }
      */
     public function build(): array
@@ -134,6 +139,7 @@ class DashboardMetricsService
             'revenueByLine' => $revenueByLine,
             'paymentsByGateway' => $paymentsByGateway,
             'subscriptionsByStatus' => $subscriptionsByStatus,
+            'saasPanels' => $this->saasTenants->build(),
         ];
     }
 

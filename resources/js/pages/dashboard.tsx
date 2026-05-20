@@ -1,5 +1,5 @@
 import { Head } from '@inertiajs/react';
-import { useMemo, type ReactNode } from 'react';
+import { useMemo, type ComponentProps, type ReactNode } from 'react';
 import {
     Activity,
     AlertTriangle,
@@ -31,6 +31,7 @@ import {
     YAxis,
 } from 'recharts';
 
+import SaasTenantsSection from '@/components/dashboard/saas-tenants-section';
 import AppLayout from '@/layouts/app-layout';
 import { dashboard } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
@@ -111,6 +112,8 @@ type RevenueLine = { key: string; label: string; total: number };
 
 type GatewayRow = { gateway: string; total: number };
 
+type SaasPanels = ComponentProps<typeof SaasTenantsSection>['panels'];
+
 type Props = {
     kpis: Kpis;
     dailyChart: DailyPoint[];
@@ -118,6 +121,7 @@ type Props = {
     revenueByLine: RevenueLine[];
     paymentsByGateway: GatewayRow[];
     subscriptionsByStatus: NamedCount[];
+    saasPanels: SaasPanels;
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -169,6 +173,7 @@ export default function Dashboard({
     revenueByLine,
     paymentsByGateway,
     subscriptionsByStatus,
+    saasPanels,
 }: Props) {
     const hasGatewayData = paymentsByGateway.some((g) => g.total > 0);
     const hasLineMix = revenueByLine.some((r) => r.total > 0);
@@ -210,10 +215,12 @@ export default function Dashboard({
                         Panel operativo
                     </h1>
                     <p className="text-sm text-muted-foreground">
-                        Ventas, catálogo, suscripciones y colas — datos en vivo
+                        Ventas, catálogo, tenants SaaS y colas — datos en vivo
                         para decidir.
                     </p>
                 </header>
+
+                <SaasTenantsSection panels={saasPanels} />
 
                 <div className="grid auto-rows-min gap-3 sm:grid-cols-2 xl:grid-cols-4">
                     <div className="neumorph rounded-2xl border-l-4 border-l-[var(--dash-revenue)] p-4">

@@ -65,6 +65,8 @@ return [
         'enabled' => env('AULAVIRTUAL_PROVISIONING_ENABLED', false),
         'provision_url' => env('AULAVIRTUAL_PROVISION_URL'),
         'hmac_secret' => env('AULAVIRTUAL_PROVISION_HMAC_SECRET'),
+        'tenant_domain' => env('AULAVIRTUAL_TENANT_DOMAIN', 'aulavirtual.orvae.pe'),
+        'tenant_scheme' => env('AULAVIRTUAL_TENANT_SCHEME', 'https'),
     ],
 
     /*
