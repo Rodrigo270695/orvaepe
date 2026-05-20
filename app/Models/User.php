@@ -14,7 +14,7 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Spatie\Permission\Traits\HasRoles;
 
-#[Fillable(['username', 'name', 'lastname', 'email', 'password', 'document_number', 'phone'])]
+#[Fillable(['username', 'name', 'lastname', 'email', 'password', 'document_number', 'phone', 'google_id', 'avatar'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -97,5 +97,15 @@ class User extends Authenticatable
     public function quotesAuthored(): HasMany
     {
         return $this->hasMany(Quote::class, 'created_by');
+    }
+
+    public function needsProfileCompletion(): bool
+    {
+        return blank($this->document_number);
+    }
+
+    public function usesGoogleAuth(): bool
+    {
+        return filled($this->google_id);
     }
 }

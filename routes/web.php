@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\ShowcaseClientsController;
 use App\Http\Controllers\Admin\SubscriptionsController;
 use App\Http\Controllers\Admin\VentasPagosController;
 use App\Http\Controllers\Admin\WebhookEventsController;
+use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\Catalog\CatalogCategoriesController;
 use App\Http\Controllers\Catalog\CatalogProductMediaController;
 use App\Http\Controllers\Catalog\CatalogProductsController;
@@ -23,10 +24,10 @@ use App\Http\Controllers\Catalog\CatalogSkusController;
 use App\Http\Controllers\Catalog\CouponsController;
 use App\Http\Controllers\Catalog\SoftwareReleaseAssetsController;
 use App\Http\Controllers\Catalog\SoftwareReleasesController;
-use App\Http\Controllers\Checkout\CheckoutMercadoPagoController;
 use App\Http\Controllers\Checkout\CheckoutCulqiController;
-use App\Http\Controllers\Checkout\CulqiWebhookController;
+use App\Http\Controllers\Checkout\CheckoutMercadoPagoController;
 use App\Http\Controllers\Checkout\CheckoutPayPalController;
+use App\Http\Controllers\Checkout\CulqiWebhookController;
 use App\Http\Controllers\Checkout\PayPalWebhookController;
 use App\Http\Controllers\Client\ClientPortalController;
 use App\Http\Controllers\DashboardController;
@@ -137,7 +138,17 @@ Route::post('/webhooks/paypal', [PayPalWebhookController::class, 'handle'])
 Route::post('/webhooks/culqi', [CulqiWebhookController::class, 'handle'])
     ->name('webhooks.culqi');
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware('guest')->group(function () {
+    Route::get('auth/google/redirect', [GoogleAuthController::class, 'redirect'])->name('auth.google.redirect');
+    Route::get('auth/google/callback', [GoogleAuthController::class, 'callback'])->name('auth.google.callback');
+});
+
+Route::middleware('auth')->group(function () {
+    Route::get('auth/google/complete', [GoogleAuthController::class, 'showComplete'])->name('auth.google.complete');
+    Route::post('auth/google/complete', [GoogleAuthController::class, 'storeComplete'])->name('auth.google.complete.store');
+});
+
+Route::middleware(['auth', 'verified', 'client.profile.complete'])->group(function () {
     Route::post('/checkout/culqi', [CheckoutCulqiController::class, 'store'])->name('checkout.culqi.store');
     Route::get('/checkout/culqi/{order}', [CheckoutCulqiController::class, 'show'])->name('checkout.culqi.show');
     Route::post('/checkout/culqi/{order}/charge', [CheckoutCulqiController::class, 'charge'])->name('checkout.culqi.charge');

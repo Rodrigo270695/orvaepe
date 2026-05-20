@@ -8,6 +8,7 @@ use App\Fortify\ResilientLoginRateLimiter;
 use App\Http\Responses\LoginResponse;
 use App\Http\Responses\RegisterResponse;
 use App\Models\User;
+use App\Support\GoogleOAuth;
 use Illuminate\Cache\RateLimiter as CacheRateLimiter;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\QueryException;
@@ -92,6 +93,10 @@ class FortifyServiceProvider extends ServiceProvider
                 return null;
             }
 
+            if (! filled($user->password)) {
+                return null;
+            }
+
             return Hash::check($request->input('password', ''), $user->password)
                 ? $user
                 : null;
@@ -106,6 +111,7 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::loginView(fn (Request $request) => Inertia::render('auth/login', [
             'canResetPassword' => Features::enabled(Features::resetPasswords()),
             'canRegister' => Features::enabled(Features::registration()),
+            'googleOAuthEnabled' => GoogleOAuth::isConfigured(),
             'status' => $request->session()->get('status'),
         ]));
 
@@ -122,7 +128,9 @@ class FortifyServiceProvider extends ServiceProvider
             'status' => $request->session()->get('status'),
         ]));
 
-        Fortify::registerView(fn () => Inertia::render('auth/register'));
+        Fortify::registerView(fn () => Inertia::render('auth/register', [
+            'googleOAuthEnabled' => GoogleOAuth::isConfigured(),
+        ]));
 
         Fortify::twoFactorChallengeView(fn () => Inertia::render('auth/two-factor-challenge'));
 

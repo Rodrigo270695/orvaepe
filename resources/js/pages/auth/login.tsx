@@ -3,6 +3,7 @@ import { Eye, EyeOff, Lock, ShieldCheck, User } from 'lucide-react';
 import { useState } from 'react';
 import InputError from '@/components/input-error';
 import TextLink from '@/components/text-link';
+import GoogleSignInButton from '@/components/auth/google-sign-in-button';
 import AuthOrvaeLoginLayout from '@/layouts/auth/auth-orvae-login-layout';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
@@ -33,12 +34,14 @@ type Props = {
     status?: string;
     canResetPassword: boolean;
     canRegister: boolean;
+    googleOAuthEnabled?: boolean;
 };
 
 export default function Login({
     status,
     canResetPassword,
     canRegister,
+    googleOAuthEnabled = false,
 }: Props) { 
     const [showPassword, setShowPassword] = useState(false);
     const pageErrors = usePage().props.errors;
@@ -70,6 +73,19 @@ export default function Login({
                                 </p>
                             </div>
                         </div>
+
+                            {googleOAuthEnabled && (
+                                <>
+                                    <GoogleSignInButton href="/auth/google/redirect" />
+                                    <div className="flex items-center gap-3">
+                                        <span className="h-px flex-1 bg-[var(--o-border2)]" />
+                                        <span className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-widest text-[var(--muted-foreground)]">
+                                            o
+                                        </span>
+                                        <span className="h-px flex-1 bg-[var(--o-border2)]" />
+                                    </div>
+                                </>
+                            )}
 
                             <div className="grid gap-6">
                                 <div className="flex flex-col gap-1.5">

@@ -2,9 +2,9 @@
 
 namespace App\Http\Responses;
 
+use App\Support\AuthRedirect;
 use Illuminate\Http\JsonResponse;
 use Laravel\Fortify\Contracts\RegisterResponse as RegisterResponseContract;
-use Laravel\Fortify\Fortify;
 
 class RegisterResponse implements RegisterResponseContract
 {
@@ -15,12 +15,11 @@ class RegisterResponse implements RegisterResponseContract
         }
 
         $user = $request->user();
-        $home = Fortify::redirects('register', config('fortify.home'));
 
-        if ($user?->hasRole('client') && ! $user->hasRole('superadmin')) {
-            $home = '/cliente';
+        if ($user?->needsProfileCompletion()) {
+            return redirect()->intended(route('auth.google.complete'));
         }
 
-        return redirect()->intended($home);
+        return redirect()->intended(AuthRedirect::homeFor($user));
     }
 }

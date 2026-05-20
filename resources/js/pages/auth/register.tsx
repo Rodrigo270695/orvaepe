@@ -9,11 +9,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import GoogleSignInButton from '@/components/auth/google-sign-in-button';
 import AuthOrvaeLoginLayout from '@/layouts/auth/auth-orvae-login-layout';
 import { store } from '@/routes/register';
 import { inertiaFormProps } from '@/lib/inertia-form-props';
 
-export default function Register() {
+type Props = {
+    googleOAuthEnabled?: boolean;
+};
+
+export default function Register({ googleOAuthEnabled = false }: Props) {
     const [documentNumberLen, setDocumentNumberLen] = useState(0);
     const [phoneLen, setPhoneLen] = useState(0);
 
@@ -73,6 +78,22 @@ export default function Register() {
                         </p>
                     </div>
                 </div>
+
+            {googleOAuthEnabled && (
+                <div className="flex flex-col gap-4">
+                    <GoogleSignInButton
+                        href="/auth/google/redirect"
+                        label="Registrarse con Google"
+                    />
+                    <div className="flex items-center gap-3">
+                        <span className="h-px flex-1 bg-[var(--o-border2)]" />
+                        <span className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-widest text-[var(--muted-foreground)]">
+                            o con correo
+                        </span>
+                        <span className="h-px flex-1 bg-[var(--o-border2)]" />
+                    </div>
+                </div>
+            )}
 
             <Form
                 {...inertiaFormProps(store())}

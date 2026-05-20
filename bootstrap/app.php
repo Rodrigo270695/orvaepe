@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\AuditHttpRequests;
+use App\Http\Middleware\EnsureClientProfileComplete;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Console\Scheduling\Schedule;
@@ -30,6 +31,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'role' => RoleMiddleware::class,
+            'client.profile.complete' => EnsureClientProfileComplete::class,
         ]);
 
         $middleware->web(append: [

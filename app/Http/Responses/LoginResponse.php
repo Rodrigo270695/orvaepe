@@ -2,8 +2,8 @@
 
 namespace App\Http\Responses;
 
+use App\Support\AuthRedirect;
 use Laravel\Fortify\Contracts\LoginResponse as LoginResponseContract;
-use Laravel\Fortify\Fortify;
 
 class LoginResponse implements LoginResponseContract
 {
@@ -14,14 +14,11 @@ class LoginResponse implements LoginResponseContract
         }
 
         $user = $request->user();
-        $home = Fortify::redirects('login', config('fortify.home'));
 
-        if ($user?->hasRole('superadmin')) {
-            $home = config('fortify.home');
-        } elseif ($user?->hasRole('client')) {
-            $home = '/cliente';
+        if ($user?->needsProfileCompletion()) {
+            return redirect()->intended(route('auth.google.complete'));
         }
 
-        return redirect()->intended($home);
+        return redirect()->intended(AuthRedirect::homeFor($user));
     }
 }
