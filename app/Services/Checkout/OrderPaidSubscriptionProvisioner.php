@@ -127,6 +127,13 @@ final class OrderPaidSubscriptionProvisioner
                     return $this->extendSubscription($renewable, $order, $sku);
                 }
             }
+
+            if (SaasCatalogSku::isAulaVirtual($sku)) {
+                $renewable = SaasSubscriptionLookup::findAulaVirtualRenewable((string) $order->user_id, $sku);
+                if ($renewable instanceof Subscription) {
+                    return $this->extendSubscription($renewable, $order, $sku);
+                }
+            }
         }
 
         $subscription = Subscription::query()

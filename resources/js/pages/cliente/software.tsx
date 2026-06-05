@@ -311,6 +311,16 @@ export default function ClienteSoftwarePage({
                                             ) : null}
                                         </div>
                                         <div className="mt-3 flex flex-wrap items-center gap-2">
+                                            {sub.academy_url ? (
+                                                <a
+                                                    href={sub.academy_url}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="inline-flex items-center rounded-lg border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-medium text-sky-800 hover:bg-sky-100 dark:border-sky-900 dark:bg-sky-950/40 dark:text-sky-300"
+                                                >
+                                                    Abrir Aula Virtual
+                                                </a>
+                                            ) : null}
                                             {sub.vetsaas_login_url ? (
                                                 <a
                                                     href={sub.vetsaas_login_url}

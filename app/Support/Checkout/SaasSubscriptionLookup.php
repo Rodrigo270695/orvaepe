@@ -50,4 +50,28 @@ final class SaasSubscriptionLookup
 
         return is_string($slug) && $slug !== '' ? $slug : null;
     }
+
+    public static function aulaTenantSlugFrom(Subscription $subscription): ?string
+    {
+        $metadata = is_array($subscription->metadata) ? $subscription->metadata : [];
+        $slug = $metadata['aula_virtual_tenant_slug'] ?? null;
+
+        return is_string($slug) && $slug !== '' ? $slug : null;
+    }
+
+    public static function isRenewableSaas(Subscription $subscription, CatalogSku $sku): bool
+    {
+        if (SaasCatalogSku::isVetsaas($sku)) {
+            return self::tenantSlugFrom($subscription) !== null;
+        }
+
+        if (SaasCatalogSku::isAulaVirtual($sku)) {
+            $metadata = is_array($subscription->metadata) ? $subscription->metadata : [];
+
+            return filled($metadata['aula_virtual_academy_url'] ?? null)
+                || self::aulaTenantSlugFrom($subscription) !== null;
+        }
+
+        return false;
+    }
 }

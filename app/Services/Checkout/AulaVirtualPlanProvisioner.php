@@ -7,7 +7,9 @@ use App\Models\Order;
 use App\Models\Subscription;
 use App\Models\User;
 use App\Support\Checkout\SaasCatalogSku;
+use App\Support\Checkout\SaasSubscriptionLookup;
 use App\Support\Http\OrvaeSignedHttpClient;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -15,6 +17,7 @@ class AulaVirtualPlanProvisioner
 {
     public function __construct(
         private readonly SaasProvisionAccessNotifier $accessNotifier,
+        private readonly SaasRenewalAccessNotifier $renewalNotifier,
     ) {}
 
     public function provision(Order $order, CatalogSku $sku, ?\DateTimeInterface $periodEnd = null): void
@@ -41,6 +44,13 @@ class AulaVirtualPlanProvisioner
                 'order_id' => $order->id,
                 'order_number' => $order->order_number,
             ]);
+
+            return;
+        }
+
+        $existingSubscription = SaasSubscriptionLookup::findAulaVirtualRenewable($user->id, $sku);
+        if ($existingSubscription instanceof Subscription) {
+            $this->renew($order, $sku, $existingSubscription, $periodEnd);
 
             return;
         }
@@ -111,15 +121,15 @@ class AulaVirtualPlanProvisioner
 
         $body = $response->json();
         $academyUrl = is_array($body) ? ($body['academy_url'] ?? null) : null;
-        $tenantSlug = is_array($body) ? ($body['tenant_slug'] ?? null) : null;
+        $tenantSlugResp = is_array($body) ? ($body['tenant_slug'] ?? null) : null;
 
-        if ($academyUrl || $tenantSlug) {
-            $this->persistAcademyAccess($order, $academyUrl, $tenantSlug);
+        if ($academyUrl || $tenantSlugResp) {
+            $this->persistAcademyAccess($order, null, $academyUrl, $tenantSlugResp);
             $this->accessNotifier->notify(
                 $order,
                 'aulavirtual',
                 is_string($academyUrl) ? $academyUrl : '',
-                is_string($tenantSlug) ? $tenantSlug : null,
+                is_string($tenantSlugResp) ? $tenantSlugResp : null,
                 (string) $user->email,
                 null,
             );
@@ -130,8 +140,143 @@ class AulaVirtualPlanProvisioner
             'order_number' => $order->order_number,
             'plan_slug' => $planSlug,
             'academy_url' => $academyUrl,
-            'tenant_slug' => $tenantSlug,
+            'tenant_slug' => $tenantSlugResp,
         ]);
+    }
+
+    public function renew(
+        Order $order,
+        CatalogSku $sku,
+        Subscription $existingSubscription,
+        ?\DateTimeInterface $periodEnd = null,
+    ): void {
+        if (! SaasCatalogSku::isAulaVirtual($sku) || ! $this->isEnabled()) {
+            return;
+        }
+
+        $url = $this->resolveRenewUrl();
+        $secret = (string) config('services.aulavirtual.hmac_secret');
+
+        if ($url === '' || $secret === '') {
+            return;
+        }
+
+        $user = $order->user;
+        if (! $user instanceof User) {
+            return;
+        }
+
+        $tenantSlug = SaasSubscriptionLookup::aulaTenantSlugFrom($existingSubscription);
+        if ($tenantSlug === null) {
+            $metadata = is_array($existingSubscription->metadata) ? $existingSubscription->metadata : [];
+            $academyUrl = (string) ($metadata['aula_virtual_academy_url'] ?? '');
+            if ($academyUrl !== '' && preg_match('#https?://([a-z0-9\-]+)\.#', $academyUrl, $m) === 1) {
+                $tenantSlug = $m[1];
+            }
+        }
+
+        if ($tenantSlug === null) {
+            return;
+        }
+
+        $planSlug = $this->resolvePlanSlug($sku);
+        if ($planSlug === null) {
+            return;
+        }
+
+        $periodStart = $existingSubscription->current_period_end && $existingSubscription->current_period_end->isFuture()
+            ? $existingSubscription->current_period_end
+            : now();
+
+        $periodEndAt = $periodEnd instanceof \DateTimeInterface
+            ? Carbon::parse($periodEnd)
+            : $this->periodEndFromInterval($periodStart, $sku);
+
+        $payload = [
+            'external_order_id' => (string) $order->id,
+            'order_number' => (string) $order->order_number,
+            'tenant' => [
+                'slug' => $tenantSlug,
+            ],
+            'subscription' => [
+                'plan_slug' => $planSlug,
+                'billing_interval' => (string) ($sku->billing_interval ?? 'monthly'),
+                'amount_paid' => (string) $order->grand_total,
+                'currency' => (string) $order->currency,
+                'payment_method' => $this->resolvePaymentMethod($order),
+                'payment_reference' => $order->payments()->latest('paid_at')->value('gateway_payment_id'),
+                'started_at' => $periodStart->toIso8601String(),
+                'expires_at' => $periodEndAt->format(\DateTimeInterface::ATOM),
+            ],
+        ];
+
+        $response = OrvaeSignedHttpClient::post(
+            $url,
+            $payload,
+            $secret,
+            'renew-order:'.$order->id,
+            timeoutSeconds: 15,
+            retryDelayMs: 300,
+        );
+
+        if (! $response->successful()) {
+            Log::warning('aulavirtual.renew_failed', [
+                'order_id' => $order->id,
+                'tenant_slug' => $tenantSlug,
+                'status' => $response->status(),
+            ]);
+
+            return;
+        }
+
+        $body = $response->json();
+        $academyUrl = is_array($body) ? ($body['academy_url'] ?? null) : null;
+        $tenantSlugResp = is_array($body) ? ($body['tenant_slug'] ?? $tenantSlug) : $tenantSlug;
+
+        $this->persistAcademyAccess($order, $existingSubscription, $academyUrl, $tenantSlugResp);
+
+        $this->renewalNotifier->notify(
+            $order,
+            'aulavirtual',
+            is_string($academyUrl) ? $academyUrl : (string) ($existingSubscription->metadata['aula_virtual_academy_url'] ?? ''),
+            is_string($tenantSlugResp) ? $tenantSlugResp : null,
+            (string) $user->email,
+            $periodEndAt->format('d/m/Y H:i'),
+        );
+
+        Log::info('aulavirtual.renew_success', [
+            'order_id' => $order->id,
+            'tenant_slug' => $tenantSlugResp,
+        ]);
+    }
+
+    private function resolveRenewUrl(): string
+    {
+        $explicit = trim((string) config('services.aulavirtual.renew_url', ''));
+        if ($explicit !== '') {
+            return $explicit;
+        }
+
+        $provision = trim((string) config('services.aulavirtual.provision_url', ''));
+        if ($provision === '') {
+            return '';
+        }
+
+        if (str_ends_with($provision, '/provision')) {
+            return substr($provision, 0, -strlen('/provision')).'/renew';
+        }
+
+        return rtrim($provision, '/').'/renew';
+    }
+
+    private function periodEndFromInterval(\DateTimeInterface $start, CatalogSku $sku): Carbon
+    {
+        $base = Carbon::parse($start);
+        $interval = strtolower(trim((string) ($sku->billing_interval ?? '')));
+
+        return in_array($interval, ['year', 'yearly', 'annual', 'anual'], true)
+            ? $base->copy()->addYear()
+            : $base->copy()->addMonth();
     }
 
     private function resolvePlanSlug(CatalogSku $sku): ?string
@@ -226,13 +371,19 @@ class AulaVirtualPlanProvisioner
         return (bool) config('services.aulavirtual.enabled', false);
     }
 
-    private function persistAcademyAccess(Order $order, mixed $academyUrl, mixed $tenantSlug): void
-    {
-        $subscription = Subscription::query()
-            ->where('user_id', $order->user_id)
-            ->where('metadata->checkout_order_id', $order->id)
-            ->latest('created_at')
-            ->first();
+    private function persistAcademyAccess(
+        Order $order,
+        ?Subscription $subscription,
+        mixed $academyUrl,
+        mixed $tenantSlug,
+    ): void {
+        if ($subscription === null) {
+            $subscription = Subscription::query()
+                ->where('user_id', $order->user_id)
+                ->where('metadata->checkout_order_id', $order->id)
+                ->latest('created_at')
+                ->first();
+        }
 
         $url = is_string($academyUrl) ? $academyUrl : null;
         $slug = is_string($tenantSlug) ? $tenantSlug : null;
@@ -241,13 +392,15 @@ class AulaVirtualPlanProvisioner
             $metadata = is_array($subscription->metadata) ? $subscription->metadata : [];
             $metadata['aula_virtual_academy_url'] = $url;
             $metadata['aula_virtual_tenant_slug'] = $slug;
+            $metadata['last_renewal_order_id'] = $order->id;
+            $metadata['last_renewal_at'] = now()->toIso8601String();
             $subscription->forceFill(['metadata' => $metadata])->save();
         }
 
         $snapshot = is_array($order->billing_snapshot) ? $order->billing_snapshot : [];
         $snapshot['aula_virtual_academy_url'] = $url;
         $snapshot['aula_virtual_tenant_slug'] = $slug;
+        $snapshot['aula_virtual_renewed_at'] = now()->toIso8601String();
         $order->forceFill(['billing_snapshot' => $snapshot])->save();
     }
-
 }

@@ -323,7 +323,12 @@ class ClientPortalController extends Controller
                     static fn ($item): bool => $item->catalogSku !== null
                         && \App\Support\Checkout\SaasCatalogSku::isVetsaas($item->catalogSku),
                 );
-                $canRenew = $hasVetsaas && filled($metadata['vetsaas_tenant_slug'] ?? null);
+                $hasAula = $sub->items->contains(
+                    static fn ($item): bool => $item->catalogSku !== null
+                        && \App\Support\Checkout\SaasCatalogSku::isAulaVirtual($item->catalogSku),
+                );
+                $canRenew = ($hasVetsaas && filled($metadata['vetsaas_tenant_slug'] ?? null))
+                    || ($hasAula && filled($metadata['aula_virtual_academy_url'] ?? null));
 
                 return [
                     'id' => $sub->id,
