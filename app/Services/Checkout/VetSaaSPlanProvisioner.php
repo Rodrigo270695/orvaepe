@@ -9,7 +9,9 @@ use App\Models\Order;
 use App\Models\Subscription;
 use App\Models\User;
 use App\Support\Checkout\SaasCatalogSku;
+use App\Support\Checkout\SaasSubscriptionLookup;
 use App\Support\Http\OrvaeSignedHttpClient;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -20,6 +22,7 @@ class VetSaaSPlanProvisioner
 {
     public function __construct(
         private readonly SaasProvisionAccessNotifier $accessNotifier,
+        private readonly SaasRenewalAccessNotifier $renewalNotifier,
     ) {}
 
     public function provision(Order $order, CatalogSku $sku, ?\DateTimeInterface $periodEnd = null): void
@@ -56,6 +59,13 @@ class VetSaaSPlanProvisioner
         $user = $order->user;
         if (! $user instanceof User) {
             $this->noteSnapshot($order, ['vetsaas_provision_skipped' => 'pedido_sin_usuario']);
+
+            return;
+        }
+
+        $existingSubscription = SaasSubscriptionLookup::findVetsaasRenewable($user->id, $sku);
+        if ($existingSubscription instanceof Subscription) {
+            $this->renew($order, $sku, $existingSubscription, $periodEnd);
 
             return;
         }
@@ -206,6 +216,184 @@ class VetSaaSPlanProvisioner
         $gateway = $order->payments()->latest('paid_at')->value('gateway');
 
         return is_string($gateway) && $gateway !== '' ? $gateway : 'manual';
+    }
+
+    public function renew(
+        Order $order,
+        CatalogSku $sku,
+        Subscription $existingSubscription,
+        ?\DateTimeInterface $periodEnd = null,
+    ): void {
+        if (! SaasCatalogSku::isVetsaas($sku) || ! $this->isEnabled()) {
+            return;
+        }
+
+        $url = $this->resolveRenewUrl();
+        $secret = (string) config('services.vetsaas.hmac_secret');
+
+        if ($url === '' || $secret === '') {
+            $this->noteSnapshot($order, ['vetsaas_renew_skipped' => 'falta_url_o_hmac_secret']);
+
+            return;
+        }
+
+        $user = $order->user;
+        if (! $user instanceof User) {
+            return;
+        }
+
+        $tenantSlug = SaasSubscriptionLookup::tenantSlugFrom($existingSubscription);
+        if ($tenantSlug === null) {
+            $this->noteSnapshot($order, ['vetsaas_renew_skipped' => 'sin_tenant_slug']);
+
+            return;
+        }
+
+        $planSlug = $this->resolvePlanSlug($sku);
+        if ($planSlug === null) {
+            return;
+        }
+
+        $periodStart = $existingSubscription->current_period_end && $existingSubscription->current_period_end->isFuture()
+            ? $existingSubscription->current_period_end
+            : now();
+
+        $periodEndAt = $periodEnd instanceof \DateTimeInterface
+            ? Carbon::parse($periodEnd)
+            : $this->periodEndFromInterval($periodStart, $sku);
+
+        $payload = [
+            'external_order_id' => (string) $order->id,
+            'order_number' => (string) $order->order_number,
+            'tenant_slug' => $tenantSlug,
+            'plan_slug' => $planSlug,
+            'ciclo' => $this->resolveCiclo($sku),
+            'period_start' => $periodStart->toIso8601String(),
+            'period_end' => $periodEndAt->toIso8601String(),
+            'precio_pactado' => (float) $order->grand_total,
+            'payment' => [
+                'monto' => (float) $order->grand_total,
+                'moneda' => (string) $order->currency,
+                'pasarela' => $this->resolvePaymentMethod($order),
+                'transaction_id' => $order->payments()->latest('paid_at')->value('gateway_payment_id'),
+                'pagado_at' => optional($order->placed_at ?? now())->toIso8601String(),
+            ],
+        ];
+
+        Log::info('vetsaas.renew_request', [
+            'order_id' => $order->id,
+            'tenant_slug' => $tenantSlug,
+            'plan_slug' => $planSlug,
+        ]);
+
+        $response = OrvaeSignedHttpClient::post(
+            $url,
+            $payload,
+            $secret,
+            'renew-order:'.$order->id,
+            timeoutSeconds: 30,
+        );
+
+        if (! $response->successful()) {
+            $this->noteSnapshot($order, [
+                'vetsaas_renew_error' => [
+                    'http_status' => $response->status(),
+                    'body' => Str::limit((string) $response->body(), 2000),
+                    'at' => now()->toIso8601String(),
+                ],
+            ]);
+            Log::warning('vetsaas.renew_failed', [
+                'order_id' => $order->id,
+                'status' => $response->status(),
+            ]);
+
+            return;
+        }
+
+        $json = $response->json();
+        $loginUrl = is_array($json) ? ($json['login_url'] ?? null) : null;
+        $tenantSlugResp = is_array($json) ? ($json['tenant_slug'] ?? $tenantSlug) : $tenantSlug;
+
+        if ((! is_string($loginUrl) || $loginUrl === '') && is_string($tenantSlugResp) && $tenantSlugResp !== '') {
+            $scheme = (string) config('services.vetsaas.tenant_scheme', 'https');
+            $domain = (string) config('services.vetsaas.tenant_domain', 'vetsaas.orvae.pe');
+            $loginUrl = sprintf('%s://%s.%s/login', $scheme, $tenantSlugResp, $domain);
+        }
+
+        $this->persistRenewalAccess($order, $existingSubscription, $loginUrl, $tenantSlugResp);
+
+        $this->renewalNotifier->notify(
+            $order,
+            'vetsaas',
+            is_string($loginUrl) ? $loginUrl : '',
+            is_string($tenantSlugResp) ? $tenantSlugResp : null,
+            (string) $user->email,
+            $periodEndAt->format('d/m/Y H:i'),
+        );
+
+        Log::info('vetsaas.renew_success', [
+            'order_id' => $order->id,
+            'tenant_slug' => $tenantSlugResp,
+        ]);
+    }
+
+    private function resolveRenewUrl(): string
+    {
+        $explicit = trim((string) config('services.vetsaas.renew_url', ''));
+        if ($explicit !== '') {
+            return $explicit;
+        }
+
+        $provision = trim((string) config('services.vetsaas.provision_url', ''));
+        if ($provision === '') {
+            return '';
+        }
+
+        if (str_ends_with($provision, '/provision')) {
+            return substr($provision, 0, -strlen('/provision')).'/renew';
+        }
+
+        return rtrim($provision, '/').'/renew';
+    }
+
+    private function resolveCiclo(CatalogSku $sku): string
+    {
+        $interval = strtolower(trim((string) ($sku->billing_interval ?? '')));
+
+        return in_array($interval, ['year', 'yearly', 'annual', 'anual'], true) ? 'anual' : 'mensual';
+    }
+
+    private function periodEndFromInterval(\DateTimeInterface $start, CatalogSku $sku): Carbon
+    {
+        $base = Carbon::parse($start);
+
+        return $this->resolveCiclo($sku) === 'anual'
+            ? $base->copy()->addYear()
+            : $base->copy()->addMonth();
+    }
+
+    private function persistRenewalAccess(
+        Order $order,
+        Subscription $subscription,
+        mixed $loginUrl,
+        mixed $tenantSlug,
+    ): void {
+        $url = is_string($loginUrl) ? $loginUrl : null;
+        $slug = is_string($tenantSlug) ? $tenantSlug : null;
+
+        $metadata = is_array($subscription->metadata) ? $subscription->metadata : [];
+        $metadata['vetsaas_login_url'] = $url;
+        $metadata['vetsaas_tenant_slug'] = $slug;
+        $metadata['last_renewal_order_id'] = $order->id;
+        $metadata['last_renewal_at'] = now()->toIso8601String();
+        $subscription->forceFill(['metadata' => $metadata])->save();
+
+        $snapshot = is_array($order->billing_snapshot) ? $order->billing_snapshot : [];
+        unset($snapshot['vetsaas_renew_error'], $snapshot['vetsaas_renew_skipped']);
+        $snapshot['vetsaas_login_url'] = $url;
+        $snapshot['vetsaas_tenant_slug'] = $slug;
+        $snapshot['vetsaas_renewed_at'] = now()->toIso8601String();
+        $order->forceFill(['billing_snapshot' => $snapshot])->save();
     }
 
     private function isEnabled(): bool

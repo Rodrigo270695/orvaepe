@@ -32,6 +32,10 @@ type SubscriptionRow = {
     current_period_start: string | null;
     current_period_end: string | null;
     cancel_at_period_end: boolean;
+    academy_url?: string | null;
+    vetsaas_login_url?: string | null;
+    vetsaas_tenant_slug?: string | null;
+    renew_url?: string | null;
     items: SubscriptionItemRow[];
 };
 
@@ -230,7 +234,8 @@ export default function ClienteSoftwarePage({
                                             Suscripción vencida
                                         </p>
                                         <p className="text-[color-mix(in_oklab,var(--state-danger)_70%,var(--foreground))]">
-                                            Acción recomendada: renovar o contactar soporte.
+                                            Renueva tu plan desde Software → Renovar plan para
+                                            recuperar el acceso al mismo subdominio.
                                         </p>
                                     </div>
                                 ) : null}
@@ -240,8 +245,16 @@ export default function ClienteSoftwarePage({
                                             Suscripción por vencer (7 días)
                                         </p>
                                         <p className="text-[color-mix(in_oklab,var(--state-alert)_70%,var(--foreground))]">
-                                            Acción recomendada: revisar renovación para evitar suspensión.
+                                            Renueva ahora para evitar suspensión del servicio.
                                         </p>
+                                        {expiringSoonSubscriptions[0]?.renew_url ? (
+                                            <a
+                                                href={expiringSoonSubscriptions[0].renew_url}
+                                                className="mt-2 inline-flex rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90"
+                                            >
+                                                Renovar plan
+                                            </a>
+                                        ) : null}
                                     </div>
                                 ) : null}
                                 {expiringSoonLicenses.length > 0 ? (
@@ -295,6 +308,29 @@ export default function ClienteSoftwarePage({
                                                 <span className="text-xs text-[color-mix(in_oklab,var(--state-alert)_70%,var(--foreground))]">
                                                     Cancelación al cierre de periodo
                                                 </span>
+                                            ) : null}
+                                        </div>
+                                        <div className="mt-3 flex flex-wrap items-center gap-2">
+                                            {sub.vetsaas_login_url ? (
+                                                <a
+                                                    href={sub.vetsaas_login_url}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="inline-flex items-center rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-800 hover:bg-emerald-100 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300"
+                                                >
+                                                    Abrir VetSaaS
+                                                    {sub.vetsaas_tenant_slug
+                                                        ? ` (${sub.vetsaas_tenant_slug})`
+                                                        : ''}
+                                                </a>
+                                            ) : null}
+                                            {sub.renew_url ? (
+                                                <a
+                                                    href={sub.renew_url}
+                                                    className="inline-flex items-center rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90"
+                                                >
+                                                    Renovar plan
+                                                </a>
                                             ) : null}
                                         </div>
                                         <ul className="mt-3 space-y-3">

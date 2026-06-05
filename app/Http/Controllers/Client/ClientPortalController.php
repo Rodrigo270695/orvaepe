@@ -317,8 +317,13 @@ class ClientPortalController extends Controller
             ->with(['items.catalogSku:id,code,name,catalog_product_id', 'items.catalogSku.product:id,name'])
             ->orderByDesc('created_at')
             ->get()
-            ->map(static function (Subscription $sub): array {
+            ->map(function (Subscription $sub): array {
                 $metadata = is_array($sub->metadata) ? $sub->metadata : [];
+                $hasVetsaas = $sub->items->contains(
+                    static fn ($item): bool => $item->catalogSku !== null
+                        && \App\Support\Checkout\SaasCatalogSku::isVetsaas($item->catalogSku),
+                );
+                $canRenew = $hasVetsaas && filled($metadata['vetsaas_tenant_slug'] ?? null);
 
                 return [
                     'id' => $sub->id,
@@ -327,6 +332,11 @@ class ClientPortalController extends Controller
                     'current_period_end' => $sub->current_period_end?->toIso8601String(),
                     'cancel_at_period_end' => (bool) $sub->cancel_at_period_end,
                     'academy_url' => $metadata['aula_virtual_academy_url'] ?? null,
+                    'vetsaas_login_url' => $metadata['vetsaas_login_url'] ?? null,
+                    'vetsaas_tenant_slug' => $metadata['vetsaas_tenant_slug'] ?? null,
+                    'renew_url' => $canRenew
+                        ? route('cliente.subscriptions.renew', $sub)
+                        : null,
                     'items' => $sub->items->map(static function ($item): array {
                         return [
                             'sku_code' => $item->catalogSku?->code,

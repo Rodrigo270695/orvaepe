@@ -21,6 +21,7 @@ import {
     removeCartLine,
     setCartLineQty,
     writeCartCoupon,
+    writeSoftwareCart,
     type SoftwareCartItem,
 } from '@/lib/softwareCartStorage';
 
@@ -87,6 +88,34 @@ export default function MarketingCart() {
     useEffect(() => {
         setMounted(true);
         sync();
+
+        if (typeof window !== 'undefined') {
+            const params = new URLSearchParams(window.location.search);
+            const renewPlanId = params.get('renew_plan_id');
+            if (renewPlanId) {
+                const existing = readSoftwareCart();
+                const already = existing.some((i) => i.planId === renewPlanId);
+                if (!already) {
+                    const renewalLine: SoftwareCartItem = {
+                        systemSlug:
+                            params.get('renew_system_slug')?.trim() || 'vetsaas',
+                        planId: renewPlanId,
+                        qty: 1,
+                        planLabel: params.get('renew_label')?.trim() || undefined,
+                    };
+                    writeSoftwareCart([...existing, renewalLine]);
+                    sync();
+                }
+                params.delete('renew_plan_id');
+                params.delete('renew_system_slug');
+                params.delete('renew_label');
+                params.delete('renew');
+                const qs = params.toString();
+                const next = `${window.location.pathname}${qs ? `?${qs}` : ''}`;
+                window.history.replaceState({}, '', next);
+            }
+        }
+
         const stored = readCartCoupon();
         if (stored) {
             setAppliedCoupon(stored.code);

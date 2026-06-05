@@ -32,6 +32,7 @@ final class ExpiringAccessNotifier
                 continue;
             }
             $sent += $this->notifyAdminsForExpiringSubscription($subscription, $daysBefore);
+            $sent += $this->notifyCustomerForExpiringSubscription($subscription, $daysBefore);
         }
 
         $licenses = LicenseKey::query()
@@ -49,6 +50,72 @@ final class ExpiringAccessNotifier
         }
 
         return $sent;
+    }
+
+    private function notifyCustomerForExpiringSubscription(Subscription $subscription, int $daysBefore): int
+    {
+        $user = $subscription->user;
+        if ($user === null) {
+            return 0;
+        }
+
+        if ($this->alreadyNotified('subscription.expiring.customer', (string) $subscription->id, $daysBefore)) {
+            return 0;
+        }
+
+        $metadata = is_array($subscription->metadata) ? $subscription->metadata : [];
+        $loginUrl = (string) ($metadata['vetsaas_login_url'] ?? $metadata['aula_virtual_academy_url'] ?? '');
+        $renewUrl = route('cliente.subscriptions.renew', $subscription);
+        $periodEnd = $subscription->current_period_end instanceof Carbon
+            ? $subscription->current_period_end->format('d/m/Y')
+            : 'N/D';
+
+        $subject = 'Tu suscripción vence pronto';
+        $message = "⏳ *Tu suscripción vence en {$daysBefore} días*\n"
+            ."📅 Fecha de vencimiento: {$periodEnd}\n\n"
+            ."Renueva desde tu portal para mantener el acceso sin interrupciones:\n"
+            .$renewUrl."\n";
+
+        if ($loginUrl !== '') {
+            $message .= "\n🔗 Acceso actual: {$loginUrl}";
+        }
+
+        $data = [
+            'subscription_id' => $subscription->id,
+            'days_before' => $daysBefore,
+            'period_end' => $periodEnd,
+            'renew_url' => $renewUrl,
+            'login_url' => $loginUrl !== '' ? $loginUrl : null,
+        ];
+
+        Notification::query()->create([
+            'user_id' => $user->id,
+            'type' => 'subscription.expiring.customer',
+            'channel' => 'in_app',
+            'subject' => $subject,
+            'message' => $message,
+            'data' => $data,
+            'status' => 'sent',
+            'sent_at' => now(),
+        ]);
+
+        $email = trim((string) $user->email);
+        if ($email === '' || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return 1;
+        }
+
+        $emailNotification = Notification::query()->create([
+            'user_id' => $user->id,
+            'type' => 'subscription.expiring.customer',
+            'channel' => 'email',
+            'subject' => $subject,
+            'message' => $message,
+            'data' => array_merge($data, ['email_to' => $email]),
+            'status' => 'pending',
+        ]);
+        $this->sender->send($emailNotification);
+
+        return 2;
     }
 
     private function notifyAdminsForExpiringSubscription(Subscription $subscription, int $daysBefore): int
@@ -125,7 +192,7 @@ final class ExpiringAccessNotifier
             ->where('created_at', '>=', $startOfDay)
             ->where('data->days_before', $daysBefore)
             ->where(function ($q) use ($entityId, $type): void {
-                if ($type === 'subscription.expiring.admin') {
+                if (str_starts_with($type, 'subscription.expiring.')) {
                     $q->where('data->subscription_id', $entityId);
                 } else {
                     $q->where('data->license_id', $entityId);

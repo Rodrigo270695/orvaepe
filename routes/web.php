@@ -30,6 +30,7 @@ use App\Http\Controllers\Checkout\CheckoutPayPalController;
 use App\Http\Controllers\Checkout\CulqiWebhookController;
 use App\Http\Controllers\Checkout\PayPalWebhookController;
 use App\Http\Controllers\Client\ClientPortalController;
+use App\Http\Controllers\Client\ClientSubscriptionRenewalController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Marketing\ComplaintBookController;
 use App\Http\Controllers\Marketing\MarketingCartController;
@@ -173,6 +174,8 @@ Route::middleware(['auth', 'verified', 'client.profile.complete'])->group(functi
         Route::patch('/facturacion', [ClientPortalController::class, 'updateBilling'])->name('billing.update');
         Route::get('/servicios', [ClientPortalController::class, 'servicios'])->name('servicios');
         Route::get('/software', [ClientPortalController::class, 'software'])->name('software');
+        Route::get('/suscripciones/{subscription}/renovar', ClientSubscriptionRenewalController::class)
+            ->name('subscriptions.renew');
         Route::get('/software/descargas/{software_release}', [ClientPortalController::class, 'downloadSoftwareRelease'])
             ->name('software.release.download');
         Route::get('/software/descargas/{software_release}/assets/{software_release_asset}', [ClientPortalController::class, 'downloadSoftwareReleaseAsset'])
