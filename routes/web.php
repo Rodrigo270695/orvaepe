@@ -42,6 +42,7 @@ use App\Http\Controllers\Marketing\MarketingSoftwareController;
 use App\Http\Controllers\Marketing\MarketingSoftwareDetailController;
 use App\Http\Controllers\Marketing\ResolveCartSkuPricesController;
 use App\Http\Controllers\Marketing\ValidateMarketingCouponController;
+use App\Http\Controllers\Marketing\VetSaaSRenewalRedirectController;
 use App\Http\Controllers\Sales\LookupSunatRucController;
 use App\Http\Controllers\Sales\OrdersController;
 use App\Http\Controllers\Sales\QuotesController;
@@ -94,6 +95,8 @@ Route::get('/', function () use ($canRegister) {
 })->name('home');
 
 Route::get('/software', MarketingSoftwareController::class)->name('marketing-software');
+Route::get('/renovar/vetsaas', VetSaaSRenewalRedirectController::class)
+    ->name('marketing.vetsaas-renew');
 Route::get('/carrito', MarketingCartController::class)->name('marketing-cart');
 Route::post('/carrito/validar-cupon', ValidateMarketingCouponController::class)
     ->name('marketing.validate-coupon');

@@ -122,7 +122,8 @@ final class OrderPaidSubscriptionProvisioner
             }
 
             if (SaasCatalogSku::isVetsaas($sku)) {
-                $renewable = SaasSubscriptionLookup::findVetsaasRenewable((string) $order->user_id, $sku);
+                $renewable = SaasSubscriptionLookup::findVetsaasRenewable((string) $order->user_id, $sku)
+                    ?? $this->findVetsaasRenewableByOrderTenantSlug($order, $sku);
                 if ($renewable instanceof Subscription) {
                     return $this->extendSubscription($renewable, $order, $sku);
                 }
@@ -229,5 +230,17 @@ final class OrderPaidSubscriptionProvisioner
             'year', 'yearly', 'annual', 'anual' => now()->addYear(),
             default => now()->addMonth(),
         };
+    }
+
+    private function findVetsaasRenewableByOrderTenantSlug(Order $order, CatalogSku $sku): ?Subscription
+    {
+        $snapshot = is_array($order->billing_snapshot) ? $order->billing_snapshot : [];
+        $slug = $snapshot['vetsaas_renew_tenant_slug'] ?? session('vetsaas_renew_tenant_slug');
+
+        if (! is_string($slug) || trim($slug) === '') {
+            return null;
+        }
+
+        return SaasSubscriptionLookup::findVetsaasByTenantSlug(trim($slug), $sku);
     }
 }

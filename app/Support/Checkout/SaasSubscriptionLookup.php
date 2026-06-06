@@ -17,6 +17,29 @@ final class SaasSubscriptionLookup
         return self::findRenewable($userId, $sku, 'vetsaas_tenant_slug');
     }
 
+    public static function findVetsaasByTenantSlug(string $tenantSlug, CatalogSku $sku): ?Subscription
+    {
+        $tenantSlug = trim($tenantSlug);
+        if ($tenantSlug === '') {
+            return null;
+        }
+
+        return Subscription::query()
+            ->whereIn('status', [
+                Subscription::STATUS_ACTIVE,
+                Subscription::STATUS_TRIALING,
+                Subscription::STATUS_PAST_DUE,
+            ])
+            ->whereHas('items', static function ($q) use ($sku): void {
+                $q->where('catalog_sku_id', $sku->id);
+            })
+            ->orderByDesc('current_period_end')
+            ->get()
+            ->first(static function (Subscription $sub) use ($tenantSlug): bool {
+                return self::tenantSlugFrom($sub) === $tenantSlug;
+            });
+    }
+
     public static function findAulaVirtualRenewable(string $userId, CatalogSku $sku): ?Subscription
     {
         return self::findRenewable($userId, $sku, 'aula_virtual_academy_url');

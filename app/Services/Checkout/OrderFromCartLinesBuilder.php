@@ -178,7 +178,16 @@ final class OrderFromCartLinesBuilder
             ? 'Checkout marketing (plan SaaS gratuito)'
             : 'Checkout marketing (carrito)';
 
-        return DB::transaction(function () use ($user, $lineRows, $subtotal, $taxTotal, $discountTotal, $grandTotal, $currency, $coupon, $notesInternal) {
+        $billingSnapshot = null;
+        $renewTenantSlug = session('vetsaas_renew_tenant_slug');
+        if (is_string($renewTenantSlug) && trim($renewTenantSlug) !== '') {
+            $billingSnapshot = [
+                'vetsaas_renew_tenant_slug' => trim($renewTenantSlug),
+            ];
+            $notesInternal .= ' | Renovación VetSaaS: '.trim($renewTenantSlug);
+        }
+
+        return DB::transaction(function () use ($user, $lineRows, $subtotal, $taxTotal, $discountTotal, $grandTotal, $currency, $coupon, $notesInternal, $billingSnapshot) {
             $order = Order::create([
                 'order_number' => Order::generateOrderNumber(),
                 'user_id' => $user->id,
@@ -189,7 +198,7 @@ final class OrderFromCartLinesBuilder
                 'tax_total' => $taxTotal,
                 'grand_total' => $grandTotal,
                 'coupon_id' => $coupon?->id,
-                'billing_snapshot' => null,
+                'billing_snapshot' => $billingSnapshot,
                 'notes_internal' => $notesInternal,
                 'placed_at' => null,
             ]);

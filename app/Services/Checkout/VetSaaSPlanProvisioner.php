@@ -63,7 +63,8 @@ class VetSaaSPlanProvisioner
             return;
         }
 
-        $existingSubscription = SaasSubscriptionLookup::findVetsaasRenewable($user->id, $sku);
+        $existingSubscription = SaasSubscriptionLookup::findVetsaasRenewable($user->id, $sku)
+            ?? $this->findRenewableByOrderTenantSlug($order, $sku);
         if ($existingSubscription instanceof Subscription) {
             $this->renew($order, $sku, $existingSubscription, $periodEnd);
 
@@ -399,6 +400,30 @@ class VetSaaSPlanProvisioner
     private function isEnabled(): bool
     {
         return (bool) config('services.vetsaas.enabled', false);
+    }
+
+    private function findRenewableByOrderTenantSlug(Order $order, CatalogSku $sku): ?Subscription
+    {
+        $tenantSlug = $this->renewTenantSlugFromOrder($order);
+        if ($tenantSlug === null) {
+            return null;
+        }
+
+        return SaasSubscriptionLookup::findVetsaasByTenantSlug($tenantSlug, $sku);
+    }
+
+    private function renewTenantSlugFromOrder(Order $order): ?string
+    {
+        $snapshot = is_array($order->billing_snapshot) ? $order->billing_snapshot : [];
+        $slug = $snapshot['vetsaas_renew_tenant_slug'] ?? null;
+
+        if (is_string($slug) && trim($slug) !== '') {
+            return trim($slug);
+        }
+
+        $sessionSlug = session('vetsaas_renew_tenant_slug');
+
+        return is_string($sessionSlug) && trim($sessionSlug) !== '' ? trim($sessionSlug) : null;
     }
 
     /**

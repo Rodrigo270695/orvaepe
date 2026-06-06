@@ -11,9 +11,14 @@ class MarketingCartController extends Controller
 {
     public function __invoke(): Response
     {
+        $renewTenantSlug = session('vetsaas_renew_tenant_slug');
+
         return Inertia::render('marketing-cart', [
             'canRegister' => Features::enabled(Features::registration()),
             'salesIgvRate' => (float) config('sales.igv_rate', 0.18),
+            'vetsaasRenewTenantSlug' => is_string($renewTenantSlug) && trim($renewTenantSlug) !== ''
+                ? trim($renewTenantSlug)
+                : null,
         ]);
     }
 }

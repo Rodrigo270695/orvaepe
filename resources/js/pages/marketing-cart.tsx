@@ -59,10 +59,12 @@ type CartPageProps = {
     flash?: { status?: string | null; toast?: unknown };
     /** Tasa IGV (ej. 0.18), alineada a config/sales */
     salesIgvRate?: number;
+    vetsaasRenewTenantSlug?: string | null;
 };
 
 export default function MarketingCart() {
-    const { auth, flash, salesIgvRate } = usePage<CartPageProps>().props;
+    const { auth, flash, salesIgvRate, vetsaasRenewTenantSlug } =
+        usePage<CartPageProps>().props;
     const [lines, setLines] = useState<SoftwareCartItem[]>([]);
     const [mounted, setMounted] = useState(false);
     const [couponInput, setCouponInput] = useState('');
@@ -596,6 +598,14 @@ export default function MarketingCart() {
             </div>
 
             <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 md:py-12">
+                {vetsaasRenewTenantSlug ? (
+                    <div className="mb-6 rounded-2xl border border-[color-mix(in_oklab,var(--state-info)_28%,var(--border))] bg-[color-mix(in_oklab,var(--state-info)_10%,transparent)] px-4 py-3 text-sm text-[var(--foreground)]">
+                        Renovación VetSaaS para la clínica{' '}
+                        <span className="font-semibold">{vetsaasRenewTenantSlug}</span>.
+                        Inicia sesión en Orvae con la cuenta que contrató el plan y completa el
+                        pago.
+                    </div>
+                ) : null}
                 {!mounted ? (
                     <div className="animate-pulse space-y-4 rounded-2xl border border-[color-mix(in_oklab,var(--state-info)_22%,var(--border))] bg-[color-mix(in_oklab,var(--card)_88%,transparent)] p-8">
                         <div className="h-6 w-1/3 rounded bg-[var(--muted)]" />
