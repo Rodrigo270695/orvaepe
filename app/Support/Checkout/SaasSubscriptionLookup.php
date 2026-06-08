@@ -12,9 +12,9 @@ use App\Models\Subscription;
  */
 final class SaasSubscriptionLookup
 {
-    public static function findVetsaasRenewable(string $userId, CatalogSku $sku): ?Subscription
+    public static function findVetsaasRenewable(string|int $userId, CatalogSku $sku): ?Subscription
     {
-        return self::findRenewable($userId, $sku, 'vetsaas_tenant_slug');
+        return self::findRenewable((string) $userId, $sku, 'vetsaas_tenant_slug');
     }
 
     public static function findVetsaasByTenantSlug(string $tenantSlug, CatalogSku $sku): ?Subscription
@@ -40,9 +40,9 @@ final class SaasSubscriptionLookup
             });
     }
 
-    public static function findAulaVirtualRenewable(string $userId, CatalogSku $sku): ?Subscription
+    public static function findAulaVirtualRenewable(string|int $userId, CatalogSku $sku): ?Subscription
     {
-        return self::findRenewable($userId, $sku, 'aula_virtual_academy_url');
+        return self::findRenewable((string) $userId, $sku, 'aula_virtual_academy_url');
     }
 
     private static function findRenewable(string $userId, CatalogSku $sku, string $metadataKey): ?Subscription

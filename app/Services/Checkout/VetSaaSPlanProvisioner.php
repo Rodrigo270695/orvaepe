@@ -63,7 +63,7 @@ class VetSaaSPlanProvisioner
             return;
         }
 
-        $existingSubscription = SaasSubscriptionLookup::findVetsaasRenewable($user->id, $sku)
+        $existingSubscription = SaasSubscriptionLookup::findVetsaasRenewable((string) $user->id, $sku)
             ?? $this->findRenewableByOrderTenantSlug($order, $sku);
         if ($existingSubscription instanceof Subscription) {
             $this->renew($order, $sku, $existingSubscription, $periodEnd);
