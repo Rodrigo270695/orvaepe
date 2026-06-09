@@ -178,7 +178,7 @@ final class OrderPaidNotifier
 
         foreach ($adminUsers as $admin) {
             $adminTo = $this->resolveWhatsAppToFromUser($admin)
-                ?: WhatsAppPhoneNormalizer::toUltraMsgTo((string) config('ultramsg.admin_number'));
+                ?: WhatsAppPhoneNormalizer::toUltraMsgTo((string) config('openwa.admin_notification_number'));
 
             Notification::query()->create([
                 'user_id' => $admin->id,

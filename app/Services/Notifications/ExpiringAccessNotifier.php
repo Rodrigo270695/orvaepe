@@ -214,7 +214,7 @@ final class ExpiringAccessNotifier
         $sent = 0;
         foreach ($admins as $admin) {
             $toWhatsApp = $this->resolveWhatsAppToFromUser($admin)
-                ?: WhatsAppPhoneNormalizer::toUltraMsgTo((string) config('ultramsg.admin_number'));
+                ?: WhatsAppPhoneNormalizer::toUltraMsgTo((string) config('openwa.admin_notification_number'));
 
             $whatsAppNotification = Notification::query()->create([
                 'user_id' => $admin->id,

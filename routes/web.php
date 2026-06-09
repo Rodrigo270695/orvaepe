@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\LicenseActivationsController;
 use App\Http\Controllers\Admin\LicenseKeyExtrasController;
 use App\Http\Controllers\Admin\LicenseKeysController;
 use App\Http\Controllers\Admin\NotificationsController;
+use App\Http\Controllers\Admin\PlatformWhatsAppController;
 use App\Http\Controllers\Admin\OemLicenseDeliveriesController;
 use App\Http\Controllers\Admin\ShowcaseClientsController;
 use App\Http\Controllers\Admin\SubscriptionsController;
@@ -480,6 +481,17 @@ Route::middleware(['auth', 'verified', 'client.profile.complete'])->group(functi
 
         Route::get('panel/operacion-webhooks', [WebhookEventsController::class, 'index'])
             ->name('panel.operacion-webhooks.index');
+
+        Route::get('panel/operacion-whatsapp', [PlatformWhatsAppController::class, 'index'])
+            ->name('panel.operacion-whatsapp.index');
+        Route::post('panel/operacion-whatsapp/sync', [PlatformWhatsAppController::class, 'sync'])
+            ->name('panel.operacion-whatsapp.sync');
+        Route::get('panel/operacion-whatsapp/qr', [PlatformWhatsAppController::class, 'qr'])
+            ->name('panel.operacion-whatsapp.qr');
+        Route::post('panel/operacion-whatsapp/logout', [PlatformWhatsAppController::class, 'logout'])
+            ->name('panel.operacion-whatsapp.logout');
+        Route::post('panel/operacion-whatsapp/test', [PlatformWhatsAppController::class, 'sendTest'])
+            ->name('panel.operacion-whatsapp.test');
 
         Route::get('panel/operacion-auditoria', [AuditLogsController::class, 'index'])
             ->name('panel.operacion-auditoria.index');

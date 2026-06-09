@@ -3,7 +3,7 @@
 namespace App\Services\Notifications;
 
 use App\Models\Notification;
-use App\Services\WhatsApp\UltraMsgClient;
+use App\Services\WhatsApp\OrvaeWhatsAppSender;
 use App\Support\WhatsAppPhoneNormalizer;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Mail;
 class NotificationSender
 {
     public function __construct(
-        private readonly UltraMsgClient $whatsApp,
+        private readonly OrvaeWhatsAppSender $whatsApp,
     ) {}
 
     public function send(Notification $notification): void
@@ -69,8 +69,8 @@ class NotificationSender
             $to = WhatsAppPhoneNormalizer::toUltraMsgTo($user->profile->phone);
         }
 
-        if (! $to && $notification->type === 'order.paid.admin') {
-            $adminFromEnv = trim((string) config('ultramsg.admin_number'));
+        if (! $to && str_ends_with($notification->type, '.admin')) {
+            $adminFromEnv = trim((string) config('openwa.admin_notification_number'));
             if ($adminFromEnv !== '') {
                 $to = WhatsAppPhoneNormalizer::toUltraMsgTo($adminFromEnv);
             }
@@ -102,7 +102,10 @@ class NotificationSender
             'to' => $to,
         ]);
 
-        $this->whatsApp->sendText($to, $body);
+        $this->whatsApp->sendText(
+            ltrim($to, '+'),
+            $body,
+        );
     }
 
     private function sendEmail(Notification $notification): void

@@ -5,6 +5,7 @@ use App\Services\Payments\MercadoPagoClient;
 use App\Services\Payments\CulqiClient;
 use App\Services\Access\SubscriptionEntitlementSyncService;
 use App\Services\Notifications\ExpiringAccessNotifier;
+use App\Services\WhatsApp\OrvaeWhatsAppSender;
 use App\Services\WhatsApp\UltraMsgClient;
 use App\Support\WhatsAppPhoneNormalizer;
 use App\Models\Subscription;
@@ -70,6 +71,26 @@ Artisan::command('culqi:test-connection', function (CulqiClient $culqi): int {
     }
 })->purpose('Comprueba CULQI_SECRET_KEY contra la API de Culqi');
 
+Artisan::command('openwa:test-send', function (OrvaeWhatsAppSender $sender): int {
+    try {
+        $toRaw = (string) config('openwa.admin_notification_number', '976709811');
+        $message = 'Prueba ORVAE por OpenWA - '.now()->format('Y-m-d H:i:s');
+
+        $via = $sender->prefersOpenWa() ? 'OpenWA' : 'UltraMsg (fallback)';
+        $sender->sendText($toRaw, $message);
+
+        $this->info('Mensaje de prueba enviado vía '.$via.'.');
+        $this->line('Destino: '.$toRaw);
+        $this->line('Texto: '.$message);
+
+        return 0;
+    } catch (Throwable $e) {
+        $this->error('Fallo al enviar: '.$e->getMessage());
+
+        return 1;
+    }
+})->purpose('Envía WhatsApp de prueba (OpenWA preferido, UltraMsg fallback)');
+
 Artisan::command('ultramsg:test-send', function (UltraMsgClient $ultraMsg): int {
     try {
         $toRaw = '976709811';
@@ -80,7 +101,6 @@ Artisan::command('ultramsg:test-send', function (UltraMsgClient $ultraMsg): int 
 
         $this->info('Mensaje de prueba enviado.');
         $this->line('Destino: '.$to.' (input: '.$toRaw.')');
-        $this->line('Texto: '.$message);
 
         return 0;
     } catch (Throwable $e) {
@@ -88,7 +108,7 @@ Artisan::command('ultramsg:test-send', function (UltraMsgClient $ultraMsg): int 
 
         return 1;
     }
-})->purpose('Envía WhatsApp de prueba a 976709811 por UltraMsg');
+})->purpose('Envía WhatsApp de prueba por UltraMsg (legacy)');
 
 Artisan::command('subscriptions:sync-entitlements', function (SubscriptionEntitlementSyncService $sync): int {
     $count = 0;
