@@ -325,6 +325,11 @@ export default function SoftwareDetail() {
                 return;
             }
 
+            if (result.kind === 'existing_account') {
+                window.location.href = `/carrito?status=${encodeURIComponent(result.message)}`;
+                return;
+            }
+
             if (result.kind === 'redirect') {
                 window.location.href = result.approvalUrl;
                 return;

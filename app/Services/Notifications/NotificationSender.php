@@ -148,8 +148,10 @@ class NotificationSender
             'order.paid.customer',
             'vetsaas.access.customer',
             'vetsaas.renewal.customer',
+            'vetsaas.existing_account.customer',
             'aulavirtual.access.customer',
             'aulavirtual.renewal.customer',
+            'aulavirtual.existing_account.customer',
         ], true);
     }
 

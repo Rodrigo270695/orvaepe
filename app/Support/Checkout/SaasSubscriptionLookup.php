@@ -97,4 +97,72 @@ final class SaasSubscriptionLookup
 
         return false;
     }
+
+    public static function findVetsaasProvisioned(string|int $userId): ?Subscription
+    {
+        return self::findProvisionedByMetadataKey((string) $userId, 'vetsaas_tenant_slug');
+    }
+
+    public static function findAulaVirtualProvisioned(string|int $userId): ?Subscription
+    {
+        return Subscription::query()
+            ->where('user_id', (string) $userId)
+            ->whereIn('status', self::renewableStatuses())
+            ->orderByDesc('current_period_end')
+            ->get()
+            ->first(static function (Subscription $sub): bool {
+                $metadata = is_array($sub->metadata) ? $sub->metadata : [];
+
+                return filled($metadata['aula_virtual_academy_url'] ?? null)
+                    || self::aulaTenantSlugFrom($sub) !== null;
+            });
+    }
+
+    public static function isMarketingRenewalCheckout(CatalogSku $sku, Subscription $existing): bool
+    {
+        $hasSameSku = $existing->items()
+            ->where('catalog_sku_id', $sku->id)
+            ->exists();
+
+        if ($hasSameSku) {
+            return true;
+        }
+
+        if (! SaasCatalogSku::isVetsaas($sku)) {
+            return false;
+        }
+
+        $renewSlug = session('vetsaas_renew_tenant_slug');
+        if (! is_string($renewSlug) || trim($renewSlug) === '') {
+            return false;
+        }
+
+        return self::tenantSlugFrom($existing) === trim($renewSlug);
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function renewableStatuses(): array
+    {
+        return [
+            Subscription::STATUS_ACTIVE,
+            Subscription::STATUS_TRIALING,
+            Subscription::STATUS_PAST_DUE,
+        ];
+    }
+
+    private static function findProvisionedByMetadataKey(string $userId, string $metadataKey): ?Subscription
+    {
+        return Subscription::query()
+            ->where('user_id', $userId)
+            ->whereIn('status', self::renewableStatuses())
+            ->orderByDesc('current_period_end')
+            ->get()
+            ->first(static function (Subscription $sub) use ($metadataKey): bool {
+                $metadata = is_array($sub->metadata) ? $sub->metadata : [];
+
+                return filled($metadata[$metadataKey] ?? null);
+            });
+    }
 }

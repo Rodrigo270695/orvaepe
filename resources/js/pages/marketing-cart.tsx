@@ -438,6 +438,11 @@ export default function MarketingCart() {
                 return;
             }
 
+            if (result.kind === 'existing_account') {
+                window.location.href = `/carrito?status=${encodeURIComponent(result.message)}`;
+                return;
+            }
+
             if (result.kind === 'culqi_inline') {
                 const submitChargeForm = (tokenId: string) => {
                     const form = document.createElement('form');

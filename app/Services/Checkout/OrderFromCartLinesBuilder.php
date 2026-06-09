@@ -17,6 +17,10 @@ use Illuminate\Validation\ValidationException;
  */
 final class OrderFromCartLinesBuilder
 {
+    public function __construct(
+        private readonly SaasDuplicateCheckoutGuard $duplicateCheckoutGuard,
+    ) {}
+
     /**
      * @param  list<array{plan_id: string, qty: int}>  $lines
      */
@@ -58,6 +62,8 @@ final class OrderFromCartLinesBuilder
                 ]);
             }
         }
+
+        $this->duplicateCheckoutGuard->assertCanCheckout($user, $skus->values());
 
         $currency = null;
         foreach ($merged as $skuId => $qty) {

@@ -32,6 +32,10 @@ export type MarketingCheckoutPostResult =
           orderNumber: string;
           message: string;
       }
+    | {
+          kind: 'existing_account';
+          message: string;
+      }
     | { kind: 'redirect'; approvalUrl: string }
     | { kind: 'unauthorized' }
     | { kind: 'error'; message: string; httpStatus: number };
@@ -93,12 +97,24 @@ export async function postMarketingCheckout(params: {
     }
 
     if (!res.ok) {
+        const message =
+            typeof data.message === 'string' && data.message.trim() !== ''
+                ? data.message
+                : 'No se pudo iniciar el pago.';
+
+        if (
+            res.status === 422 &&
+            message.toLowerCase().includes('ya tienes una cuenta activa')
+        ) {
+            return {
+                kind: 'existing_account',
+                message,
+            };
+        }
+
         return {
             kind: 'error',
-            message:
-                typeof data.message === 'string' && data.message.trim() !== ''
-                    ? data.message
-                    : 'No se pudo iniciar el pago.',
+            message,
             httpStatus: res.status,
         };
     }
