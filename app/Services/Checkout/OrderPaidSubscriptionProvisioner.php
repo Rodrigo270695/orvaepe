@@ -72,7 +72,15 @@ final class OrderPaidSubscriptionProvisioner
         $this->entitlementSync->sync($subscription->fresh());
         $periodEnd = $subscription->fresh()->current_period_end;
 
-        DB::afterCommit(function () use ($order, $recurringLines, $periodEnd): void {
+        $this->dispatchSaasProvisioning($order, $recurringLines, $periodEnd);
+    }
+
+    /**
+     * @param  \Illuminate\Support\Collection<int, \App\Models\OrderLine>  $recurringLines
+     */
+    private function dispatchSaasProvisioning(Order $order, $recurringLines, ?\DateTimeInterface $periodEnd): void
+    {
+        $callback = function () use ($order, $recurringLines, $periodEnd): void {
             $freshOrder = $order->fresh(['user', 'payments', 'lines.sku.product']);
 
             foreach ($recurringLines as $line) {
@@ -105,7 +113,13 @@ final class OrderPaidSubscriptionProvisioner
                     }
                 }
             }
-        });
+        };
+
+        if (DB::transactionLevel() > 0) {
+            DB::afterCommit($callback);
+        } else {
+            $callback();
+        }
     }
 
     /**

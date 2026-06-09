@@ -77,7 +77,7 @@ class NotificationSender
         }
 
         // Fallback para cliente: usar snapshot guardado al crear la notificación.
-        if (! $to && $notification->type === 'order.paid.customer') {
+        if (! $to && $this->isCustomerWhatsAppType($notification->type)) {
             $snapshotPhone = $data['phone_snapshot'] ?? null;
             if (is_string($snapshotPhone) && $snapshotPhone !== '') {
                 $to = WhatsAppPhoneNormalizer::toUltraMsgTo($snapshotPhone);
@@ -140,6 +140,17 @@ class NotificationSender
         Mail::raw($body, function ($mail) use ($to, $subject): void {
             $mail->to($to)->subject($subject);
         });
+    }
+
+    private function isCustomerWhatsAppType(string $type): bool
+    {
+        return in_array($type, [
+            'order.paid.customer',
+            'vetsaas.access.customer',
+            'vetsaas.renewal.customer',
+            'aulavirtual.access.customer',
+            'aulavirtual.renewal.customer',
+        ], true);
     }
 
     /** Texto legible en correo (sin marcadores típicos de WhatsApp). */
