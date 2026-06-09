@@ -39,8 +39,6 @@ type Props = {
     mode: 'create' | 'edit';
     item: ShowcaseClientRow | null;
     errors: Record<string, string | undefined>;
-    /** Solo creación: siguiente orden (max + 1 o 1). */
-    nextSortOrder: number;
 };
 
 /** Radix Select no permite `value=""` en items; el backend convierte esto a null. */
@@ -58,7 +56,6 @@ export default function ShowcaseClientFormFields({
     mode,
     item,
     errors,
-    nextSortOrder,
 }: Props) {
     const [published, setPublished] = React.useState(item?.is_published ?? false);
     const [filePreview, setFilePreview] = React.useState<string | null>(null);
@@ -276,37 +273,6 @@ export default function ShowcaseClientFormFields({
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                {mode === 'create' ? (
-                    <div className="space-y-2">
-                        <AdminUnderlineLabel>Orden</AdminUnderlineLabel>
-                        <div className="rounded-xl border border-border/50 bg-muted/15 px-3 py-2.5">
-                            <p className="text-sm text-foreground">
-                                Se guardará como{' '}
-                                <span className="font-mono font-semibold tabular-nums">
-                                    {nextSortOrder}
-                                </span>
-                            </p>
-                            <p className="mt-1 text-[10px] text-muted-foreground">
-                                Automático: último número + 1; si no hay
-                                registros, empieza en 1.
-                            </p>
-                        </div>
-                    </div>
-                ) : (
-                    <div className="space-y-2">
-                        <AdminUnderlineLabel htmlFor="sort_order">
-                            Orden
-                        </AdminUnderlineLabel>
-                        <AdminUnderlineInput
-                            id="sort_order"
-                            name="sort_order"
-                            type="number"
-                            min={0}
-                            defaultValue={String(item?.sort_order ?? 0)}
-                        />
-                        <InputError message={errors.sort_order} />
-                    </div>
-                )}
                 <div className="space-y-2">
                     <AdminUnderlineLabel htmlFor="authorized_at">
                         Autorización (referencia)

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ShowcaseClientRequest;
 use App\Models\ShowcaseClient;
+use App\Support\Catalog\SortOrderAllocator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -66,12 +67,8 @@ class ShowcaseClientsController extends Controller
             ->paginate($perPage)
             ->appends($append);
 
-        $maxOrder = (int) ShowcaseClient::query()->max('sort_order');
-        $nextSortOrder = $maxOrder + 1;
-
         return Inertia::render('admin/marketing-vitrina/index', [
             'showcaseClients' => $clients,
-            'next_sort_order' => $nextSortOrder,
             'filters' => [
                 'q' => $q,
                 'sort_by' => $sortBy,
@@ -83,8 +80,7 @@ class ShowcaseClientsController extends Controller
     public function store(ShowcaseClientRequest $request): RedirectResponse
     {
         $data = $request->safe()->except(['logo', 'logo_clear', 'sort_order']);
-        $maxOrder = (int) ShowcaseClient::query()->max('sort_order');
-        $data['sort_order'] = $maxOrder + 1;
+        $data['sort_order'] = SortOrderAllocator::nextFor(ShowcaseClient::class);
 
         if ($request->hasFile('logo')) {
             $data['logo_path'] = $request->file('logo')->store('showcase-logos', 'public');
@@ -103,7 +99,7 @@ class ShowcaseClientsController extends Controller
 
     public function update(ShowcaseClientRequest $request, ShowcaseClient $showcaseClient): RedirectResponse
     {
-        $data = $request->safe()->except(['logo', 'logo_clear']);
+        $data = $request->safe()->except(['logo', 'logo_clear', 'sort_order']);
 
         if ($request->boolean('logo_clear')) {
             if ($showcaseClient->logo_path) {

@@ -3,7 +3,6 @@ import {
     ArrowDown,
     ArrowUp,
     ArrowUpDown,
-    BadgeDollarSign,
     Ban,
     Barcode,
     Braces,
@@ -70,7 +69,6 @@ export default function CatalogSkusIndex({
     const totalSkus = skus?.total ?? totalInScreen;
     const totalActive = rows.filter((r) => r.is_active).length;
     const totalInactive = rows.filter((r) => !r.is_active).length;
-    const nextSortOrder = Math.max(0, ...rows.map((r) => Number(r.sort_order ?? 0))) + 1;
     const categoryFilterOptions = React.useMemo(() => {
         const map = new Map<string, string>();
         productsForSelect.forEach((p) => {
@@ -230,10 +228,6 @@ export default function CatalogSkusIndex({
                             <LayoutGrid className="size-3.5" />
                             En pantalla {totalInScreen}
                         </span>
-                        <span className="inline-flex items-center gap-1 rounded-full bg-[#D28C3C]/12 px-2.5 py-1 text-xs text-[#D28C3C]">
-                            <BadgeDollarSign className="size-3.5" />
-                            Orden sugerido {nextSortOrder}
-                        </span>
                     </div>
                 </NeuCardRaised>
             )}
@@ -293,7 +287,6 @@ export default function CatalogSkusIndex({
                         item={item}
                         errors={errors}
                         productsForSelect={productsForSelect}
-                        nextSortOrder={nextSortOrder}
                     />
                 ),
             }}

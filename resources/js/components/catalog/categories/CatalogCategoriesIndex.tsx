@@ -41,14 +41,6 @@ export default function CatalogCategoriesIndex({
     const totalCategories = categories?.total ?? totalInScreen;
     const totalActive = rows.filter((r) => r.is_active).length;
     const totalInactive = rows.filter((r) => !r.is_active).length;
-    const nextSortOrder =
-        Math.max(
-            0,
-            ...categoriesForSelect.map((c) =>
-                Number(c.sort_order ?? 0),
-            ),
-        ) + 1;
-
     const handleSort = (sortBy: string) => {
         const currentUrl = new URL(page.url, window.location.origin);
         const currentSortBy = currentUrl.searchParams.get('sort_by') ?? initialSortBy ?? '';
@@ -255,7 +247,6 @@ export default function CatalogCategoriesIndex({
                         item={item}
                         errors={errors}
                         categoriesForSelect={categoriesForSelect}
-                        nextSortOrder={nextSortOrder}
                     />
                 ),
             }}

@@ -20,7 +20,6 @@ class CatalogCategoryStoreRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $parentId = $this->input('parent_id');
-        $sortOrder = $this->input('sort_order');
 
         $parentIdNormalized = $parentId;
         if ($parentIdNormalized === '' || $parentIdNormalized === '_none_') {
@@ -29,9 +28,6 @@ class CatalogCategoryStoreRequest extends FormRequest
 
         $this->merge([
             'parent_id' => $parentIdNormalized,
-            // La columna `sort_order` es NOT NULL en la BD (default 0), así
-            // que si el form manda vacío convertimos a 0.
-            'sort_order' => $sortOrder === '' || $sortOrder === null ? 0 : $sortOrder,
         ]);
     }
 
@@ -67,7 +63,6 @@ class CatalogCategoryStoreRequest extends FormRequest
                 'max:80',
                 Rule::in(['software_system', 'oem_license', 'service']),
             ],
-            'sort_order' => ['nullable', 'integer'],
             'is_active' => ['nullable', 'boolean'],
         ];
     }

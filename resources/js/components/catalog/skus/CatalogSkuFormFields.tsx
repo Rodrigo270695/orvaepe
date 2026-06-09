@@ -61,7 +61,6 @@ type Props = {
     item: CatalogSku | null;
     errors: Record<string, string | undefined>;
     productsForSelect: CatalogSkuProductOption[];
-    nextSortOrder: number;
 };
 
 const saleModelOptions = [
@@ -99,16 +98,12 @@ export default function CatalogSkuFormFields({
     item,
     errors,
     productsForSelect,
-    nextSortOrder,
 }: Props) {
     const [isActive, setIsActive] = React.useState(item?.is_active ?? true);
     const [taxIncluded, setTaxIncluded] = React.useState(item?.tax_included ?? false);
     const [igvApplies, setIgvApplies] = React.useState(item?.igv_applies ?? true);
     const [codeValue, setCodeValue] = React.useState(item?.code ?? '');
     const [nameValue, setNameValue] = React.useState(item?.name ?? '');
-    const [sortOrderValue, setSortOrderValue] = React.useState(
-        mode === 'create' ? String(nextSortOrder) : String(item?.sort_order ?? ''),
-    );
     const [selectedCategoryId, setSelectedCategoryId] = React.useState('');
     const [selectedProductId, setSelectedProductId] = React.useState('');
     const [saleModelValue, setSaleModelValue] = React.useState(item?.sale_model ?? 'saas_subscription');
@@ -133,7 +128,6 @@ export default function CatalogSkuFormFields({
         setIgvApplies(item?.igv_applies ?? true);
         setCodeValue(item?.code ?? '');
         setNameValue(item?.name ?? '');
-        setSortOrderValue(mode === 'create' ? String(nextSortOrder) : String(item?.sort_order ?? ''));
         setSelectedProductId(
             item?.catalog_product_id
                 ? String(item.catalog_product_id)
@@ -164,10 +158,7 @@ export default function CatalogSkuFormFields({
         item?.igv_applies,
         item?.code,
         item?.name,
-        item?.sort_order,
         item?.catalog_product_id,
-        mode,
-        nextSortOrder,
         productsForSelect,
     ]);
 
@@ -435,21 +426,6 @@ export default function CatalogSkuFormFields({
                     />
                     <InputError message={errors.fulfillment_type} />
                 </div>
-            </div>
-
-            <div className="space-y-2">
-                <AdminUnderlineLabel htmlFor="sort_order">
-                    Orden
-                </AdminUnderlineLabel>
-                <AdminUnderlineInput
-                    id="sort_order"
-                    name="sort_order"
-                    type="number"
-                    value={sortOrderValue}
-                    onChange={(event) => setSortOrderValue(event.target.value)}
-                    placeholder="0"
-                />
-                <InputError message={errors.sort_order} />
             </div>
 
             <div className="grid grid-cols-1 gap-4 pt-2 sm:grid-cols-2">

@@ -32,8 +32,6 @@ import {
 
 type Props = {
     showcaseClients: any;
-    /** Valor que se mostrará al crear (coincide con el que aplicará el servidor). */
-    nextSortOrder: number;
     initialQuery: string;
     initialSortBy: string;
     initialSortDir: 'asc' | 'desc';
@@ -73,7 +71,6 @@ function formatSectorLabel(sector: string | null | undefined): string {
 
 export default function MarketingVitrinaIndex({
     showcaseClients,
-    nextSortOrder,
     initialQuery,
     initialSortBy,
     initialSortDir,
@@ -351,7 +348,6 @@ export default function MarketingVitrinaIndex({
                         mode={mode}
                         item={item}
                         errors={errors}
-                        nextSortOrder={nextSortOrder}
                     />
                 ),
             }}

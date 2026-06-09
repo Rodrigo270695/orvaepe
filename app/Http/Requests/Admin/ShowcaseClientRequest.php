@@ -37,7 +37,6 @@ class ShowcaseClientRequest extends FormRequest
             'website_url' => ['nullable', 'string', 'max:500', 'url'],
             'sector' => ['nullable', 'string', 'max:64'],
             'is_published' => ['boolean'],
-            'sort_order' => ['integer', 'min:0', 'max:999999'],
             'admin_notes' => ['nullable', 'string', 'max:5000'],
             'authorized_at' => ['nullable', 'date'],
         ];
@@ -57,11 +56,6 @@ class ShowcaseClientRequest extends FormRequest
 
         if ($this->has('authorized_at') && $this->input('authorized_at') === '') {
             $this->merge(['authorized_at' => null]);
-        }
-
-        $sort = $this->input('sort_order');
-        if ($sort === '' || $sort === null) {
-            $this->merge(['sort_order' => 0]);
         }
 
         $this->merge([

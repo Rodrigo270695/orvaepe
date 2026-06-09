@@ -8,6 +8,7 @@ use App\Models\CatalogProduct;
 use App\Models\CatalogSku;
 use App\Services\Catalog\CatalogSkusExcelExport;
 use App\Support\AdminFlashToast;
+use App\Support\Catalog\SortOrderAllocator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
@@ -161,9 +162,7 @@ class CatalogSkusController extends Controller
     public function store(CatalogSkuStoreRequest $request): RedirectResponse
     {
         $data = $request->validated();
-        if (!isset($data['sort_order']) || $data['sort_order'] === null) {
-            $data['sort_order'] = 0;
-        }
+        $data['sort_order'] = SortOrderAllocator::nextFor(CatalogSku::class);
         $data['limits'] = null;
         $data['metadata'] = null;
         CatalogSku::create($data);
@@ -181,11 +180,7 @@ class CatalogSkusController extends Controller
         CatalogSkuStoreRequest $request,
         CatalogSku $catalog_sku,
     ): RedirectResponse {
-        $data = $request->validated();
-        if (!isset($data['sort_order']) || $data['sort_order'] === null) {
-            $data['sort_order'] = 0;
-        }
-        $catalog_sku->update($data);
+        $catalog_sku->update($request->validated());
 
         return redirect()
             ->to(url()->previous())

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Catalog;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Catalog\CatalogCategoryStoreRequest;
 use App\Models\CatalogCategory;
+use App\Support\Catalog\SortOrderAllocator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -86,10 +87,7 @@ class CatalogCategoriesController extends Controller
     public function store(CatalogCategoryStoreRequest $request): RedirectResponse
     {
         $data = $request->validated();
-
-        if (!isset($data['sort_order']) || $data['sort_order'] === null) {
-            $data['sort_order'] = 0;
-        }
+        $data['sort_order'] = SortOrderAllocator::nextFor(CatalogCategory::class);
 
         CatalogCategory::create($data);
 
@@ -106,13 +104,7 @@ class CatalogCategoriesController extends Controller
         CatalogCategoryStoreRequest $request,
         CatalogCategory $catalog_category,
     ): RedirectResponse {
-        $data = $request->validated();
-
-        if (!isset($data['sort_order']) || $data['sort_order'] === null) {
-            $data['sort_order'] = 0;
-        }
-
-        $catalog_category->update($data);
+        $catalog_category->update($request->validated());
 
         return redirect()
             ->to(url()->previous())

@@ -90,7 +90,6 @@ class CatalogSkuStoreRequest extends FormRequest
             'igv_applies' => ['nullable', 'boolean'],
             'fulfillment_type' => ['required', 'string', Rule::in($fulfillmentAllowed)],
             'is_active' => ['nullable', 'boolean'],
-            'sort_order' => ['nullable', 'integer', 'min:0'],
         ];
     }
 

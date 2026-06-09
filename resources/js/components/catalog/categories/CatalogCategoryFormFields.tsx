@@ -24,7 +24,6 @@ type Props = {
     item: CatalogCategory | null;
     errors: Record<string, string | undefined>;
     categoriesForSelect: CatalogCategory[];
-    nextSortOrder: number;
 };
 
 export default function CatalogCategoryFormFields({
@@ -32,7 +31,6 @@ export default function CatalogCategoryFormFields({
     item,
     errors,
     categoriesForSelect,
-    nextSortOrder,
 }: Props) {
     const revenueLineLabel = (value: string) => {
         if (value === 'software_system') return 'Sistemas';
@@ -46,12 +44,6 @@ export default function CatalogCategoryFormFields({
     );
     const [slugValue, setSlugValue] = React.useState(item?.slug ?? '');
     const [nameValue, setNameValue] = React.useState(item?.name ?? '');
-    const [sortOrderValue, setSortOrderValue] = React.useState(
-        mode === 'create'
-            ? String(nextSortOrder)
-            : String(item?.sort_order ?? ''),
-    );
-
     React.useEffect(() => {
         setIsActive(item?.is_active ?? true);
     }, [item?.id, item?.is_active]);
@@ -59,12 +51,7 @@ export default function CatalogCategoryFormFields({
     React.useEffect(() => {
         setSlugValue(item?.slug ?? '');
         setNameValue(item?.name ?? '');
-        setSortOrderValue(
-            mode === 'create'
-                ? String(nextSortOrder)
-                : String(item?.sort_order ?? ''),
-        );
-    }, [item?.id, item?.slug, item?.name, item?.sort_order, mode, nextSortOrder]);
+    }, [item?.id, item?.slug, item?.name]);
 
     const toTitleCaseWords = (value: string) =>
         value
@@ -161,36 +148,17 @@ export default function CatalogCategoryFormFields({
                 <InputError message={errors.description} />
             </div>
 
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                    <AdminUnderlineLabel htmlFor="revenue_line" required>
-                        Línea de ingreso
-                    </AdminUnderlineLabel>
-                    <AdminUnderlineSelect
-                        id="revenue_line"
-                        name="revenue_line"
-                        defaultValue={item?.revenue_line ?? 'software_system'}
-                        options={revenueOptions}
-                    />
-                    <InputError message={errors.revenue_line} />
-                </div>
-
-                <div className="space-y-2">
-                    <AdminUnderlineLabel htmlFor="sort_order">
-                        Orden
-                    </AdminUnderlineLabel>
-                    <AdminUnderlineInput
-                        id="sort_order"
-                        name="sort_order"
-                        type="number"
-                        value={sortOrderValue}
-                        onChange={(event) =>
-                            setSortOrderValue(event.target.value)
-                        }
-                        placeholder="0"
-                    />
-                    <InputError message={errors.sort_order} />
-                </div>
+            <div className="space-y-2">
+                <AdminUnderlineLabel htmlFor="revenue_line" required>
+                    Línea de ingreso
+                </AdminUnderlineLabel>
+                <AdminUnderlineSelect
+                    id="revenue_line"
+                    name="revenue_line"
+                    defaultValue={item?.revenue_line ?? 'software_system'}
+                    options={revenueOptions}
+                />
+                <InputError message={errors.revenue_line} />
             </div>
 
             {/* Al final: activo/inactivo solo con check */}
