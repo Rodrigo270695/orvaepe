@@ -73,23 +73,29 @@ Artisan::command('culqi:test-connection', function (CulqiClient $culqi): int {
 
 Artisan::command('openwa:test-send', function (OrvaeWhatsAppSender $sender): int {
     try {
+        $status = $sender->status();
+        $this->line('Estado: '.$status['detail']);
+
         $toRaw = (string) config('openwa.admin_notification_number', '976709811');
         $message = 'Prueba ORVAE por OpenWA - '.now()->format('Y-m-d H:i:s');
 
-        $via = $sender->prefersOpenWa() ? 'OpenWA' : 'UltraMsg (fallback)';
         $sender->sendText($toRaw, $message);
 
+        $via = $sender->prefersOpenWa() ? 'OpenWA' : 'UltraMsg';
         $this->info('Mensaje de prueba enviado vía '.$via.'.');
         $this->line('Destino: '.$toRaw);
-        $this->line('Texto: '.$message);
 
         return 0;
     } catch (Throwable $e) {
         $this->error('Fallo al enviar: '.$e->getMessage());
 
+        if (! (bool) config('openwa.enabled')) {
+            $this->warn('Agrega OPENWA_ENABLED=true y OPENWA_API_KEY en /var/www/orvaepe/.env');
+        }
+
         return 1;
     }
-})->purpose('Envía WhatsApp de prueba (OpenWA preferido, UltraMsg fallback)');
+})->purpose('Envía WhatsApp de prueba (OpenWA; UltraMsg solo si OPENWA_ENABLED=false)');
 
 Artisan::command('ultramsg:test-send', function (UltraMsgClient $ultraMsg): int {
     try {
