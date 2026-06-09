@@ -33,6 +33,8 @@ class VetSaaSRenewalRedirectController extends Controller
                 ->with('status', 'No encontramos el plan indicado. Elige tu plan en la página de VetSaaS.');
         }
 
+        $request->session()->put('saas_marketing_renewal', true);
+
         if ($tenantSlug !== '') {
             $request->session()->put('vetsaas_renew_tenant_slug', $tenantSlug);
         }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Support\Checkout;
 
 use App\Models\CatalogSku;
+use App\Models\Order;
 use App\Models\Subscription;
 
 /**
@@ -118,13 +119,9 @@ final class SaasSubscriptionLookup
             });
     }
 
-    public static function isMarketingRenewalCheckout(CatalogSku $sku, Subscription $existing): bool
+    public static function isMarketingRenewalCheckout(CatalogSku $sku): bool
     {
-        $hasSameSku = $existing->items()
-            ->where('catalog_sku_id', $sku->id)
-            ->exists();
-
-        if ($hasSameSku) {
+        if (session('saas_marketing_renewal') === true) {
             return true;
         }
 
@@ -133,11 +130,62 @@ final class SaasSubscriptionLookup
         }
 
         $renewSlug = session('vetsaas_renew_tenant_slug');
-        if (! is_string($renewSlug) || trim($renewSlug) === '') {
+
+        return is_string($renewSlug) && trim($renewSlug) !== '';
+    }
+
+    public static function findActiveSaasSubscription(string|int $userId, string $productKey): ?Subscription
+    {
+        $skuIds = self::saasSkuIdsForProduct($productKey);
+        if ($skuIds === []) {
+            return null;
+        }
+
+        return Subscription::query()
+            ->where('user_id', (string) $userId)
+            ->whereIn('status', self::renewableStatuses())
+            ->whereHas('items', static function ($q) use ($skuIds): void {
+                $q->whereIn('catalog_sku_id', $skuIds);
+            })
+            ->orderByDesc('current_period_end')
+            ->first();
+    }
+
+    public static function hasPaidSaasOrder(string|int $userId, string $productKey): bool
+    {
+        $skuIds = self::saasSkuIdsForProduct($productKey);
+        if ($skuIds === []) {
             return false;
         }
 
-        return self::tenantSlugFrom($existing) === trim($renewSlug);
+        return Order::query()
+            ->where('user_id', (string) $userId)
+            ->where('status', Order::STATUS_PAID)
+            ->whereHas('lines', static function ($q) use ($skuIds): void {
+                $q->whereIn('catalog_sku_id', $skuIds);
+            })
+            ->exists();
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function saasSkuIdsForProduct(string $productKey): array
+    {
+        return CatalogSku::query()
+            ->with('product')
+            ->where('is_active', true)
+            ->get()
+            ->filter(function (CatalogSku $sku) use ($productKey): bool {
+                return match ($productKey) {
+                    'vetsaas' => SaasCatalogSku::isVetsaas($sku),
+                    'aulavirtual' => SaasCatalogSku::isAulaVirtual($sku),
+                    default => false,
+                };
+            })
+            ->pluck('id')
+            ->values()
+            ->all();
     }
 
     /**

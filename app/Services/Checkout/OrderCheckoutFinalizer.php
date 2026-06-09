@@ -76,6 +76,8 @@ final class OrderCheckoutFinalizer
 
     private function afterPaid(Order $order, User $user): void
     {
+        session()->forget(['saas_marketing_renewal', 'vetsaas_renew_tenant_slug']);
+
         $order->refresh();
         $order->coupon?->increment('used_count');
 

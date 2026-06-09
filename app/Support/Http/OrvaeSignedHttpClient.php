@@ -47,4 +47,26 @@ final class OrvaeSignedHttpClient
             ->withBody($body, 'application/json')
             ->post($url);
     }
+
+    public static function get(
+        string $url,
+        string $secret,
+        string $idempotencyKey,
+        int $timeoutSeconds = 15,
+        int $retries = 1,
+        int $retryDelayMs = 300,
+    ): Response {
+        $timestamp = (string) now()->timestamp;
+        $signature = hash_hmac('sha256', $timestamp.'.', $secret);
+
+        return Http::timeout($timeoutSeconds)
+            ->retry($retries, $retryDelayMs)
+            ->withHeaders([
+                'Accept' => 'application/json',
+                'X-Orvae-Timestamp' => $timestamp,
+                'X-Orvae-Signature' => $signature,
+                'X-Idempotency-Key' => $idempotencyKey,
+            ])
+            ->get($url);
+    }
 }

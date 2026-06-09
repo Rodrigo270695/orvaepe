@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Subscription;
 use App\Models\SubscriptionItem;
 use App\Support\Checkout\SaasCatalogSku;
+use App\Support\Checkout\SaasSubscriptionLookup;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -27,6 +28,13 @@ class ClientSubscriptionRenewalController extends Controller
         }
 
         $sku = $item->catalogSku;
+
+        $request->session()->put('saas_marketing_renewal', true);
+
+        $tenantSlug = SaasSubscriptionLookup::tenantSlugFrom($subscription);
+        if (is_string($tenantSlug) && $tenantSlug !== '') {
+            $request->session()->put('vetsaas_renew_tenant_slug', $tenantSlug);
+        }
 
         return redirect()->route('marketing-cart', [
             'renew_plan_id' => $sku->id,
