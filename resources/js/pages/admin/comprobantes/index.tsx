@@ -76,9 +76,20 @@ export default function ComprobantesIndex({ invoices, filters }: Props) {
     const [type, setType] = React.useState(filters?.type ?? '');
     const [filing, setFiling] = React.useState(filters?.filing ?? '');
 
-    function applyFilters(e: React.FormEvent) {
-        e.preventDefault();
-        router.get('/panel/ventas-facturas', { q, type, filing }, { preserveState: true, replace: true });
+    function applyFilters(params: { q?: string; type?: string; filing?: string }) {
+        router.get('/panel/ventas-facturas', params, { preserveState: true, replace: true });
+    }
+
+    function handleTypeChange(v: string) {
+        const val = v === '__all__' ? '' : v;
+        setType(val);
+        applyFilters({ q, type: val, filing });
+    }
+
+    function handleFilingChange(v: string) {
+        const val = v === '__all__' ? '' : v;
+        setFiling(val);
+        applyFilters({ q, type, filing: val });
     }
 
     return (
@@ -103,19 +114,21 @@ export default function ComprobantesIndex({ invoices, filters }: Props) {
                     </Link>
                 </div>
 
-                {/* Filtros */}
-                <form onSubmit={applyFilters} className="mb-6 flex flex-wrap items-end gap-4">
+                {/* Filtros — auto-apply en selects, Enter en búsqueda */}
+                <div className="mb-6 flex flex-wrap items-end gap-4">
                     <div className="flex-1 min-w-[200px] space-y-1">
                         <label className={labelClass}>Buscar</label>
-                        <div className="relative">
-                            <Search className="absolute left-1 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-                            <input
-                                value={q}
-                                onChange={(e) => setQ(e.target.value)}
-                                placeholder="Número de comprobante…"
-                                className={`${inputClass} pl-6`}
-                            />
-                        </div>
+                        <form onSubmit={(e) => { e.preventDefault(); applyFilters({ q, type, filing }); }}>
+                            <div className="relative">
+                                <Search className="absolute left-1 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+                                <input
+                                    value={q}
+                                    onChange={(e) => setQ(e.target.value)}
+                                    placeholder="Número de comprobante…"
+                                    className={`${inputClass} pl-6`}
+                                />
+                            </div>
+                        </form>
                     </div>
 
                     <div className="space-y-1 min-w-[160px]">
@@ -126,7 +139,7 @@ export default function ComprobantesIndex({ invoices, filters }: Props) {
                                 { value: '__all__', label: 'Todos' },
                                 ...Object.entries(DOC_LABELS).map(([v, l]) => ({ value: v, label: l })),
                             ]}
-                            onValueChange={(v) => setType(v === '__all__' ? '' : v)}
+                            onValueChange={handleTypeChange}
                         />
                     </div>
 
@@ -138,17 +151,10 @@ export default function ComprobantesIndex({ invoices, filters }: Props) {
                                 { value: '__all__', label: 'Todos' },
                                 ...Object.entries(FILING_BADGE).map(([v, { label }]) => ({ value: v, label })),
                             ]}
-                            onValueChange={(v) => setFiling(v === '__all__' ? '' : v)}
+                            onValueChange={handleFilingChange}
                         />
                     </div>
-
-                    <button
-                        type="submit"
-                        className="rounded-xl bg-[#4A80B8]/10 px-4 py-2 text-sm text-[#4A80B8] hover:bg-[#4A80B8]/20 transition"
-                    >
-                        Filtrar
-                    </button>
-                </form>
+                </div>
 
                 {/* Tabla */}
                 <div className="neumorph-inset rounded-xl border border-border/60 overflow-hidden">
