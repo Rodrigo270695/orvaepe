@@ -1,5 +1,5 @@
 import { Form } from '@inertiajs/react';
-import { BadgeCheck, FileKey2, KeyRound, Plus, Save, Trash2, Upload } from 'lucide-react';
+import { BadgeCheck, CheckCircle2, FileKey2, KeyRound, Loader2, Plus, Save, Trash2, Upload, XCircle } from 'lucide-react';
 import * as React from 'react';
 
 import AdminCrudDeleteModal from '@/components/admin/crud/AdminCrudDeleteModal';
@@ -38,7 +38,27 @@ type Props = {
 
 function CertificateRow({ cert }: { cert: DigitalCertificateRow }) {
     const [deleteOpen, setDeleteOpen] = React.useState(false);
+    const [testing, setTesting]       = React.useState(false);
+    const [testResult, setTestResult] = React.useState<{ ok: boolean; message: string } | null>(null);
     const destroyAction = panel.sunatEmisor.digitalCertificates.destroy.url(cert.id);
+
+    async function handleTest() {
+        setTesting(true);
+        setTestResult(null);
+        try {
+            const csrf = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
+            const res  = await fetch(
+                `/panel/sunat-emisor/digital-certificates/${cert.id}/test`,
+                { method: 'POST', headers: { 'X-CSRF-TOKEN': csrf, 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' } },
+            );
+            const json = (await res.json()) as { ok: boolean; message: string };
+            setTestResult(json);
+        } catch {
+            setTestResult({ ok: false, message: 'Error de conexión al probar el certificado.' });
+        } finally {
+            setTesting(false);
+        }
+    }
 
     return (
         <div className={insetCardClass}>
@@ -68,15 +88,43 @@ function CertificateRow({ cert }: { cert: DigitalCertificateRow }) {
                         </span>
                     )}
                 </div>
-                <NeuButtonInset
-                    type="button"
-                    onClick={() => setDeleteOpen(true)}
-                    className="inline-flex shrink-0 cursor-pointer flex-row items-center gap-2 whitespace-nowrap text-[#C05050]"
-                >
-                    <Trash2 className="size-4 shrink-0" />
-                    Eliminar
-                </NeuButtonInset>
+                <div className="flex shrink-0 items-center gap-2">
+                    {/* Botón probar contraseña */}
+                    <NeuButtonInset
+                        type="button"
+                        onClick={() => void handleTest()}
+                        disabled={testing}
+                        className="inline-flex cursor-pointer flex-row items-center gap-1.5 whitespace-nowrap text-[#4A80B8]"
+                    >
+                        {testing
+                            ? <Loader2 className="size-3.5 animate-spin" />
+                            : <KeyRound className="size-3.5" />}
+                        Probar
+                    </NeuButtonInset>
+                    <NeuButtonInset
+                        type="button"
+                        onClick={() => setDeleteOpen(true)}
+                        className="inline-flex cursor-pointer flex-row items-center gap-2 whitespace-nowrap text-[#C05050]"
+                    >
+                        <Trash2 className="size-4 shrink-0" />
+                        Eliminar
+                    </NeuButtonInset>
+                </div>
             </div>
+
+            {/* Resultado del test */}
+            {testResult && (
+                <div className={`mb-3 flex items-start gap-2 rounded-lg px-3 py-2 text-[11px] ${
+                    testResult.ok
+                        ? 'bg-[#4A9A72]/8 text-[#4A9A72]'
+                        : 'bg-[#C05050]/8 text-[#C05050]'
+                }`}>
+                    {testResult.ok
+                        ? <CheckCircle2 className="mt-px size-3.5 shrink-0" />
+                        : <XCircle className="mt-px size-3.5 shrink-0" />}
+                    <span>{testResult.message}</span>
+                </div>
+            )}
 
             {/* Info del archivo actual */}
             <div className="mb-4 flex items-center gap-2 rounded-lg bg-(--o-amber)/5 px-3 py-2 text-[11px] text-muted-foreground">

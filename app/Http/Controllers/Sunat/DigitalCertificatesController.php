@@ -8,9 +8,11 @@ use App\Http\Requests\Sunat\DigitalCertificateUpdateRequest;
 use App\Models\CompanyLegalProfile;
 use App\Models\DigitalCertificate;
 use App\Support\AdminFlashToast;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Storage;
+use Throwable;
 
 class DigitalCertificatesController extends Controller
 {
@@ -84,6 +86,49 @@ class DigitalCertificatesController extends Controller
             'toast',
             AdminFlashToast::success('Certificado actualizado'),
         );
+    }
+
+    /**
+     * Prueba si el .p12 se puede abrir con la contraseña guardada.
+     * Devuelve JSON { ok: bool, message: string }.
+     */
+    public function test(DigitalCertificate $digital_certificate): JsonResponse
+    {
+        try {
+            $pfxContent = Storage::disk($digital_certificate->storage_disk)
+                ->get($digital_certificate->storage_path);
+
+            $rawPwdEnc    = $digital_certificate->attributes['password_enc'] ?? null;
+            $certPassword = '';
+            if (!empty($rawPwdEnc)) {
+                $certPassword = Crypt::decryptString($rawPwdEnc);
+            }
+
+            $certs  = [];
+            $result = openssl_pkcs12_read($pfxContent, $certs, $certPassword);
+
+            if ($result === false) {
+                $err = openssl_error_string();
+                $msg = (str_contains((string) $err, 'mac verify') || str_contains((string) $err, 'PKCS12'))
+                    ? 'Contraseña incorrecta. Guarda la contraseña correcta del .p12 y vuelve a probar.'
+                    : 'No se pudo leer el certificado: ' . $err;
+
+                return response()->json(['ok' => false, 'message' => $msg]);
+            }
+
+            // Intentar obtener fecha de expiración
+            $info = openssl_x509_parse($certs['cert'] ?? '');
+            $validTo = isset($info['validTo_time_t'])
+                ? date('d/m/Y', $info['validTo_time_t'])
+                : 'desconocida';
+
+            return response()->json([
+                'ok'      => true,
+                'message' => '✓ Certificado válido · Expira: ' . $validTo,
+            ]);
+        } catch (Throwable $e) {
+            return response()->json(['ok' => false, 'message' => $e->getMessage()]);
+        }
     }
 
     public function destroy(DigitalCertificate $digital_certificate): RedirectResponse

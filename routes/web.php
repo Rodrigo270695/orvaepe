@@ -215,6 +215,9 @@ Route::middleware(['auth', 'verified', 'client.profile.complete'])->group(functi
         Route::delete('panel/sunat-emisor/digital-certificates/{digital_certificate}', [DigitalCertificatesController::class, 'destroy'])
             ->name('panel.sunat-emisor.digital-certificates.destroy');
 
+        Route::post('panel/sunat-emisor/digital-certificates/{digital_certificate}/test', [DigitalCertificatesController::class, 'test'])
+            ->name('panel.sunat-emisor.digital-certificates.test');
+
         Route::patch('panel/sunat-emisor/emitter-settings', [SunatEmitterSettingsController::class, 'upsert'])
             ->name('panel.sunat-emisor.emitter-settings.upsert');
 

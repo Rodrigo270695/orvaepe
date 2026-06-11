@@ -79,17 +79,20 @@ class InvoiceEmitterService
 
         // ── 3. Leer .p12 y convertir a PEM ───────────────────────────────
         try {
-            $pfxContent  = Storage::disk($cert->storage_disk)->get($cert->storage_path);
+            $pfxContent   = Storage::disk($cert->storage_disk)->get($cert->storage_path);
+            $rawPwdEnc    = $cert->attributes['password_enc'] ?? null;
             $certPassword = '';
-            if (!empty($cert->getRawOriginal('password_enc') ?? $cert->attributes['password_enc'] ?? null)) {
-                $certPassword = Crypt::decryptString(
-                    $cert->getRawOriginal('password_enc') ?? $cert->attributes['password_enc']
-                );
+            if (!empty($rawPwdEnc)) {
+                $certPassword = Crypt::decryptString($rawPwdEnc);
             }
             $x509 = new X509Certificate($pfxContent, $certPassword);
             $pem  = $x509->export(X509ContentType::PEM);
         } catch (Throwable $e) {
-            return $this->fail($invoice, 'Error al cargar el certificado: ' . $e->getMessage());
+            $raw = $e->getMessage();
+            $msg = (str_contains($raw, 'mac verify') || str_contains($raw, 'PKCS12'))
+                ? 'Contraseña del certificado incorrecta. Ve a Config. emisor → Certificados y actualiza la contraseña de tu .p12.'
+                : 'Error al cargar el certificado: ' . $raw;
+            return $this->fail($invoice, $msg);
         }
 
         // ── 4. Credenciales SOL ──────────────────────────────────────────
