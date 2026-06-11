@@ -8,6 +8,7 @@ use App\Models\Invoice;
 use App\Models\InvoiceLine;
 use App\Models\InvoiceDocumentSequence;
 use App\Models\Order;
+use App\Services\Sunat\ApiSunatEmitterService;
 use App\Services\Sunat\InvoiceEmitterService;
 use App\Support\AdminFlashToast;
 use Illuminate\Http\RedirectResponse;
@@ -175,9 +176,8 @@ class VentasFacturasController extends Controller
             return $invoice;
         });
 
-        // Emitir a SUNAT
-        $service = new InvoiceEmitterService();
-        $accepted = $service->emit($invoice);
+        // Emitir a SUNAT — elegir servicio según modo configurado
+        $accepted = $this->emitInvoice($invoice);
 
         if ($accepted) {
             return redirect('/panel/ventas-facturas/' . $invoice->id)
@@ -207,13 +207,33 @@ class VentasFacturasController extends Controller
             return back()->with('toast', AdminFlashToast::success('Este comprobante ya fue aceptado por SUNAT.'));
         }
 
-        $service  = new InvoiceEmitterService();
-        $accepted = $service->emit($invoice);
+        $accepted = $this->emitInvoice($invoice);
         $invoice->refresh();
 
         return back()->with('toast', $accepted
             ? AdminFlashToast::success('Re-envío aceptado por SUNAT ✓')
             : AdminFlashToast::error('SUNAT rechazó el reintento: ' . ($invoice->sunat_response_description ?? 'Error')),
         );
+    }
+
+    /**
+     * Elige el servicio de emisión según el emission_mode del emisor configurado.
+     * - 'apisunat' → ApiSunatEmitterService (Lucode PSE, sin certificado propio)
+     * - cualquier otro → InvoiceEmitterService (Greenter SOAP, requiere certificado .p12)
+     */
+    private function emitInvoice(Invoice $invoice): bool
+    {
+        $mode = CompanyLegalProfile::query()
+            ->where('is_default_issuer', true)
+            ->with('sunatEmitterSetting:id,company_legal_profile_id,emission_mode,is_active')
+            ->first()
+            ?->sunatEmitterSetting
+            ?->emission_mode;
+
+        if ($mode === 'apisunat') {
+            return (new ApiSunatEmitterService())->emit($invoice);
+        }
+
+        return (new InvoiceEmitterService())->emit($invoice);
     }
 }

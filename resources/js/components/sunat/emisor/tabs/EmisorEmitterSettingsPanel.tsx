@@ -1,5 +1,5 @@
 import { Form } from '@inertiajs/react';
-import { KeyRound, Link2, Save, SlidersHorizontal, User } from 'lucide-react';
+import { ExternalLink, KeyRound, Link2, Save, SlidersHorizontal, User, Zap } from 'lucide-react';
 import * as React from 'react';
 
 import AdminUnderlineLabel from '@/components/admin/form/admin-underline-label';
@@ -25,9 +25,10 @@ const inputIconClass =
     'w-full border-0 border-b border-[var(--o-border2)] bg-transparent rounded-none shadow-none py-2.5 pl-7 pr-2 font-[family-name:var(--font-body)] text-[13px] text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:border-[var(--o-amber)]/60 focus-visible:ring-0';
 
 const emissionOptions = [
-    { value: 'sunat_direct', label: 'SUNAT directo (SEE-Del Contribuyente)' },
+    { value: 'apisunat', label: '⚡ API SUNAT · Lucode PSE (recomendado, sin certificado)' },
+    { value: 'sunat_direct', label: 'SUNAT directo · SEE-Del Contribuyente (requiere certificado .p12)' },
     { value: 'ose', label: 'OSE – Operador de Servicios Electrónicos' },
-    { value: 'pse', label: 'PSE – Proveedor de Servicios Electrónicos' },
+    { value: 'pse', label: 'PSE – Proveedor de Servicios Electrónicos genérico' },
 ];
 
 const environmentOptions = [
@@ -70,6 +71,7 @@ export default function EmisorEmitterSettingsPanel({
             ? setting.default_certificate_id
             : '_none_';
 
+    const isApiSunat  = mode === 'apisunat';
     const isSunatDirect = mode === 'sunat_direct';
     const isOse = mode === 'ose';
     const isPse = mode === 'pse';
@@ -124,6 +126,67 @@ export default function EmisorEmitterSettingsPanel({
                                 <InputError message={errors.environment} />
                             </div>
                         </div>
+
+                        {/* ── API SUNAT / Lucode PSE ── */}
+                        {isApiSunat && (
+                            <div className="space-y-4 rounded-xl border border-[#4A9A72]/25 bg-[#4A9A72]/4 p-4">
+                                <div className="flex items-start gap-2">
+                                    <Zap className="mt-0.5 size-4 shrink-0 text-[#4A9A72]" />
+                                    <div>
+                                        <p className="text-[11px] font-semibold text-[#4A9A72]">
+                                            API SUNAT · Lucode PSE
+                                        </p>
+                                        <p className="mt-0.5 text-[10px] text-muted-foreground">
+                                            Sin certificado propio. Lucode firma y envía a SUNAT por ti.{' '}
+                                            Plan gratuito: 20 comprobantes/mes · Plan 01: S/ 8/mes (100 comprobantes).
+                                        </p>
+                                        <a
+                                            href="https://app.apisunat.pe/organization"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="mt-1 inline-flex items-center gap-1 text-[10px] text-[#4A9A72] underline underline-offset-2"
+                                        >
+                                            Ir a app.apisunat.pe para obtener tu token
+                                            <ExternalLink className="size-2.5" />
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <label htmlFor="apisunat_token" className={labelClass}>
+                                        Token API SUNAT
+                                        {setting?.has_apisunat_token && (
+                                            <span className="ml-2 text-[#4A9A72]">● guardado</span>
+                                        )}
+                                    </label>
+                                    <div className="relative">
+                                        <KeyRound className="absolute left-1 top-1/2 size-3.5 -translate-y-1/2 text-[#4A9A72]" />
+                                        <Input
+                                            id="apisunat_token"
+                                            name="apisunat_token"
+                                            type="password"
+                                            autoComplete="new-password"
+                                            placeholder={
+                                                setting?.has_apisunat_token
+                                                    ? '••••••••  (dejar vacío para conservar)'
+                                                    : 'Pega aquí tu Bearer token de API SUNAT'
+                                            }
+                                            className={inputIconClass}
+                                        />
+                                    </div>
+                                    <p className="text-[10px] text-muted-foreground">
+                                        Se cifra con AES-256. Encuéntralo en{' '}
+                                        <code>app.apisunat.pe → Organizaciones → Token</code>.
+                                    </p>
+                                    <InputError message={errors.apisunat_token} />
+                                </div>
+
+                                <div className="rounded-lg border border-[#4A9A72]/20 bg-[#4A9A72]/6 px-3 py-2 text-[10px] text-[#4A9A72]">
+                                    <strong>Paso previo:</strong> Autoriza a Lucode como tu PSE en el portal SOL →
+                                    Comprobantes de Pago → PSE → Autorizar proveedor.
+                                </div>
+                            </div>
+                        )}
 
                         {/* ── Credenciales SUNAT directo ── */}
                         {isSunatDirect && (

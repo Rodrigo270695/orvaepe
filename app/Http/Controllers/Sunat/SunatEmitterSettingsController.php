@@ -56,10 +56,16 @@ class SunatEmitterSettingsController extends Controller
         if ($solPassword !== null && $solPassword !== '') {
             $data['sol_password_enc'] = Crypt::encryptString($solPassword);
         } elseif ($solPassword === '' && $existing) {
-            // El usuario borró la clave: limpiar
             $data['sol_password_enc'] = null;
         }
-        // Si no se envió el campo (null), conservar el valor existente
+
+        // Cifrar token de API SUNAT solo si se envió un valor nuevo
+        $apisunatToken = $request->input('apisunat_token');
+        if ($apisunatToken !== null && $apisunatToken !== '') {
+            $data['apisunat_token_enc'] = Crypt::encryptString($apisunatToken);
+        } elseif ($apisunatToken === '' && $existing) {
+            $data['apisunat_token_enc'] = null;
+        }
 
         SunatEmitterSetting::updateOrCreate(
             ['company_legal_profile_id' => $profile->id],

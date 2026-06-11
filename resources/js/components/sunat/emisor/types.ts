@@ -45,6 +45,8 @@ export type SunatEmitterSettingRow = {
     sol_username: string | null;
     /** Indica si la clave SOL está guardada (sol_password_enc no se expone). */
     has_sol_password: boolean;
+    /** Indica si el token de API SUNAT está guardado (apisunat_token_enc no se expone). */
+    has_apisunat_token: boolean;
     default_certificate_id: string | null;
     environment: string;
     options: Record<string, unknown> | null;

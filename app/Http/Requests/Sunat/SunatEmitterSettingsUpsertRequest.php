@@ -23,7 +23,7 @@ class SunatEmitterSettingsUpsertRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'emission_mode'          => ['required', Rule::in(['sunat_direct', 'ose', 'pse'])],
+            'emission_mode'          => ['required', Rule::in(['sunat_direct', 'ose', 'pse', 'apisunat'])],
             'environment'            => ['required', Rule::in(['beta', 'production'])],
 
             // Credenciales SUNAT directa
@@ -33,6 +33,9 @@ class SunatEmitterSettingsUpsertRequest extends FormRequest
             // Credenciales OSE / PSE
             'ose_provider_code'      => ['nullable', 'string', 'max:100'],
             'api_base_url'           => ['nullable', 'string', 'url'],
+
+            // Credenciales API SUNAT (Lucode PSE)
+            'apisunat_token'         => ['nullable', 'string', 'max:512'],
 
             'default_certificate_id' => ['nullable', 'uuid', 'exists:digital_certificates,id'],
             'is_active'              => ['nullable', 'boolean'],
