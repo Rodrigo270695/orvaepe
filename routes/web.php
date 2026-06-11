@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\PlatformWhatsAppController;
 use App\Http\Controllers\Admin\OemLicenseDeliveriesController;
 use App\Http\Controllers\Admin\ShowcaseClientsController;
 use App\Http\Controllers\Admin\SubscriptionsController;
+use App\Http\Controllers\Admin\LookupDocumentController;
 use App\Http\Controllers\Admin\VentasFacturasController;
 use App\Http\Controllers\Admin\VentasPagosController;
 use App\Http\Controllers\Admin\WebhookEventsController;
@@ -504,6 +505,9 @@ Route::middleware(['auth', 'verified', 'client.profile.complete'])->group(functi
             ->name('panel.informes-lineas.index');
 
         // ── Comprobantes electrónicos ────────────────────────────────────
+        Route::post('panel/ventas-facturas/lookup-doc', LookupDocumentController::class)
+            ->name('panel.ventas-facturas.lookup-doc');
+
         Route::get('panel/ventas-facturas', [VentasFacturasController::class, 'index'])
             ->name('panel.ventas-facturas.index');
 

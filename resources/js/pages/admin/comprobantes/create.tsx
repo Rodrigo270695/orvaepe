@@ -1,9 +1,9 @@
 import { Head, router } from '@inertiajs/react';
 import {
+    Building2,
     FilePlus2,
     Loader2,
     Plus,
-    Search,
     Trash2,
     User,
 } from 'lucide-react';
@@ -11,6 +11,7 @@ import * as React from 'react';
 
 import AdminUnderlineLabel from '@/components/admin/form/admin-underline-label';
 import AdminUnderlineSelect from '@/components/admin/form/admin-underline-select';
+import { LineCodePicker, type CodeGroup } from '@/components/facturas/LineCodePicker';
 import InputError from '@/components/input-error';
 import AppLayout from '@/layouts/app-layout';
 import { dashboard } from '@/routes';
@@ -31,30 +32,85 @@ const BUYER_DOC_OPTIONS = [
     { value: '-', label: 'Sin documento' },
 ];
 
-const IGV_CODE_OPTIONS = [
-    { value: '10', label: '10 – Gravado (IGV 18%)' },
-    { value: '20', label: '20 – Exonerado' },
-    { value: '30', label: '30 – Inafecto' },
-    { value: '40', label: '40 – Exportación' },
+/**
+ * Catálogo 16 SUNAT — Códigos de afectación IGV.
+ * Agrupados por tipo para el LineCodePicker.
+ */
+const IGV_GROUPS: CodeGroup[] = [
+    {
+        label: 'Operaciones gravadas',
+        options: [
+            { value: '10', label: 'Gravado — Operación Onerosa', shortLabel: 'Gravado 18%', color: 'blue' },
+            { value: '17', label: 'Gravado — IVAP (Arroz pilado)', shortLabel: 'IVAP', color: 'blue' },
+        ],
+    },
+    {
+        label: 'Exoneradas e inafectas',
+        options: [
+            { value: '20', label: 'Exonerado — Operación Onerosa', shortLabel: 'Exonerado', color: 'yellow' },
+            { value: '30', label: 'Inafecto — Operación Onerosa',  shortLabel: 'Inafecto',  color: 'gray' },
+            { value: '31', label: 'Inafecto — Retiro por bonificación', shortLabel: 'Retiro bonif.', color: 'gray' },
+        ],
+    },
+    {
+        label: 'Exportación y gratuita',
+        options: [
+            { value: '40', label: 'Exportación de bienes o servicios', shortLabel: 'Exportación', color: 'purple' },
+            { value: '11', label: 'Gravado — Retiro por premio',   shortLabel: 'Retiro premio', color: 'orange' },
+            { value: '21', label: 'Exonerado — Transferencia gratuita', shortLabel: 'Exon. gratuita', color: 'orange' },
+        ],
+    },
 ];
 
 /**
- * Catálogo 03 SUNAT — Unidades de medida (selección de los más usados en Perú).
+ * Catálogo 03 SUNAT — Unidades de medida.
  * Ref: https://cpe.sunat.gob.pe/sites/default/files/inline-files/Catalogo%2003.pdf
  */
-const UNIT_OPTIONS = [
-    { value: 'ZZ',  label: 'ZZ – Servicio (digital/intangible)' },
-    { value: 'NIU', label: 'NIU – Unidad' },
-    { value: 'KGM', label: 'KGM – Kilogramo' },
-    { value: 'MTR', label: 'MTR – Metro' },
-    { value: 'LTR', label: 'LTR – Litro' },
-    { value: 'GLL', label: 'GLL – Galón' },
-    { value: 'FOT', label: 'FOT – Pie' },
-    { value: 'INH', label: 'INH – Pulgada' },
-    { value: 'LBR', label: 'LBR – Libra' },
-    { value: 'ONZ', label: 'ONZ – Onza' },
-    { value: 'SET', label: 'SET – Juego' },
-    { value: 'KWH', label: 'KWH – Kilovatio hora' },
+const UNIT_GROUPS: CodeGroup[] = [
+    {
+        label: 'Servicios (intangibles)',
+        options: [
+            { value: 'ZZ',  label: 'Unidad de servicio (digital / intangible)', shortLabel: 'Servicio', color: 'blue' },
+            { value: 'E49', label: 'Trabajo / actividad de servicio',           shortLabel: 'Trabajo',  color: 'blue' },
+        ],
+    },
+    {
+        label: 'Cantidad',
+        options: [
+            { value: 'NIU', label: 'Unidad (unidades físicas)',  shortLabel: 'Unidad',   color: 'green' },
+            { value: 'SET', label: 'Juego / conjunto de ítems',  shortLabel: 'Juego',    color: 'green' },
+            { value: 'PAR', label: 'Par',                        shortLabel: 'Par',      color: 'green' },
+            { value: 'C62', label: 'Uno (count)',                shortLabel: 'Count',    color: 'green' },
+        ],
+    },
+    {
+        label: 'Peso',
+        options: [
+            { value: 'KGM', label: 'Kilogramo', shortLabel: 'Kg',    color: 'orange' },
+            { value: 'GRM', label: 'Gramo',     shortLabel: 'g',     color: 'orange' },
+            { value: 'LBR', label: 'Libra',     shortLabel: 'lb',    color: 'orange' },
+            { value: 'ONZ', label: 'Onza',      shortLabel: 'oz',    color: 'orange' },
+        ],
+    },
+    {
+        label: 'Longitud y volumen',
+        options: [
+            { value: 'MTR', label: 'Metro',   shortLabel: 'm',   color: 'purple' },
+            { value: 'LTR', label: 'Litro',   shortLabel: 'L',   color: 'purple' },
+            { value: 'GLL', label: 'Galón',   shortLabel: 'Gal', color: 'purple' },
+            { value: 'FOT', label: 'Pie',     shortLabel: 'ft',  color: 'purple' },
+            { value: 'INH', label: 'Pulgada', shortLabel: 'in',  color: 'purple' },
+        ],
+    },
+    {
+        label: 'Energía y tiempo',
+        options: [
+            { value: 'KWH', label: 'Kilovatio hora', shortLabel: 'kWh', color: 'yellow' },
+            { value: 'HUR', label: 'Hora',           shortLabel: 'h',   color: 'yellow' },
+            { value: 'DAY', label: 'Día',            shortLabel: 'día', color: 'yellow' },
+            { value: 'MON', label: 'Mes',            shortLabel: 'mes', color: 'yellow' },
+        ],
+    },
 ];
 
 const CURRENCY_OPTIONS = [
@@ -130,6 +186,9 @@ export default function ComprobantesCreate({ sequences, orders, preOrderId }: Pr
     const [buyerNumDoc, setBuyerNumDoc] = React.useState('');
     const [buyerName, setBuyerName] = React.useState('');
     const [buyerAddress, setBuyerAddress] = React.useState('');
+    const [lookupLoading, setLookupLoading] = React.useState(false);
+    const [lookupError, setLookupError] = React.useState<string | null>(null);
+    const [lookupOk, setLookupOk] = React.useState(false);
 
     const [lines, setLines] = React.useState<Line[]>([emptyLine()]);
     const [errors, setErrors] = React.useState<Record<string, string>>({});
@@ -156,6 +215,82 @@ export default function ComprobantesCreate({ sequences, orders, preOrderId }: Pr
         }
         setCurrency(order.currency);
     }, [orderId, orders]);
+
+    // ── Validación de longitud esperada según tipo de doc ────────────────
+    const expectedLen = buyerTipoDoc === '6' ? 11 : buyerTipoDoc === '1' ? 8 : null;
+
+    // ── Consulta APIPERU (RUC o DNI) ─────────────────────────────────────
+    const lookupDocument = React.useCallback(async (doc: string) => {
+        const len = doc.length;
+        if ((buyerTipoDoc === '6' && len !== 11) || (buyerTipoDoc === '1' && len !== 8)) return;
+
+        setLookupLoading(true);
+        setLookupError(null);
+        setLookupOk(false);
+
+        try {
+            const csrfMeta = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]');
+            const csrfToken = csrfMeta?.content ?? '';
+
+            const res = await fetch('/panel/ventas-facturas/lookup-doc', {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: JSON.stringify({ document: doc }),
+            });
+
+            const json = (await res.json().catch(() => ({}))) as {
+                tipo_doc?: string;
+                name?: string;
+                address?: string;
+                estado?: string;
+                condicion?: string;
+                message?: string;
+            };
+
+            if (!res.ok) {
+                setLookupError(json.message ?? 'No se encontraron datos.');
+                return;
+            }
+
+            if (json.name) setBuyerName(json.name);
+            if (json.address) setBuyerAddress(json.address);
+            setLookupOk(true);
+        } catch {
+            setLookupError('Error de conexión al consultar.');
+        } finally {
+            setLookupLoading(false);
+        }
+    }, [buyerTipoDoc]);
+
+    // ── Manejador del campo de documento (solo números + auto-lookup) ────
+    function handleDocChange(raw: string) {
+        const digits = raw.replace(/\D/g, '');
+        // Limitar longitud
+        const maxLen = buyerTipoDoc === '6' ? 11 : buyerTipoDoc === '1' ? 8 : 15;
+        const trimmed = digits.slice(0, maxLen);
+        setBuyerNumDoc(trimmed);
+        setLookupError(null);
+        setLookupOk(false);
+
+        // Auto-lookup al alcanzar la longitud correcta
+        const target = buyerTipoDoc === '6' ? 11 : buyerTipoDoc === '1' ? 8 : null;
+        if (target && trimmed.length === target) {
+            void lookupDocument(trimmed);
+        }
+    }
+
+    // Reset al cambiar tipo de doc
+    function handleTipoDocChange(v: string) {
+        setBuyerTipoDoc(v);
+        setBuyerNumDoc('');
+        setLookupError(null);
+        setLookupOk(false);
+    }
 
     // ── Totales ──────────────────────────────────────────────────────────
     const totals = React.useMemo(() => {
@@ -322,24 +457,83 @@ export default function ComprobantesCreate({ sequences, orders, preOrderId }: Pr
                                     name="buyer[tipo_doc]"
                                     value={buyerTipoDoc}
                                     options={BUYER_DOC_OPTIONS}
-                                    onValueChange={setBuyerTipoDoc}
+                                    onValueChange={handleTipoDocChange}
                                 />
                                 <InputError message={errors['buyer.tipo_doc']} />
                             </div>
 
                             <div className="space-y-1.5">
                                 <label className={labelClass}>
-                                    N.º Documento ({buyerTipoDoc === '6' ? 'RUC 11 dígitos' : buyerTipoDoc === '1' ? 'DNI 8 dígitos' : 'opcional'})
+                                    N.º Documento
+                                    <span className="ml-1 normal-case text-(--muted-foreground)">
+                                        ({buyerTipoDoc === '6' ? 'RUC – 11 dígitos' : buyerTipoDoc === '1' ? 'DNI – 8 dígitos' : 'opcional'})
+                                    </span>
                                 </label>
-                                <div className="relative">
-                                    <Search className="absolute left-1 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-                                    <input
-                                        value={buyerNumDoc}
-                                        onChange={(e) => setBuyerNumDoc(e.target.value)}
-                                        placeholder={buyerTipoDoc === '6' ? '20123456789' : '12345678'}
-                                        className={inputIconClass}
-                                    />
+
+                                {/* Campo con ícono búsqueda, contador y botón lookup */}
+                                <div className="flex items-stretch gap-2">
+                                    <div className="relative flex-1">
+                                        {/* Ícono izquierdo */}
+                                        {lookupLoading ? (
+                                            <Loader2 className="absolute left-1 top-1/2 size-3.5 -translate-y-1/2 animate-spin text-[#4A80B8]" />
+                                        ) : (
+                                            <Building2 className="absolute left-1 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+                                        )}
+
+                                        <input
+                                            value={buyerNumDoc}
+                                            onChange={(e) => handleDocChange(e.target.value)}
+                                            placeholder={buyerTipoDoc === '6' ? '20123456789' : buyerTipoDoc === '1' ? '12345678' : 'Número'}
+                                            inputMode="numeric"
+                                            maxLength={buyerTipoDoc === '6' ? 11 : buyerTipoDoc === '1' ? 8 : 15}
+                                            className={`${inputIconClass} pr-14`}
+                                            autoComplete="off"
+                                        />
+
+                                        {/* Contador de dígitos dentro del campo (derecha) */}
+                                        {expectedLen && (
+                                            <span
+                                                className={`absolute right-2 top-1/2 -translate-y-1/2 font-mono text-[11px] font-semibold tabular-nums transition-colors ${
+                                                    buyerNumDoc.length === expectedLen
+                                                        ? 'text-[#4A9A72]'
+                                                        : 'text-muted-foreground'
+                                                }`}
+                                            >
+                                                {buyerNumDoc.length}/{expectedLen}
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    {/* Botón lookup manual */}
+                                    {(buyerTipoDoc === '6' || buyerTipoDoc === '1') && (
+                                        <button
+                                            type="button"
+                                            onClick={() => void lookupDocument(buyerNumDoc)}
+                                            disabled={
+                                                lookupLoading ||
+                                                (buyerTipoDoc === '6' && buyerNumDoc.length !== 11) ||
+                                                (buyerTipoDoc === '1' && buyerNumDoc.length !== 8)
+                                            }
+                                            title="Consultar nombre/razón social en SUNAT (apiperu.dev)"
+                                            className="flex shrink-0 items-center gap-1.5 rounded-lg border border-border/60 bg-[#4A80B8]/8 px-3 py-1.5 text-[11px] font-medium text-[#4A80B8] transition hover:bg-[#4A80B8]/15 disabled:cursor-not-allowed disabled:opacity-40"
+                                        >
+                                            {lookupLoading ? (
+                                                <Loader2 className="size-3.5 animate-spin" />
+                                            ) : (
+                                                <Building2 className="size-3.5" />
+                                            )}
+                                            Consultar
+                                        </button>
+                                    )}
                                 </div>
+
+                                {/* Feedback lookup */}
+                                {lookupOk && (
+                                    <p className="text-[11px] text-[#4A9A72]">✓ Datos obtenidos de SUNAT · Revisa y edita si es necesario.</p>
+                                )}
+                                {lookupError && (
+                                    <p className="text-[11px] text-[#C05050]">{lookupError}</p>
+                                )}
                                 <InputError message={errors['buyer.num_doc']} />
                             </div>
 
@@ -398,17 +592,16 @@ export default function ComprobantesCreate({ sequences, orders, preOrderId }: Pr
                                         onChange={(e) => setLine(i, 'quantity', e.target.value)}
                                         className={inputClass}
                                     />
-                                    {/* Unidad de medida — Catálogo 03 SUNAT */}
-                                    <select
-                                        value={line.unit_measure}
-                                        onChange={(e) => setLine(i, 'unit_measure', e.target.value)}
-                                        className={`${inputClass} cursor-pointer`}
-                                        title="Catálogo 03 SUNAT — Unidades de medida"
-                                    >
-                                        {UNIT_OPTIONS.map((o) => (
-                                            <option key={o.value} value={o.value}>{o.label}</option>
-                                        ))}
-                                    </select>
+                                    {/* Unidad — Catálogo 03 SUNAT */}
+                                    <div className="flex items-end pb-1">
+                                        <LineCodePicker
+                                            value={line.unit_measure}
+                                            onChange={(v) => setLine(i, 'unit_measure', v)}
+                                            groups={UNIT_GROUPS}
+                                            dropdownWidth="300px"
+                                        />
+                                    </div>
+
                                     <input
                                         type="number"
                                         min="0"
@@ -418,15 +611,16 @@ export default function ComprobantesCreate({ sequences, orders, preOrderId }: Pr
                                         className={inputClass}
                                         placeholder="0.00"
                                     />
-                                    <select
-                                        value={line.igv_code}
-                                        onChange={(e) => setLine(i, 'igv_code', e.target.value)}
-                                        className={`${inputClass} cursor-pointer`}
-                                    >
-                                        {IGV_CODE_OPTIONS.map((o) => (
-                                            <option key={o.value} value={o.value}>{o.label}</option>
-                                        ))}
-                                    </select>
+
+                                    {/* Afectación IGV — Catálogo 16 SUNAT */}
+                                    <div className="flex items-end pb-1">
+                                        <LineCodePicker
+                                            value={line.igv_code}
+                                            onChange={(v) => setLine(i, 'igv_code', v)}
+                                            groups={IGV_GROUPS}
+                                            dropdownWidth="310px"
+                                        />
+                                    </div>
                                     <input
                                         type="number"
                                         min="0"
