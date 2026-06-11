@@ -5,7 +5,6 @@ import {
     Barcode,
     Building2,
     CreditCard,
-    FilePlus2,
     GitBranch,
     FileSearch,
     FileText,
@@ -159,16 +158,6 @@ const adminSections: NavSidebarSection[] = [
                 title: 'Comprobantes',
                 icon: ReceiptText,
                 items: [
-                    {
-                        title: 'Emitir CPE',
-                        href: '/panel/ventas-facturas/crear',
-                        icon: FilePlus2,
-                    },
-                    {
-                        title: 'Todos los CPE',
-                        href: panelPath('ventas-facturas'),
-                        icon: ReceiptText,
-                    },
                     {
                         title: 'Logs SUNAT',
                         href: panelPath('sunat-logs'),
