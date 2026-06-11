@@ -456,18 +456,18 @@ export default function ComprobantesCreate({ sequences, orders, preOrderId }: Pr
                                 <AdminUnderlineSelect
                                     id="order_id"
                                     name="order_id"
-                                    value={orderId}
+                                    value={orderId || '__none__'}
                                     options={[
-                                        { value: '', label: '— Sin orden asociada —' },
+                                        { value: '__none__', label: '— Sin orden asociada —' },
                                         ...orders.map((o) => ({
                                             value: o.id,
                                             label: `${o.order_number} — ${o.currency} ${Number(o.grand_total).toFixed(2)}`,
                                         })),
                                     ]}
                                     onValueChange={(v) => {
-                                        setOrderId(v);
-                                        // Si se deselecciona la orden, limpiar líneas
-                                        if (!v) setLines([emptyLine()]);
+                                        const real = v === '__none__' ? '' : v;
+                                        setOrderId(real);
+                                        if (!real) setLines([emptyLine()]);
                                     }}
                                 />
                                 {orderId && (
