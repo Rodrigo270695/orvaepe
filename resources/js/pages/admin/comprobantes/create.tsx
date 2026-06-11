@@ -794,7 +794,7 @@ export default function ComprobantesCreate({ sequences, orders, preOrderId }: Pr
                             <button
                                 type="submit"
                                 disabled={submitting}
-                                className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#4A80B8] px-5 py-3 text-[13px] font-semibold text-white shadow-md transition hover:bg-[#4A80B8]/90 active:scale-[0.98] disabled:opacity-60"
+                                className="w-full cursor-pointer inline-flex items-center justify-center gap-2 rounded-xl bg-[#4A80B8] px-5 py-3 text-[13px] font-semibold text-white shadow-md transition hover:bg-[#4A80B8]/90 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
                             >
                                 {submitting ? (
                                     <><Loader2 className="size-4 animate-spin" />Emitiendo a SUNAT…</>

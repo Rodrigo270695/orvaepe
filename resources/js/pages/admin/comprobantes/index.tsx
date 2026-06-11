@@ -11,6 +11,8 @@ import {
 } from 'lucide-react';
 import * as React from 'react';
 
+import AdminUnderlineSelect from '@/components/admin/form/admin-underline-select';
+
 import { panelSectionTitle } from '@/config/admin-panel';
 import AppLayout from '@/layouts/app-layout';
 import { dashboard } from '@/routes';
@@ -118,30 +120,26 @@ export default function ComprobantesIndex({ invoices, filters }: Props) {
 
                     <div className="space-y-1 min-w-[160px]">
                         <label className={labelClass}>Tipo</label>
-                        <select
-                            value={type}
-                            onChange={(e) => setType(e.target.value)}
-                            className={`${inputClass} cursor-pointer`}
-                        >
-                            <option value="">Todos</option>
-                            {Object.entries(DOC_LABELS).map(([v, l]) => (
-                                <option key={v} value={v}>{l}</option>
-                            ))}
-                        </select>
+                        <AdminUnderlineSelect
+                            value={type || '__all__'}
+                            options={[
+                                { value: '__all__', label: 'Todos' },
+                                ...Object.entries(DOC_LABELS).map(([v, l]) => ({ value: v, label: l })),
+                            ]}
+                            onValueChange={(v) => setType(v === '__all__' ? '' : v)}
+                        />
                     </div>
 
                     <div className="space-y-1 min-w-[160px]">
                         <label className={labelClass}>Estado SUNAT</label>
-                        <select
-                            value={filing}
-                            onChange={(e) => setFiling(e.target.value)}
-                            className={`${inputClass} cursor-pointer`}
-                        >
-                            <option value="">Todos</option>
-                            {Object.entries(FILING_BADGE).map(([v, { label }]) => (
-                                <option key={v} value={v}>{label}</option>
-                            ))}
-                        </select>
+                        <AdminUnderlineSelect
+                            value={filing || '__all__'}
+                            options={[
+                                { value: '__all__', label: 'Todos' },
+                                ...Object.entries(FILING_BADGE).map(([v, { label }]) => ({ value: v, label })),
+                            ]}
+                            onValueChange={(v) => setFiling(v === '__all__' ? '' : v)}
+                        />
                     </div>
 
                     <button
@@ -180,7 +178,7 @@ export default function ComprobantesIndex({ invoices, filters }: Props) {
                                     return (
                                         <tr
                                             key={inv.id}
-                                            className="border-b border-border/30 last:border-0 hover:bg-[var(--o-amber)]/3 transition-colors cursor-pointer"
+                                            className="border-b border-border/30 last:border-0 hover:bg-(--o-amber)/3 transition-colors cursor-pointer"
                                             onClick={() => router.visit(`/panel/ventas-facturas/${inv.id}`)}
                                         >
                                             <td className="px-4 py-3 font-mono font-semibold text-[#4A80B8]">
