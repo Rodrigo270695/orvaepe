@@ -62,18 +62,20 @@ class VentasFacturasController extends Controller
             ->orderBy('serie')
             ->get(['id', 'document_type_code', 'serie', 'establishment_code', 'next_correlative']);
 
-        // Órdenes pagadas sin factura emitida (para pre-rellenar)
+        // Órdenes pagadas sin factura emitida (para pre-rellenar, no obligatorio)
         $orders = Order::query()
             ->where('status', Order::STATUS_PAID)
-            ->whereNotIn('id', Invoice::query()->select('order_id'))
+            ->whereNotIn('id', Invoice::query()->whereNotNull('order_id')->select('order_id'))
             ->with([
                 'user',
-                'lines' => fn ($q) => $q->select([
-                    'id', 'order_id',
-                    'product_name_snapshot', 'sku_name_snapshot',
-                    'quantity', 'unit_price',
-                    'tax_amount', 'line_total',
-                ]),
+                'lines' => fn ($q) => $q
+                    ->select([
+                        'id', 'order_id', 'catalog_sku_id',
+                        'product_name_snapshot', 'sku_name_snapshot',
+                        'quantity', 'unit_price',
+                        'tax_amount', 'line_total',
+                    ])
+                    ->with(['sku:id,igv_applies,tax_included']),
             ])
             ->orderByDesc('placed_at')
             ->limit(100)
@@ -90,7 +92,7 @@ class VentasFacturasController extends Controller
     {
         $data = $request->validate([
             'sequence_id'            => ['required', 'uuid', 'exists:invoice_document_sequences,id'],
-            'order_id'               => ['required', 'uuid', 'exists:orders,id'],
+            'order_id'               => ['nullable', 'uuid', 'exists:orders,id'],
             'issued_at'              => ['required', 'date'],
             'currency'               => ['required', 'in:PEN,USD'],
             'payment_type'           => ['required', 'in:Contado,Credito'],
@@ -142,7 +144,7 @@ class VentasFacturasController extends Controller
                 'sunat_serie'                   => $seq->serie,
                 'sunat_correlative'             => (string) $correlative,
                 'sunat_filing_status'           => Invoice::FILING_DRAFT,
-                'order_id'                      => $data['order_id'],
+                'order_id'                      => $data['order_id'] ?? null,
                 'user_id'                       => Auth::id(),
                 'status'                        => Invoice::STATUS_DRAFT,
                 'subtotal'                      => $subtotal,

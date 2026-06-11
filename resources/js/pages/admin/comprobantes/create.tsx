@@ -131,6 +131,11 @@ type Sequence = {
     next_correlative: number;
 };
 
+type OrderLineSku = {
+    igv_applies: boolean;
+    tax_included: boolean;
+};
+
 type OrderLine = {
     id: string;
     product_name_snapshot: string;
@@ -139,6 +144,7 @@ type OrderLine = {
     unit_price: string;
     tax_amount: string | null;
     line_total: string;
+    sku: OrderLineSku | null;
 };
 
 type OrderOption = {
@@ -188,7 +194,7 @@ export default function ComprobantesCreate({ sequences, orders, preOrderId }: Pr
 
     // ── Estado del formulario ────────────────────────────────────────────
     const [sequenceId, setSequenceId] = React.useState(sequences[0]?.id ?? '');
-    const [orderId, setOrderId] = React.useState(preOrderId ?? orders[0]?.id ?? '');
+    const [orderId, setOrderId] = React.useState(preOrderId ?? '');
     const [issuedAt, setIssuedAt] = React.useState(new Date().toISOString().slice(0, 10));
     const [currency, setCurrency] = React.useState('PEN');
     const [paymentType] = React.useState('Contado');
@@ -213,50 +219,50 @@ export default function ComprobantesCreate({ sequences, orders, preOrderId }: Pr
         label: `${s.document_type_code === '01' ? 'Factura' : s.document_type_code === '03' ? 'Boleta' : 'Nota'} ${s.serie} · correlativo ${s.next_correlative}`,
     }));
 
-    // ── Rellenar comprador + líneas desde la orden seleccionada ─────────
+    // ── Rellenar comprador + líneas cuando se selecciona una orden ──────
     React.useEffect(() => {
+        if (!orderId) return; // sin orden seleccionada: no hacer nada
+
         const order = orders.find((o) => o.id === orderId);
         if (!order) return;
 
         // Datos del comprador (desde billing_snapshot)
         const snap = order.billing_snapshot as Record<string, string> | null;
         if (snap) {
-            setBuyerName((snap.legal_name ?? snap.razon_social ?? '') as string);
-            setBuyerNumDoc((snap.ruc ?? snap.document_number ?? '') as string);
-            setBuyerAddress((snap.address ?? '') as string);
+            setBuyerName(snap.legal_name ?? snap.razon_social ?? '');
+            setBuyerNumDoc(snap.ruc ?? snap.document_number ?? '');
+            setBuyerAddress(snap.address ?? '');
             setBuyerTipoDoc(snap.ruc ? '6' : '1');
         }
         setCurrency(order.currency);
 
-        // Líneas del comprobante desde las líneas de la orden
+        // Líneas desde la orden
         if (order.lines && order.lines.length > 0) {
             const mapped: Line[] = order.lines.map((ol) => {
-                // Calcular precio unitario sin IGV
-                const lineTotal  = parseFloat(ol.line_total);
-                const taxAmount  = parseFloat(ol.tax_amount ?? '0');
-                const lineBase   = lineTotal - taxAmount;          // total s/IGV
-                const qty        = ol.quantity || 1;
-                const unitNoIgv  = lineBase > 0
-                    ? (lineBase / qty).toFixed(2)
-                    : parseFloat(ol.unit_price).toFixed(2);
+                const sku         = ol.sku;
+                // igv_applies del SKU; fallback: si hay tax_amount > 0 asumimos gravado
+                const igvApplies  = sku != null
+                    ? sku.igv_applies
+                    : parseFloat(ol.tax_amount ?? '0') > 0;
 
-                const hasIgv  = taxAmount > 0;
-                const taxRate = hasIgv
-                    ? (taxAmount / lineBase).toFixed(4)
-                    : '0';
+                // Si el precio del SKU ya incluye IGV, dividimos para obtener la base
+                const taxIncluded = sku != null ? sku.tax_included : false;
+                const rawPrice    = parseFloat(ol.unit_price);
+                const unitNoIgv   = igvApplies && taxIncluded
+                    ? (rawPrice / 1.18).toFixed(2)
+                    : rawPrice.toFixed(2);
 
-                const description = [
-                    ol.product_name_snapshot,
-                    ol.sku_name_snapshot,
-                ].filter(Boolean).join(' — ');
+                const description = [ol.product_name_snapshot, ol.sku_name_snapshot]
+                    .filter(Boolean)
+                    .join(' — ');
 
                 return {
                     description,
-                    quantity:     String(qty),
+                    quantity:     String(ol.quantity || 1),
                     unit_measure: 'ZZ',
                     unit_price:   unitNoIgv,
-                    tax_rate:     hasIgv ? taxRate : '0',
-                    igv_code:     hasIgv ? '10' : '30',
+                    tax_rate:     igvApplies ? String(IGV_RATE) : '0',
+                    igv_code:     igvApplies ? '10' : '30',
                     product_code: '',
                 };
             });
@@ -378,7 +384,7 @@ export default function ComprobantesCreate({ sequences, orders, preOrderId }: Pr
 
         router.post('/panel/ventas-facturas', {
             sequence_id: sequenceId,
-            order_id:    orderId,
+            order_id:    orderId || null,
             issued_at:   issuedAt,
             currency,
             payment_type: paymentType,
@@ -443,19 +449,32 @@ export default function ComprobantesCreate({ sequences, orders, preOrderId }: Pr
                             </div>
 
                             <div className="space-y-2">
-                                <AdminUnderlineLabel htmlFor="order_id" required>
+                                <AdminUnderlineLabel htmlFor="order_id">
                                     Orden de venta
+                                    <span className="ml-1 font-normal text-muted-foreground">(opcional)</span>
                                 </AdminUnderlineLabel>
                                 <AdminUnderlineSelect
                                     id="order_id"
                                     name="order_id"
                                     value={orderId}
-                                    options={orders.map((o) => ({
-                                        value: o.id,
-                                        label: `${o.order_number} — ${o.currency} ${Number(o.grand_total).toFixed(2)}`,
-                                    }))}
-                                    onValueChange={setOrderId}
+                                    options={[
+                                        { value: '', label: '— Sin orden asociada —' },
+                                        ...orders.map((o) => ({
+                                            value: o.id,
+                                            label: `${o.order_number} — ${o.currency} ${Number(o.grand_total).toFixed(2)}`,
+                                        })),
+                                    ]}
+                                    onValueChange={(v) => {
+                                        setOrderId(v);
+                                        // Si se deselecciona la orden, limpiar líneas
+                                        if (!v) setLines([emptyLine()]);
+                                    }}
                                 />
+                                {orderId && (
+                                    <p className="text-[10px] text-muted-foreground">
+                                        Líneas pre-cargadas desde la orden. Puedes editarlas.
+                                    </p>
+                                )}
                                 <InputError message={errors.order_id} />
                             </div>
 
