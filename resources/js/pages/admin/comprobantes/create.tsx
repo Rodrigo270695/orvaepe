@@ -131,6 +131,16 @@ type Sequence = {
     next_correlative: number;
 };
 
+type OrderLine = {
+    id: string;
+    product_name_snapshot: string;
+    sku_name_snapshot: string | null;
+    quantity: number;
+    unit_price: string;
+    tax_amount: string | null;
+    line_total: string;
+};
+
 type OrderOption = {
     id: string;
     order_number: string;
@@ -138,6 +148,7 @@ type OrderOption = {
     currency: string;
     placed_at: string;
     billing_snapshot: Record<string, unknown> | null;
+    lines: OrderLine[];
 };
 
 type Props = {
@@ -202,10 +213,12 @@ export default function ComprobantesCreate({ sequences, orders, preOrderId }: Pr
         label: `${s.document_type_code === '01' ? 'Factura' : s.document_type_code === '03' ? 'Boleta' : 'Nota'} ${s.serie} · correlativo ${s.next_correlative}`,
     }));
 
-    // ── Rellenar desde orden ─────────────────────────────────────────────
+    // ── Rellenar comprador + líneas desde la orden seleccionada ─────────
     React.useEffect(() => {
         const order = orders.find((o) => o.id === orderId);
         if (!order) return;
+
+        // Datos del comprador (desde billing_snapshot)
         const snap = order.billing_snapshot as Record<string, string> | null;
         if (snap) {
             setBuyerName((snap.legal_name ?? snap.razon_social ?? '') as string);
@@ -214,6 +227,41 @@ export default function ComprobantesCreate({ sequences, orders, preOrderId }: Pr
             setBuyerTipoDoc(snap.ruc ? '6' : '1');
         }
         setCurrency(order.currency);
+
+        // Líneas del comprobante desde las líneas de la orden
+        if (order.lines && order.lines.length > 0) {
+            const mapped: Line[] = order.lines.map((ol) => {
+                // Calcular precio unitario sin IGV
+                const lineTotal  = parseFloat(ol.line_total);
+                const taxAmount  = parseFloat(ol.tax_amount ?? '0');
+                const lineBase   = lineTotal - taxAmount;          // total s/IGV
+                const qty        = ol.quantity || 1;
+                const unitNoIgv  = lineBase > 0
+                    ? (lineBase / qty).toFixed(2)
+                    : parseFloat(ol.unit_price).toFixed(2);
+
+                const hasIgv  = taxAmount > 0;
+                const taxRate = hasIgv
+                    ? (taxAmount / lineBase).toFixed(4)
+                    : '0';
+
+                const description = [
+                    ol.product_name_snapshot,
+                    ol.sku_name_snapshot,
+                ].filter(Boolean).join(' — ');
+
+                return {
+                    description,
+                    quantity:     String(qty),
+                    unit_measure: 'ZZ',
+                    unit_price:   unitNoIgv,
+                    tax_rate:     hasIgv ? taxRate : '0',
+                    igv_code:     hasIgv ? '10' : '30',
+                    product_code: '',
+                };
+            });
+            setLines(mapped);
+        }
     }, [orderId, orders]);
 
     // ── Validación de longitud esperada según tipo de doc ────────────────
@@ -598,7 +646,6 @@ export default function ComprobantesCreate({ sequences, orders, preOrderId }: Pr
                                             value={line.unit_measure}
                                             onChange={(v) => setLine(i, 'unit_measure', v)}
                                             groups={UNIT_GROUPS}
-                                            dropdownWidth="300px"
                                         />
                                     </div>
 
@@ -618,7 +665,6 @@ export default function ComprobantesCreate({ sequences, orders, preOrderId }: Pr
                                             value={line.igv_code}
                                             onChange={(v) => setLine(i, 'igv_code', v)}
                                             groups={IGV_GROUPS}
-                                            dropdownWidth="310px"
                                         />
                                     </div>
                                     <input

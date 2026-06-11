@@ -31,8 +31,6 @@ type Props = {
     groups: CodeGroup[];
     disabled?: boolean;
     placeholder?: string;
-    /** Ancho del dropdown. Por defecto '260px'. */
-    dropdownWidth?: string;
 };
 
 // ── Colores ───────────────────────────────────────────────────────────────────
@@ -61,50 +59,59 @@ export function LineCodePicker({
     groups,
     disabled,
     placeholder = 'Selecciona…',
-    dropdownWidth = '280px',
 }: Props) {
     const selected = flatOptions(groups).find((o) => o.value === value);
-    const color = selected?.color ?? 'default';
+    const color    = selected?.color ?? 'default';
     const badgeCls = BADGE_COLORS[color];
 
     return (
         <SelectPrimitive.Root value={value} onValueChange={onChange} disabled={disabled}>
+            {/* ── Trigger ──────────────────────────────────────────────── */}
             <SelectPrimitive.Trigger
                 className={cn(
-                    'inline-flex h-8 min-w-0 max-w-full items-center gap-1.5 rounded-lg border px-2 py-1 text-[12px] font-medium shadow-none outline-none transition',
+                    'inline-flex h-8 w-full items-center gap-1.5 rounded-lg border px-2 py-1',
+                    'text-[12px] font-medium shadow-none outline-none transition',
                     'data-[state=open]:ring-1 data-[state=open]:ring-[#4A80B8]/40',
                     'disabled:cursor-not-allowed disabled:opacity-50',
                     badgeCls,
                 )}
             >
-                <span className="font-mono text-[11px] font-bold">{selected?.value ?? '—'}</span>
-                <span className="hidden truncate text-[11px] sm:inline">
+                <span className="shrink-0 font-mono text-[11px] font-bold">
+                    {selected?.value ?? '—'}
+                </span>
+                <span className="min-w-0 flex-1 truncate text-left text-[11px]">
                     {selected?.shortLabel ?? selected?.label?.split('(')[0]?.trim() ?? placeholder}
                 </span>
                 <SelectPrimitive.Icon asChild>
-                    <ChevronDownIcon className="ml-auto size-3 shrink-0 opacity-60" />
+                    <ChevronDownIcon className="size-3 shrink-0 opacity-60" />
                 </SelectPrimitive.Icon>
             </SelectPrimitive.Trigger>
 
+            {/* ── Dropdown ─────────────────────────────────────────────── */}
             <SelectPrimitive.Portal>
                 <SelectPrimitive.Content
                     position="popper"
                     sideOffset={6}
                     align="start"
-                    style={{ width: dropdownWidth, zIndex: 9999 }}
+                    avoidCollisions
+                    collisionPadding={12}
                     className={cn(
+                        /* tamaño adaptable: mínimo 220px, máximo ancho de pantalla - 24px */
+                        'min-w-[220px] w-max max-w-[calc(100vw-24px)]',
                         'border-border/60 bg-popover text-popover-foreground',
-                        'z-50 rounded-xl border shadow-xl',
+                        'z-9999 rounded-xl border shadow-2xl',
                         'data-[state=open]:animate-in data-[state=closed]:animate-out',
                         'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
                         'data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
-                        'data-[side=bottom]:slide-in-from-top-2',
+                        'data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2',
                     )}
                 >
-                    <SelectPrimitive.Viewport className="p-1.5">
+                    {/* scroll si hay muchas opciones */}
+                    <SelectPrimitive.Viewport
+                        className="max-h-[min(380px,60vh)] overflow-y-auto overscroll-contain p-1.5"
+                    >
                         {groups.map((group, gi) => (
                             <SelectPrimitive.Group key={gi}>
-                                {/* Separador de grupo */}
                                 {gi > 0 && (
                                     <div className="mx-2 my-1 border-t border-border/40" />
                                 )}
@@ -119,16 +126,17 @@ export function LineCodePicker({
                                             key={opt.value}
                                             value={opt.value}
                                             className={cn(
-                                                'relative flex w-full cursor-pointer select-none items-center gap-2.5 rounded-lg px-2 py-2 text-[12px] outline-none',
-                                                'transition-colors',
+                                                'relative flex w-full cursor-pointer select-none items-center',
+                                                'gap-2.5 rounded-lg px-2 py-2 text-[12px] outline-none transition-colors',
                                                 'focus:bg-(--o-amber)/5 data-[state=checked]:bg-(--o-amber)/8',
                                                 'data-disabled:pointer-events-none data-disabled:opacity-40',
                                             )}
                                         >
-                                            {/* Badge del código */}
+                                            {/* Badge código */}
                                             <span
                                                 className={cn(
-                                                    'inline-flex w-10 shrink-0 items-center justify-center rounded-md border px-1.5 py-0.5 font-mono text-[10px] font-bold',
+                                                    'inline-flex w-10 shrink-0 items-center justify-center',
+                                                    'rounded-md border px-1.5 py-0.5 font-mono text-[10px] font-bold',
                                                     optBadge,
                                                 )}
                                             >
@@ -136,13 +144,13 @@ export function LineCodePicker({
                                             </span>
 
                                             {/* Descripción */}
-                                            <span className="flex-1 text-[12px] leading-tight text-foreground">
+                                            <span className="flex-1 text-[12px] leading-snug text-foreground">
                                                 {opt.label}
                                             </span>
 
-                                            {/* Check activo */}
+                                            {/* Check */}
                                             <SelectPrimitive.ItemIndicator>
-                                                <CheckIcon className="size-3.5 text-[#4A9A72]" />
+                                                <CheckIcon className="size-3.5 shrink-0 text-[#4A9A72]" />
                                             </SelectPrimitive.ItemIndicator>
                                         </SelectPrimitive.Item>
                                     );

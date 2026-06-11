@@ -66,7 +66,15 @@ class VentasFacturasController extends Controller
         $orders = Order::query()
             ->where('status', Order::STATUS_PAID)
             ->whereNotIn('id', Invoice::query()->select('order_id'))
-            ->with(['user', 'lines'])
+            ->with([
+                'user',
+                'lines' => fn ($q) => $q->select([
+                    'id', 'order_id',
+                    'product_name_snapshot', 'sku_name_snapshot',
+                    'quantity', 'unit_price',
+                    'tax_amount', 'line_total',
+                ]),
+            ])
             ->orderByDesc('placed_at')
             ->limit(100)
             ->get(['id', 'order_number', 'grand_total', 'currency', 'placed_at', 'user_id', 'billing_snapshot']);
