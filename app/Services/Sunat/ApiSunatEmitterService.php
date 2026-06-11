@@ -142,12 +142,12 @@ class ApiSunatEmitterService
         // Guardar log
         $attempt = $invoice->submissionLogs()->count() + 1;
         $invoice->submissionLogs()->create([
-            'attempt_number'      => $attempt,
-            'environment'         => $env,
-            'service_url'         => $url,
-            'was_successful'      => true,
-            'sunat_response_code' => '0',
-            'sunat_response_desc' => $json['message'] ?? 'OK',
+            'attempt'          => $attempt,
+            'channel'          => 'apisunat',
+            'http_status'      => 200,
+            'response_code'    => '0',
+            'response_message' => $json['message'] ?? 'Aceptado por API SUNAT',
+            'success'          => true,
         ]);
 
         return true;
@@ -158,6 +158,15 @@ class ApiSunatEmitterService
         $invoice->update([
             'sunat_filing_status'        => Invoice::FILING_ERROR,
             'sunat_response_description' => $message,
+        ]);
+
+        // Registrar el intento fallido en el log
+        $attempt = $invoice->submissionLogs()->count() + 1;
+        $invoice->submissionLogs()->create([
+            'attempt'          => $attempt,
+            'channel'          => 'apisunat',
+            'response_message' => $message,
+            'success'          => false,
         ]);
 
         Log::error('apisunat.fail', ['invoice' => $invoice->id, 'msg' => $message]);

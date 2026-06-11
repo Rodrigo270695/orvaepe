@@ -14,6 +14,8 @@ use App\Http\Controllers\Admin\OemLicenseDeliveriesController;
 use App\Http\Controllers\Admin\ShowcaseClientsController;
 use App\Http\Controllers\Admin\SubscriptionsController;
 use App\Http\Controllers\Admin\LookupDocumentController;
+use App\Http\Controllers\Admin\SunatBoletaResumenController;
+use App\Http\Controllers\Admin\SunatLogsController;
 use App\Http\Controllers\Admin\VentasFacturasController;
 use App\Http\Controllers\Admin\VentasPagosController;
 use App\Http\Controllers\Admin\WebhookEventsController;
@@ -525,6 +527,12 @@ Route::middleware(['auth', 'verified', 'client.profile.complete'])->group(functi
 
         Route::post('panel/ventas-facturas/{invoice}/reintentar', [VentasFacturasController::class, 'retry'])
             ->name('panel.ventas-facturas.retry');
+
+        Route::get('panel/sunat-logs', [SunatLogsController::class, 'index'])
+            ->name('panel.sunat-logs.index');
+
+        Route::get('panel/sunat-boleta-resumen', [SunatBoletaResumenController::class, 'index'])
+            ->name('panel.sunat-boleta-resumen.index');
 
         Route::get('panel/{section}', function (string $section) {
             return Inertia::render('admin/coming-soon/index', [
