@@ -35,6 +35,7 @@ type InvoiceLine = {
     id: string;
     description: string;
     quantity: string;
+    unit_measure_code: string | null;
     unit_price: string;
     tax_rate: string;
     line_total: string;
@@ -218,8 +219,9 @@ export default function ComprobantesShow({ invoice }: Props) {
                                 <tr>
                                     <th className={`${labelClass} py-2 text-left`}>Descripción</th>
                                     <th className={`${labelClass} py-2 text-right`}>Cant.</th>
-                                    <th className={`${labelClass} py-2 text-right`}>P. Unit.</th>
-                                    <th className={`${labelClass} py-2 text-right`}>Total</th>
+                                    <th className={`${labelClass} py-2 text-center`}>Unidad</th>
+                                    <th className={`${labelClass} py-2 text-right`}>P. Unit. s/IGV</th>
+                                    <th className={`${labelClass} py-2 text-right`}>Total c/IGV</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -227,6 +229,11 @@ export default function ComprobantesShow({ invoice }: Props) {
                                     <tr key={l.id} className="border-b border-border/20 last:border-0">
                                         <td className="py-2 pr-3">{l.description}</td>
                                         <td className="py-2 text-right text-muted-foreground">{Number(l.quantity).toFixed(2)}</td>
+                                        <td className="py-2 text-center">
+                                            <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px]">
+                                                {l.unit_measure_code ?? 'ZZ'}
+                                            </span>
+                                        </td>
                                         <td className="py-2 text-right text-muted-foreground">{Number(l.unit_price).toFixed(2)}</td>
                                         <td className="py-2 text-right font-medium">{Number(l.line_total).toFixed(2)}</td>
                                     </tr>

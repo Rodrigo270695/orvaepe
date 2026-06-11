@@ -97,6 +97,7 @@ class VentasFacturasController extends Controller
             'lines.*.tax_rate'       => ['required', 'numeric', 'min:0', 'max:1'],
             'lines.*.igv_code'       => ['required', 'string', 'max:10'],
             'lines.*.product_code'   => ['nullable', 'string', 'max:50'],
+            'lines.*.unit_measure'   => ['required', 'string', 'max:10'],
         ]);
 
         $profile = CompanyLegalProfile::query()->where('is_default_issuer', true)->first();
@@ -152,6 +153,7 @@ class VentasFacturasController extends Controller
                     'invoice_id'            => $invoice->id,
                     'description'           => $line['description'],
                     'quantity'              => $line['quantity'],
+                    'unit_measure_code'     => $line['unit_measure'] ?? 'ZZ',
                     'unit_price'            => $line['unit_price'],
                     'tax_rate'              => $line['tax_rate'],
                     'line_total'            => round($base + $igv, 2),

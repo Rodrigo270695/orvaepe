@@ -20,6 +20,7 @@ class InvoiceLine extends Model
         'invoice_id',
         'description',
         'quantity',
+        'unit_measure_code',
         'unit_price',
         'tax_rate',
         'line_total',

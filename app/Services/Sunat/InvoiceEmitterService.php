@@ -220,9 +220,11 @@ class InvoiceEmitterService
             $affCode   = $line->igv_affectation_code ?? '10';
             $lineIgv   = $affCode === '10' ? round($lineBase * $taxRate, 10) : 0.0;
 
+            $unitCode = $line->unit_measure_code ?? 'ZZ';
+
             $detail = (new SaleDetail())
                 ->setCodProducto($line->sunat_product_code ?? 'ZZ')
-                ->setUnidad('NIU')
+                ->setUnidad($unitCode)
                 ->setDescripcion($line->description)
                 ->setCantidad($qty)
                 ->setMtoValorUnitario($baseUnit)

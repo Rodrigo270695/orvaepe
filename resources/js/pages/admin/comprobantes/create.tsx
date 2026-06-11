@@ -38,6 +38,25 @@ const IGV_CODE_OPTIONS = [
     { value: '40', label: '40 – Exportación' },
 ];
 
+/**
+ * Catálogo 03 SUNAT — Unidades de medida (selección de los más usados en Perú).
+ * Ref: https://cpe.sunat.gob.pe/sites/default/files/inline-files/Catalogo%2003.pdf
+ */
+const UNIT_OPTIONS = [
+    { value: 'ZZ',  label: 'ZZ – Servicio (digital/intangible)' },
+    { value: 'NIU', label: 'NIU – Unidad' },
+    { value: 'KGM', label: 'KGM – Kilogramo' },
+    { value: 'MTR', label: 'MTR – Metro' },
+    { value: 'LTR', label: 'LTR – Litro' },
+    { value: 'GLL', label: 'GLL – Galón' },
+    { value: 'FOT', label: 'FOT – Pie' },
+    { value: 'INH', label: 'INH – Pulgada' },
+    { value: 'LBR', label: 'LBR – Libra' },
+    { value: 'ONZ', label: 'ONZ – Onza' },
+    { value: 'SET', label: 'SET – Juego' },
+    { value: 'KWH', label: 'KWH – Kilovatio hora' },
+];
+
 const CURRENCY_OPTIONS = [
     { value: 'PEN', label: 'PEN – Soles' },
     { value: 'USD', label: 'USD – Dólares' },
@@ -74,6 +93,7 @@ type Props = {
 type Line = {
     description: string;
     quantity: string;
+    unit_measure: string;
     unit_price: string;
     tax_rate: string;
     igv_code: string;
@@ -81,7 +101,15 @@ type Line = {
 };
 
 function emptyLine(): Line {
-    return { description: '', quantity: '1', unit_price: '0.00', tax_rate: String(IGV_RATE), igv_code: '10', product_code: '' };
+    return {
+        description: '',
+        quantity: '1',
+        unit_measure: 'ZZ',
+        unit_price: '0.00',
+        tax_rate: String(IGV_RATE),
+        igv_code: '10',
+        product_code: '',
+    };
 }
 
 export default function ComprobantesCreate({ sequences, orders, preOrderId }: Props) {
@@ -178,11 +206,12 @@ export default function ComprobantesCreate({ sequences, orders, preOrderId }: Pr
                 direccion:   buyerAddress,
             },
             lines: lines.map((l) => ({
-                description: l.description,
-                quantity:    l.quantity,
-                unit_price:  l.unit_price,
-                tax_rate:    l.tax_rate,
-                igv_code:    l.igv_code,
+                description:  l.description,
+                quantity:     l.quantity,
+                unit_measure: l.unit_measure,
+                unit_price:   l.unit_price,
+                tax_rate:     l.tax_rate,
+                igv_code:     l.igv_code,
                 product_code: l.product_code,
             })),
         }, {
@@ -346,14 +375,14 @@ export default function ComprobantesCreate({ sequences, orders, preOrderId }: Pr
 
                         <div className="space-y-3">
                             {/* Header de columnas */}
-                            <div className="hidden grid-cols-[2fr_1fr_1fr_1fr_1fr_auto] gap-2 md:grid">
-                                {['Descripción', 'Cantidad', 'P. Unit. (sin IGV)', 'Afectación', 'IGV %', ''].map((h, i) => (
+                            <div className="hidden grid-cols-[2.5fr_1fr_1fr_1fr_1fr_1fr_auto] gap-2 md:grid">
+                                {['Descripción', 'Cant.', 'Unidad (Cat.03)', 'P. Unit. s/IGV', 'Afectación IGV', 'IGV %', ''].map((h, i) => (
                                     <span key={i} className={labelClass}>{h}</span>
                                 ))}
                             </div>
 
                             {lines.map((line, i) => (
-                                <div key={i} className="grid grid-cols-1 gap-2 rounded-lg bg-(--o-amber)/3 p-3 md:grid-cols-[2fr_1fr_1fr_1fr_1fr_auto] md:items-center md:bg-transparent md:p-0">
+                                <div key={i} className="grid grid-cols-1 gap-2 rounded-lg bg-(--o-amber)/3 p-3 md:grid-cols-[2.5fr_1fr_1fr_1fr_1fr_1fr_auto] md:items-center md:bg-transparent md:p-0">
                                     <input
                                         value={line.description}
                                         onChange={(e) => setLine(i, 'description', e.target.value)}
@@ -369,6 +398,17 @@ export default function ComprobantesCreate({ sequences, orders, preOrderId }: Pr
                                         onChange={(e) => setLine(i, 'quantity', e.target.value)}
                                         className={inputClass}
                                     />
+                                    {/* Unidad de medida — Catálogo 03 SUNAT */}
+                                    <select
+                                        value={line.unit_measure}
+                                        onChange={(e) => setLine(i, 'unit_measure', e.target.value)}
+                                        className={`${inputClass} cursor-pointer`}
+                                        title="Catálogo 03 SUNAT — Unidades de medida"
+                                    >
+                                        {UNIT_OPTIONS.map((o) => (
+                                            <option key={o.value} value={o.value}>{o.label}</option>
+                                        ))}
+                                    </select>
                                     <input
                                         type="number"
                                         min="0"
