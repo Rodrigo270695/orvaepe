@@ -9,6 +9,8 @@ use App\Models\CompanyLegalProfile;
 use App\Models\DigitalCertificate;
 use App\Support\AdminFlashToast;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Storage;
 
 class DigitalCertificatesController extends Controller
 {
@@ -22,13 +24,22 @@ class DigitalCertificatesController extends Controller
                 ->with('toast', AdminFlashToast::error('Falta el perfil legal'));
         }
 
-        DigitalCertificate::create(array_merge(
-            $request->validated(),
-            [
-                'company_legal_profile_id' => $profile->id,
-                'is_active' => $request->boolean('is_active'),
-            ],
-        ));
+        $file = $request->file('certificate_file');
+        $path = $file->store('certs', 'local');
+
+        $passwordEnc = null;
+        if ($request->filled('certificate_password')) {
+            $passwordEnc = Crypt::encryptString($request->input('certificate_password'));
+        }
+
+        DigitalCertificate::create([
+            'company_legal_profile_id' => $profile->id,
+            'label'                    => $request->validated('label'),
+            'storage_disk'             => 'local',
+            'storage_path'             => $path,
+            'password_enc'             => $passwordEnc,
+            'is_active'                => $request->boolean('is_active'),
+        ]);
 
         return redirect('/panel/sunat-emisor')->with(
             'toast',
@@ -46,8 +57,26 @@ class DigitalCertificatesController extends Controller
             abort(404);
         }
 
-        $data = $request->validated();
-        $data['is_active'] = $request->boolean('is_active');
+        $data = [
+            'label'     => $request->validated('label') ?? $digital_certificate->label,
+            'is_active' => $request->boolean('is_active'),
+        ];
+
+        if ($request->hasFile('certificate_file')) {
+            // Borrar el archivo anterior y subir el nuevo
+            Storage::disk('local')->delete($digital_certificate->storage_path);
+
+            $file = $request->file('certificate_file');
+            $data['storage_path'] = $file->store('certs', 'local');
+            $data['storage_disk'] = 'local';
+        }
+
+        if ($request->has('certificate_password')) {
+            $pwd = $request->input('certificate_password');
+            $data['password_enc'] = $pwd !== null && $pwd !== ''
+                ? Crypt::encryptString($pwd)
+                : null;
+        }
 
         $digital_certificate->update($data);
 
@@ -65,6 +94,7 @@ class DigitalCertificatesController extends Controller
             abort(404);
         }
 
+        Storage::disk('local')->delete($digital_certificate->storage_path);
         $digital_certificate->delete();
 
         return redirect('/panel/sunat-emisor')->with(

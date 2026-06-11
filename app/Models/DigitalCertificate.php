@@ -28,6 +28,7 @@ class DigitalCertificate extends Model
         'valid_from',
         'valid_until',
         'is_active',
+        'password_enc',
     ])]
     protected $fillable = [
         'company_legal_profile_id',
@@ -40,12 +41,24 @@ class DigitalCertificate extends Model
         'valid_from',
         'valid_until',
         'is_active',
+        'password_enc',
     ];
+
+    /** Nunca exponer el cifrado al frontend. */
+    protected $hidden = ['password_enc'];
+
+    /** Indica si la contraseña del certificado está guardada. */
+    protected $appends = ['has_password'];
+
+    public function getHasPasswordAttribute(): bool
+    {
+        return !empty($this->attributes['password_enc']);
+    }
 
     protected function casts(): array
     {
         return [
-            'is_active' => 'boolean',
+            'is_active'  => 'boolean',
             'valid_from' => 'datetime',
             'valid_until' => 'datetime',
         ];

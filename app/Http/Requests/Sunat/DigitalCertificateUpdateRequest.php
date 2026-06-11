@@ -14,15 +14,18 @@ class DigitalCertificateUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'label' => ['sometimes', 'required', 'string', 'max:255'],
-            'storage_disk' => ['sometimes', 'required', 'string', 'max:50'],
-            'storage_path' => ['sometimes', 'required', 'string'],
-            'certificate_thumbprint' => ['nullable', 'string', 'max:255'],
-            'serial_number' => ['nullable', 'string', 'max:255'],
-            'issuer_cn' => ['nullable', 'string', 'max:255'],
-            'valid_from' => ['nullable', 'date'],
-            'valid_until' => ['nullable', 'date', 'after_or_equal:valid_from'],
-            'is_active' => ['nullable', 'boolean'],
+            'label'                => ['sometimes', 'required', 'string', 'max:255'],
+            'certificate_file'     => ['nullable', 'file', 'max:512'],
+            'certificate_password' => ['nullable', 'string', 'max:255'],
+            'is_active'            => ['nullable', 'boolean'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'certificate_file.file' => 'Debes subir un archivo válido.',
+            'certificate_file.max'  => 'El certificado no debe superar 512 KB.',
         ];
     }
 }

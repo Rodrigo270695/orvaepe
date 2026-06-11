@@ -3,6 +3,8 @@ import { ListOrdered, Plus, Save, Trash2 } from 'lucide-react';
 import * as React from 'react';
 
 import AdminCrudDeleteModal from '@/components/admin/crud/AdminCrudDeleteModal';
+import AdminUnderlineLabel from '@/components/admin/form/admin-underline-label';
+import AdminUnderlineSelect from '@/components/admin/form/admin-underline-select';
 import InputError from '@/components/input-error';
 import RequiredFieldMark from '@/components/sunat/emisor/RequiredFieldMark';
 import type {
@@ -24,14 +26,62 @@ const inputClass =
 const insetCardClass =
     'neumorph-inset overflow-x-auto rounded-xl border border-border/60 p-4 md:p-5';
 
+/** Tipos de comprobantes SUNAT (Tabla 10 CPE) */
+const SUNAT_DOC_TYPES = [
+    { value: '01', label: '01 – Factura' },
+    { value: '03', label: '03 – Boleta de Venta' },
+    { value: '07', label: '07 – Nota de Crédito' },
+    { value: '08', label: '08 – Nota de Débito' },
+    { value: '09', label: '09 – Guía de Remisión (Remitente)' },
+    { value: '12', label: '12 – Ticket de Máquina Registradora' },
+    { value: '20', label: '20 – Comprobante de Retención' },
+    { value: '31', label: '31 – Guía de Remisión (Transportista)' },
+    { value: '40', label: '40 – Comprobante de Percepción' },
+    { value: 'RC', label: 'RC – Resumen Diario de Boletas' },
+    { value: 'RA', label: 'RA – Resumen de Reversiones' },
+];
+
+/** Prefijo de serie recomendado por tipo SUNAT */
+const SERIE_PREFIX: Record<string, string> = {
+    '01': 'F',
+    '03': 'B',
+    '07': 'FC',
+    '08': 'FD',
+    '09': 'T',
+    '12': 'TK',
+    '20': 'R',
+    '31': 'V',
+    '40': 'P',
+    'RC': 'RC',
+    'RA': 'RA',
+};
+
+/** Descripción breve del formato de serie por tipo */
+const SERIE_HINT: Record<string, string> = {
+    '01': 'Ej. F001 (letra F + 3 dígitos)',
+    '03': 'Ej. B001 (letra B + 3 dígitos)',
+    '07': 'Ej. FC01 (crédito de factura) o BC01 (crédito de boleta)',
+    '08': 'Ej. FD01 (débito de factura) o BD01 (débito de boleta)',
+    '09': 'Ej. T001 (letra T + 3 dígitos)',
+    '12': 'Ej. TK01',
+    '20': 'Ej. R001',
+    '31': 'Ej. V001',
+    '40': 'Ej. P001',
+    'RC': 'Ej. RC01',
+    'RA': 'Ej. RA01',
+};
+
+function docTypeLabel(code: string): string {
+    return SUNAT_DOC_TYPES.find((d) => d.value === code)?.label ?? code;
+}
+
 type Props = {
     profile: CompanyLegalProfileLoaded | null;
 };
 
 function SequenceRow({ row }: { row: InvoiceDocumentSequenceRow }) {
     const [deleteOpen, setDeleteOpen] = React.useState(false);
-    const destroyAction =
-        panel.sunatEmisor.invoiceSequences.destroy.url(row.id);
+    const destroyAction = panel.sunatEmisor.invoiceSequences.destroy.url(row.id);
 
     return (
         <div className={insetCardClass}>
@@ -40,7 +90,7 @@ function SequenceRow({ row }: { row: InvoiceDocumentSequenceRow }) {
                 onOpenChange={setDeleteOpen}
                 title="Eliminar secuencia"
                 description="Se eliminará esta fila de numeración. No borra comprobantes ya emitidos en SUNAT."
-                entityLabel={`${row.document_type_code} · ${row.serie} · Est. ${row.establishment_code}`}
+                entityLabel={`${docTypeLabel(row.document_type_code)} · ${row.serie} · Est. ${row.establishment_code}`}
                 action={destroyAction}
                 method="post"
                 methodOverride="delete"
@@ -51,7 +101,7 @@ function SequenceRow({ row }: { row: InvoiceDocumentSequenceRow }) {
                 <div className="flex min-w-0 flex-1 items-center gap-2">
                     <ListOrdered className="size-4 shrink-0 text-[#D28C3C]" />
                     <span className="truncate font-mono text-sm font-semibold">
-                        {row.document_type_code} · {row.serie} · Est.{' '}
+                        {docTypeLabel(row.document_type_code)} · {row.serie} · Est.{' '}
                         {row.establishment_code}
                     </span>
                     {row.is_active ? (
@@ -83,19 +133,18 @@ function SequenceRow({ row }: { row: InvoiceDocumentSequenceRow }) {
                     <>
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                             <div className="space-y-1.5">
-                                <Label htmlFor={`s-${row.id}-tipo`} className={labelClass}>
+                                <AdminUnderlineLabel htmlFor={`s-${row.id}-tipo`} required>
                                     Tipo doc.
-                                    <RequiredFieldMark />
-                                </Label>
-                                <Input
+                                </AdminUnderlineLabel>
+                                <AdminUnderlineSelect
                                     id={`s-${row.id}-tipo`}
                                     name="document_type_code"
                                     defaultValue={row.document_type_code}
-                                    required
-                                    className={inputClass}
+                                    options={SUNAT_DOC_TYPES}
                                 />
                                 <InputError message={errors.document_type_code} />
                             </div>
+
                             <div className="space-y-1.5">
                                 <Label htmlFor={`s-${row.id}-serie`} className={labelClass}>
                                     Serie
@@ -106,10 +155,12 @@ function SequenceRow({ row }: { row: InvoiceDocumentSequenceRow }) {
                                     name="serie"
                                     defaultValue={row.serie}
                                     required
+                                    placeholder="F001"
                                     className={inputClass}
                                 />
                                 <InputError message={errors.serie} />
                             </div>
+
                             <div className="space-y-1.5">
                                 <Label htmlFor={`s-${row.id}-est`} className={labelClass}>
                                     Establecimiento
@@ -120,10 +171,12 @@ function SequenceRow({ row }: { row: InvoiceDocumentSequenceRow }) {
                                     name="establishment_code"
                                     defaultValue={row.establishment_code}
                                     required
+                                    placeholder="001"
                                     className={inputClass}
                                 />
                                 <InputError message={errors.establishment_code} />
                             </div>
+
                             <div className="space-y-1.5">
                                 <Label htmlFor={`s-${row.id}-next`} className={labelClass}>
                                     Siguiente correlativo
@@ -214,6 +267,17 @@ function AddSequenceForm({
     onCancel?: () => void;
     showCancel?: boolean;
 }) {
+    const [selectedType, setSelectedType] = React.useState('01');
+    const [serie, setSerie] = React.useState('F001');
+
+    function handleTypeChange(type: string) {
+        setSelectedType(type);
+        const prefix = SERIE_PREFIX[type] ?? '';
+        setSerie(prefix + '001');
+    }
+
+    const hint = SERIE_HINT[selectedType];
+
     return (
         <div className={insetCardClass}>
             <div className="mb-4 flex items-center gap-2">
@@ -230,19 +294,19 @@ function AddSequenceForm({
                     <>
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                             <div className="space-y-1.5">
-                                <Label htmlFor="new-s-tipo" className={labelClass}>
+                                <AdminUnderlineLabel htmlFor="new-s-tipo" required>
                                     Tipo doc.
-                                    <RequiredFieldMark />
-                                </Label>
-                                <Input
+                                </AdminUnderlineLabel>
+                                <AdminUnderlineSelect
                                     id="new-s-tipo"
                                     name="document_type_code"
-                                    required
-                                    placeholder="01"
-                                    className={inputClass}
+                                    value={selectedType}
+                                    options={SUNAT_DOC_TYPES}
+                                    onValueChange={handleTypeChange}
                                 />
                                 <InputError message={errors.document_type_code} />
                             </div>
+
                             <div className="space-y-1.5">
                                 <Label htmlFor="new-s-serie" className={labelClass}>
                                     Serie
@@ -252,11 +316,16 @@ function AddSequenceForm({
                                     id="new-s-serie"
                                     name="serie"
                                     required
-                                    placeholder="F001"
+                                    value={serie}
+                                    onChange={(e) => setSerie(e.target.value)}
                                     className={inputClass}
                                 />
+                                {hint && (
+                                    <p className="text-[10px] text-muted-foreground">{hint}</p>
+                                )}
                                 <InputError message={errors.serie} />
                             </div>
+
                             <div className="space-y-1.5">
                                 <Label htmlFor="new-s-est" className={labelClass}>
                                     Establecimiento
@@ -266,11 +335,13 @@ function AddSequenceForm({
                                     id="new-s-est"
                                     name="establishment_code"
                                     required
+                                    defaultValue="001"
                                     placeholder="001"
                                     className={inputClass}
                                 />
                                 <InputError message={errors.establishment_code} />
                             </div>
+
                             <div className="space-y-1.5">
                                 <Label htmlFor="new-s-next" className={labelClass}>
                                     Siguiente correlativo
@@ -292,7 +363,7 @@ function AddSequenceForm({
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                             <div className="space-y-1.5">
                                 <Label htmlFor="new-s-from" className={labelClass}>
-                                    Rango desde
+                                    Rango desde (opcional)
                                 </Label>
                                 <Input
                                     id="new-s-from"
@@ -305,7 +376,7 @@ function AddSequenceForm({
                             </div>
                             <div className="space-y-1.5">
                                 <Label htmlFor="new-s-to" className={labelClass}>
-                                    Rango hasta
+                                    Rango hasta (opcional)
                                 </Label>
                                 <Input
                                     id="new-s-to"
@@ -387,9 +458,8 @@ export default function EmisorInvoiceSequencesPanel({ profile }: Props) {
             <header>
                 <h2 className="text-sm font-semibold">Secuencias documentarias</h2>
                 <p className="mt-1 text-[11px] text-muted-foreground">
-                    Tipo SUNAT (01 factura, 03 boleta…), serie, establecimiento y
-                    siguiente correlativo. El incremento al emitir debe ser
-                    transaccional.
+                    Define una secuencia por cada tipo de comprobante y serie que emitirás.
+                    El correlativo se incrementa automáticamente al emitir.
                 </p>
             </header>
 

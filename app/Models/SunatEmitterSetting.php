@@ -23,6 +23,8 @@ class SunatEmitterSetting extends Model
         'ose_provider_code',
         'api_base_url',
         'sunat_username_hint',
+        'sol_username',
+        'sol_password_enc',
         'credentials_secret_ref',
         'default_certificate_id',
         'environment',
@@ -35,6 +37,8 @@ class SunatEmitterSetting extends Model
         'ose_provider_code',
         'api_base_url',
         'sunat_username_hint',
+        'sol_username',
+        'sol_password_enc',
         'credentials_secret_ref',
         'default_certificate_id',
         'environment',
@@ -42,11 +46,21 @@ class SunatEmitterSetting extends Model
         'is_active',
     ];
 
+    /** Nunca exponer las contraseñas cifradas al frontend. */
+    protected $hidden = ['sol_password_enc'];
+
+    protected $appends = ['has_sol_password'];
+
+    public function getHasSolPasswordAttribute(): bool
+    {
+        return !empty($this->attributes['sol_password_enc']);
+    }
+
     protected function casts(): array
     {
         return [
             'is_active' => 'boolean',
-            'options' => 'array',
+            'options'   => 'array',
         ];
     }
 

@@ -9,6 +9,7 @@ use App\Models\DigitalCertificate;
 use App\Models\SunatEmitterSetting;
 use App\Support\AdminFlashToast;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Crypt;
 
 class SunatEmitterSettingsController extends Controller
 {
@@ -22,11 +23,9 @@ class SunatEmitterSettingsController extends Controller
                 ->with('toast', AdminFlashToast::error('Falta el perfil legal'));
         }
 
-        $data = $request->validated();
-
-        if (!empty($data['default_certificate_id'])) {
+        if (!empty($request->validated('default_certificate_id'))) {
             $belongs = DigitalCertificate::query()
-                ->where('id', $data['default_certificate_id'])
+                ->where('id', $request->validated('default_certificate_id'))
                 ->where('company_legal_profile_id', $profile->id)
                 ->exists();
 
@@ -37,11 +36,34 @@ class SunatEmitterSettingsController extends Controller
             }
         }
 
-        $data['is_active'] = $request->boolean('is_active');
+        $existing = SunatEmitterSetting::query()
+            ->where('company_legal_profile_id', $profile->id)
+            ->first();
+
+        $data = [
+            'company_legal_profile_id' => $profile->id,
+            'emission_mode'            => $request->validated('emission_mode'),
+            'environment'              => $request->validated('environment'),
+            'ose_provider_code'        => $request->validated('ose_provider_code'),
+            'api_base_url'             => $request->validated('api_base_url'),
+            'sol_username'             => $request->validated('sol_username'),
+            'default_certificate_id'   => $request->validated('default_certificate_id'),
+            'is_active'                => $request->boolean('is_active'),
+        ];
+
+        // Cifrar clave SOL solo si se envió un valor nuevo
+        $solPassword = $request->input('sol_password');
+        if ($solPassword !== null && $solPassword !== '') {
+            $data['sol_password_enc'] = Crypt::encryptString($solPassword);
+        } elseif ($solPassword === '' && $existing) {
+            // El usuario borró la clave: limpiar
+            $data['sol_password_enc'] = null;
+        }
+        // Si no se envió el campo (null), conservar el valor existente
 
         SunatEmitterSetting::updateOrCreate(
             ['company_legal_profile_id' => $profile->id],
-            array_merge($data, ['company_legal_profile_id' => $profile->id]),
+            $data,
         );
 
         return redirect('/panel/sunat-emisor')->with(

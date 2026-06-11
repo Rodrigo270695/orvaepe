@@ -23,14 +23,26 @@ class SunatEmitterSettingsUpsertRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'emission_mode' => ['required', Rule::in(['sunat_direct', 'ose', 'pse'])],
-            'ose_provider_code' => ['nullable', 'string', 'max:100'],
-            'api_base_url' => ['nullable', 'string'],
-            'sunat_username_hint' => ['nullable', 'string', 'max:32'],
-            'credentials_secret_ref' => ['nullable', 'string', 'max:255'],
+            'emission_mode'          => ['required', Rule::in(['sunat_direct', 'ose', 'pse'])],
+            'environment'            => ['required', Rule::in(['beta', 'production'])],
+
+            // Credenciales SUNAT directa
+            'sol_username'           => ['nullable', 'string', 'max:100'],
+            'sol_password'           => ['nullable', 'string', 'max:255'],
+
+            // Credenciales OSE / PSE
+            'ose_provider_code'      => ['nullable', 'string', 'max:100'],
+            'api_base_url'           => ['nullable', 'string', 'url'],
+
             'default_certificate_id' => ['nullable', 'uuid', 'exists:digital_certificates,id'],
-            'environment' => ['required', Rule::in(['beta', 'production'])],
-            'is_active' => ['nullable', 'boolean'],
+            'is_active'              => ['nullable', 'boolean'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'api_base_url.url' => 'La URL base debe ser una URL válida (https://…).',
         ];
     }
 }

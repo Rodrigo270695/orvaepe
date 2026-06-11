@@ -1,5 +1,5 @@
 import { Form } from '@inertiajs/react';
-import { BadgeCheck, Plus, Save, Trash2 } from 'lucide-react';
+import { BadgeCheck, FileKey2, KeyRound, Plus, Save, Trash2, Upload } from 'lucide-react';
 import * as React from 'react';
 
 import AdminCrudDeleteModal from '@/components/admin/crud/AdminCrudDeleteModal';
@@ -21,26 +21,24 @@ const labelClass =
 const inputClass =
     'w-full border-0 border-b border-[var(--o-border2)] bg-transparent rounded-none shadow-none py-2.5 pl-1 pr-2 font-[family-name:var(--font-body)] text-[13px] text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:border-[var(--o-amber)]/60 focus-visible:ring-0';
 
+const fileInputClass =
+    'w-full border-0 border-b border-[var(--o-border2)] bg-transparent rounded-none shadow-none py-2 pl-1 pr-2 font-[family-name:var(--font-body)] text-[13px] text-[var(--foreground)] file:mr-3 file:rounded file:border-0 file:bg-[var(--o-amber)]/10 file:px-2 file:py-1 file:text-[11px] file:text-[var(--o-amber)] file:cursor-pointer focus:outline-none focus-visible:ring-0';
+
 const insetCardClass =
     'neumorph-inset overflow-x-auto rounded-xl border border-border/60 p-4 md:p-5';
 
-function isoToDate(iso: string | null): string {
-    if (!iso) return '';
-    return iso.slice(0, 10);
+/** Extrae solo el nombre de archivo de una ruta de almacenamiento. */
+function basename(path: string): string {
+    return path.split('/').pop() ?? path;
 }
 
 type Props = {
     profile: CompanyLegalProfileLoaded | null;
 };
 
-function CertificateRow({
-    cert,
-}: {
-    cert: DigitalCertificateRow;
-}) {
+function CertificateRow({ cert }: { cert: DigitalCertificateRow }) {
     const [deleteOpen, setDeleteOpen] = React.useState(false);
-    const destroyAction =
-        panel.sunatEmisor.digitalCertificates.destroy.url(cert.id);
+    const destroyAction = panel.sunatEmisor.digitalCertificates.destroy.url(cert.id);
 
     return (
         <div className={insetCardClass}>
@@ -48,7 +46,7 @@ function CertificateRow({
                 open={deleteOpen}
                 onOpenChange={setDeleteOpen}
                 title="Eliminar certificado"
-                description="Se quitará la referencia en base de datos. El archivo en disco no se borra automáticamente."
+                description="Se eliminará el archivo del disco y la referencia en base de datos."
                 entityLabel={cert.label}
                 action={destroyAction}
                 method="post"
@@ -59,9 +57,7 @@ function CertificateRow({
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                 <div className="flex min-w-0 flex-1 items-center gap-2">
                     <BadgeCheck className="size-4 shrink-0 text-[#D28C3C]" />
-                    <span className="truncate text-sm font-semibold">
-                        {cert.label}
-                    </span>
+                    <span className="truncate text-sm font-semibold">{cert.label}</span>
                     {cert.is_active ? (
                         <span className="shrink-0 rounded-full bg-[#4A9A72]/12 px-2 py-0.5 text-[10px] text-[#4A9A72]">
                             Activo
@@ -82,129 +78,79 @@ function CertificateRow({
                 </NeuButtonInset>
             </div>
 
-            <Form
-                {...panel.sunatEmisor.digitalCertificates.update.form.patch(
-                    cert.id,
+            {/* Info del archivo actual */}
+            <div className="mb-4 flex items-center gap-2 rounded-lg bg-(--o-amber)/5 px-3 py-2 text-[11px] text-muted-foreground">
+                <FileKey2 className="size-3.5 shrink-0 text-[#D28C3C]" />
+                <span>
+                    Archivo actual:{' '}
+                    <code className="font-mono text-foreground">{basename(cert.storage_path)}</code>
+                </span>
+                {cert.has_password && (
+                    <span className="ml-2 flex items-center gap-1 text-[#4A9A72]">
+                        <KeyRound className="size-3" />
+                        contraseña guardada
+                    </span>
                 )}
+            </div>
+
+            <Form
+                {...panel.sunatEmisor.digitalCertificates.update.form.patch(cert.id)}
                 options={{ preserveScroll: true }}
                 className="space-y-4"
             >
                 {({ processing, errors }) => (
                     <>
-                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                            <div className="space-y-1.5">
-                                <Label htmlFor={`c-${cert.id}-label`} className={labelClass}>
-                                    Etiqueta
-                                    <RequiredFieldMark />
-                                </Label>
-                                <Input
-                                    id={`c-${cert.id}-label`}
-                                    name="label"
-                                    defaultValue={cert.label}
-                                    required
-                                    className={inputClass}
-                                />
-                                <InputError message={errors.label} />
-                            </div>
-                            <div className="space-y-1.5">
-                                <Label htmlFor={`c-${cert.id}-disk`} className={labelClass}>
-                                    Disco
-                                    <RequiredFieldMark />
-                                </Label>
-                                <Input
-                                    id={`c-${cert.id}-disk`}
-                                    name="storage_disk"
-                                    defaultValue={cert.storage_disk}
-                                    required
-                                    placeholder="local, s3…"
-                                    className={inputClass}
-                                />
-                                <InputError message={errors.storage_disk} />
-                            </div>
-                        </div>
-
                         <div className="space-y-1.5">
-                            <Label htmlFor={`c-${cert.id}-path`} className={labelClass}>
-                                Ruta al certificado
+                            <Label htmlFor={`c-${cert.id}-label`} className={labelClass}>
+                                Etiqueta
                                 <RequiredFieldMark />
                             </Label>
                             <Input
-                                id={`c-${cert.id}-path`}
-                                name="storage_path"
-                                defaultValue={cert.storage_path}
+                                id={`c-${cert.id}-label`}
+                                name="label"
+                                defaultValue={cert.label}
                                 required
                                 className={inputClass}
                             />
-                            <InputError message={errors.storage_path} />
-                        </div>
-
-                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                            <div className="space-y-1.5">
-                                <Label htmlFor={`c-${cert.id}-thumb`} className={labelClass}>
-                                    Huella (SHA)
-                                </Label>
-                                <Input
-                                    id={`c-${cert.id}-thumb`}
-                                    name="certificate_thumbprint"
-                                    defaultValue={cert.certificate_thumbprint ?? ''}
-                                    className={inputClass}
-                                />
-                                <InputError message={errors.certificate_thumbprint} />
-                            </div>
-                            <div className="space-y-1.5">
-                                <Label htmlFor={`c-${cert.id}-serial`} className={labelClass}>
-                                    N.º serie
-                                </Label>
-                                <Input
-                                    id={`c-${cert.id}-serial`}
-                                    name="serial_number"
-                                    defaultValue={cert.serial_number ?? ''}
-                                    className={inputClass}
-                                />
-                                <InputError message={errors.serial_number} />
-                            </div>
+                            <InputError message={errors.label} />
                         </div>
 
                         <div className="space-y-1.5">
-                            <Label htmlFor={`c-${cert.id}-issuer`} className={labelClass}>
-                                Emisor CN
+                            <Label htmlFor={`c-${cert.id}-file`} className={labelClass}>
+                                Reemplazar certificado (.p12 / .pfx)
+                                <span className="ml-1 text-muted-foreground">(opcional)</span>
                             </Label>
-                            <Input
-                                id={`c-${cert.id}-issuer`}
-                                name="issuer_cn"
-                                defaultValue={cert.issuer_cn ?? ''}
-                                className={inputClass}
-                            />
-                            <InputError message={errors.issuer_cn} />
+                            <div className="relative">
+                                <Upload className="absolute left-1 top-1/2 size-3.5 -translate-y-1/2 text-[#D28C3C]" />
+                                <input
+                                    id={`c-${cert.id}-file`}
+                                    name="certificate_file"
+                                    type="file"
+                                    accept=".p12,.pfx"
+                                    className={`${fileInputClass} pl-7`}
+                                />
+                            </div>
+                            <InputError message={errors.certificate_file} />
                         </div>
 
-                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                            <div className="space-y-1.5">
-                                <Label htmlFor={`c-${cert.id}-vf`} className={labelClass}>
-                                    Válido desde
-                                </Label>
+                        <div className="space-y-1.5">
+                            <Label htmlFor={`c-${cert.id}-pwd`} className={labelClass}>
+                                {cert.has_password
+                                    ? 'Nueva contraseña del certificado (dejar vacío para conservar)'
+                                    : 'Contraseña del certificado (opcional)'}
+                            </Label>
+                            <div className="relative">
+                                <KeyRound className="absolute left-1 top-1/2 size-3.5 -translate-y-1/2 text-[#D28C3C]" />
                                 <Input
-                                    id={`c-${cert.id}-vf`}
-                                    name="valid_from"
-                                    type="date"
-                                    defaultValue={isoToDate(cert.valid_from)}
-                                    className={inputClass}
+                                    id={`c-${cert.id}-pwd`}
+                                    name="certificate_password"
+                                    type="password"
+                                    autoComplete="new-password"
+                                    placeholder={cert.has_password ? '••••••••' : 'Sin contraseña'}
+                                    className={`${inputClass} pl-7`}
                                 />
-                                <InputError message={errors.valid_from} />
                             </div>
-                            <div className="space-y-1.5">
-                                <Label htmlFor={`c-${cert.id}-vu`} className={labelClass}>
-                                    Válido hasta
-                                </Label>
-                                <Input
-                                    id={`c-${cert.id}-vu`}
-                                    name="valid_until"
-                                    type="date"
-                                    defaultValue={isoToDate(cert.valid_until)}
-                                    className={inputClass}
-                                />
-                                <InputError message={errors.valid_until} />
-                            </div>
+                            <InputError message={errors.certificate_password} />
                         </div>
 
                         <div className="flex items-center gap-3">
@@ -262,75 +208,63 @@ function AddCertificateForm({
             >
                 {({ processing, errors }) => (
                     <>
-                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                            <div className="space-y-1.5">
-                                <Label htmlFor="new-c-label" className={labelClass}>
-                                    Etiqueta
-                                    <RequiredFieldMark />
-                                </Label>
-                                <Input
-                                    id="new-c-label"
-                                    name="label"
-                                    required
-                                    placeholder="Ej. SUNAT 2026"
-                                    className={inputClass}
-                                />
-                                <InputError message={errors.label} />
-                            </div>
-                            <div className="space-y-1.5">
-                                <Label htmlFor="new-c-disk" className={labelClass}>
-                                    Disco
-                                    <RequiredFieldMark />
-                                </Label>
-                                <Input
-                                    id="new-c-disk"
-                                    name="storage_disk"
-                                    defaultValue="local"
-                                    required
-                                    className={inputClass}
-                                />
-                                <InputError message={errors.storage_disk} />
-                            </div>
-                        </div>
-
                         <div className="space-y-1.5">
-                            <Label htmlFor="new-c-path" className={labelClass}>
-                                Ruta al certificado
+                            <Label htmlFor="new-c-label" className={labelClass}>
+                                Etiqueta
                                 <RequiredFieldMark />
                             </Label>
                             <Input
-                                id="new-c-path"
-                                name="storage_path"
+                                id="new-c-label"
+                                name="label"
                                 required
-                                placeholder="certificate/certificado.p12"
+                                placeholder="Ej. CDT SUNAT 2026"
                                 className={inputClass}
                             />
-                            <InputError message={errors.storage_path} />
+                            <InputError message={errors.label} />
                         </div>
 
-                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                            <div className="space-y-1.5">
-                                <Label htmlFor="new-c-thumb" className={labelClass}>
-                                    Huella (opcional)
-                                </Label>
-                                <Input
-                                    id="new-c-thumb"
-                                    name="certificate_thumbprint"
-                                    className={inputClass}
+                        <div className="space-y-1.5">
+                            <Label htmlFor="new-c-file" className={labelClass}>
+                                Archivo del certificado (.p12 / .pfx)
+                                <RequiredFieldMark />
+                            </Label>
+                            <div className="relative">
+                                <Upload className="absolute left-1 top-1/2 size-3.5 -translate-y-1/2 text-[#D28C3C]" />
+                                <input
+                                    id="new-c-file"
+                                    name="certificate_file"
+                                    type="file"
+                                    accept=".p12,.pfx"
+                                    required
+                                    className={`${fileInputClass} pl-7`}
                                 />
-                                <InputError message={errors.certificate_thumbprint} />
                             </div>
-                            <div className="space-y-1.5">
-                                <Label htmlFor="new-c-serial" className={labelClass}>
-                                    N.º serie (opcional)
-                                </Label>
+                            <p className="text-[10px] text-muted-foreground">
+                                El archivo se almacena de forma privada en el servidor (no es público).
+                            </p>
+                            <InputError message={errors.certificate_file} />
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <Label htmlFor="new-c-pwd" className={labelClass}>
+                                Contraseña del certificado
+                                <span className="ml-1 text-muted-foreground">(si aplica)</span>
+                            </Label>
+                            <div className="relative">
+                                <KeyRound className="absolute left-1 top-1/2 size-3.5 -translate-y-1/2 text-[#D28C3C]" />
                                 <Input
-                                    id="new-c-serial"
-                                    name="serial_number"
-                                    className={inputClass}
+                                    id="new-c-pwd"
+                                    name="certificate_password"
+                                    type="password"
+                                    autoComplete="new-password"
+                                    placeholder="Contraseña con la que protegiste el .p12"
+                                    className={`${inputClass} pl-7`}
                                 />
-                                <InputError message={errors.serial_number} />
                             </div>
+                            <p className="text-[10px] text-muted-foreground">
+                                Se guarda cifrada con AES-256. Necesaria para firmar XMLs en tiempo de ejecución.
+                            </p>
+                            <InputError message={errors.certificate_password} />
                         </div>
 
                         <div className="flex items-center gap-3">
@@ -366,7 +300,7 @@ function AddCertificateForm({
                                 className="cursor-pointer"
                             >
                                 <Plus className="size-4 text-[#4A9A72]" />
-                                {processing ? 'Creando…' : 'Registrar certificado'}
+                                {processing ? 'Subiendo…' : 'Registrar certificado'}
                             </NeuButtonRaised>
                         </div>
                     </>
@@ -402,8 +336,8 @@ export default function EmisorCertificatesPanel({ profile }: Props) {
             <header>
                 <h2 className="text-sm font-semibold">Certificados digitales</h2>
                 <p className="mt-1 text-[11px] text-muted-foreground">
-                    Referencia al .pfx (u otro almacén) para firmar XML. La
-                    contraseña del certificado no se guarda en base de datos.
+                    Sube tu archivo .p12 (CDT gratuito de SUNAT u otro). La contraseña
+                    se cifra con AES-256 y nunca se expone al navegador.
                 </p>
             </header>
 
