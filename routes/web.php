@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\PlatformWhatsAppController;
 use App\Http\Controllers\Admin\OemLicenseDeliveriesController;
 use App\Http\Controllers\Admin\ShowcaseClientsController;
 use App\Http\Controllers\Admin\SubscriptionsController;
+use App\Http\Controllers\Admin\VentasFacturasController;
 use App\Http\Controllers\Admin\VentasPagosController;
 use App\Http\Controllers\Admin\WebhookEventsController;
 use App\Http\Controllers\Auth\GoogleAuthController;
@@ -501,6 +502,22 @@ Route::middleware(['auth', 'verified', 'client.profile.complete'])->group(functi
 
         Route::get('panel/informes-lineas', [InformesController::class, 'lineas'])
             ->name('panel.informes-lineas.index');
+
+        // ── Comprobantes electrónicos ────────────────────────────────────
+        Route::get('panel/ventas-facturas', [VentasFacturasController::class, 'index'])
+            ->name('panel.ventas-facturas.index');
+
+        Route::get('panel/ventas-facturas/crear', [VentasFacturasController::class, 'create'])
+            ->name('panel.ventas-facturas.create');
+
+        Route::post('panel/ventas-facturas', [VentasFacturasController::class, 'store'])
+            ->name('panel.ventas-facturas.store');
+
+        Route::get('panel/ventas-facturas/{invoice}', [VentasFacturasController::class, 'show'])
+            ->name('panel.ventas-facturas.show');
+
+        Route::post('panel/ventas-facturas/{invoice}/reintentar', [VentasFacturasController::class, 'retry'])
+            ->name('panel.ventas-facturas.retry');
 
         Route::get('panel/{section}', function (string $section) {
             return Inertia::render('admin/coming-soon/index', [

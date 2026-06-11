@@ -5,6 +5,7 @@ import {
     Barcode,
     Building2,
     CreditCard,
+    FilePlus2,
     GitBranch,
     FileSearch,
     FileText,
@@ -154,17 +155,22 @@ const adminSections: NavSidebarSection[] = [
         label: 'Emisión',
         groups: [
             {
-                id: 'nav-sunat',
-                title: 'SUNAT',
+                id: 'nav-cpe',
+                title: 'Comprobantes',
                 icon: ReceiptText,
                 items: [
                     {
-                        title: 'Emisión SUNAT',
-                        href: panelPath('sunat-emisor'),
-                        icon: Building2,
+                        title: 'Emitir CPE',
+                        href: '/panel/ventas-facturas/crear',
+                        icon: FilePlus2,
                     },
                     {
-                        title: 'Logs',
+                        title: 'Todos los CPE',
+                        href: panelPath('ventas-facturas'),
+                        icon: ReceiptText,
+                    },
+                    {
+                        title: 'Logs SUNAT',
                         href: panelPath('sunat-logs'),
                         icon: FileSearch,
                     },
@@ -172,6 +178,18 @@ const adminSections: NavSidebarSection[] = [
                         title: 'Resumen boletas',
                         href: panelPath('sunat-boleta-resumen'),
                         icon: Receipt,
+                    },
+                ],
+            },
+            {
+                id: 'nav-sunat',
+                title: 'SUNAT',
+                icon: Building2,
+                items: [
+                    {
+                        title: 'Config. emisor',
+                        href: panelPath('sunat-emisor'),
+                        icon: Building2,
                     },
                 ],
             },
