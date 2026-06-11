@@ -653,8 +653,8 @@ export default function ComprobantesCreate({ sequences, orders, preOrderId }: Pr
                                     />
                                     <input
                                         type="number"
-                                        min="0.0001"
-                                        step="0.01"
+                                        min="0.001"
+                                        step="any"
                                         value={line.quantity}
                                         onChange={(e) => setLine(i, 'quantity', e.target.value)}
                                         className={inputClass}
