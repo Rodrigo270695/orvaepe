@@ -1,4 +1,3 @@
-import React from 'react';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     BadgeCheck,
