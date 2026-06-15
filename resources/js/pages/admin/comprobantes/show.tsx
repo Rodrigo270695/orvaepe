@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import {
     BadgeCheck,
@@ -7,6 +7,7 @@ import {
     Clock,
     Download,
     FilePlus2,
+    Printer,
     RefreshCcw,
     ReceiptText,
     Trash2,
@@ -70,6 +71,7 @@ type Invoice = {
     status: string;
     xml_signed_path: string | null;
     cdr_path: string | null;
+    pdf_path: string | null;
     buyer_snapshot: { tipo_doc?: string; num_doc?: string; razon_social?: string; direccion?: string } | null;
     lines: InvoiceLine[];
     order: { order_number: string; id: string } | null;
@@ -254,7 +256,12 @@ export default function ComprobantesShow({ invoice }: Props) {
                         </table>
                     </div>
 
-                    {/* Archivos */}
+                    {/* PDF */}
+                    {invoice.pdf_path && (
+                        <PdfDownloadCard pdfTicketUrl={invoice.pdf_path} />
+                    )}
+
+                    {/* Archivos XML / CDR */}
                     {(invoice.xml_signed_path || invoice.cdr_path) && (
                         <div className={cardClass}>
                             <h2 className="mb-4 text-sm font-semibold">Archivos SUNAT</h2>
@@ -332,5 +339,47 @@ export default function ComprobantesShow({ invoice }: Props) {
                 entityLabel={invoice.invoice_number}
             />
         </AppLayout>
+    );
+}
+
+// ── Componente selector de formato PDF ───────────────────────────────────────
+
+type PdfFormat = { label: string; description: string; urlSegment: string; icon: string };
+
+const PDF_FORMATS: PdfFormat[] = [
+    { label: 'Ticket 80mm', description: 'Ticketera estándar',      urlSegment: 'ticket', icon: '🖨️' },
+    { label: 'A4',          description: 'Impresora hoja completa', urlSegment: 'a4',     icon: '📄' },
+];
+
+function PdfDownloadCard({ pdfTicketUrl }: { pdfTicketUrl: string }) {
+    function buildUrl(segment: string): string {
+        return pdfTicketUrl.replace(/\/pdf\/[^/]+\//, `/pdf/${segment}/`);
+    }
+
+    return (
+        <div className="rounded-2xl border border-(--o-border) bg-white p-5 shadow-sm">
+            <div className="mb-4 flex items-center gap-2">
+                <Printer className="size-4 text-(--o-warm)" />
+                <h2 className="text-sm font-semibold">Imprimir / Descargar PDF</h2>
+            </div>
+            <div className="flex flex-wrap gap-3">
+                {PDF_FORMATS.map((fmt) => (
+                    <a
+                        key={fmt.urlSegment}
+                        href={buildUrl(fmt.urlSegment)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 rounded-xl border border-(--o-border) bg-(--o-surface) px-4 py-2.5 text-[13px] font-medium text-(--o-text) shadow-sm transition hover:bg-(--o-warm)/10 hover:border-(--o-warm) hover:text-(--o-warm)"
+                    >
+                        <span className="text-base leading-none">{fmt.icon}</span>
+                        <span>{fmt.label}</span>
+                        <span className="text-[11px] font-normal text-(--o-muted)">— {fmt.description}</span>
+                    </a>
+                ))}
+            </div>
+            <p className="mt-3 text-[11px] text-(--o-muted)">
+                Se abre en nueva pestaña. Usa Ctrl+P / Cmd+P para imprimir.
+            </p>
+        </div>
     );
 }

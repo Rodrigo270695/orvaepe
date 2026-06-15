@@ -148,6 +148,10 @@ class ApiSunatEmitterService
             ? Invoice::STATUS_ISSUED
             : $invoice->status;
 
+        $pdfPayload = $payload['pdf'] ?? [];
+        // Guardamos la URL base del ticket; desde ella derivamos A4 en el frontend
+        $pdfTicketUrl = $pdfPayload['ticket'] ?? $pdfPayload['a4'] ?? null;
+
         $invoice->update([
             'sunat_filing_status'        => $filingStatus,
             'status'                     => $docStatus,
@@ -155,6 +159,7 @@ class ApiSunatEmitterService
             'sunat_response_description' => $msg,
             'xml_signed_path'            => $payload['xml'] ?? null,
             'cdr_path'                   => $payload['cdr'] ?? null,
+            'pdf_path'                   => $pdfTicketUrl,
         ]);
 
         $attempt = $invoice->submissionLogs()->count() + 1;
