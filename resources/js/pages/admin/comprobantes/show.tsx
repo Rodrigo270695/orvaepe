@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 
 import AdminCrudDeleteModal from '@/components/admin/crud/AdminCrudDeleteModal';
+import { NeuCardRaised } from '@/components/ui/neu-card-raised';
 import AppLayout from '@/layouts/app-layout';
 import { dashboard } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
@@ -166,7 +167,7 @@ export default function ComprobantesShow({ invoice, company_ruc }: Props) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`CPE ${invoice.invoice_number}`} />
 
-            <div className="min-h-screen bg-[#f0f2f5]">
+            <div className="min-h-screen">
 
                 {/* ── Hero header ─────────────────────────────────────────── */}
                 <div className={`${cfg.headerBg} border-b ${cfg.borderColor}`}>
@@ -261,8 +262,8 @@ export default function ComprobantesShow({ invoice, company_ruc }: Props) {
                         {/* ── Columna izquierda (2/3) ──────────────────────── */}
                         <div className="space-y-5 lg:col-span-2">
 
-                            {/* Líneas del comprobante */}
-                            <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
+                        {/* Líneas del comprobante */}
+                        <NeuCardRaised className="overflow-hidden rounded-2xl">
                                 <div className="flex items-center gap-2 border-b border-gray-100 px-6 py-4">
                                     <PackageSearch className="size-4 text-[#D28C3C]" />
                                     <h2 className="text-[14px] font-semibold">Productos / Servicios</h2>
@@ -317,11 +318,11 @@ export default function ComprobantesShow({ invoice, company_ruc }: Props) {
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </NeuCardRaised>
 
                             {/* Historial de envíos */}
                             {invoice.submission_logs.length > 0 && (
-                                <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
+                                <NeuCardRaised className="overflow-hidden rounded-2xl">
                                     <div className="flex items-center gap-2 border-b border-gray-100 px-6 py-4">
                                         <Hash className="size-4 text-[#D28C3C]" />
                                         <h2 className="text-[14px] font-semibold">Historial de envíos a SUNAT</h2>
@@ -361,7 +362,7 @@ export default function ComprobantesShow({ invoice, company_ruc }: Props) {
                                             </div>
                                         ))}
                                     </div>
-                                </div>
+                                </NeuCardRaised>
                             )}
                         </div>
 
@@ -369,7 +370,7 @@ export default function ComprobantesShow({ invoice, company_ruc }: Props) {
                         <div className="space-y-4">
 
                             {/* Resumen financiero */}
-                            <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
+                            <NeuCardRaised className="overflow-hidden rounded-2xl">
                                 <div className="border-b border-gray-100 bg-linear-to-r from-[#4A80B8]/5 to-transparent px-5 py-4">
                                     <p className="font-mono text-[10px] font-semibold uppercase tracking-wider text-gray-400">Total a pagar</p>
                                     <p className="mt-1 text-3xl font-bold text-gray-800">
@@ -392,11 +393,11 @@ export default function ComprobantesShow({ invoice, company_ruc }: Props) {
                                         />
                                     )}
                                 </div>
-                            </div>
+                            </NeuCardRaised>
 
                             {/* Comprador */}
                             {invoice.buyer_snapshot && (
-                                <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
+                                <NeuCardRaised className="overflow-hidden rounded-2xl">
                                     <div className="flex items-center gap-2 border-b border-gray-100 px-5 py-3.5">
                                         {invoice.buyer_snapshot.tipo_doc === '6'
                                             ? <Building2 className="size-4 text-[#4A80B8]" />
@@ -413,7 +414,7 @@ export default function ComprobantesShow({ invoice, company_ruc }: Props) {
                                             <SideField label="Dirección" value={invoice.buyer_snapshot.direccion} />
                                         )}
                                     </div>
-                                </div>
+                                </NeuCardRaised>
                             )}
 
                             {/* Imprimir PDF */}
@@ -421,7 +422,7 @@ export default function ComprobantesShow({ invoice, company_ruc }: Props) {
                                 hasPdf
                                     ? <PrintPdfButton ticketUrl={invoice.pdf_path!} />
                                     : (
-                                        <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
+                                        <NeuCardRaised className="overflow-hidden rounded-2xl">
                                             <div className="flex items-center gap-2 border-b border-gray-100 px-5 py-3.5">
                                                 <Printer className="size-4 text-[#D28C3C]" />
                                                 <h3 className="text-[13px] font-semibold text-gray-700">Imprimir / PDF</h3>
@@ -439,13 +440,13 @@ export default function ComprobantesShow({ invoice, company_ruc }: Props) {
                                                     {refreshingPdf ? 'Consultando...' : 'Obtener PDF desde APISUNAT'}
                                                 </button>
                                             </div>
-                                        </div>
+                                        </NeuCardRaised>
                                     )
                             )}
 
                             {/* Archivos SUNAT */}
                             {(invoice.xml_signed_path || invoice.cdr_path) && (
-                                <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
+                                <NeuCardRaised className="overflow-hidden rounded-2xl">
                                     <div className="flex items-center gap-2 border-b border-gray-100 px-5 py-3.5">
                                         <FileText className="size-4 text-[#4A9A72]" />
                                         <h3 className="text-[13px] font-semibold text-gray-700">Archivos SUNAT</h3>
@@ -468,7 +469,7 @@ export default function ComprobantesShow({ invoice, company_ruc }: Props) {
                                             />
                                         )}
                                     </div>
-                                </div>
+                                </NeuCardRaised>
                             )}
                         </div>
                     </div>
@@ -515,7 +516,7 @@ function SunatFileRow({
     colorClass: string;
 }) {
     return (
-        <div className={`flex items-center rounded-xl border px-4 py-3 ${colorClass}`}>
+        <div className={`neumorph flex items-center rounded-xl px-4 py-3 transition hover:-translate-y-px ${colorClass}`}>
             <Download className="mr-2 size-4 shrink-0" />
             <span className="flex-1 text-[13px] font-medium">{label}</span>
             <div className="flex items-center gap-1">
@@ -525,7 +526,7 @@ function SunatFileRow({
                     target="_blank"
                     rel="noopener noreferrer"
                     title="Ver en nueva pestaña"
-                    className="rounded-lg p-1.5 opacity-60 transition hover:opacity-100"
+                    className="neumorph-inset rounded-lg p-1.5 opacity-60 transition hover:opacity-100"
                 >
                     <ExternalLink className="size-3.5" />
                 </a>
@@ -533,7 +534,7 @@ function SunatFileRow({
                 <a
                     href={downloadUrl}
                     title="Descargar archivo"
-                    className="rounded-lg p-1.5 opacity-60 transition hover:opacity-100"
+                    className="neumorph-inset rounded-lg p-1.5 opacity-60 transition hover:opacity-100"
                 >
                     <Download className="size-3.5" />
                 </a>
@@ -568,15 +569,15 @@ function PrintPdfButton({ ticketUrl }: { ticketUrl: string }) {
                     onClick={() => setOpen(false)}
                 >
                     <div
-                        className="relative w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl"
+                        className="neumorph relative w-full max-w-sm rounded-3xl p-6"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="mb-5 text-center">
-                            <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-2xl bg-amber-100">
+                            <div className="neumorph-inset mx-auto mb-3 flex size-12 items-center justify-center rounded-2xl">
                                 <Printer className="size-6 text-amber-600" />
                             </div>
-                            <h3 className="text-[16px] font-bold text-gray-800">Selecciona el formato</h3>
-                            <p className="mt-1 text-[12px] text-gray-400">¿Cómo quieres imprimir o guardar el comprobante?</p>
+                            <h3 className="text-[16px] font-bold">Selecciona el formato</h3>
+                            <p className="mt-1 text-[12px] text-muted-foreground">¿Cómo quieres imprimir o guardar el comprobante?</p>
                         </div>
 
                         <div className="space-y-3">
@@ -587,24 +588,24 @@ function PrintPdfButton({ ticketUrl }: { ticketUrl: string }) {
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     onClick={() => setOpen(false)}
-                                    className={`flex cursor-pointer items-center gap-4 rounded-2xl border-2 border-gray-100 bg-gray-50 px-5 py-4 transition ${accent}`}
+                                    className={`neumorph flex cursor-pointer items-center gap-4 rounded-2xl px-5 py-4 transition hover:-translate-y-px ${accent}`}
                                 >
                                     <span className="text-3xl leading-none">{icon}</span>
                                     <div className="flex-1">
-                                        <p className="text-[14px] font-bold text-gray-800">{label}</p>
-                                        <p className="text-[12px] text-gray-400">{sub}</p>
+                                        <p className="text-[14px] font-bold">{label}</p>
+                                        <p className="text-[12px] text-muted-foreground">{sub}</p>
                                     </div>
-                                    <ExternalLink className="size-4 shrink-0 text-gray-300" />
+                                    <ExternalLink className="size-4 shrink-0 text-muted-foreground/50" />
                                 </a>
                             ))}
                         </div>
 
-                        <p className="mt-4 text-center text-[11px] text-gray-400">
+                        <p className="mt-4 text-center text-[11px] text-muted-foreground">
                             Se abre en nueva pestaña · Ctrl+P para imprimir
                         </p>
                         <button
                             onClick={() => setOpen(false)}
-                            className="mt-4 w-full cursor-pointer rounded-xl py-2 text-[13px] text-gray-400 transition hover:text-gray-600"
+                            className="mt-4 w-full cursor-pointer rounded-xl py-2 text-[13px] text-muted-foreground transition hover:text-foreground"
                         >
                             Cancelar
                         </button>
