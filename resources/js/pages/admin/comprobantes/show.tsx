@@ -261,7 +261,9 @@ export default function ComprobantesShow({ invoice }: Props) {
                             <div className="flex flex-wrap gap-3">
                                 {invoice.xml_signed_path && (
                                     <a
-                                        href={`/panel/ventas-facturas/${invoice.id}/xml`}
+                                        href={invoice.xml_signed_path}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
                                         className="inline-flex items-center gap-2 rounded-lg bg-[#4A80B8]/10 px-3 py-2 text-[13px] text-[#4A80B8] hover:bg-[#4A80B8]/20 transition"
                                     >
                                         <Download className="size-4" />
@@ -270,7 +272,9 @@ export default function ComprobantesShow({ invoice }: Props) {
                                 )}
                                 {invoice.cdr_path && (
                                     <a
-                                        href={`/panel/ventas-facturas/${invoice.id}/cdr`}
+                                        href={invoice.cdr_path}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
                                         className="inline-flex items-center gap-2 rounded-lg bg-[#4A9A72]/10 px-3 py-2 text-[13px] text-[#4A9A72] hover:bg-[#4A9A72]/20 transition"
                                     >
                                         <Download className="size-4" />
