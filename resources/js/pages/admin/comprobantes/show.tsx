@@ -256,9 +256,11 @@ export default function ComprobantesShow({ invoice }: Props) {
                         </table>
                     </div>
 
-                    {/* PDF */}
-                    {invoice.pdf_path && (
-                        <PdfDownloadCard pdfTicketUrl={invoice.pdf_path} />
+                    {/* PDF — disponible si hay pdf_path guardado O si podemos derivarlo del XML */}
+                    {(invoice.pdf_path || invoice.xml_signed_path) && (
+                        <PdfDownloadCard
+                            pdfTicketUrl={invoice.pdf_path ?? derivePdfFromXml(invoice.xml_signed_path!)}
+                        />
                     )}
 
                     {/* Archivos XML / CDR */}
@@ -340,6 +342,20 @@ export default function ComprobantesShow({ invoice }: Props) {
             />
         </AppLayout>
     );
+}
+
+// ── Helpers PDF ──────────────────────────────────────────────────────────────
+
+/**
+ * Deriva la URL de ticket PDF desde el xml_signed_path de APISUNAT.
+ * Ejemplo: https://app.apisunat.pe/20611148217-03-BE01-2.xml
+ *       → https://app.apisunat.pe/pdf/ticket/20611148217-03-BE01-2
+ */
+function derivePdfFromXml(xmlPath: string): string {
+    const parts   = xmlPath.split('/');
+    const base    = parts.slice(0, 3).join('/');           // https://app.apisunat.pe
+    const filename = parts[parts.length - 1].replace(/\.xml$/i, ''); // 20611148217-03-BE01-2
+    return `${base}/pdf/ticket/${filename}`;
 }
 
 // ── Componente selector de formato PDF ───────────────────────────────────────
