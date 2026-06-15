@@ -231,7 +231,18 @@ class VentasFacturasController extends Controller
         }
 
         $number = $invoice->invoice_number;
+
         DB::transaction(function () use ($invoice) {
+            // Si este comprobante es el último correlativo emitido en su secuencia,
+            // retrocedemos el contador para que el número pueda reutilizarse.
+            $sequence = \App\Models\InvoiceDocumentSequence::where('serie', $invoice->sunat_serie)
+                ->where('document_type_code', $invoice->sunat_document_type_code)
+                ->first();
+
+            if ($sequence && ($sequence->next_correlative - 1) === (int) $invoice->sunat_correlative) {
+                $sequence->decrement('next_correlative');
+            }
+
             $invoice->submissionLogs()->delete();
             $invoice->lines()->delete();
             $invoice->delete();
