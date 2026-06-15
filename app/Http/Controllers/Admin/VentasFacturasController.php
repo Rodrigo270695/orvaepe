@@ -284,6 +284,44 @@ class VentasFacturasController extends Controller
         }
     }
 
+    public function downloadXml(Invoice $invoice): \Symfony\Component\HttpFoundation\StreamedResponse|\Illuminate\Http\RedirectResponse
+    {
+        return $this->proxyDownload(
+            $invoice->xml_signed_path,
+            $invoice->invoice_number . '.xml',
+            'application/xml',
+        );
+    }
+
+    public function downloadCdr(Invoice $invoice): \Symfony\Component\HttpFoundation\StreamedResponse|\Illuminate\Http\RedirectResponse
+    {
+        return $this->proxyDownload(
+            $invoice->cdr_path,
+            'CDR-' . $invoice->invoice_number . '.xml',
+            'application/xml',
+        );
+    }
+
+    private function proxyDownload(?string $url, string $filename, string $mime): \Symfony\Component\HttpFoundation\StreamedResponse|\Illuminate\Http\RedirectResponse
+    {
+        if (empty($url)) {
+            return back()->with('toast', AdminFlashToast::error('El archivo no está disponible.'));
+        }
+
+        try {
+            $response = Http::timeout(30)->get($url);
+            $content  = $response->body();
+        } catch (\Throwable $e) {
+            return back()->with('toast', AdminFlashToast::error('No se pudo descargar el archivo: ' . $e->getMessage()));
+        }
+
+        return response()->streamDownload(
+            fn () => print($content),
+            $filename,
+            ['Content-Type' => $mime],
+        );
+    }
+
     public function destroy(Invoice $invoice): RedirectResponse
     {
         // Solo se pueden eliminar comprobantes que no llegaron a SUNAT

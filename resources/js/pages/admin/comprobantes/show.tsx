@@ -452,32 +452,20 @@ export default function ComprobantesShow({ invoice, company_ruc }: Props) {
                                     </div>
                                     <div className="space-y-2 p-4">
                                         {invoice.xml_signed_path && (
-                                            <a
-                                                href={invoice.xml_signed_path}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="flex w-full items-center justify-between rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-[13px] font-medium text-blue-700 transition hover:bg-blue-100"
-                                            >
-                                                <div className="flex items-center gap-2">
-                                                    <Download className="size-4" />
-                                                    XML firmado
-                                                </div>
-                                                <ExternalLink className="size-3.5 opacity-60" />
-                                            </a>
+                                            <SunatFileRow
+                                                label="XML firmado"
+                                                viewUrl={invoice.xml_signed_path}
+                                                downloadUrl={`/panel/ventas-facturas/${invoice.id}/download-xml`}
+                                                colorClass="border-blue-100 bg-blue-50 text-blue-700 hover:bg-blue-100"
+                                            />
                                         )}
                                         {invoice.cdr_path && (
-                                            <a
-                                                href={invoice.cdr_path}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="flex w-full items-center justify-between rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-[13px] font-medium text-emerald-700 transition hover:bg-emerald-100"
-                                            >
-                                                <div className="flex items-center gap-2">
-                                                    <Download className="size-4" />
-                                                    CDR (respuesta SUNAT)
-                                                </div>
-                                                <ExternalLink className="size-3.5 opacity-60" />
-                                            </a>
+                                            <SunatFileRow
+                                                label="CDR (respuesta SUNAT)"
+                                                viewUrl={invoice.cdr_path}
+                                                downloadUrl={`/panel/ventas-facturas/${invoice.id}/download-cdr`}
+                                                colorClass="border-emerald-100 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                                            />
                                         )}
                                     </div>
                                 </div>
@@ -509,6 +497,47 @@ function SideField({ label, value }: { label: string; value: React.ReactNode }) 
         <div className="flex items-start justify-between gap-3 py-2.5">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 shrink-0 pt-0.5">{label}</span>
             <span className="text-right text-[13px] font-medium text-gray-700">{value ?? '—'}</span>
+        </div>
+    );
+}
+
+// ── Fila de archivo SUNAT con ver + descargar ────────────────────────────────
+
+function SunatFileRow({
+    label,
+    viewUrl,
+    downloadUrl,
+    colorClass,
+}: {
+    label: string;
+    viewUrl: string;
+    downloadUrl: string;
+    colorClass: string;
+}) {
+    return (
+        <div className={`flex items-center rounded-xl border px-4 py-3 ${colorClass}`}>
+            <Download className="mr-2 size-4 shrink-0" />
+            <span className="flex-1 text-[13px] font-medium">{label}</span>
+            <div className="flex items-center gap-1">
+                {/* Ver en nueva pestaña */}
+                <a
+                    href={viewUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="Ver en nueva pestaña"
+                    className="rounded-lg p-1.5 opacity-60 transition hover:opacity-100"
+                >
+                    <ExternalLink className="size-3.5" />
+                </a>
+                {/* Descargar vía proxy backend */}
+                <a
+                    href={downloadUrl}
+                    title="Descargar archivo"
+                    className="rounded-lg p-1.5 opacity-60 transition hover:opacity-100"
+                >
+                    <Download className="size-3.5" />
+                </a>
+            </div>
         </div>
     );
 }

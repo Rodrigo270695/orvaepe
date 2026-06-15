@@ -531,6 +531,12 @@ Route::middleware(['auth', 'verified', 'client.profile.complete'])->group(functi
         Route::post('panel/ventas-facturas/{invoice}/refresh-pdf', [VentasFacturasController::class, 'refreshPdf'])
             ->name('panel.ventas-facturas.refresh-pdf');
 
+        Route::get('panel/ventas-facturas/{invoice}/download-xml', [VentasFacturasController::class, 'downloadXml'])
+            ->name('panel.ventas-facturas.download-xml');
+
+        Route::get('panel/ventas-facturas/{invoice}/download-cdr', [VentasFacturasController::class, 'downloadCdr'])
+            ->name('panel.ventas-facturas.download-cdr');
+
         Route::delete('panel/ventas-facturas/{invoice}', [VentasFacturasController::class, 'destroy'])
             ->name('panel.ventas-facturas.destroy');
 
