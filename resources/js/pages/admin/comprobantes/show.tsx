@@ -169,8 +169,8 @@ export default function ComprobantesShow({ invoice, company_ruc }: Props) {
 
             <div className="min-h-screen">
 
-                {/* ── Hero header ─────────────────────────────────────────── */}
-                <div className={`${cfg.headerBg} border-b ${cfg.borderColor}`}>
+                {/* ── Header ──────────────────────────────────────────────── */}
+                <div className="border-b border-border/50">
                     <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
 
                         {/* Breadcrumb back */}
@@ -185,12 +185,12 @@ export default function ComprobantesShow({ invoice, company_ruc }: Props) {
                         <div className="flex flex-wrap items-start justify-between gap-4">
                             {/* Título */}
                             <div className="flex items-start gap-4">
-                                <div className={`rounded-2xl p-3 ${cfg.badgeBg}`}>
-                                    <ReceiptText className={`size-7 ${cfg.headerText}`} />
+                                <div className={`neumorph-sm rounded-xl p-2.5 ${cfg.badgeBg}`}>
+                                    <ReceiptText className={`size-6 ${cfg.badgeText}`} />
                                 </div>
                                 <div>
                                     <div className="flex flex-wrap items-center gap-3">
-                                        <h1 className={`font-mono text-2xl font-bold tracking-tight ${cfg.headerText}`}>
+                                        <h1 className="font-mono text-2xl font-bold tracking-tight">
                                             {invoice.invoice_number}
                                         </h1>
                                         <span className={`inline-flex items-center gap-1.5 rounded-full ${cfg.badgeBg} ${cfg.badgeText} px-3 py-1 text-[12px] font-semibold`}>
@@ -233,7 +233,7 @@ export default function ComprobantesShow({ invoice, company_ruc }: Props) {
                                 {canDelete && (
                                     <button
                                         onClick={() => setShowDeleteModal(true)}
-                                        className="cursor-pointer inline-flex items-center gap-2 rounded-xl border border-red-300 bg-white px-4 py-2 text-[13px] font-medium text-red-600 shadow-sm hover:bg-red-50 transition"
+                                        className="cursor-pointer inline-flex items-center gap-2 rounded-xl border border-red-300 px-4 py-2 text-[13px] font-medium text-red-600 transition hover:bg-red-50"
                                     >
                                         <Trash2 className="size-4" />
                                         Eliminar
@@ -244,7 +244,7 @@ export default function ComprobantesShow({ invoice, company_ruc }: Props) {
 
                         {/* Respuesta SUNAT */}
                         {invoice.sunat_response_description && (
-                            <div className={`mt-4 flex items-start gap-2 rounded-xl border px-4 py-3 text-[13px] font-medium ${cfg.borderColor} bg-white/60 ${cfg.headerText}`}>
+                            <div className={`neumorph-sm mt-4 flex items-start gap-2 rounded-xl border px-4 py-3 text-[13px] font-medium ${cfg.borderColor} ${cfg.badgeText}`}>
                                 {cfg.icon}
                                 <span>
                                     {invoice.sunat_response_code && <span className="font-mono font-bold">{invoice.sunat_response_code}: </span>}
