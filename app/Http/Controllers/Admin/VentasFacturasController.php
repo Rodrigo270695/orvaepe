@@ -196,8 +196,11 @@ class VentasFacturasController extends Controller
     {
         $invoice->load(['lines', 'order', 'user', 'submissionLogs' => fn ($q) => $q->orderByDesc('created_at')]);
 
+        $ruc = \App\Models\CompanyLegalProfile::where('is_default_issuer', true)->value('ruc');
+
         return Inertia::render('admin/comprobantes/show', [
-            'invoice' => $invoice,
+            'invoice'     => $invoice,
+            'company_ruc' => $ruc,
         ]);
     }
 

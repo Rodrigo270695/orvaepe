@@ -1,16 +1,23 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import {
+    ArrowLeft,
     BadgeCheck,
     BadgeX,
+    Building2,
     CircleAlert,
     Clock,
     Download,
+    ExternalLink,
     FilePlus2,
+    FileText,
+    Hash,
+    PackageSearch,
     Printer,
     RefreshCcw,
     ReceiptText,
     Trash2,
+    User,
 } from 'lucide-react';
 
 import AdminCrudDeleteModal from '@/components/admin/crud/AdminCrudDeleteModal';
@@ -18,22 +25,42 @@ import AppLayout from '@/layouts/app-layout';
 import { dashboard } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
 
+// ── Catálogos ─────────────────────────────────────────────────────────────────
+
 const DOC_LABELS: Record<string, string> = {
-    '01': 'Factura',
+    '01': 'Factura Electrónica',
     '03': 'Boleta de Venta',
     '07': 'Nota de Crédito',
     '08': 'Nota de Débito',
     '09': 'Guía de Remisión',
 };
 
-const FILING_BADGE: Record<string, { label: string; className: string; icon: React.ReactNode }> = {
-    draft:        { label: 'Borrador',         className: 'bg-muted text-muted-foreground',     icon: <Clock className="size-4" /> },
-    pending:      { label: 'Pendiente',        className: 'bg-yellow-500/10 text-yellow-600',   icon: <Clock className="size-4" /> },
-    accepted:     { label: 'Aceptado ✓',       className: 'bg-[#4A9A72]/15 text-[#4A9A72]',    icon: <BadgeCheck className="size-4" /> },
-    accepted_obs: { label: 'Aceptado c/obs',   className: 'bg-[#4A9A72]/10 text-[#4A9A72]',    icon: <BadgeCheck className="size-4" /> },
-    rejected:     { label: 'Rechazado',        className: 'bg-red-500/10 text-red-500',         icon: <BadgeX className="size-4" /> },
-    error:        { label: 'Error técnico',    className: 'bg-orange-500/10 text-orange-500',   icon: <CircleAlert className="size-4" /> },
+const DOC_TYPE_LABEL: Record<string, string> = {
+    '1': 'DNI',
+    '6': 'RUC',
+    '4': 'Carnet extrajería',
+    '7': 'Pasaporte',
+    'A': 'Cédula diplomática',
 };
+
+const FILING_CONFIG: Record<string, {
+    label: string;
+    icon: React.ReactNode;
+    headerBg: string;
+    headerText: string;
+    badgeBg: string;
+    badgeText: string;
+    borderColor: string;
+}> = {
+    draft:        { label: 'Borrador',        icon: <Clock className="size-5"/>,      headerBg: 'bg-slate-100',         headerText: 'text-slate-600',    badgeBg: 'bg-slate-100',        badgeText: 'text-slate-600',    borderColor: 'border-slate-200' },
+    pending:      { label: 'Pendiente',       icon: <Clock className="size-5"/>,      headerBg: 'bg-yellow-50',         headerText: 'text-yellow-700',   badgeBg: 'bg-yellow-100',       badgeText: 'text-yellow-700',   borderColor: 'border-yellow-200' },
+    accepted:     { label: 'Aceptado ✓',      icon: <BadgeCheck className="size-5"/>, headerBg: 'bg-emerald-50',        headerText: 'text-emerald-700',  badgeBg: 'bg-emerald-100',      badgeText: 'text-emerald-700',  borderColor: 'border-emerald-200' },
+    accepted_obs: { label: 'Aceptado c/obs',  icon: <BadgeCheck className="size-5"/>, headerBg: 'bg-emerald-50',        headerText: 'text-emerald-700',  badgeBg: 'bg-emerald-100',      badgeText: 'text-emerald-700',  borderColor: 'border-emerald-200' },
+    rejected:     { label: 'Rechazado',       icon: <BadgeX className="size-5"/>,     headerBg: 'bg-red-50',            headerText: 'text-red-700',      badgeBg: 'bg-red-100',          badgeText: 'text-red-700',      borderColor: 'border-red-200' },
+    error:        { label: 'Error técnico',   icon: <CircleAlert className="size-5"/>,headerBg: 'bg-orange-50',         headerText: 'text-orange-700',   badgeBg: 'bg-orange-100',       badgeText: 'text-orange-700',   borderColor: 'border-orange-200' },
+};
+
+// ── Tipos ─────────────────────────────────────────────────────────────────────
 
 type InvoiceLine = {
     id: string;
@@ -50,6 +77,7 @@ type Log = {
     id: string;
     attempt: number;
     channel: string;
+    http_status: number | null;
     response_code: string | null;
     response_message: string | null;
     success: boolean;
@@ -60,6 +88,8 @@ type Invoice = {
     id: string;
     invoice_number: string;
     sunat_document_type_code: string;
+    sunat_serie: string;
+    sunat_correlative: number;
     sunat_filing_status: string;
     sunat_response_code: string | null;
     sunat_response_description: string | null;
@@ -78,32 +108,43 @@ type Invoice = {
     submission_logs: Log[];
 };
 
-type Props = { invoice: Invoice };
+type Props = { invoice: Invoice; company_ruc: string | null };
 
-const labelClass = 'font-[family-name:var(--font-mono)] text-[9px] font-normal uppercase tracking-[0.14em] text-[var(--o-warm)]';
-const valueClass = 'text-[13px] font-medium text-foreground';
-const cardClass  = 'neumorph-inset rounded-xl border border-border/60 p-4 md:p-5';
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
-function Field({ label, value }: { label: string; value: React.ReactNode }) {
-    return (
-        <div className="space-y-0.5">
-            <p className={labelClass}>{label}</p>
-            <p className={valueClass}>{value ?? '—'}</p>
-        </div>
-    );
+function buildApisunatPdfUrl(ruc: string, docType: string, serie: string, correlativo: number, format: 'ticket' | 'a4'): string {
+    return `https://app.apisunat.pe/pdf/${format}/${ruc}-${docType}-${serie}-${correlativo}`;
 }
 
-export default function ComprobantesShow({ invoice }: Props) {
+function fmt(n: string | number, currency = 'PEN') {
+    return `${currency} ${Number(n).toFixed(2)}`;
+}
+
+function fmtDate(d: string | null) {
+    if (!d) return '—';
+    return new Date(d).toLocaleDateString('es-PE', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+// ── Componente principal ──────────────────────────────────────────────────────
+
+export default function ComprobantesShow({ invoice, company_ruc }: Props) {
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Panel', href: dashboard() },
+        { title: 'Panel',        href: dashboard() },
         { title: 'Comprobantes', href: '/panel/ventas-facturas' },
         { title: invoice.invoice_number, href: `/panel/ventas-facturas/${invoice.id}` },
     ];
 
-    const badge = FILING_BADGE[invoice.sunat_filing_status] ?? FILING_BADGE.draft;
-    const canRetry  = !['accepted', 'accepted_obs'].includes(invoice.sunat_filing_status);
-    const canDelete = ['draft', 'error', 'rejected'].includes(invoice.sunat_filing_status);
+    const cfg      = FILING_CONFIG[invoice.sunat_filing_status] ?? FILING_CONFIG.draft;
+    const isOk     = ['accepted', 'accepted_obs'].includes(invoice.sunat_filing_status);
+    const canRetry = !isOk;
+    const canDelete= ['draft', 'error', 'rejected'].includes(invoice.sunat_filing_status);
     const [showDeleteModal, setShowDeleteModal] = React.useState(false);
+
+    // Construir PDF URL con RUC de la empresa
+    const pdfAvailable = isOk && company_ruc;
+    const pdfBaseInfo  = pdfAvailable
+        ? { ruc: company_ruc!, type: invoice.sunat_document_type_code, serie: invoice.sunat_serie, correlativo: invoice.sunat_correlative }
+        : null;
 
     function handleRetry() {
         router.post(`/panel/ventas-facturas/${invoice.id}/reintentar`, {}, { preserveScroll: true });
@@ -112,220 +153,343 @@ export default function ComprobantesShow({ invoice }: Props) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`CPE ${invoice.invoice_number}`} />
-            <div className="px-4 py-6 md:px-6 lg:px-7 max-w-4xl">
 
-                {/* Header */}
-                <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                        <div className="flex items-center gap-3">
-                            <ReceiptText className="size-5 text-[#D28C3C]" />
-                            <h1 className="font-mono text-lg font-bold">{invoice.invoice_number}</h1>
-                            <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium ${badge.className}`}>
-                                {badge.icon}
-                                {badge.label}
-                            </span>
-                        </div>
-                        <p className="mt-1 text-[12px] text-muted-foreground">
-                            {DOC_LABELS[invoice.sunat_document_type_code] ?? invoice.sunat_document_type_code}
-                            {invoice.issued_at
-                                ? ' · Emitida el ' + new Date(invoice.issued_at).toLocaleDateString('es-PE')
-                                : ''}
-                        </p>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                        {canRetry && (
-                            <button
-                                onClick={handleRetry}
-                                className="cursor-pointer inline-flex items-center gap-2 rounded-xl bg-orange-500/10 px-3 py-2 text-[13px] text-orange-500 hover:bg-orange-500/20 transition"
-                            >
-                                <RefreshCcw className="size-4" />
-                                Reintentar envío
-                            </button>
-                        )}
+            <div className="min-h-screen bg-[#f0f2f5]">
+
+                {/* ── Hero header ─────────────────────────────────────────── */}
+                <div className={`${cfg.headerBg} border-b ${cfg.borderColor}`}>
+                    <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
+
+                        {/* Breadcrumb back */}
                         <Link
-                            href="/panel/ventas-facturas/crear"
-                            className="inline-flex items-center gap-2 rounded-xl bg-[#4A80B8]/10 px-3 py-2 text-[13px] text-[#4A80B8] hover:bg-[#4A80B8]/20 transition"
+                            href="/panel/ventas-facturas"
+                            className="mb-4 inline-flex items-center gap-1.5 text-[12px] text-muted-foreground hover:text-foreground transition"
                         >
-                            <FilePlus2 className="size-4" />
-                            Nuevo CPE
+                            <ArrowLeft className="size-3.5" />
+                            Comprobantes
                         </Link>
-                        {canDelete && (
-                            <button
-                                onClick={() => setShowDeleteModal(true)}
-                                className="cursor-pointer inline-flex items-center gap-2 rounded-xl bg-red-500/10 px-3 py-2 text-[13px] text-red-500 hover:bg-red-500/20 transition"
-                            >
-                                <Trash2 className="size-4" />
-                                Eliminar
-                            </button>
+
+                        <div className="flex flex-wrap items-start justify-between gap-4">
+                            {/* Título */}
+                            <div className="flex items-start gap-4">
+                                <div className={`rounded-2xl p-3 ${cfg.badgeBg}`}>
+                                    <ReceiptText className={`size-7 ${cfg.headerText}`} />
+                                </div>
+                                <div>
+                                    <div className="flex flex-wrap items-center gap-3">
+                                        <h1 className={`font-mono text-2xl font-bold tracking-tight ${cfg.headerText}`}>
+                                            {invoice.invoice_number}
+                                        </h1>
+                                        <span className={`inline-flex items-center gap-1.5 rounded-full ${cfg.badgeBg} ${cfg.badgeText} px-3 py-1 text-[12px] font-semibold`}>
+                                            {cfg.icon}
+                                            {cfg.label}
+                                        </span>
+                                    </div>
+                                    <p className="mt-1 text-[13px] text-muted-foreground">
+                                        {DOC_LABELS[invoice.sunat_document_type_code] ?? invoice.sunat_document_type_code}
+                                        {invoice.issued_at ? ` · Emitida el ${fmtDate(invoice.issued_at)}` : ''}
+                                        {invoice.order && (
+                                            <> · Orden{' '}
+                                                <Link href={`/panel/ventas-ordenes/${invoice.order.id}`} className="text-[#4A80B8] hover:underline font-medium">
+                                                    {invoice.order.order_number}
+                                                </Link>
+                                            </>
+                                        )}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Acciones */}
+                            <div className="flex flex-wrap items-center gap-2">
+                                {canRetry && (
+                                    <button
+                                        onClick={handleRetry}
+                                        className="cursor-pointer inline-flex items-center gap-2 rounded-xl bg-orange-500 px-4 py-2 text-[13px] font-medium text-white shadow hover:bg-orange-600 transition"
+                                    >
+                                        <RefreshCcw className="size-4" />
+                                        Reintentar envío
+                                    </button>
+                                )}
+                                <Link
+                                    href="/panel/ventas-facturas/crear"
+                                    className="inline-flex items-center gap-2 rounded-xl bg-[#4A80B8] px-4 py-2 text-[13px] font-medium text-white shadow hover:bg-[#3a6fa8] transition"
+                                >
+                                    <FilePlus2 className="size-4" />
+                                    Nuevo CPE
+                                </Link>
+                                {canDelete && (
+                                    <button
+                                        onClick={() => setShowDeleteModal(true)}
+                                        className="cursor-pointer inline-flex items-center gap-2 rounded-xl border border-red-300 bg-white px-4 py-2 text-[13px] font-medium text-red-600 shadow-sm hover:bg-red-50 transition"
+                                    >
+                                        <Trash2 className="size-4" />
+                                        Eliminar
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Respuesta SUNAT */}
+                        {invoice.sunat_response_description && (
+                            <div className={`mt-4 flex items-start gap-2 rounded-xl border px-4 py-3 text-[13px] font-medium ${cfg.borderColor} bg-white/60 ${cfg.headerText}`}>
+                                {cfg.icon}
+                                <span>
+                                    {invoice.sunat_response_code && <span className="font-mono font-bold">{invoice.sunat_response_code}: </span>}
+                                    {invoice.sunat_response_description}
+                                </span>
+                            </div>
                         )}
                     </div>
                 </div>
 
-                {/* Respuesta SUNAT */}
-                {invoice.sunat_response_description && (
-                    <div className={`mb-6 flex gap-3 rounded-xl border p-4 text-[13px] ${
-                        invoice.sunat_filing_status === 'accepted' || invoice.sunat_filing_status === 'accepted_obs'
-                            ? 'border-[#4A9A72]/30 bg-[#4A9A72]/5 text-[#4A9A72]'
-                            : 'border-red-400/30 bg-red-400/5 text-red-500'
-                    }`}>
-                        <span className="font-mono font-bold">{invoice.sunat_response_code}:</span>
-                        <span>{invoice.sunat_response_description}</span>
-                    </div>
-                )}
+                {/* ── Contenido principal ─────────────────────────────────── */}
+                <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+                    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
 
-                {/* Grid de datos */}
-                <div className="space-y-5">
+                        {/* ── Columna izquierda (2/3) ──────────────────────── */}
+                        <div className="space-y-5 lg:col-span-2">
 
-                    {/* Resumen */}
-                    <div className={cardClass}>
-                        <h2 className="mb-4 text-sm font-semibold">Resumen del comprobante</h2>
-                        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-                            <Field label="Número" value={<span className="font-mono">{invoice.invoice_number}</span>} />
-                            <Field label="Moneda" value={invoice.currency} />
-                            <Field label="Subtotal" value={`${invoice.currency} ${Number(invoice.subtotal).toFixed(2)}`} />
-                            <Field label="IGV" value={`${invoice.currency} ${Number(invoice.tax_total).toFixed(2)}`} />
-                            <Field
-                                label="Total"
-                                value={
-                                    <span className="text-base font-bold text-[#4A9A72]">
-                                        {invoice.currency} {Number(invoice.grand_total).toFixed(2)}
+                            {/* Líneas del comprobante */}
+                            <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
+                                <div className="flex items-center gap-2 border-b border-gray-100 px-6 py-4">
+                                    <PackageSearch className="size-4 text-[#D28C3C]" />
+                                    <h2 className="text-[14px] font-semibold">Productos / Servicios</h2>
+                                    <span className="ml-auto rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-500">
+                                        {invoice.lines.length} {invoice.lines.length === 1 ? 'línea' : 'líneas'}
                                     </span>
-                                }
-                            />
-                            {invoice.order && (
-                                <Field
-                                    label="Orden"
-                                    value={
-                                        <Link
-                                            href={`/panel/ventas-ordenes/${invoice.order.id}`}
-                                            className="text-[#4A80B8] hover:underline"
+                                </div>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-[13px]">
+                                        <thead>
+                                            <tr className="bg-gray-50/80">
+                                                <th className="px-6 py-3 text-left font-mono text-[10px] font-semibold uppercase tracking-wider text-gray-400">Descripción</th>
+                                                <th className="px-3 py-3 text-right font-mono text-[10px] font-semibold uppercase tracking-wider text-gray-400">Cant.</th>
+                                                <th className="px-3 py-3 text-center font-mono text-[10px] font-semibold uppercase tracking-wider text-gray-400">UM</th>
+                                                <th className="px-3 py-3 text-right font-mono text-[10px] font-semibold uppercase tracking-wider text-gray-400">P. Unit</th>
+                                                <th className="px-6 py-3 text-right font-mono text-[10px] font-semibold uppercase tracking-wider text-gray-400">Total c/IGV</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-50">
+                                            {invoice.lines.map((l) => (
+                                                <tr key={l.id} className="hover:bg-gray-50/50 transition-colors">
+                                                    <td className="px-6 py-3.5 font-medium text-gray-800">{l.description}</td>
+                                                    <td className="px-3 py-3.5 text-right text-gray-500">{Number(l.quantity).toFixed(2)}</td>
+                                                    <td className="px-3 py-3.5 text-center">
+                                                        <span className="rounded-md bg-blue-50 px-2 py-0.5 font-mono text-[10px] font-semibold text-blue-600">
+                                                            {l.unit_measure_code ?? 'ZZ'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-3 py-3.5 text-right text-gray-500">{Number(l.unit_price).toFixed(2)}</td>
+                                                    <td className="px-6 py-3.5 text-right font-bold text-gray-800">{Number(l.line_total).toFixed(2)}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {/* Totales inline */}
+                                <div className="border-t border-gray-100 bg-gray-50/50 px-6 py-4">
+                                    <div className="flex justify-end">
+                                        <div className="w-64 space-y-1.5 text-[13px]">
+                                            <div className="flex justify-between text-gray-500">
+                                                <span>Subtotal (sin IGV)</span>
+                                                <span>{fmt(invoice.subtotal, invoice.currency)}</span>
+                                            </div>
+                                            <div className="flex justify-between text-gray-500">
+                                                <span>IGV (18%)</span>
+                                                <span>{fmt(invoice.tax_total, invoice.currency)}</span>
+                                            </div>
+                                            <div className="flex justify-between border-t border-gray-200 pt-1.5 text-[15px] font-bold text-gray-800">
+                                                <span>Total</span>
+                                                <span className="text-emerald-600">{fmt(invoice.grand_total, invoice.currency)}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Historial de envíos */}
+                            {invoice.submission_logs.length > 0 && (
+                                <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
+                                    <div className="flex items-center gap-2 border-b border-gray-100 px-6 py-4">
+                                        <Hash className="size-4 text-[#D28C3C]" />
+                                        <h2 className="text-[14px] font-semibold">Historial de envíos a SUNAT</h2>
+                                    </div>
+                                    <div className="divide-y divide-gray-50">
+                                        {invoice.submission_logs.map((log) => (
+                                            <div key={log.id} className={`flex items-start gap-3 px-6 py-4 ${log.success ? 'bg-emerald-50/30' : 'bg-red-50/30'}`}>
+                                                <div className={`mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full ${log.success ? 'bg-emerald-100' : 'bg-red-100'}`}>
+                                                    {log.success
+                                                        ? <BadgeCheck className="size-3.5 text-emerald-600" />
+                                                        : <BadgeX className="size-3.5 text-red-500" />}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex flex-wrap items-baseline gap-2">
+                                                        <span className="text-[13px] font-semibold text-gray-700">
+                                                            Intento #{log.attempt}
+                                                        </span>
+                                                        <span className={`text-[11px] font-semibold ${log.success ? 'text-emerald-600' : 'text-red-500'}`}>
+                                                            {log.success ? '· Aceptado' : '· Rechazado/Error'}
+                                                        </span>
+                                                        {log.http_status && (
+                                                            <span className="rounded bg-gray-100 px-1.5 py-0.5 font-mono text-[10px] text-gray-500">
+                                                                HTTP {log.http_status}
+                                                            </span>
+                                                        )}
+                                                        <span className="ml-auto text-[11px] text-gray-400 shrink-0">
+                                                            {new Date(log.created_at).toLocaleString('es-PE')}
+                                                        </span>
+                                                    </div>
+                                                    {log.response_message && (
+                                                        <p className="mt-0.5 text-[12px] text-gray-500 wrap-break-word">
+                                                            {log.response_code && <span className="font-mono font-medium">{log.response_code}: </span>}
+                                                            {log.response_message}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* ── Columna derecha (1/3) ────────────────────────── */}
+                        <div className="space-y-4">
+
+                            {/* Resumen financiero */}
+                            <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
+                                <div className="border-b border-gray-100 bg-linear-to-r from-[#4A80B8]/5 to-transparent px-5 py-4">
+                                    <p className="font-mono text-[10px] font-semibold uppercase tracking-wider text-gray-400">Total a pagar</p>
+                                    <p className="mt-1 text-3xl font-bold text-gray-800">
+                                        {fmt(invoice.grand_total, invoice.currency)}
+                                    </p>
+                                </div>
+                                <div className="divide-y divide-gray-50 px-5 py-1">
+                                    <SideField label="Número" value={<span className="font-mono text-[13px] font-semibold">{invoice.invoice_number}</span>} />
+                                    <SideField label="Tipo" value={DOC_LABELS[invoice.sunat_document_type_code] ?? '—'} />
+                                    <SideField label="Moneda" value={invoice.currency} />
+                                    <SideField label="Fecha emisión" value={fmtDate(invoice.issued_at)} />
+                                    {invoice.order && (
+                                        <SideField
+                                            label="Orden"
+                                            value={
+                                                <Link href={`/panel/ventas-ordenes/${invoice.order.id}`} className="text-[#4A80B8] hover:underline text-[13px]">
+                                                    {invoice.order.order_number}
+                                                </Link>
+                                            }
+                                        />
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Comprador */}
+                            {invoice.buyer_snapshot && (
+                                <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
+                                    <div className="flex items-center gap-2 border-b border-gray-100 px-5 py-3.5">
+                                        {invoice.buyer_snapshot.tipo_doc === '6'
+                                            ? <Building2 className="size-4 text-[#4A80B8]" />
+                                            : <User className="size-4 text-[#4A80B8]" />}
+                                        <h3 className="text-[13px] font-semibold text-gray-700">Comprador</h3>
+                                    </div>
+                                    <div className="divide-y divide-gray-50 px-5 py-1">
+                                        <SideField
+                                            label={DOC_TYPE_LABEL[invoice.buyer_snapshot.tipo_doc ?? ''] ?? 'Doc.'}
+                                            value={<span className="font-mono font-semibold text-[13px]">{invoice.buyer_snapshot.num_doc}</span>}
+                                        />
+                                        <SideField label="Nombre / Razón Social" value={invoice.buyer_snapshot.razon_social} />
+                                        {invoice.buyer_snapshot.direccion && invoice.buyer_snapshot.direccion !== '-' && (
+                                            <SideField label="Dirección" value={invoice.buyer_snapshot.direccion} />
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Imprimir PDF */}
+                            {pdfBaseInfo && (
+                                <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
+                                    <div className="flex items-center gap-2 border-b border-gray-100 px-5 py-3.5">
+                                        <Printer className="size-4 text-[#D28C3C]" />
+                                        <h3 className="text-[13px] font-semibold text-gray-700">Imprimir / PDF</h3>
+                                    </div>
+                                    <div className="space-y-2 p-4">
+                                        <a
+                                            href={buildApisunatPdfUrl(pdfBaseInfo.ruc, pdfBaseInfo.type, pdfBaseInfo.serie, pdfBaseInfo.correlativo, 'ticket')}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex w-full items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-[13px] font-medium text-gray-700 transition hover:border-[#D28C3C]/50 hover:bg-[#D28C3C]/5 hover:text-[#D28C3C]"
                                         >
-                                            {invoice.order.order_number}
-                                        </Link>
-                                    }
-                                />
+                                            <div className="flex items-center gap-2.5">
+                                                <span className="text-lg">🖨️</span>
+                                                <div>
+                                                    <p className="font-semibold">Ticket 80mm</p>
+                                                    <p className="text-[11px] font-normal text-gray-400">Ticketera térmica</p>
+                                                </div>
+                                            </div>
+                                            <ExternalLink className="size-3.5 text-gray-400" />
+                                        </a>
+                                        <a
+                                            href={buildApisunatPdfUrl(pdfBaseInfo.ruc, pdfBaseInfo.type, pdfBaseInfo.serie, pdfBaseInfo.correlativo, 'a4')}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex w-full items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-[13px] font-medium text-gray-700 transition hover:border-[#4A80B8]/50 hover:bg-[#4A80B8]/5 hover:text-[#4A80B8]"
+                                        >
+                                            <div className="flex items-center gap-2.5">
+                                                <span className="text-lg">📄</span>
+                                                <div>
+                                                    <p className="font-semibold">Formato A4</p>
+                                                    <p className="text-[11px] font-normal text-gray-400">Impresora normal</p>
+                                                </div>
+                                            </div>
+                                            <ExternalLink className="size-3.5 text-gray-400" />
+                                        </a>
+                                        <p className="pt-1 text-center text-[11px] text-gray-400">
+                                            Ctrl+P / Cmd+P para imprimir
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Archivos SUNAT */}
+                            {(invoice.xml_signed_path || invoice.cdr_path) && (
+                                <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
+                                    <div className="flex items-center gap-2 border-b border-gray-100 px-5 py-3.5">
+                                        <FileText className="size-4 text-[#4A9A72]" />
+                                        <h3 className="text-[13px] font-semibold text-gray-700">Archivos SUNAT</h3>
+                                    </div>
+                                    <div className="space-y-2 p-4">
+                                        {invoice.xml_signed_path && (
+                                            <a
+                                                href={invoice.xml_signed_path}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex w-full items-center justify-between rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-[13px] font-medium text-blue-700 transition hover:bg-blue-100"
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    <Download className="size-4" />
+                                                    XML firmado
+                                                </div>
+                                                <ExternalLink className="size-3.5 opacity-60" />
+                                            </a>
+                                        )}
+                                        {invoice.cdr_path && (
+                                            <a
+                                                href={invoice.cdr_path}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex w-full items-center justify-between rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-[13px] font-medium text-emerald-700 transition hover:bg-emerald-100"
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    <Download className="size-4" />
+                                                    CDR (respuesta SUNAT)
+                                                </div>
+                                                <ExternalLink className="size-3.5 opacity-60" />
+                                            </a>
+                                        )}
+                                    </div>
+                                </div>
                             )}
                         </div>
                     </div>
-
-                    {/* Comprador */}
-                    {invoice.buyer_snapshot && (
-                        <div className={cardClass}>
-                            <h2 className="mb-4 text-sm font-semibold">Comprador</h2>
-                            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-                                <Field
-                                    label="Tipo / Documento"
-                                    value={`${invoice.buyer_snapshot.tipo_doc === '6' ? 'RUC' : invoice.buyer_snapshot.tipo_doc === '1' ? 'DNI' : '—'} ${invoice.buyer_snapshot.num_doc ?? ''}`}
-                                />
-                                <Field label="Razón social" value={invoice.buyer_snapshot.razon_social} />
-                                {invoice.buyer_snapshot.direccion && (
-                                    <Field label="Dirección" value={invoice.buyer_snapshot.direccion} />
-                                )}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Líneas */}
-                    <div className={cardClass}>
-                        <h2 className="mb-4 text-sm font-semibold">Líneas</h2>
-                        <table className="w-full text-[13px]">
-                            <thead className="border-b border-border/60">
-                                <tr>
-                                    <th className={`${labelClass} py-2 text-left`}>Descripción</th>
-                                    <th className={`${labelClass} py-2 text-right`}>Cant.</th>
-                                    <th className={`${labelClass} py-2 text-center`}>Unidad</th>
-                                    <th className={`${labelClass} py-2 text-right`}>P. Unit. s/IGV</th>
-                                    <th className={`${labelClass} py-2 text-right`}>Total c/IGV</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {invoice.lines.map((l) => (
-                                    <tr key={l.id} className="border-b border-border/20 last:border-0">
-                                        <td className="py-2 pr-3">{l.description}</td>
-                                        <td className="py-2 text-right text-muted-foreground">{Number(l.quantity).toFixed(2)}</td>
-                                        <td className="py-2 text-center">
-                                            <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px]">
-                                                {l.unit_measure_code ?? 'ZZ'}
-                                            </span>
-                                        </td>
-                                        <td className="py-2 text-right text-muted-foreground">{Number(l.unit_price).toFixed(2)}</td>
-                                        <td className="py-2 text-right font-medium">{Number(l.line_total).toFixed(2)}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    {/* PDF — disponible si hay pdf_path guardado O si podemos derivarlo del XML */}
-                    {(invoice.pdf_path || invoice.xml_signed_path) && (
-                        <PdfDownloadCard
-                            pdfTicketUrl={invoice.pdf_path ?? derivePdfFromXml(invoice.xml_signed_path!)}
-                        />
-                    )}
-
-                    {/* Archivos XML / CDR */}
-                    {(invoice.xml_signed_path || invoice.cdr_path) && (
-                        <div className={cardClass}>
-                            <h2 className="mb-4 text-sm font-semibold">Archivos SUNAT</h2>
-                            <div className="flex flex-wrap gap-3">
-                                {invoice.xml_signed_path && (
-                                    <a
-                                        href={invoice.xml_signed_path}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-2 rounded-lg bg-[#4A80B8]/10 px-3 py-2 text-[13px] text-[#4A80B8] hover:bg-[#4A80B8]/20 transition"
-                                    >
-                                        <Download className="size-4" />
-                                        XML firmado
-                                    </a>
-                                )}
-                                {invoice.cdr_path && (
-                                    <a
-                                        href={invoice.cdr_path}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-2 rounded-lg bg-[#4A9A72]/10 px-3 py-2 text-[13px] text-[#4A9A72] hover:bg-[#4A9A72]/20 transition"
-                                    >
-                                        <Download className="size-4" />
-                                        CDR (respuesta SUNAT)
-                                    </a>
-                                )}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Logs de envío */}
-                    {invoice.submission_logs.length > 0 && (
-                        <div className={cardClass}>
-                            <h2 className="mb-4 text-sm font-semibold">Historial de envíos a SUNAT</h2>
-                            <div className="space-y-2">
-                                {invoice.submission_logs.map((log) => (
-                                    <div
-                                        key={log.id}
-                                        className={`flex items-start gap-3 rounded-lg p-3 text-[12px] ${log.success ? 'bg-[#4A9A72]/5' : 'bg-red-500/5'}`}
-                                    >
-                                        {log.success
-                                            ? <BadgeCheck className="mt-0.5 size-4 shrink-0 text-[#4A9A72]" />
-                                            : <BadgeX className="mt-0.5 size-4 shrink-0 text-red-500" />}
-                                        <div className="flex-1 min-w-0">
-                                            <span className="font-mono font-semibold">
-                                                Intento #{log.attempt} ·{' '}
-                                                <span className={log.success ? 'text-[#4A9A72]' : 'text-red-500'}>
-                                                    {log.success ? 'Aceptado' : 'Rechazado/Error'}
-                                                </span>
-                                            </span>
-                                            <span className="ml-3 text-muted-foreground">
-                                                código {log.response_code}: {log.response_message}
-                                            </span>
-                                        </div>
-                                        <span className="text-muted-foreground shrink-0">
-                                            {new Date(log.created_at).toLocaleString('es-PE')}
-                                        </span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
                 </div>
             </div>
 
@@ -333,7 +497,7 @@ export default function ComprobantesShow({ invoice }: Props) {
                 open={showDeleteModal}
                 onOpenChange={setShowDeleteModal}
                 title="Eliminar comprobante"
-                description="Se eliminarán el comprobante, sus líneas y el historial de envíos. El correlativo quedará como gap y no se reutilizará."
+                description="Se eliminarán el comprobante, sus líneas y el historial de envíos."
                 confirmLabel="Sí, eliminar"
                 action={`/panel/ventas-facturas/${invoice.id}`}
                 method="post"
@@ -344,58 +508,13 @@ export default function ComprobantesShow({ invoice }: Props) {
     );
 }
 
-// ── Helpers PDF ──────────────────────────────────────────────────────────────
+// ── Sub-componentes ───────────────────────────────────────────────────────────
 
-/**
- * Deriva la URL de ticket PDF desde el xml_signed_path de APISUNAT.
- * Ejemplo: https://app.apisunat.pe/20611148217-03-BE01-2.xml
- *       → https://app.apisunat.pe/pdf/ticket/20611148217-03-BE01-2
- */
-function derivePdfFromXml(xmlPath: string): string {
-    const parts   = xmlPath.split('/');
-    const base    = parts.slice(0, 3).join('/');           // https://app.apisunat.pe
-    const filename = parts[parts.length - 1].replace(/\.xml$/i, ''); // 20611148217-03-BE01-2
-    return `${base}/pdf/ticket/${filename}`;
-}
-
-// ── Componente selector de formato PDF ───────────────────────────────────────
-
-type PdfFormat = { label: string; description: string; urlSegment: string; icon: string };
-
-const PDF_FORMATS: PdfFormat[] = [
-    { label: 'Ticket 80mm', description: 'Ticketera estándar',      urlSegment: 'ticket', icon: '🖨️' },
-    { label: 'A4',          description: 'Impresora hoja completa', urlSegment: 'a4',     icon: '📄' },
-];
-
-function PdfDownloadCard({ pdfTicketUrl }: { pdfTicketUrl: string }) {
-    function buildUrl(segment: string): string {
-        return pdfTicketUrl.replace(/\/pdf\/[^/]+\//, `/pdf/${segment}/`);
-    }
-
+function SideField({ label, value }: { label: string; value: React.ReactNode }) {
     return (
-        <div className="rounded-2xl border border-(--o-border) bg-white p-5 shadow-sm">
-            <div className="mb-4 flex items-center gap-2">
-                <Printer className="size-4 text-(--o-warm)" />
-                <h2 className="text-sm font-semibold">Imprimir / Descargar PDF</h2>
-            </div>
-            <div className="flex flex-wrap gap-3">
-                {PDF_FORMATS.map((fmt) => (
-                    <a
-                        key={fmt.urlSegment}
-                        href={buildUrl(fmt.urlSegment)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 rounded-xl border border-(--o-border) bg-(--o-surface) px-4 py-2.5 text-[13px] font-medium text-(--o-text) shadow-sm transition hover:bg-(--o-warm)/10 hover:border-(--o-warm) hover:text-(--o-warm)"
-                    >
-                        <span className="text-base leading-none">{fmt.icon}</span>
-                        <span>{fmt.label}</span>
-                        <span className="text-[11px] font-normal text-(--o-muted)">— {fmt.description}</span>
-                    </a>
-                ))}
-            </div>
-            <p className="mt-3 text-[11px] text-(--o-muted)">
-                Se abre en nueva pestaña. Usa Ctrl+P / Cmd+P para imprimir.
-            </p>
+        <div className="flex items-start justify-between gap-3 py-2.5">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 shrink-0 pt-0.5">{label}</span>
+            <span className="text-right text-[13px] font-medium text-gray-700">{value ?? '—'}</span>
         </div>
     );
 }
