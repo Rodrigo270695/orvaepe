@@ -60,16 +60,11 @@ class ApiSunatEmitterService
         }
 
         // ── 2. Descifrar token de API SUNAT ───────────────────────────────
-        // Recargamos el modelo sin restricciones de $hidden para leer el campo cifrado
-        $settingsFresh = \App\Models\SunatEmitterSetting::find($settings->id);
-        $rawTokenEnc   = $settingsFresh?->attributes['apisunat_token_enc'] ?? null;
+        // getAttributes() es el método público correcto para leer campos protegidos
+        // desde fuera del modelo (->attributes dispara __get y devuelve null)
+        $rawTokenEnc = $settings->getAttributes()['apisunat_token_enc'] ?? null;
 
         if (empty($rawTokenEnc)) {
-            Log::error('apisunat.no_token', [
-                'invoice'     => $invoice->id,
-                'settings_id' => $settings->id,
-                'has_column'  => $settingsFresh !== null,
-            ]);
             return $this->fail($invoice, 'No hay token de API SUNAT configurado. Agrégalo en Config. emisor.');
         }
 

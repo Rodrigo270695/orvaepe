@@ -80,7 +80,7 @@ class InvoiceEmitterService
         // ── 3. Leer .p12 y convertir a PEM ───────────────────────────────
         try {
             $pfxContent   = Storage::disk($cert->storage_disk)->get($cert->storage_path);
-            $rawPwdEnc    = $cert->attributes['password_enc'] ?? null;
+            $rawPwdEnc    = $cert->getAttributes()['password_enc'] ?? null;
             $certPassword = '';
             if (!empty($rawPwdEnc)) {
                 $certPassword = Crypt::decryptString($rawPwdEnc);
@@ -98,7 +98,7 @@ class InvoiceEmitterService
         // ── 4. Credenciales SOL ──────────────────────────────────────────
         $solUser = $settings->sol_username ?? '';
         $solPass = '';
-        $rawSolEnc = $settings->getRawOriginal('sol_password_enc') ?? $settings->attributes['sol_password_enc'] ?? null;
+        $rawSolEnc = $settings->getAttributes()['sol_password_enc'] ?? null;
         if (!empty($rawSolEnc)) {
             try {
                 $solPass = Crypt::decryptString($rawSolEnc);

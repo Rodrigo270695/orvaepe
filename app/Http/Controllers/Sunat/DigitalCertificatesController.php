@@ -98,7 +98,7 @@ class DigitalCertificatesController extends Controller
             $pfxContent = Storage::disk($digital_certificate->storage_disk)
                 ->get($digital_certificate->storage_path);
 
-            $rawPwdEnc    = $digital_certificate->attributes['password_enc'] ?? null;
+            $rawPwdEnc    = $digital_certificate->getAttributes()['password_enc'] ?? null;
             $certPassword = '';
             if (!empty($rawPwdEnc)) {
                 $certPassword = Crypt::decryptString($rawPwdEnc);
