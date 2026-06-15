@@ -11,6 +11,7 @@ import {
     Trash2,
 } from 'lucide-react';
 
+import AdminCrudDeleteModal from '@/components/admin/crud/AdminCrudDeleteModal';
 import AppLayout from '@/layouts/app-layout';
 import { dashboard } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
@@ -99,14 +100,10 @@ export default function ComprobantesShow({ invoice }: Props) {
     const badge = FILING_BADGE[invoice.sunat_filing_status] ?? FILING_BADGE.draft;
     const canRetry  = !['accepted', 'accepted_obs'].includes(invoice.sunat_filing_status);
     const canDelete = ['draft', 'error', 'rejected'].includes(invoice.sunat_filing_status);
+    const [showDeleteModal, setShowDeleteModal] = React.useState(false);
 
     function handleRetry() {
         router.post(`/panel/ventas-facturas/${invoice.id}/reintentar`, {}, { preserveScroll: true });
-    }
-
-    function handleDelete() {
-        if (!confirm(`¿Eliminar el comprobante ${invoice.invoice_number}? Esta acción no se puede deshacer.`)) return;
-        router.delete(`/panel/ventas-facturas/${invoice.id}`);
     }
 
     return (
@@ -151,7 +148,7 @@ export default function ComprobantesShow({ invoice }: Props) {
                         </Link>
                         {canDelete && (
                             <button
-                                onClick={handleDelete}
+                                onClick={() => setShowDeleteModal(true)}
                                 className="cursor-pointer inline-flex items-center gap-2 rounded-xl bg-red-500/10 px-3 py-2 text-[13px] text-red-500 hover:bg-red-500/20 transition"
                             >
                                 <Trash2 className="size-4" />
@@ -317,6 +314,18 @@ export default function ComprobantesShow({ invoice }: Props) {
                     )}
                 </div>
             </div>
+
+            <AdminCrudDeleteModal
+                open={showDeleteModal}
+                onOpenChange={setShowDeleteModal}
+                title="Eliminar comprobante"
+                description="Se eliminarán el comprobante, sus líneas y el historial de envíos. El correlativo quedará como gap y no se reutilizará."
+                confirmLabel="Sí, eliminar"
+                action={`/panel/ventas-facturas/${invoice.id}`}
+                method="post"
+                methodOverride="delete"
+                entityLabel={invoice.invoice_number}
+            />
         </AppLayout>
     );
 }

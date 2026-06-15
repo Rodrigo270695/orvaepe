@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import * as React from 'react';
 
+import AdminCrudDeleteModal from '@/components/admin/crud/AdminCrudDeleteModal';
 import AdminCrudIndex from '@/components/admin/crud/AdminCrudIndex';
 import type { AdminCrudTableColumn } from '@/components/admin/crud/AdminCrudTable';
 import AdminUnderlineLabel from '@/components/admin/form/admin-underline-label';
@@ -85,6 +86,7 @@ export default function ComprobantesIndex({ invoices, filters }: Props) {
 
     const page = usePage();
     const [q, setQ] = React.useState(filters?.q ?? '');
+    const [deleteTarget, setDeleteTarget] = React.useState<Invoice | null>(null);
 
     const rows = invoices.data;
     const total      = invoices.total;
@@ -291,10 +293,7 @@ export default function ComprobantesIndex({ invoices, filters }: Props) {
                                     aria-label="Eliminar comprobante"
                                     onClick={(e) => {
                                         e.stopPropagation();
-
-                                        if (confirm(`¿Eliminar ${row.invoice_number}?`)) {
-                                            router.delete(`/panel/ventas-facturas/${row.id}`);
-                                        }
+                                        setDeleteTarget(row);
                                     }}
                                     className="group inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg transition-colors"
                                 >
@@ -305,6 +304,22 @@ export default function ComprobantesIndex({ invoices, filters }: Props) {
                     )}
                 />
             </div>
+
+            <AdminCrudDeleteModal
+                open={deleteTarget !== null}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setDeleteTarget(null);
+                    }
+                }}
+                title="Eliminar comprobante"
+                description="Solo se pueden eliminar comprobantes en estado Borrador, Error o Rechazado. El correlativo quedará como gap (no se reutiliza)."
+                confirmLabel="Eliminar"
+                action={deleteTarget ? `/panel/ventas-facturas/${deleteTarget.id}` : '#'}
+                method="post"
+                methodOverride="delete"
+                entityLabel={deleteTarget?.invoice_number}
+            />
         </AppLayout>
     );
 }
