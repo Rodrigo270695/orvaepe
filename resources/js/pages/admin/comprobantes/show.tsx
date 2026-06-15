@@ -8,6 +8,7 @@ import {
     FilePlus2,
     RefreshCcw,
     ReceiptText,
+    Trash2,
 } from 'lucide-react';
 
 import AppLayout from '@/layouts/app-layout';
@@ -96,12 +97,16 @@ export default function ComprobantesShow({ invoice }: Props) {
     ];
 
     const badge = FILING_BADGE[invoice.sunat_filing_status] ?? FILING_BADGE.draft;
-    const canRetry = !['accepted', 'accepted_obs'].includes(invoice.sunat_filing_status);
+    const canRetry  = !['accepted', 'accepted_obs'].includes(invoice.sunat_filing_status);
+    const canDelete = ['draft', 'error', 'rejected'].includes(invoice.sunat_filing_status);
 
     function handleRetry() {
-        router.post(`/panel/ventas-facturas/${invoice.id}/reintentar`, {}, {
-            preserveScroll: true,
-        });
+        router.post(`/panel/ventas-facturas/${invoice.id}/reintentar`, {}, { preserveScroll: true });
+    }
+
+    function handleDelete() {
+        if (!confirm(`¿Eliminar el comprobante ${invoice.invoice_number}? Esta acción no se puede deshacer.`)) return;
+        router.delete(`/panel/ventas-facturas/${invoice.id}`);
     }
 
     return (
@@ -127,11 +132,11 @@ export default function ComprobantesShow({ invoice }: Props) {
                                 : ''}
                         </p>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                         {canRetry && (
                             <button
                                 onClick={handleRetry}
-                                className="inline-flex items-center gap-2 rounded-xl bg-orange-500/10 px-3 py-2 text-[13px] text-orange-500 hover:bg-orange-500/20 transition"
+                                className="cursor-pointer inline-flex items-center gap-2 rounded-xl bg-orange-500/10 px-3 py-2 text-[13px] text-orange-500 hover:bg-orange-500/20 transition"
                             >
                                 <RefreshCcw className="size-4" />
                                 Reintentar envío
@@ -144,6 +149,15 @@ export default function ComprobantesShow({ invoice }: Props) {
                             <FilePlus2 className="size-4" />
                             Nuevo CPE
                         </Link>
+                        {canDelete && (
+                            <button
+                                onClick={handleDelete}
+                                className="cursor-pointer inline-flex items-center gap-2 rounded-xl bg-red-500/10 px-3 py-2 text-[13px] text-red-500 hover:bg-red-500/20 transition"
+                            >
+                                <Trash2 className="size-4" />
+                                Eliminar
+                            </button>
+                        )}
                     </div>
                 </div>
 

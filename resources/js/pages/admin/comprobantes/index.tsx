@@ -9,6 +9,7 @@ import {
     LayoutGrid,
     ReceiptText,
     Search,
+    Trash2,
 } from 'lucide-react';
 import * as React from 'react';
 
@@ -66,11 +67,13 @@ type Props = {
     filters?: { q?: string; type?: string; filing?: string };
 };
 
-const labelClass = 'font-[family-name:var(--font-mono)] text-[9px] font-normal uppercase tracking-[0.14em] text-[var(--o-warm)]';
 const inputClass = 'w-full border-0 border-b border-[var(--o-border2)] bg-transparent rounded-none shadow-none py-2 pl-6 pr-2 font-[family-name:var(--font-body)] text-[13px] text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:border-[var(--o-amber)]/60 focus-visible:ring-0';
 
 function formatDate(iso: string | null): string {
-    if (!iso) return '—';
+    if (!iso) {
+        return '—';
+    }
+
     return new Date(iso).toLocaleString('es-PE', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
@@ -91,10 +94,15 @@ export default function ComprobantesIndex({ invoices, filters }: Props) {
 
     function navigate(params: Record<string, string>) {
         const currentUrl = new URL(page.url, window.location.origin);
+
         Object.entries(params).forEach(([k, v]) => {
-            if (v) currentUrl.searchParams.set(k, v);
-            else currentUrl.searchParams.delete(k);
+            if (v) {
+                currentUrl.searchParams.set(k, v);
+            } else {
+                currentUrl.searchParams.delete(k);
+            }
         });
+
         currentUrl.searchParams.set('page', '1');
         router.get(currentUrl.pathname + currentUrl.search, {}, { preserveScroll: true, preserveState: true, replace: true });
     }
@@ -139,6 +147,7 @@ export default function ComprobantesIndex({ invoices, filters }: Props) {
             cellClassName: 'px-3 py-2 align-middle',
             render: (r) => {
                 const badge = FILING_BADGE[r.sunat_filing_status] ?? FILING_BADGE.draft;
+
                 return (
                     <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${badge.className}`}>
                         {badge.icon}
@@ -217,7 +226,10 @@ export default function ComprobantesIndex({ invoices, filters }: Props) {
                             {/* Búsqueda con Enter */}
                             <div className="w-full min-w-0 max-w-sm sm:w-auto space-y-1.5">
                                 <AdminUnderlineLabel htmlFor="cpe_search">Buscar</AdminUnderlineLabel>
-                                <form onSubmit={(e) => { e.preventDefault(); navigate({ q, type: currentType, filing: currentFiling }); }}>
+                                <form onSubmit={(e) => {
+                                    e.preventDefault();
+                                    navigate({ q, type: currentType, filing: currentFiling });
+                                }}>
                                     <div className="relative">
                                         <Search className="absolute left-1 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
                                         <input
@@ -236,6 +248,7 @@ export default function ComprobantesIndex({ invoices, filters }: Props) {
                                 <AdminUnderlineLabel htmlFor="cpe_type">Tipo</AdminUnderlineLabel>
                                 <AdminUnderlineSelect
                                     id="cpe_type"
+                                    name="cpe_type"
                                     value={currentType || '__all__'}
                                     options={[
                                         { value: '__all__', label: 'Todos' },
@@ -250,6 +263,7 @@ export default function ComprobantesIndex({ invoices, filters }: Props) {
                                 <AdminUnderlineLabel htmlFor="cpe_filing">Estado SUNAT</AdminUnderlineLabel>
                                 <AdminUnderlineSelect
                                     id="cpe_filing"
+                                    name="cpe_filing"
                                     value={currentFiling || '__all__'}
                                     options={[
                                         { value: '__all__', label: 'Todos' },
@@ -262,14 +276,32 @@ export default function ComprobantesIndex({ invoices, filters }: Props) {
                     )}
 
                     renderRowActions={({ row }) => (
-                        <Link
-                            href={`/panel/ventas-facturas/${row.id}`}
-                            className="group inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4A80B8]/30"
-                            aria-label="Ver comprobante"
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <Eye className="size-4 text-[#4A80B8]/60 transition-colors group-hover:text-[#4A80B8]" />
-                        </Link>
+                        <div className="flex items-center gap-1">
+                            <Link
+                                href={`/panel/ventas-facturas/${row.id}`}
+                                className="group inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg transition-colors"
+                                aria-label="Ver comprobante"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <Eye className="size-4 text-[#4A80B8]/60 transition-colors group-hover:text-[#4A80B8]" />
+                            </Link>
+                            {['draft', 'error', 'rejected'].includes(row.sunat_filing_status) && (
+                                <button
+                                    type="button"
+                                    aria-label="Eliminar comprobante"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+
+                                        if (confirm(`¿Eliminar ${row.invoice_number}?`)) {
+                                            router.delete(`/panel/ventas-facturas/${row.id}`);
+                                        }
+                                    }}
+                                    className="group inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg transition-colors"
+                                >
+                                    <Trash2 className="size-4 text-[#C05050]/60 transition-colors group-hover:text-[#C05050]" />
+                                </button>
+                            )}
+                        </div>
                     )}
                 />
             </div>

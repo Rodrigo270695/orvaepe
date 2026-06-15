@@ -216,6 +216,31 @@ class VentasFacturasController extends Controller
         );
     }
 
+    public function destroy(Invoice $invoice): RedirectResponse
+    {
+        // Solo se pueden eliminar comprobantes que no llegaron a SUNAT
+        if (in_array($invoice->sunat_filing_status, [
+            Invoice::FILING_ACCEPTED,
+            Invoice::FILING_ACCEPTED_WITH_OBS,
+            Invoice::FILING_PENDING,
+        ])) {
+            return back()->with('toast', AdminFlashToast::error(
+                'No se puede eliminar este comprobante.',
+                'Solo se pueden eliminar los que están en estado Borrador o Error.',
+            ));
+        }
+
+        $number = $invoice->invoice_number;
+        DB::transaction(function () use ($invoice) {
+            $invoice->submissionLogs()->delete();
+            $invoice->lines()->delete();
+            $invoice->delete();
+        });
+
+        return redirect('/panel/ventas-facturas')
+            ->with('toast', AdminFlashToast::success("Comprobante {$number} eliminado."));
+    }
+
     /**
      * Elige el servicio de emisión según el emission_mode del emisor configurado.
      * - 'apisunat' → ApiSunatEmitterService (Lucode PSE, sin certificado propio)

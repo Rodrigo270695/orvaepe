@@ -528,6 +528,9 @@ Route::middleware(['auth', 'verified', 'client.profile.complete'])->group(functi
         Route::post('panel/ventas-facturas/{invoice}/reintentar', [VentasFacturasController::class, 'retry'])
             ->name('panel.ventas-facturas.retry');
 
+        Route::delete('panel/ventas-facturas/{invoice}', [VentasFacturasController::class, 'destroy'])
+            ->name('panel.ventas-facturas.destroy');
+
         Route::get('panel/sunat-logs', [SunatLogsController::class, 'index'])
             ->name('panel.sunat-logs.index');
 
