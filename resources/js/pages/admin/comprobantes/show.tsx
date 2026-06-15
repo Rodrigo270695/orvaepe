@@ -113,11 +113,13 @@ type Props = { invoice: Invoice; company_ruc: string | null };
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 /**
- * APISUNAT usa el correlativo SIN cero-padding en la URL del PDF.
- * Ejemplo: https://app.apisunat.pe/pdf/ticket/20611148217-03-BE01-2
+ * Deriva la URL de A4 desde el ticket URL (mismo path, solo cambia el segmento).
+ * La URL real incluye tokens únicos de APISUNAT, por eso no se puede construir manualmente.
+ * Ejemplo ticket: https://app.apisunat.pe/pdf/ticket/8701/abc123/RUC-03-BE01-2
+ * Ejemplo a4:     https://app.apisunat.pe/pdf/a4/8701/abc123/RUC-03-BE01-2
  */
-function buildApisunatPdfUrl(ruc: string, docType: string, serie: string, correlativo: number, format: 'ticket' | 'a4'): string {
-    return `https://app.apisunat.pe/pdf/${format}/${ruc}-${docType}-${serie}-${correlativo}`;
+function buildA4FromTicket(ticketUrl: string): string {
+    return ticketUrl.replace('/pdf/ticket/', '/pdf/a4/');
 }
 
 function fmt(n: string | number, currency = 'PEN') {
@@ -143,15 +145,21 @@ export default function ComprobantesShow({ invoice, company_ruc }: Props) {
     const canRetry = !isOk;
     const canDelete= ['draft', 'error', 'rejected'].includes(invoice.sunat_filing_status);
     const [showDeleteModal, setShowDeleteModal] = React.useState(false);
+    const [refreshingPdf, setRefreshingPdf]     = React.useState(false);
 
-    // Construir PDF URL con RUC de la empresa
-    const pdfAvailable = isOk && company_ruc;
-    const pdfBaseInfo  = pdfAvailable
-        ? { ruc: company_ruc!, type: invoice.sunat_document_type_code, serie: invoice.sunat_serie, correlativo: invoice.sunat_correlative }
-        : null;
+    // La URL real del PDF la provee APISUNAT (incluye tokens únicos de organización)
+    const hasPdf = Boolean(invoice.pdf_path);
 
     function handleRetry() {
         router.post(`/panel/ventas-facturas/${invoice.id}/reintentar`, {}, { preserveScroll: true });
+    }
+
+    function handleRefreshPdf() {
+        setRefreshingPdf(true);
+        router.post(`/panel/ventas-facturas/${invoice.id}/refresh-pdf`, {}, {
+            preserveScroll: true,
+            onFinish: () => setRefreshingPdf(false),
+        });
     }
 
     return (
@@ -408,9 +416,31 @@ export default function ComprobantesShow({ invoice, company_ruc }: Props) {
                                 </div>
                             )}
 
-                            {/* Imprimir PDF — botón único con modal */}
-                            {pdfBaseInfo && (
-                                <PrintPdfButton pdfBaseInfo={pdfBaseInfo} />
+                            {/* Imprimir PDF */}
+                            {isOk && (
+                                hasPdf
+                                    ? <PrintPdfButton ticketUrl={invoice.pdf_path!} />
+                                    : (
+                                        <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
+                                            <div className="flex items-center gap-2 border-b border-gray-100 px-5 py-3.5">
+                                                <Printer className="size-4 text-[#D28C3C]" />
+                                                <h3 className="text-[13px] font-semibold text-gray-700">Imprimir / PDF</h3>
+                                            </div>
+                                            <div className="p-4 text-center">
+                                                <p className="mb-3 text-[12px] text-gray-400">
+                                                    URL del PDF no disponible. Consulta APISUNAT para obtenerla.
+                                                </p>
+                                                <button
+                                                    onClick={handleRefreshPdf}
+                                                    disabled={refreshingPdf}
+                                                    className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-amber-500 px-4 py-2 text-[13px] font-semibold text-white transition hover:bg-amber-600 disabled:opacity-60"
+                                                >
+                                                    <RefreshCcw className={`size-4 ${refreshingPdf ? 'animate-spin' : ''}`} />
+                                                    {refreshingPdf ? 'Consultando...' : 'Obtener PDF desde APISUNAT'}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )
                             )}
 
                             {/* Archivos SUNAT */}
@@ -485,40 +515,24 @@ function SideField({ label, value }: { label: string; value: React.ReactNode }) 
 
 // ── Modal de selección de formato PDF ────────────────────────────────────────
 
-type PdfBaseInfo = { ruc: string; type: string; serie: string; correlativo: number };
-
 const PDF_FORMATS = [
-    {
-        format: 'ticket' as const,
-        label: 'Ticket 80mm',
-        sub: 'Ticketera térmica',
-        icon: '🖨️',
-        accent: 'hover:border-amber-400 hover:bg-amber-50 hover:text-amber-700',
-    },
-    {
-        format: 'a4' as const,
-        label: 'Formato A4',
-        sub: 'Hoja completa',
-        icon: '📄',
-        accent: 'hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700',
-    },
+    { label: 'Ticket 80mm', sub: 'Ticketera térmica',  icon: '🖨️', accent: 'hover:border-amber-400 hover:bg-amber-50 hover:text-amber-700', getUrl: (t: string) => t },
+    { label: 'Formato A4',  sub: 'Impresora normal',   icon: '📄', accent: 'hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700',   getUrl: buildA4FromTicket },
 ];
 
-function PrintPdfButton({ pdfBaseInfo }: { pdfBaseInfo: PdfBaseInfo }) {
+function PrintPdfButton({ ticketUrl }: { ticketUrl: string }) {
     const [open, setOpen] = useState(false);
 
     return (
         <>
-            {/* Botón único */}
             <button
                 onClick={() => setOpen(true)}
                 className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-[#D28C3C] px-4 py-3 text-[14px] font-semibold text-white shadow-md transition hover:bg-[#b97630] active:scale-[0.98]"
             >
-                <Printer className="size-4.5" />
+                <Printer className="size-4" />
                 Imprimir / Descargar PDF
             </button>
 
-            {/* Modal overlay */}
             {open && (
                 <div
                     className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
@@ -528,7 +542,6 @@ function PrintPdfButton({ pdfBaseInfo }: { pdfBaseInfo: PdfBaseInfo }) {
                         className="relative w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        {/* Cabecera modal */}
                         <div className="mb-5 text-center">
                             <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-2xl bg-amber-100">
                                 <Printer className="size-6 text-amber-600" />
@@ -537,16 +550,15 @@ function PrintPdfButton({ pdfBaseInfo }: { pdfBaseInfo: PdfBaseInfo }) {
                             <p className="mt-1 text-[12px] text-gray-400">¿Cómo quieres imprimir o guardar el comprobante?</p>
                         </div>
 
-                        {/* Opciones */}
                         <div className="space-y-3">
-                            {PDF_FORMATS.map(({ format, label, sub, icon, accent }) => (
+                            {PDF_FORMATS.map(({ label, sub, icon, accent, getUrl }) => (
                                 <a
-                                    key={format}
-                                    href={buildApisunatPdfUrl(pdfBaseInfo.ruc, pdfBaseInfo.type, pdfBaseInfo.serie, pdfBaseInfo.correlativo, format)}
+                                    key={label}
+                                    href={getUrl(ticketUrl)}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     onClick={() => setOpen(false)}
-                                    className={`flex items-center gap-4 rounded-2xl border-2 border-gray-100 bg-gray-50 px-5 py-4 transition ${accent} cursor-pointer`}
+                                    className={`flex cursor-pointer items-center gap-4 rounded-2xl border-2 border-gray-100 bg-gray-50 px-5 py-4 transition ${accent}`}
                                 >
                                     <span className="text-3xl leading-none">{icon}</span>
                                     <div className="flex-1">
@@ -559,12 +571,11 @@ function PrintPdfButton({ pdfBaseInfo }: { pdfBaseInfo: PdfBaseInfo }) {
                         </div>
 
                         <p className="mt-4 text-center text-[11px] text-gray-400">
-                            Se abre en nueva pestaña · Usa Ctrl+P para imprimir
+                            Se abre en nueva pestaña · Ctrl+P para imprimir
                         </p>
-
                         <button
                             onClick={() => setOpen(false)}
-                            className="mt-4 w-full cursor-pointer rounded-xl py-2 text-[13px] text-gray-400 hover:text-gray-600 transition"
+                            className="mt-4 w-full cursor-pointer rounded-xl py-2 text-[13px] text-gray-400 transition hover:text-gray-600"
                         >
                             Cancelar
                         </button>

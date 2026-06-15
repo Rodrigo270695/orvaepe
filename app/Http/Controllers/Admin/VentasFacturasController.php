@@ -8,11 +8,14 @@ use App\Models\Invoice;
 use App\Models\InvoiceLine;
 use App\Models\InvoiceDocumentSequence;
 use App\Models\Order;
+use App\Models\SunatEmitterSetting;
 use App\Services\Sunat\ApiSunatEmitterService;
 use App\Services\Sunat\InvoiceEmitterService;
 use App\Support\AdminFlashToast;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -217,6 +220,68 @@ class VentasFacturasController extends Controller
             ? AdminFlashToast::success('Re-envío aceptado por SUNAT ✓')
             : AdminFlashToast::error('SUNAT rechazó el reintento: ' . ($invoice->sunat_response_description ?? 'Error')),
         );
+    }
+
+    /**
+     * Consulta APISUNAT para obtener las URLs reales del PDF y actualiza el registro.
+     * Usado cuando pdf_path quedó vacío (emisiones anteriores al guardado del PDF).
+     */
+    public function refreshPdf(Invoice $invoice): RedirectResponse
+    {
+        if (!$invoice->isAccepted()) {
+            return back()->with('toast', AdminFlashToast::error('Solo se puede refrescar el PDF de comprobantes aceptados.'));
+        }
+
+        $profile  = CompanyLegalProfile::where('is_default_issuer', true)->with('sunatEmitterSetting')->first();
+        $settings = $profile?->sunatEmitterSetting;
+
+        if (!$settings) {
+            return back()->with('toast', AdminFlashToast::error('No hay configuración de emisor.'));
+        }
+
+        $rawTokenEnc = $settings->getAttributes()['apisunat_token_enc'] ?? null;
+        if (empty($rawTokenEnc)) {
+            return back()->with('toast', AdminFlashToast::error('No hay token de APISUNAT configurado.'));
+        }
+
+        try {
+            $token = Crypt::decryptString($rawTokenEnc);
+        } catch (\Throwable) {
+            return back()->with('toast', AdminFlashToast::error('No se pudo descifrar el token de APISUNAT.'));
+        }
+
+        $docNames = ['01' => 'factura', '03' => 'boleta', '07' => 'nota_credito', '08' => 'nota_debito'];
+        $docName  = $docNames[$invoice->sunat_document_type_code] ?? 'boleta';
+        $env      = $settings->environment ?? 'beta';
+        $baseUrl  = $env === 'production'
+            ? 'https://app.apisunat.pe/api/v3/status'
+            : 'https://sandbox.apisunat.pe/api/v3/status';
+
+        try {
+            $resp = Http::withToken($token)->timeout(20)->post($baseUrl, [
+                'documento' => $docName,
+                'serie'     => $invoice->sunat_serie,
+                'numero'    => (int) $invoice->sunat_correlative,
+            ]);
+
+            $json    = $resp->json();
+            $payload = $json['payload'] ?? [];
+            $pdf     = $payload['pdf'] ?? [];
+
+            if (!empty($pdf['ticket'])) {
+                $invoice->update([
+                    'pdf_path'        => $pdf['ticket'],
+                    'xml_signed_path' => $payload['xml'] ?? $invoice->xml_signed_path,
+                    'cdr_path'        => $payload['cdr'] ?? $invoice->cdr_path,
+                ]);
+
+                return back()->with('toast', AdminFlashToast::success('PDF actualizado correctamente.'));
+            }
+
+            return back()->with('toast', AdminFlashToast::error('APISUNAT no devolvió PDF. ' . ($json['message'] ?? '')));
+        } catch (\Throwable $e) {
+            return back()->with('toast', AdminFlashToast::error('Error al consultar APISUNAT: ' . $e->getMessage()));
+        }
     }
 
     public function destroy(Invoice $invoice): RedirectResponse
