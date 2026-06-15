@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import {
     ArrowLeft,
@@ -112,6 +112,10 @@ type Props = { invoice: Invoice; company_ruc: string | null };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+/**
+ * APISUNAT usa el correlativo SIN cero-padding en la URL del PDF.
+ * Ejemplo: https://app.apisunat.pe/pdf/ticket/20611148217-03-BE01-2
+ */
 function buildApisunatPdfUrl(ruc: string, docType: string, serie: string, correlativo: number, format: 'ticket' | 'a4'): string {
     return `https://app.apisunat.pe/pdf/${format}/${ruc}-${docType}-${serie}-${correlativo}`;
 }
@@ -404,49 +408,9 @@ export default function ComprobantesShow({ invoice, company_ruc }: Props) {
                                 </div>
                             )}
 
-                            {/* Imprimir PDF */}
+                            {/* Imprimir PDF — botón único con modal */}
                             {pdfBaseInfo && (
-                                <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
-                                    <div className="flex items-center gap-2 border-b border-gray-100 px-5 py-3.5">
-                                        <Printer className="size-4 text-[#D28C3C]" />
-                                        <h3 className="text-[13px] font-semibold text-gray-700">Imprimir / PDF</h3>
-                                    </div>
-                                    <div className="space-y-2 p-4">
-                                        <a
-                                            href={buildApisunatPdfUrl(pdfBaseInfo.ruc, pdfBaseInfo.type, pdfBaseInfo.serie, pdfBaseInfo.correlativo, 'ticket')}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="flex w-full items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-[13px] font-medium text-gray-700 transition hover:border-[#D28C3C]/50 hover:bg-[#D28C3C]/5 hover:text-[#D28C3C]"
-                                        >
-                                            <div className="flex items-center gap-2.5">
-                                                <span className="text-lg">🖨️</span>
-                                                <div>
-                                                    <p className="font-semibold">Ticket 80mm</p>
-                                                    <p className="text-[11px] font-normal text-gray-400">Ticketera térmica</p>
-                                                </div>
-                                            </div>
-                                            <ExternalLink className="size-3.5 text-gray-400" />
-                                        </a>
-                                        <a
-                                            href={buildApisunatPdfUrl(pdfBaseInfo.ruc, pdfBaseInfo.type, pdfBaseInfo.serie, pdfBaseInfo.correlativo, 'a4')}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="flex w-full items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-[13px] font-medium text-gray-700 transition hover:border-[#4A80B8]/50 hover:bg-[#4A80B8]/5 hover:text-[#4A80B8]"
-                                        >
-                                            <div className="flex items-center gap-2.5">
-                                                <span className="text-lg">📄</span>
-                                                <div>
-                                                    <p className="font-semibold">Formato A4</p>
-                                                    <p className="text-[11px] font-normal text-gray-400">Impresora normal</p>
-                                                </div>
-                                            </div>
-                                            <ExternalLink className="size-3.5 text-gray-400" />
-                                        </a>
-                                        <p className="pt-1 text-center text-[11px] text-gray-400">
-                                            Ctrl+P / Cmd+P para imprimir
-                                        </p>
-                                    </div>
-                                </div>
+                                <PrintPdfButton pdfBaseInfo={pdfBaseInfo} />
                             )}
 
                             {/* Archivos SUNAT */}
@@ -516,5 +480,97 @@ function SideField({ label, value }: { label: string; value: React.ReactNode }) 
             <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 shrink-0 pt-0.5">{label}</span>
             <span className="text-right text-[13px] font-medium text-gray-700">{value ?? '—'}</span>
         </div>
+    );
+}
+
+// ── Modal de selección de formato PDF ────────────────────────────────────────
+
+type PdfBaseInfo = { ruc: string; type: string; serie: string; correlativo: number };
+
+const PDF_FORMATS = [
+    {
+        format: 'ticket' as const,
+        label: 'Ticket 80mm',
+        sub: 'Ticketera térmica',
+        icon: '🖨️',
+        accent: 'hover:border-amber-400 hover:bg-amber-50 hover:text-amber-700',
+    },
+    {
+        format: 'a4' as const,
+        label: 'Formato A4',
+        sub: 'Hoja completa',
+        icon: '📄',
+        accent: 'hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700',
+    },
+];
+
+function PrintPdfButton({ pdfBaseInfo }: { pdfBaseInfo: PdfBaseInfo }) {
+    const [open, setOpen] = useState(false);
+
+    return (
+        <>
+            {/* Botón único */}
+            <button
+                onClick={() => setOpen(true)}
+                className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-[#D28C3C] px-4 py-3 text-[14px] font-semibold text-white shadow-md transition hover:bg-[#b97630] active:scale-[0.98]"
+            >
+                <Printer className="size-4.5" />
+                Imprimir / Descargar PDF
+            </button>
+
+            {/* Modal overlay */}
+            {open && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+                    onClick={() => setOpen(false)}
+                >
+                    <div
+                        className="relative w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* Cabecera modal */}
+                        <div className="mb-5 text-center">
+                            <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-2xl bg-amber-100">
+                                <Printer className="size-6 text-amber-600" />
+                            </div>
+                            <h3 className="text-[16px] font-bold text-gray-800">Selecciona el formato</h3>
+                            <p className="mt-1 text-[12px] text-gray-400">¿Cómo quieres imprimir o guardar el comprobante?</p>
+                        </div>
+
+                        {/* Opciones */}
+                        <div className="space-y-3">
+                            {PDF_FORMATS.map(({ format, label, sub, icon, accent }) => (
+                                <a
+                                    key={format}
+                                    href={buildApisunatPdfUrl(pdfBaseInfo.ruc, pdfBaseInfo.type, pdfBaseInfo.serie, pdfBaseInfo.correlativo, format)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={() => setOpen(false)}
+                                    className={`flex items-center gap-4 rounded-2xl border-2 border-gray-100 bg-gray-50 px-5 py-4 transition ${accent} cursor-pointer`}
+                                >
+                                    <span className="text-3xl leading-none">{icon}</span>
+                                    <div className="flex-1">
+                                        <p className="text-[14px] font-bold text-gray-800">{label}</p>
+                                        <p className="text-[12px] text-gray-400">{sub}</p>
+                                    </div>
+                                    <ExternalLink className="size-4 shrink-0 text-gray-300" />
+                                </a>
+                            ))}
+                        </div>
+
+                        <p className="mt-4 text-center text-[11px] text-gray-400">
+                            Se abre en nueva pestaña · Usa Ctrl+P para imprimir
+                        </p>
+
+                        <button
+                            onClick={() => setOpen(false)}
+                            className="mt-4 w-full cursor-pointer rounded-xl py-2 text-[13px] text-gray-400 hover:text-gray-600 transition"
+                        >
+                            Cancelar
+                        </button>
+                    </div>
+                </div>
+            )}
+        </>
     );
 }
