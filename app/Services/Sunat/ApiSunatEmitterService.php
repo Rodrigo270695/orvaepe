@@ -18,7 +18,7 @@ use Throwable;
  */
 class ApiSunatEmitterService
 {
-    private const PROD_URL    = 'https://api.apisunat.pe/api/v3/documents';
+    private const PROD_URL    = 'https://app.apisunat.pe/api/v3/documents';
     private const SANDBOX_URL = 'https://sandbox.apisunat.pe/api/v3/documents';
 
     // Catálogo 10 SUNAT → nombre del tributo para API SUNAT
@@ -123,48 +123,62 @@ class ApiSunatEmitterService
         }
 
         // ── 5. Procesar respuesta ─────────────────────────────────────────
-        $success = $json['success'] ?? false;
+        $apiSuccess = $json['success'] ?? false;
+        $msg        = $json['message'] ?? 'Sin respuesta de API SUNAT';
+        $payload    = $json['payload'] ?? [];
+        $estado     = strtoupper($payload['estado'] ?? '');  // ACEPTADO | PENDIENTE | RECHAZADO | EXCEPCION
 
-        if (!$success) {
-            $msg = $json['message'] ?? 'Error desconocido de API SUNAT';
+        if (!$apiSuccess) {
             Log::warning('apisunat.rejected', ['invoice' => $invoice->id, 'resp' => $json]);
-            return $this->fail($invoice, $msg);
+            return $this->fail($invoice, $msg, $response->status());
         }
 
-        // Respuesta exitosa
+        // Determinar estado SUNAT desde payload
+        $filingStatus = match ($estado) {
+            'ACEPTADO'  => Invoice::FILING_ACCEPTED,
+            'PENDIENTE' => Invoice::FILING_PENDING,
+            'RECHAZADO' => Invoice::FILING_REJECTED,
+            default     => Invoice::FILING_ERROR,
+        };
+
+        $docStatus = in_array($filingStatus, [Invoice::FILING_ACCEPTED, Invoice::FILING_PENDING])
+            ? Invoice::STATUS_ISSUED
+            : $invoice->status;
+
         $invoice->update([
-            'sunat_filing_status'          => Invoice::FILING_ACCEPTED,
-            'status'                       => Invoice::STATUS_ISSUED,
-            'sunat_response_code'          => '0',
-            'sunat_response_description'   => $json['message'] ?? 'Aceptado por SUNAT vía API SUNAT',
+            'sunat_filing_status'        => $filingStatus,
+            'status'                     => $docStatus,
+            'sunat_response_code'        => $estado ?: '0',
+            'sunat_response_description' => $msg,
+            'xml_signed_path'            => $payload['xml'] ?? null,
+            'cdr_path'                   => $payload['cdr'] ?? null,
         ]);
 
-        // Guardar log
         $attempt = $invoice->submissionLogs()->count() + 1;
         $invoice->submissionLogs()->create([
             'attempt'          => $attempt,
             'channel'          => 'apisunat',
-            'http_status'      => 200,
-            'response_code'    => '0',
-            'response_message' => $json['message'] ?? 'Aceptado por API SUNAT',
-            'success'          => true,
+            'http_status'      => $response->status(),
+            'response_code'    => $estado ?: '0',
+            'response_message' => $msg,
+            'success'          => $filingStatus === Invoice::FILING_ACCEPTED,
         ]);
 
-        return true;
+        return $filingStatus === Invoice::FILING_ACCEPTED;
     }
 
-    private function fail(Invoice $invoice, string $message): bool
+    private function fail(Invoice $invoice, string $message, int $httpStatus = 0): bool
     {
         $invoice->update([
             'sunat_filing_status'        => Invoice::FILING_ERROR,
             'sunat_response_description' => $message,
         ]);
 
-        // Registrar el intento fallido en el log
         $attempt = $invoice->submissionLogs()->count() + 1;
         $invoice->submissionLogs()->create([
             'attempt'          => $attempt,
             'channel'          => 'apisunat',
+            'http_status'      => $httpStatus,
             'response_message' => $message,
             'success'          => false,
         ]);

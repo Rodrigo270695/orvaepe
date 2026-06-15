@@ -25,6 +25,7 @@ class SunatEmitterSetting extends Model
         'sunat_username_hint',
         'sol_username',
         'sol_password_enc',
+        'apisunat_token_enc',
         'credentials_secret_ref',
         'default_certificate_id',
         'environment',
