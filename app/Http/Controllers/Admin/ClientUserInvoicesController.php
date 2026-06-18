@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Controllers\Client;
+namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Invoice;
@@ -14,12 +14,14 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
-class ClientInvoiceController extends Controller
+/**
+ * Vista espejo (solo lectura) de /cliente/facturas para soporte desde el panel admin.
+ */
+class ClientUserInvoicesController extends Controller
 {
-    public function index(Request $request): Response
+    public function index(Request $request, User $user): Response
     {
-        $user = $request->user();
-        abort_unless($user instanceof User, 401);
+        $this->ensureClientUser($user);
 
         $access = new ClientInvoiceAccess($user);
 
@@ -31,18 +33,17 @@ class ClientInvoiceController extends Controller
             ->withQueryString()
             ->through(fn (Invoice $invoice): array => $access->listPayload($invoice));
 
-        return Inertia::render('cliente/facturas/index', [
+        return Inertia::render('admin/acceso-clientes/facturas/index', [
+            'client' => $access->clientSummary(),
             'invoices' => $invoices,
         ]);
     }
 
-    public function show(Request $request, Invoice $invoice): Response
+    public function show(Request $request, User $user, Invoice $invoice): Response
     {
-        $user = $request->user();
-        abort_unless($user instanceof User, 401);
-
+        $this->ensureClientUser($user);
         $access = new ClientInvoiceAccess($user);
-        abort_unless($access->belongsToClient($invoice), 403);
+        abort_unless($access->belongsToClient($invoice), 404);
 
         $invoice->load([
             'lines',
@@ -60,18 +61,17 @@ class ClientInvoiceController extends Controller
             ]),
         ]);
 
-        return Inertia::render('cliente/facturas/show', [
+        return Inertia::render('admin/acceso-clientes/facturas/show', [
+            'client' => $access->clientSummary(),
             'invoice' => $access->detailPayload($invoice),
         ]);
     }
 
-    public function downloadXml(Request $request, Invoice $invoice): StreamedResponse|RedirectResponse
+    public function downloadXml(User $user, Invoice $invoice): StreamedResponse|RedirectResponse
     {
-        $user = $request->user();
-        abort_unless($user instanceof User, 401);
-
+        $this->ensureClientUser($user);
         $access = new ClientInvoiceAccess($user);
-        abort_unless($access->belongsToClient($invoice), 403);
+        abort_unless($access->belongsToClient($invoice), 404);
 
         return ClientInvoiceAccess::proxyDownload(
             $invoice->xml_signed_path,
@@ -80,13 +80,11 @@ class ClientInvoiceController extends Controller
         );
     }
 
-    public function downloadCdr(Request $request, Invoice $invoice): StreamedResponse|RedirectResponse
+    public function downloadCdr(User $user, Invoice $invoice): StreamedResponse|RedirectResponse
     {
-        $user = $request->user();
-        abort_unless($user instanceof User, 401);
-
+        $this->ensureClientUser($user);
         $access = new ClientInvoiceAccess($user);
-        abort_unless($access->belongsToClient($invoice), 403);
+        abort_unless($access->belongsToClient($invoice), 404);
 
         return ClientInvoiceAccess::proxyDownload(
             $invoice->cdr_path,
@@ -95,13 +93,11 @@ class ClientInvoiceController extends Controller
         );
     }
 
-    public function downloadPdf(Request $request, Invoice $invoice): StreamedResponse|RedirectResponse
+    public function downloadPdf(Request $request, User $user, Invoice $invoice): StreamedResponse|RedirectResponse
     {
-        $user = $request->user();
-        abort_unless($user instanceof User, 401);
-
+        $this->ensureClientUser($user);
         $access = new ClientInvoiceAccess($user);
-        abort_unless($access->belongsToClient($invoice), 403);
+        abort_unless($access->belongsToClient($invoice), 404);
 
         $format = $request->query('format', 'ticket');
         $url = $invoice->pdf_path;
@@ -117,5 +113,10 @@ class ClientInvoiceController extends Controller
             $invoice->invoice_number.$suffix.'.pdf',
             'application/pdf',
         );
+    }
+
+    private function ensureClientUser(User $user): void
+    {
+        abort_unless($user->hasRole('client'), 404);
     }
 }

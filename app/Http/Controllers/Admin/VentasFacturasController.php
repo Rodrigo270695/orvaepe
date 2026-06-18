@@ -8,6 +8,7 @@ use App\Models\Invoice;
 use App\Models\InvoiceLine;
 use App\Models\InvoiceDocumentSequence;
 use App\Models\Order;
+use App\Models\User;
 use App\Models\SunatEmitterSetting;
 use App\Services\Sunat\ApiSunatEmitterService;
 use App\Services\Sunat\InvoiceEmitterService;
@@ -199,13 +200,32 @@ class VentasFacturasController extends Controller
 
     public function show(Invoice $invoice): Response
     {
-        $invoice->load(['lines', 'order', 'user', 'submissionLogs' => fn ($q) => $q->orderByDesc('created_at')]);
+        $invoice->load([
+            'lines',
+            'order',
+            'user',
+            'clientUser.profile',
+            'submissionLogs' => fn ($q) => $q->orderByDesc('created_at'),
+        ]);
 
         $ruc = \App\Models\CompanyLegalProfile::where('is_default_issuer', true)->value('ruc');
+
+        $clientUser = $invoice->clientUser;
+        if ($clientUser === null && $invoice->order?->user_id !== null) {
+            $clientUser = User::query()
+                ->with('profile')
+                ->find($invoice->order->user_id);
+        }
 
         return Inertia::render('admin/comprobantes/show', [
             'invoice'     => $invoice,
             'company_ruc' => $ruc,
+            'portal_client' => $clientUser === null ? null : [
+                'id' => $clientUser->id,
+                'email' => $clientUser->email,
+                'name' => trim($clientUser->name.' '.($clientUser->lastname ?? '')),
+                'ruc' => $clientUser->profile?->ruc,
+            ],
         ]);
     }
 

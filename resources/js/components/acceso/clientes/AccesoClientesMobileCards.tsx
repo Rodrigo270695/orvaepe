@@ -1,3 +1,5 @@
+import { Link } from '@inertiajs/react';
+
 import type { ClientUserRow } from '@/components/acceso/clientes/clienteUserTypes';
 import { formatClientFullName } from '@/components/sales/orders/orderDisplay';
 
@@ -99,6 +101,12 @@ export default function AccesoClientesMobileCards({
                             </p>
                         </div>
                     </div>
+                    <Link
+                        href={`/panel/acceso-clientes/${row.id}/facturas`}
+                        className="mt-3 inline-flex w-full items-center justify-center rounded-lg border border-[#4A80B8]/25 bg-[#4A80B8]/8 px-3 py-2 text-xs font-medium text-[#4A80B8]"
+                    >
+                        Ver facturas del portal
+                    </Link>
                 </div>
             ))}
         </div>

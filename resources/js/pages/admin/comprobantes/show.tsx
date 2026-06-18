@@ -109,7 +109,14 @@ type Invoice = {
     submission_logs: Log[];
 };
 
-type Props = { invoice: Invoice; company_ruc: string | null };
+type Props = { invoice: Invoice; company_ruc: string | null; portal_client?: PortalClient | null };
+
+type PortalClient = {
+    id: number;
+    email: string;
+    name: string;
+    ruc: string | null;
+};
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -134,7 +141,7 @@ function fmtDate(d: string | null) {
 
 // ── Componente principal ──────────────────────────────────────────────────────
 
-export default function ComprobantesShow({ invoice, company_ruc }: Props) {
+export default function ComprobantesShow({ invoice, company_ruc, portal_client }: Props) {
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Panel',        href: dashboard() },
         { title: 'Comprobantes', href: '/panel/ventas-facturas' },
@@ -388,6 +395,19 @@ export default function ComprobantesShow({ invoice, company_ruc }: Props) {
                                             value={
                                                 <Link href={`/panel/ventas-ordenes/${invoice.order.id}`} className="text-[#4A80B8] hover:underline text-[13px]">
                                                     {invoice.order.order_number}
+                                                </Link>
+                                            }
+                                        />
+                                    )}
+                                    {portal_client && (
+                                        <SideField
+                                            label="Portal cliente"
+                                            value={
+                                                <Link
+                                                    href={`/panel/acceso-clientes/${portal_client.id}/facturas`}
+                                                    className="text-[#4A80B8] hover:underline text-[13px]"
+                                                >
+                                                    Ver facturas de {portal_client.email}
                                                 </Link>
                                             }
                                         />

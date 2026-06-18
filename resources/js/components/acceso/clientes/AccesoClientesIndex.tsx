@@ -1,5 +1,5 @@
-import { router, usePage } from '@inertiajs/react';
-import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
+import { Link, router, usePage } from '@inertiajs/react';
+import { ArrowDown, ArrowUp, ArrowUpDown, Receipt } from 'lucide-react';
 
 import AdminCrudIndex from '@/components/admin/crud/AdminCrudIndex';
 import type { AdminCrudTableColumn } from '@/components/admin/crud/AdminCrudTable';
@@ -133,6 +133,19 @@ export default function AccesoClientesIndex({
             cellClassName:
                 'px-3 py-2 align-middle text-xs text-muted-foreground',
             render: (r) => formatDateTime(r.created_at),
+        },
+        {
+            header: 'Portal',
+            cellClassName: 'px-3 py-2 align-middle text-right',
+            render: (r) => (
+                <Link
+                    href={`/panel/acceso-clientes/${r.id}/facturas`}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-[#4A80B8]/25 bg-[#4A80B8]/8 px-2.5 py-1.5 text-xs font-medium text-[#4A80B8] transition hover:bg-[#4A80B8]/15"
+                >
+                    <Receipt className="size-3.5" />
+                    Ver facturas
+                </Link>
+            ),
         },
     ];
 

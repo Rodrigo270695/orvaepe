@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AuditLogsController;
 use App\Http\Controllers\Admin\ClientUsersController;
+use App\Http\Controllers\Admin\ClientUserInvoicesController;
 use App\Http\Controllers\Admin\EntitlementsController;
 use App\Http\Controllers\Admin\EntitlementSecretsController;
 use App\Http\Controllers\Admin\InformesController;
@@ -430,6 +431,17 @@ Route::middleware(['auth', 'verified', 'client.profile.complete'])->group(functi
         // Acceso — Entitlements y secretos (derechos de uso / credenciales técnicas)
         Route::get('panel/acceso-clientes', [ClientUsersController::class, 'index'])
             ->name('panel.acceso-clientes.index');
+
+        Route::get('panel/acceso-clientes/{user}/facturas', [ClientUserInvoicesController::class, 'index'])
+            ->name('panel.acceso-clientes.facturas.index');
+        Route::get('panel/acceso-clientes/{user}/facturas/{invoice}/xml', [ClientUserInvoicesController::class, 'downloadXml'])
+            ->name('panel.acceso-clientes.facturas.download-xml');
+        Route::get('panel/acceso-clientes/{user}/facturas/{invoice}/cdr', [ClientUserInvoicesController::class, 'downloadCdr'])
+            ->name('panel.acceso-clientes.facturas.download-cdr');
+        Route::get('panel/acceso-clientes/{user}/facturas/{invoice}/pdf', [ClientUserInvoicesController::class, 'downloadPdf'])
+            ->name('panel.acceso-clientes.facturas.download-pdf');
+        Route::get('panel/acceso-clientes/{user}/facturas/{invoice}', [ClientUserInvoicesController::class, 'show'])
+            ->name('panel.acceso-clientes.facturas.show');
 
         Route::get('panel/marketing-vitrina', [ShowcaseClientsController::class, 'index'])
             ->name('panel.marketing-vitrina.index');
