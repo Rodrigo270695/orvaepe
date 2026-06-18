@@ -150,6 +150,8 @@ class VentasFacturasController extends Controller
                 'sunat_filing_status'           => Invoice::FILING_DRAFT,
                 'order_id'                      => $data['order_id'] ?? null,
                 'user_id'                       => Auth::id(),
+                'client_user_id'                => app(\App\Support\Invoices\InvoiceClientResolver::class)
+                    ->resolve($data['order_id'] ?? null, $data['buyer']),
                 'status'                        => Invoice::STATUS_DRAFT,
                 'subtotal'                      => $subtotal,
                 'tax_total'                     => $taxTotal,

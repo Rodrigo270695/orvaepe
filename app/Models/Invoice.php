@@ -55,6 +55,7 @@ class Invoice extends Model
         'sunat_filing_status',
         'order_id',
         'user_id',
+        'client_user_id',
         'status',
         'subtotal',
         'tax_total',
@@ -105,6 +106,11 @@ class Invoice extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function clientUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'client_user_id');
     }
 
     public function lines(): HasMany

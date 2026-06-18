@@ -60,6 +60,11 @@ class User extends Authenticatable
         return $this->hasMany(LicenseKey::class);
     }
 
+    public function clientInvoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class, 'client_user_id');
+    }
+
     /**
      * @return HasMany<AuditLog, $this>
      */

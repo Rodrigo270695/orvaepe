@@ -624,14 +624,6 @@ class ClientPortalController extends Controller
         return null;
     }
 
-    public function facturas(Request $request): Response
-    {
-        return Inertia::render('cliente/placeholder', [
-            'title' => 'Facturas',
-            'description' => 'Tus comprobantes electrónicos aparecerán aquí cuando estén disponibles.',
-        ]);
-    }
-
     public function soporte(Request $request): Response
     {
         return Inertia::render('cliente/placeholder', [

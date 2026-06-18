@@ -34,6 +34,7 @@ use App\Http\Controllers\Checkout\CheckoutMercadoPagoController;
 use App\Http\Controllers\Checkout\CheckoutPayPalController;
 use App\Http\Controllers\Checkout\CulqiWebhookController;
 use App\Http\Controllers\Checkout\PayPalWebhookController;
+use App\Http\Controllers\Client\ClientInvoiceController;
 use App\Http\Controllers\Client\ClientPortalController;
 use App\Http\Controllers\Client\ClientSubscriptionRenewalController;
 use App\Http\Controllers\DashboardController;
@@ -189,7 +190,11 @@ Route::middleware(['auth', 'verified', 'client.profile.complete'])->group(functi
         Route::get('/software/descargas/{software_release}/assets/{software_release_asset}', [ClientPortalController::class, 'downloadSoftwareReleaseAsset'])
             ->name('software.asset.download');
         Route::get('/licencias', [ClientPortalController::class, 'licenses'])->name('licenses');
-        Route::get('/facturas', [ClientPortalController::class, 'facturas'])->name('facturas');
+        Route::get('/facturas', [ClientInvoiceController::class, 'index'])->name('facturas');
+        Route::get('/facturas/{invoice}/xml', [ClientInvoiceController::class, 'downloadXml'])->name('facturas.download-xml');
+        Route::get('/facturas/{invoice}/cdr', [ClientInvoiceController::class, 'downloadCdr'])->name('facturas.download-cdr');
+        Route::get('/facturas/{invoice}/pdf', [ClientInvoiceController::class, 'downloadPdf'])->name('facturas.download-pdf');
+        Route::get('/facturas/{invoice}', [ClientInvoiceController::class, 'show'])->name('facturas.show');
         Route::get('/soporte', [ClientPortalController::class, 'soporte'])->name('soporte');
         Route::get('/perfil', [ClientPortalController::class, 'profile'])->name('profile');
         Route::patch('/perfil', [ClientPortalController::class, 'updateProfile'])->name('profile.update');
