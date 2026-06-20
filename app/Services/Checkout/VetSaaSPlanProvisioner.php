@@ -255,13 +255,12 @@ class VetSaaSPlanProvisioner
             return;
         }
 
-        $periodStart = $existingSubscription->current_period_end && $existingSubscription->current_period_end->isFuture()
-            ? $existingSubscription->current_period_end
-            : now();
+        $existingSubscription->refresh();
 
+        $periodStart = $existingSubscription->current_period_start ?? now();
         $periodEndAt = $periodEnd instanceof \DateTimeInterface
             ? Carbon::parse($periodEnd)
-            : $this->periodEndFromInterval($periodStart, $sku);
+            : ($existingSubscription->current_period_end ?? $this->periodEndFromInterval($periodStart, $sku));
 
         $payload = [
             'external_order_id' => (string) $order->id,
