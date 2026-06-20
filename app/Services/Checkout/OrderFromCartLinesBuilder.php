@@ -19,6 +19,7 @@ final class OrderFromCartLinesBuilder
 {
     public function __construct(
         private readonly SaasDuplicateCheckoutGuard $duplicateCheckoutGuard,
+        private readonly VetSaaSComprobantesOverageClient $comprobantesOverageClient,
     ) {}
 
     /**
@@ -172,6 +173,43 @@ final class OrderFromCartLinesBuilder
         }
 
         $discountTotal = round($discountTotal, 2);
+
+        $renewTenantSlug = session('vetsaas_renew_tenant_slug');
+        $renewTenantSlug = is_string($renewTenantSlug) ? trim($renewTenantSlug) : '';
+        $hasVetsaasRenewal = $renewTenantSlug !== ''
+            && $skus->contains(fn (CatalogSku $sku): bool => SaasCatalogSku::isVetsaas($sku));
+
+        $comprobantesOverageMeta = null;
+        if ($hasVetsaasRenewal) {
+            $overageResponse = $this->comprobantesOverageClient->forTenantSlug($renewTenantSlug);
+            if (is_array($overageResponse) && ($overageResponse['applies'] ?? false)) {
+                $overageAmount = round((float) ($overageResponse['overage_cost'] ?? 0), 2);
+                if ($overageAmount > 0) {
+                    $comprobantesOverageMeta = $overageResponse;
+                    $lineRows[] = [
+                        'catalog_sku_id' => null,
+                        'product_name_snapshot' => 'VetSaaS',
+                        'sku_name_snapshot' => (string) ($overageResponse['description'] ?? 'Comprobantes electrónicos adicionales'),
+                        'quantity' => 1,
+                        'unit_price' => $overageAmount,
+                        'line_discount' => 0.0,
+                        'tax_amount' => 0.0,
+                        'line_total' => $overageAmount,
+                        'metadata' => [
+                            'type' => 'vetsaas_comprobantes_overage',
+                            'tenant_slug' => $renewTenantSlug,
+                            'used' => $overageResponse['used'] ?? null,
+                            'included' => $overageResponse['included'] ?? null,
+                            'overage_blocks' => $overageResponse['overage_blocks'] ?? null,
+                            'igv_applies' => false,
+                        ],
+                    ];
+                    $subtotal = round($subtotal + $overageAmount, 2);
+                    $lineTotalSum = round($lineTotalSum + $overageAmount, 2);
+                }
+            }
+        }
+
         $grandTotal = round(max(0.0, $lineTotalSum - $discountTotal), 2);
 
         if ($grandTotal <= 0 && ! SaasCatalogSku::collectionQualifiesForZeroTotalCheckout($skus->values())) {
@@ -185,12 +223,14 @@ final class OrderFromCartLinesBuilder
             : 'Checkout marketing (carrito)';
 
         $billingSnapshot = null;
-        $renewTenantSlug = session('vetsaas_renew_tenant_slug');
-        if (is_string($renewTenantSlug) && trim($renewTenantSlug) !== '') {
+        if ($renewTenantSlug !== '') {
             $billingSnapshot = [
-                'vetsaas_renew_tenant_slug' => trim($renewTenantSlug),
+                'vetsaas_renew_tenant_slug' => $renewTenantSlug,
             ];
-            $notesInternal .= ' | Renovación VetSaaS: '.trim($renewTenantSlug);
+            if ($comprobantesOverageMeta !== null) {
+                $billingSnapshot['vetsaas_comprobantes_overage'] = $comprobantesOverageMeta;
+            }
+            $notesInternal .= ' | Renovación VetSaaS: '.$renewTenantSlug;
         }
 
         return DB::transaction(function () use ($user, $lineRows, $subtotal, $taxTotal, $discountTotal, $grandTotal, $currency, $coupon, $notesInternal, $billingSnapshot) {

@@ -262,6 +262,24 @@ class VetSaaSPlanProvisioner
             ? Carbon::parse($periodEnd)
             : ($existingSubscription->current_period_end ?? $this->periodEndFromInterval($periodStart, $sku));
 
+        $order->loadMissing('lines');
+        $planLineTotal = round((float) $order->lines
+            ->whereNotNull('catalog_sku_id')
+            ->sum('line_total'), 2);
+
+        $snapshot = is_array($order->billing_snapshot) ? $order->billing_snapshot : [];
+        $comprobantesOverage = $snapshot['vetsaas_comprobantes_overage'] ?? null;
+        $comprobantesOveragePayload = null;
+        if (is_array($comprobantesOverage) && (float) ($comprobantesOverage['overage_cost'] ?? 0) > 0) {
+            $comprobantesOveragePayload = [
+                'blocks' => (int) ($comprobantesOverage['overage_blocks'] ?? 0),
+                'units' => (int) ($comprobantesOverage['overage_units'] ?? 0),
+                'amount' => round((float) ($comprobantesOverage['overage_cost'] ?? 0), 2),
+                'used' => (int) ($comprobantesOverage['used'] ?? 0),
+                'included' => $comprobantesOverage['included'] ?? null,
+            ];
+        }
+
         $payload = [
             'external_order_id' => (string) $order->id,
             'order_number' => (string) $order->order_number,
@@ -270,7 +288,8 @@ class VetSaaSPlanProvisioner
             'ciclo' => $this->resolveCiclo($sku),
             'period_start' => $periodStart->toIso8601String(),
             'period_end' => $periodEndAt->toIso8601String(),
-            'precio_pactado' => (float) $order->grand_total,
+            'precio_pactado' => $planLineTotal > 0 ? $planLineTotal : (float) $order->grand_total,
+            'comprobantes_overage' => $comprobantesOveragePayload,
             'payment' => [
                 'monto' => (float) $order->grand_total,
                 'moneda' => (string) $order->currency,

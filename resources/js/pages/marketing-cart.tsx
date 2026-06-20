@@ -54,6 +54,16 @@ type CulqiWindow = Window & {
     culqi?: () => void;
 };
 
+type ComprobantesOverageResponse = {
+    applies?: boolean;
+    overage_cost?: string;
+    description?: string | null;
+    used?: number;
+    included?: number | null;
+    overage_blocks?: number;
+    currency?: string;
+};
+
 type CartPageProps = {
     auth?: { user?: { name?: string } | null };
     flash?: { status?: string | null; toast?: unknown };
@@ -78,8 +88,12 @@ export default function MarketingCart() {
     const [skuPricesLoading, setSkuPricesLoading] = useState(false);
     const [checkoutLoading, setCheckoutLoading] = useState(false);
     const [checkoutError, setCheckoutError] = useState<string | null>(null);
+    const [comprobantesOverage, setComprobantesOverage] =
+        useState<ComprobantesOverageResponse | null>(null);
+    const [comprobantesOverageLoading, setComprobantesOverageLoading] = useState(false);
 
     const linesKeyRef = useRef<string | undefined>(undefined);
+    const overageFetchId = useRef(0);
     const skipNextInvalidationRef = useRef(true);
     const skuPriceFetchId = useRef(0);
 
@@ -258,6 +272,71 @@ export default function MarketingCart() {
         };
     }, [mounted, planIdsKey, lines.length]);
 
+    useEffect(() => {
+        if (!mounted || !vetsaasRenewTenantSlug?.trim()) {
+            setComprobantesOverage(null);
+            setComprobantesOverageLoading(false);
+            return;
+        }
+
+        const fetchId = ++overageFetchId.current;
+        const ac = new AbortController();
+
+        setComprobantesOverageLoading(true);
+
+        (async () => {
+            try {
+                const res = await fetch('/carrito/vetsaas-comprobantes-overage', {
+                    method: 'GET',
+                    headers: {
+                        Accept: 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    credentials: 'same-origin',
+                    signal: ac.signal,
+                });
+
+                if (fetchId !== overageFetchId.current) {
+                    return;
+                }
+
+                if (!res.ok) {
+                    setComprobantesOverage(null);
+                    return;
+                }
+
+                const data = (await res.json()) as ComprobantesOverageResponse;
+                setComprobantesOverage(data);
+            } catch (e) {
+                if (e instanceof DOMException && e.name === 'AbortError') {
+                    return;
+                }
+                if (fetchId !== overageFetchId.current) {
+                    return;
+                }
+                setComprobantesOverage(null);
+            } finally {
+                if (fetchId === overageFetchId.current) {
+                    setComprobantesOverageLoading(false);
+                }
+            }
+        })();
+
+        return () => {
+            ac.abort();
+        };
+    }, [mounted, vetsaasRenewTenantSlug]);
+
+    const comprobantesOveragePen = useMemo(() => {
+        if (!comprobantesOverage?.applies) {
+            return 0;
+        }
+
+        const amount = Number.parseFloat(comprobantesOverage.overage_cost ?? '0');
+
+        return Number.isFinite(amount) && amount > 0 ? Math.round(amount * 100) / 100 : 0;
+    }, [comprobantesOverage]);
+
     const totalUnits = useMemo(
         () => lines.reduce((s, l) => s + (l.qty ?? 0), 0),
         [lines],
@@ -306,16 +385,17 @@ export default function MarketingCart() {
         }
 
         const { grandTotal, currency } = totalsWithIgv;
+        const withOverage = Math.round((grandTotal + comprobantesOveragePen) * 100) / 100;
 
         if (currency === 'PEN' && discountPen !== null && discountPen > 0) {
             return {
-                amount: Math.max(0, Math.round((grandTotal - discountPen) * 100) / 100),
+                amount: Math.max(0, Math.round((withOverage - discountPen) * 100) / 100),
                 currency: 'PEN',
             };
         }
 
-        return { amount: grandTotal, currency };
-    }, [totalsWithIgv, discountPen]);
+        return { amount: withOverage, currency };
+    }, [totalsWithIgv, discountPen, comprobantesOveragePen]);
 
     const applyCoupon = async () => {
         const code = couponInput.trim();
@@ -912,6 +992,33 @@ export default function MarketingCart() {
                                         </span>
                                     </div>
                                 ) : null}
+                                {comprobantesOveragePen > 0 ? (
+                                    <div className="flex justify-between text-sm">
+                                        <span className="max-w-[12rem] text-[var(--muted-foreground)]">
+                                            {comprobantesOverage?.description ??
+                                                'Comprobantes electrónicos adicionales'}
+                                        </span>
+                                        <span className="text-right font-semibold tabular-nums text-[var(--foreground)]">
+                                            {comprobantesOverageLoading ? (
+                                                <span className="text-[var(--muted-foreground)]">…</span>
+                                            ) : (
+                                                <>
+                                                    {formatPenValue(comprobantesOveragePen)}{' '}
+                                                    <span className="text-[var(--muted-foreground)]">
+                                                        PEN
+                                                    </span>
+                                                </>
+                                            )}
+                                        </span>
+                                    </div>
+                                ) : vetsaasRenewTenantSlug && comprobantesOverageLoading ? (
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-[var(--muted-foreground)]">
+                                            Comprobantes adicionales
+                                        </span>
+                                        <span className="text-[var(--muted-foreground)]">…</span>
+                                    </div>
+                                ) : null}
                                 {appliedCoupon && discountPen !== null && discountPen > 0 && (
                                     <>
                                         <div className="flex justify-between text-sm">
@@ -1065,6 +1172,9 @@ export default function MarketingCart() {
                                         disabled={
                                             checkoutLoading ||
                                             skuPricesLoading ||
+                                            (vetsaasRenewTenantSlug
+                                                ? comprobantesOverageLoading
+                                                : false) ||
                                             totalPayable === null ||
                                             lines.length === 0
                                         }

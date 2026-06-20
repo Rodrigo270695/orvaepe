@@ -48,6 +48,7 @@ use App\Http\Controllers\Marketing\MarketingServicesController;
 use App\Http\Controllers\Marketing\MarketingSoftwareController;
 use App\Http\Controllers\Marketing\MarketingSoftwareDetailController;
 use App\Http\Controllers\Marketing\ResolveCartSkuPricesController;
+use App\Http\Controllers\Marketing\ResolveVetSaaSComprobantesOverageController;
 use App\Http\Controllers\Marketing\ValidateMarketingCouponController;
 use App\Http\Controllers\Marketing\VetSaaSRenewalRedirectController;
 use App\Http\Controllers\Sales\LookupSunatRucController;
@@ -109,6 +110,8 @@ Route::post('/carrito/validar-cupon', ValidateMarketingCouponController::class)
     ->name('marketing.validate-coupon');
 Route::post('/carrito/precios-skus', ResolveCartSkuPricesController::class)
     ->name('marketing.cart-sku-prices');
+Route::get('/carrito/vetsaas-comprobantes-overage', ResolveVetSaaSComprobantesOverageController::class)
+    ->name('marketing.vetsaas-comprobantes-overage');
 Route::get('/software/{system}', [MarketingSoftwareDetailController::class, 'show'])
     ->where('system', '[A-Za-z0-9-]+')
     ->name('software-detail');
