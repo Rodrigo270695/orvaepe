@@ -109,6 +109,26 @@ final class SaasCatalogSku
         return $normalized;
     }
 
+    public static function isFreePlan(CatalogSku $sku): bool
+    {
+        foreach (self::planSlugCandidates($sku) as $candidate) {
+            if (! is_string($candidate)) {
+                continue;
+            }
+
+            if (self::normalizePlanSlug($sku, $candidate) === 'free') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static function isPaidVetsaasPlan(CatalogSku $sku): bool
+    {
+        return self::isVetsaas($sku) && ! self::isFreePlan($sku);
+    }
+
     /**
      * @return list<string|null>
      */

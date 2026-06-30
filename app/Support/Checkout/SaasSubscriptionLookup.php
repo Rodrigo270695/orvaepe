@@ -15,7 +15,16 @@ final class SaasSubscriptionLookup
 {
     public static function findVetsaasRenewable(string|int $userId, CatalogSku $sku): ?Subscription
     {
-        return self::findRenewable((string) $userId, $sku, 'vetsaas_tenant_slug');
+        $exact = self::findRenewable((string) $userId, $sku, 'vetsaas_tenant_slug');
+        if ($exact instanceof Subscription) {
+            return $exact;
+        }
+
+        if (! SaasCatalogSku::isPaidVetsaasPlan($sku)) {
+            return null;
+        }
+
+        return self::findVetsaasProvisioned((string) $userId);
     }
 
     public static function findVetsaasByTenantSlug(string $tenantSlug, CatalogSku $sku): ?Subscription
@@ -25,20 +34,16 @@ final class SaasSubscriptionLookup
             return null;
         }
 
-        return Subscription::query()
-            ->whereIn('status', [
-                Subscription::STATUS_ACTIVE,
-                Subscription::STATUS_TRIALING,
-                Subscription::STATUS_PAST_DUE,
-            ])
-            ->whereHas('items', static function ($q) use ($sku): void {
-                $q->where('catalog_sku_id', $sku->id);
-            })
-            ->orderByDesc('current_period_end')
-            ->get()
-            ->first(static function (Subscription $sub) use ($tenantSlug): bool {
-                return self::tenantSlugFrom($sub) === $tenantSlug;
-            });
+        $exact = self::findByTenantSlugAndSku($tenantSlug, $sku);
+        if ($exact instanceof Subscription) {
+            return $exact;
+        }
+
+        if (! SaasCatalogSku::isPaidVetsaasPlan($sku)) {
+            return null;
+        }
+
+        return self::findProvisionedByTenantSlug($tenantSlug);
     }
 
     public static function findAulaVirtualRenewable(string|int $userId, CatalogSku $sku): ?Subscription
@@ -211,6 +216,31 @@ final class SaasSubscriptionLookup
                 $metadata = is_array($sub->metadata) ? $sub->metadata : [];
 
                 return filled($metadata[$metadataKey] ?? null);
+            });
+    }
+
+    private static function findByTenantSlugAndSku(string $tenantSlug, CatalogSku $sku): ?Subscription
+    {
+        return Subscription::query()
+            ->whereIn('status', self::renewableStatuses())
+            ->whereHas('items', static function ($q) use ($sku): void {
+                $q->where('catalog_sku_id', $sku->id);
+            })
+            ->orderByDesc('current_period_end')
+            ->get()
+            ->first(static function (Subscription $sub) use ($tenantSlug): bool {
+                return self::tenantSlugFrom($sub) === $tenantSlug;
+            });
+    }
+
+    private static function findProvisionedByTenantSlug(string $tenantSlug): ?Subscription
+    {
+        return Subscription::query()
+            ->whereIn('status', self::renewableStatuses())
+            ->orderByDesc('current_period_end')
+            ->get()
+            ->first(static function (Subscription $sub) use ($tenantSlug): bool {
+                return self::tenantSlugFrom($sub) === $tenantSlug;
             });
     }
 }

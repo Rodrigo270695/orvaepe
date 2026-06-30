@@ -50,3 +50,32 @@ test('zero total checkout requires all saas skus', function (): void {
     expect(SaasCatalogSku::collectionQualifiesForZeroTotalCheckout(collect([$vetsaas])))->toBeTrue()
         ->and(SaasCatalogSku::collectionQualifiesForZeroTotalCheckout(collect([$vetsaas, $other])))->toBeFalse();
 });
+
+test('detects free and paid vetsaas plans', function (): void {
+    $free = new CatalogSku([
+        'metadata' => ['saas_product' => 'vetsaas', 'vetsaas_plan_slug' => 'free'],
+        'sale_model' => 'saas_subscription',
+        'code' => 'vetsaas-free-mensual',
+    ]);
+    $starter = new CatalogSku([
+        'metadata' => ['saas_product' => 'vetsaas', 'vetsaas_plan_slug' => 'starter'],
+        'sale_model' => 'saas_subscription',
+        'code' => 'vetsaas-starter-mensual',
+    ]);
+    $pro = new CatalogSku([
+        'metadata' => ['saas_product' => 'vetsaas', 'vetsaas_plan_slug' => 'pro'],
+        'sale_model' => 'saas_subscription',
+        'code' => 'vetsaas-pro-mensual',
+    ]);
+    $clinica = new CatalogSku([
+        'metadata' => ['saas_product' => 'vetsaas', 'vetsaas_plan_slug' => 'clinica'],
+        'sale_model' => 'saas_subscription',
+        'code' => 'vetsaas-clinica-mensual',
+    ]);
+
+    expect(SaasCatalogSku::isFreePlan($free))->toBeTrue()
+        ->and(SaasCatalogSku::isPaidVetsaasPlan($free))->toBeFalse()
+        ->and(SaasCatalogSku::isPaidVetsaasPlan($starter))->toBeTrue()
+        ->and(SaasCatalogSku::isPaidVetsaasPlan($pro))->toBeTrue()
+        ->and(SaasCatalogSku::isPaidVetsaasPlan($clinica))->toBeTrue();
+});
