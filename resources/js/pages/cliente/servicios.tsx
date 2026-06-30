@@ -38,6 +38,7 @@ type SubscriptionRow = {
     current_period_start: string | null;
     current_period_end: string | null;
     cancel_at_period_end: boolean;
+    is_free_saas?: boolean;
     items: SubscriptionItemRow[];
 };
 
@@ -160,10 +161,12 @@ export default function ClienteServicios() {
     };
 
     const expiringSoonSubscriptions = subscriptions.filter((sub) => {
+        if (sub.is_free_saas) return false;
         const days = daysUntil(sub.current_period_end);
         return days !== null && days >= 0 && days <= 7;
     });
     const expiredSubscriptions = subscriptions.filter((sub) => {
+        if (sub.is_free_saas) return false;
         const days = daysUntil(sub.current_period_end);
         return days !== null && days < 0;
     });

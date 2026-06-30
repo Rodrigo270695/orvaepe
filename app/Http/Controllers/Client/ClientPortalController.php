@@ -187,6 +187,7 @@ class ClientPortalController extends Controller
                     'current_period_start' => $sub->current_period_start?->toIso8601String(),
                     'current_period_end' => $sub->current_period_end?->toIso8601String(),
                     'cancel_at_period_end' => (bool) $sub->cancel_at_period_end,
+                    'is_free_saas' => \App\Support\Checkout\SaasCatalogSku::isFreeSaasSubscription($sub),
                     'items' => $serviceItems->map(static function ($item): array {
                         return [
                             'sku_code' => $item->catalogSku?->code,
@@ -342,6 +343,7 @@ class ClientPortalController extends Controller
                     'renew_url' => $canRenew
                         ? route('cliente.subscriptions.renew', $sub)
                         : null,
+                    'is_free_saas' => \App\Support\Checkout\SaasCatalogSku::isFreeSaasSubscription($sub),
                     'items' => $sub->items->map(static function ($item): array {
                         return [
                             'sku_code' => $item->catalogSku?->code,

@@ -6,6 +6,7 @@ use App\Models\LicenseKey;
 use App\Models\Notification;
 use App\Models\Subscription;
 use App\Models\User;
+use App\Support\Checkout\SaasCatalogSku;
 use App\Support\WhatsAppPhoneNormalizer;
 use Illuminate\Support\Carbon;
 
@@ -24,13 +25,22 @@ final class ExpiringAccessNotifier
             ->whereIn('status', [Subscription::STATUS_ACTIVE, Subscription::STATUS_TRIALING])
             ->whereNotNull('current_period_end')
             ->whereDate('current_period_end', '=', $targetDate)
-            ->with(['user:id,name,lastname,email,phone,username', 'user.profile:id,user_id,phone'])
+            ->with([
+                'user:id,name,lastname,email,phone,username',
+                'user.profile:id,user_id,phone',
+                'items.catalogSku',
+            ])
             ->get();
 
         foreach ($subscriptions as $subscription) {
             if (! $subscription instanceof Subscription) {
                 continue;
             }
+
+            if (SaasCatalogSku::isFreeSaasSubscription($subscription)) {
+                continue;
+            }
+
             $sent += $this->notifyAdminsForExpiringSubscription($subscription, $daysBefore);
             $sent += $this->notifyCustomerForExpiringSubscription($subscription, $daysBefore);
         }

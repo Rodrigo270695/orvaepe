@@ -5,6 +5,7 @@ use App\Models\CatalogSku;
 use App\Models\Subscription;
 use App\Models\SubscriptionItem;
 use App\Models\User;
+use App\Support\Checkout\SaasCatalogSku;
 use App\Support\Checkout\SaasSubscriptionLookup;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -179,4 +180,16 @@ test('findVetsaasByTenantSlug resolves paid upgrade without matching sku item', 
 
     expect($found)->not->toBeNull()
         ->and(SaasSubscriptionLookup::tenantSlugFrom($found))->toBe('pet-paradise');
+});
+
+test('isFreeSaasSubscription detects free vetsaas and aula subscriptions', function (): void {
+    $user = User::factory()->create();
+    $freeSku = createVetsaasSku('free', 'vetsaas-free-mensual');
+    $starterSku = createVetsaasSku('starter', 'vetsaas-starter-mensual');
+
+    $freeSub = createProvisionedVetsaasSubscription($user, $freeSku, 'pet-paradise');
+    $paidSub = createProvisionedVetsaasSubscription($user, $starterSku, 'clinica-alfa');
+
+    expect(SaasCatalogSku::isFreeSaasSubscription($freeSub))->toBeTrue()
+        ->and(SaasCatalogSku::isFreeSaasSubscription($paidSub))->toBeFalse();
 });

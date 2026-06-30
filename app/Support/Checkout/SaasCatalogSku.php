@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Support\Checkout;
 
 use App\Models\CatalogSku;
+use App\Models\Subscription;
 use Illuminate\Support\Collection;
 
 /**
@@ -127,6 +128,29 @@ final class SaasCatalogSku
     public static function isPaidVetsaasPlan(CatalogSku $sku): bool
     {
         return self::isVetsaas($sku) && ! self::isFreePlan($sku);
+    }
+
+    public static function isFreeSaasSubscription(Subscription $subscription): bool
+    {
+        if (! $subscription->relationLoaded('items')) {
+            $subscription->load('items.catalogSku');
+        }
+
+        $saasItems = $subscription->items->filter(static function ($item): bool {
+            $sku = $item->catalogSku;
+
+            return $sku instanceof CatalogSku && self::isSaasSubscription($sku);
+        });
+
+        if ($saasItems->isEmpty()) {
+            return false;
+        }
+
+        return $saasItems->every(static function ($item): bool {
+            $sku = $item->catalogSku;
+
+            return $sku instanceof CatalogSku && self::isFreePlan($sku);
+        });
     }
 
     /**

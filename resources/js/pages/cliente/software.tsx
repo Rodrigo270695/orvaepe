@@ -36,6 +36,7 @@ type SubscriptionRow = {
     vetsaas_login_url?: string | null;
     vetsaas_tenant_slug?: string | null;
     renew_url?: string | null;
+    is_free_saas?: boolean;
     items: SubscriptionItemRow[];
 };
 
@@ -147,10 +148,12 @@ export default function ClienteSoftwarePage({
     };
 
     const expiringSoonSubscriptions = subscriptions.filter((sub) => {
+        if (sub.is_free_saas) return false;
         const days = daysUntil(sub.current_period_end);
         return days !== null && days >= 0 && days <= 7;
     });
     const expiredSubscriptions = subscriptions.filter((sub) => {
+        if (sub.is_free_saas) return false;
         const days = daysUntil(sub.current_period_end);
         return days !== null && days < 0;
     });
