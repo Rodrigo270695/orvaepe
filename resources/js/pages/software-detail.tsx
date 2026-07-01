@@ -11,6 +11,9 @@ import SoftwareDetailSection from '@/components/software/SoftwareDetailSection';
 import SoftwareDetailPlanSelectionPanel from '@/components/software/SoftwareDetailPlanSelectionPanel';
 import SoftwareDetailStickyPurchaseBar from '@/components/software/SoftwareDetailStickyPurchaseBar';
 import SoftwareProductHero from '@/components/software/SoftwareProductHero';
+import VetSaaSClientsCarousel, {
+    type VetSaaSShowcaseClient,
+} from '@/components/software/VetSaaSClientsCarousel';
 import GeometricBackground from '@/components/welcome/GeometricBackground';
 import ScrollReveal from '@/components/welcome/ScrollReveal';
 import ScrollToTopButton from '@/components/welcome/ScrollToTopButton';
@@ -88,6 +91,7 @@ type SoftwareDetailPageProps = {
     contact?: { whatsapp_e164?: string };
     mercadoPagoEnabled?: boolean;
     paypalSimulateCheckout?: boolean;
+    vetsaasShowcaseClients?: VetSaaSShowcaseClient[];
 };
 
 export default function SoftwareDetail() {
@@ -105,6 +109,7 @@ export default function SoftwareDetail() {
         contact,
         mercadoPagoEnabled: mercadoPagoEnabledProp,
         paypalSimulateCheckout: paypalSimulateCheckoutProp,
+        vetsaasShowcaseClients = [],
     } = page.props;
     const mercadoPagoEnabled = Boolean(mercadoPagoEnabledProp);
     const paypalSimulateCheckout = Boolean(paypalSimulateCheckoutProp);
@@ -643,6 +648,10 @@ export default function SoftwareDetail() {
                             </div>
                         </SoftwareDetailSection>
                     </ScrollReveal>
+
+                    {vetsaasShowcaseClients.length > 0 ? (
+                        <VetSaaSClientsCarousel clients={vetsaasShowcaseClients} />
+                    ) : null}
 
                     {specImages.length > 0 ? (
                         <ScrollReveal direction="up">

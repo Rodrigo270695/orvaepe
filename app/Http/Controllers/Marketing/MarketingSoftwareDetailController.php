@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Marketing;
 
 use App\Http\Controllers\Controller;
 use App\Models\CatalogProduct;
+use App\Services\Checkout\VetSaaSShowcaseClient;
 use App\Support\MarketingSoftwareCatalogPresenter;
+use App\Support\Marketing\VetSaaSSoftware;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -12,7 +14,7 @@ use Laravel\Fortify\Features;
 
 class MarketingSoftwareDetailController extends Controller
 {
-    public function show(Request $request, string $system): Response
+    public function show(Request $request, string $system, VetSaaSShowcaseClient $showcaseClient): Response
     {
         $saleModels = MarketingSoftwareCatalogPresenter::OWN_SOFTWARE_SALE_MODELS;
 
@@ -46,6 +48,9 @@ class MarketingSoftwareDetailController extends Controller
             'system' => $product
                 ? MarketingSoftwareCatalogPresenter::productToSystem($product)
                 : null,
+            'vetsaasShowcaseClients' => VetSaaSSoftware::isProduct($product)
+                ? $showcaseClient->clients()
+                : [],
         ]);
     }
 }
