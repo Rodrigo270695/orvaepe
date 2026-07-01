@@ -20,6 +20,7 @@ final class OrderFromCartLinesBuilder
     public function __construct(
         private readonly SaasDuplicateCheckoutGuard $duplicateCheckoutGuard,
         private readonly VetSaaSComprobantesOverageClient $comprobantesOverageClient,
+        private readonly VetSaaSRenewalBillingClient $renewalBillingClient,
     ) {}
 
     /**
@@ -82,6 +83,26 @@ final class OrderFromCartLinesBuilder
 
         $currency = (string) $currency;
 
+        $renewTenantSlug = session('vetsaas_renew_tenant_slug');
+        $renewTenantSlug = is_string($renewTenantSlug) ? trim($renewTenantSlug) : '';
+        $hasVetsaasRenewal = $renewTenantSlug !== ''
+            && $skus->contains(fn (CatalogSku $sku): bool => SaasCatalogSku::isVetsaas($sku));
+
+        $renewalBilling = $hasVetsaasRenewal
+            ? $this->renewalBillingClient->forTenantSlug($renewTenantSlug)
+            : null;
+        $renewalPlanAmount = is_array($renewalBilling) && ($renewalBilling['applies'] ?? false)
+            ? round((float) ($renewalBilling['plan_amount'] ?? 0), 2)
+            : 0.0;
+
+        $resolveUnitPrice = function (CatalogSku $sku) use ($renewalPlanAmount): float {
+            if ($renewalPlanAmount > 0 && SaasCatalogSku::isVetsaas($sku)) {
+                return $renewalPlanAmount;
+            }
+
+            return (float) $sku->list_price;
+        };
+
         $subtotal = 0.0;
         $taxTotal = 0.0;
         $lineTotalSum = 0.0;
@@ -89,7 +110,7 @@ final class OrderFromCartLinesBuilder
 
         foreach ($merged as $skuId => $qty) {
             $sku = $skus->get($skuId);
-            $unit = (float) $sku->list_price;
+            $unit = $resolveUnitPrice($sku);
             $amounts = PeruIgvLineCalculator::forLine(
                 $qty,
                 $unit,
@@ -156,7 +177,7 @@ final class OrderFromCartLinesBuilder
                 if (! $coupon->appliesToSkuId($sku->id)) {
                     continue;
                 }
-                $eligibleSubtotal += (float) $sku->list_price * $qty;
+                $eligibleSubtotal += $resolveUnitPrice($sku) * $qty;
             }
 
             if ($eligibleSubtotal <= 0) {
@@ -174,13 +195,38 @@ final class OrderFromCartLinesBuilder
 
         $discountTotal = round($discountTotal, 2);
 
-        $renewTenantSlug = session('vetsaas_renew_tenant_slug');
-        $renewTenantSlug = is_string($renewTenantSlug) ? trim($renewTenantSlug) : '';
-        $hasVetsaasRenewal = $renewTenantSlug !== ''
-            && $skus->contains(fn (CatalogSku $sku): bool => SaasCatalogSku::isVetsaas($sku));
-
         $comprobantesOverageMeta = null;
         if ($hasVetsaasRenewal) {
+            if (is_array($renewalBilling) && is_array($renewalBilling['addons'] ?? null)) {
+                foreach ($renewalBilling['addons'] as $addon) {
+                    if (! is_array($addon)) {
+                        continue;
+                    }
+                    $addonAmount = round((float) ($addon['amount'] ?? 0), 2);
+                    if ($addonAmount <= 0) {
+                        continue;
+                    }
+                    $lineRows[] = [
+                        'catalog_sku_id' => null,
+                        'product_name_snapshot' => 'VetSaaS',
+                        'sku_name_snapshot' => (string) ($addon['label'] ?? 'Add-on VetSaaS'),
+                        'quantity' => 1,
+                        'unit_price' => $addonAmount,
+                        'line_discount' => 0.0,
+                        'tax_amount' => 0.0,
+                        'line_total' => $addonAmount,
+                        'metadata' => [
+                            'type' => 'vetsaas_renewal_addon',
+                            'addon_key' => (string) ($addon['key'] ?? 'addon'),
+                            'tenant_slug' => $renewTenantSlug,
+                            'igv_applies' => false,
+                        ],
+                    ];
+                    $subtotal = round($subtotal + $addonAmount, 2);
+                    $lineTotalSum = round($lineTotalSum + $addonAmount, 2);
+                }
+            }
+
             $overageResponse = $this->comprobantesOverageClient->forTenantSlug($renewTenantSlug);
             if (is_array($overageResponse) && ($overageResponse['applies'] ?? false)) {
                 $overageAmount = round((float) ($overageResponse['overage_cost'] ?? 0), 2);
@@ -212,7 +258,15 @@ final class OrderFromCartLinesBuilder
 
         $grandTotal = round(max(0.0, $lineTotalSum - $discountTotal), 2);
 
-        if ($grandTotal <= 0 && ! SaasCatalogSku::collectionQualifiesForZeroTotalCheckout($skus->values())) {
+        $renewalBillableTotal = is_array($renewalBilling)
+            ? round((float) ($renewalBilling['total_amount'] ?? 0), 2)
+            : 0.0;
+
+        if (
+            $grandTotal <= 0
+            && $renewalBillableTotal <= 0
+            && ! SaasCatalogSku::collectionQualifiesForZeroTotalCheckout($skus->values())
+        ) {
             throw ValidationException::withMessages([
                 'lines' => 'El total a pagar debe ser mayor a cero.',
             ]);

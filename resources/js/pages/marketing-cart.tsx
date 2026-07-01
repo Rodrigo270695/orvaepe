@@ -64,6 +64,13 @@ type ComprobantesOverageResponse = {
     currency?: string;
 };
 
+type RenewalAddonRow = {
+    key: string;
+    label: string;
+    amount: number;
+    igv_applies?: boolean;
+};
+
 type CartPageProps = {
     auth?: { user?: { name?: string } | null };
     flash?: { status?: string | null; toast?: unknown };
@@ -91,6 +98,7 @@ export default function MarketingCart() {
     const [comprobantesOverage, setComprobantesOverage] =
         useState<ComprobantesOverageResponse | null>(null);
     const [comprobantesOverageLoading, setComprobantesOverageLoading] = useState(false);
+    const [renewalAddons, setRenewalAddons] = useState<RenewalAddonRow[]>([]);
 
     const linesKeyRef = useRef<string | undefined>(undefined);
     const overageFetchId = useRef(0);
@@ -214,6 +222,7 @@ export default function MarketingCart() {
     useEffect(() => {
         if (!mounted || lines.length === 0) {
             setSkuPrices({});
+            setRenewalAddons([]);
             setSkuPricesLoading(false);
             return;
         }
@@ -245,13 +254,25 @@ export default function MarketingCart() {
 
                 if (!res.ok) {
                     setSkuPrices({});
+                    setRenewalAddons([]);
                     return;
                 }
 
                 const data = (await res.json()) as {
                     prices?: Record<string, SkuPriceRow>;
+                    renewal_addons?: RenewalAddonRow[];
                 };
                 setSkuPrices(data.prices ?? {});
+                setRenewalAddons(
+                    Array.isArray(data.renewal_addons)
+                        ? data.renewal_addons.filter(
+                              (row) =>
+                                  typeof row?.amount === 'number' &&
+                                  Number.isFinite(row.amount) &&
+                                  row.amount > 0,
+                          )
+                        : [],
+                );
             } catch (e) {
                 if (e instanceof DOMException && e.name === 'AbortError') {
                     return;
@@ -260,6 +281,7 @@ export default function MarketingCart() {
                     return;
                 }
                 setSkuPrices({});
+                setRenewalAddons([]);
             } finally {
                 if (fetchId === skuPriceFetchId.current) {
                     setSkuPricesLoading(false);
@@ -327,6 +349,12 @@ export default function MarketingCart() {
         };
     }, [mounted, vetsaasRenewTenantSlug]);
 
+    const renewalAddonsPen = useMemo(() => {
+        const sum = renewalAddons.reduce((acc, row) => acc + row.amount, 0);
+
+        return sum > 0 ? Math.round(sum * 100) / 100 : 0;
+    }, [renewalAddons]);
+
     const comprobantesOveragePen = useMemo(() => {
         if (!comprobantesOverage?.applies) {
             return 0;
@@ -385,17 +413,19 @@ export default function MarketingCart() {
         }
 
         const { grandTotal, currency } = totalsWithIgv;
-        const withOverage = Math.round((grandTotal + comprobantesOveragePen) * 100) / 100;
+        const withAddons = Math.round(
+            (grandTotal + renewalAddonsPen + comprobantesOveragePen) * 100,
+        ) / 100;
 
         if (currency === 'PEN' && discountPen !== null && discountPen > 0) {
             return {
-                amount: Math.max(0, Math.round((withOverage - discountPen) * 100) / 100),
+                amount: Math.max(0, Math.round((withAddons - discountPen) * 100) / 100),
                 currency: 'PEN',
             };
         }
 
-        return { amount: withOverage, currency };
-    }, [totalsWithIgv, discountPen, comprobantesOveragePen]);
+        return { amount: withAddons, currency };
+    }, [totalsWithIgv, discountPen, comprobantesOveragePen, renewalAddonsPen]);
 
     const applyCoupon = async () => {
         const code = couponInput.trim();
@@ -992,6 +1022,22 @@ export default function MarketingCart() {
                                         </span>
                                     </div>
                                 ) : null}
+                                {renewalAddons.map((addon) => (
+                                    <div
+                                        key={addon.key}
+                                        className="flex justify-between text-sm"
+                                    >
+                                        <span className="max-w-[12rem] text-[var(--muted-foreground)]">
+                                            {addon.label}
+                                        </span>
+                                        <span className="text-right font-semibold tabular-nums text-[var(--foreground)]">
+                                            {formatPenValue(addon.amount)}{' '}
+                                            <span className="text-[var(--muted-foreground)]">
+                                                PEN
+                                            </span>
+                                        </span>
+                                    </div>
+                                ))}
                                 {comprobantesOveragePen > 0 ? (
                                     <div className="flex justify-between text-sm">
                                         <span className="max-w-[12rem] text-[var(--muted-foreground)]">
