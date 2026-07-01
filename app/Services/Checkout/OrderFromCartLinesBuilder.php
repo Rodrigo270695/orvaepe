@@ -196,15 +196,23 @@ final class OrderFromCartLinesBuilder
         $discountTotal = round($discountTotal, 2);
 
         $comprobantesOverageMeta = null;
+        $comprobantesInRenewalAddons = false;
         if ($hasVetsaasRenewal) {
             if (is_array($renewalBilling) && is_array($renewalBilling['addons'] ?? null)) {
                 foreach ($renewalBilling['addons'] as $addon) {
                     if (! is_array($addon)) {
                         continue;
                     }
+                    $addonKey = (string) ($addon['key'] ?? 'addon');
                     $addonAmount = round((float) ($addon['amount'] ?? 0), 2);
                     if ($addonAmount <= 0) {
                         continue;
+                    }
+                    if ($addonKey === 'comprobantes_overage') {
+                        $comprobantesInRenewalAddons = true;
+                        if (is_array($renewalBilling['comprobantes_overage'] ?? null)) {
+                            $comprobantesOverageMeta = $renewalBilling['comprobantes_overage'];
+                        }
                     }
                     $lineRows[] = [
                         'catalog_sku_id' => null,
@@ -216,9 +224,20 @@ final class OrderFromCartLinesBuilder
                         'tax_amount' => 0.0,
                         'line_total' => $addonAmount,
                         'metadata' => [
-                            'type' => 'vetsaas_renewal_addon',
-                            'addon_key' => (string) ($addon['key'] ?? 'addon'),
+                            'type' => $addonKey === 'comprobantes_overage'
+                                ? 'vetsaas_comprobantes_overage'
+                                : 'vetsaas_renewal_addon',
+                            'addon_key' => $addonKey,
                             'tenant_slug' => $renewTenantSlug,
+                            'used' => $addonKey === 'comprobantes_overage'
+                                ? ($comprobantesOverageMeta['used'] ?? null)
+                                : null,
+                            'included' => $addonKey === 'comprobantes_overage'
+                                ? ($comprobantesOverageMeta['included'] ?? null)
+                                : null,
+                            'overage_blocks' => $addonKey === 'comprobantes_overage'
+                                ? ($comprobantesOverageMeta['overage_blocks'] ?? null)
+                                : null,
                             'igv_applies' => false,
                         ],
                     ];
@@ -227,31 +246,33 @@ final class OrderFromCartLinesBuilder
                 }
             }
 
-            $overageResponse = $this->comprobantesOverageClient->forTenantSlug($renewTenantSlug);
-            if (is_array($overageResponse) && ($overageResponse['applies'] ?? false)) {
-                $overageAmount = round((float) ($overageResponse['overage_cost'] ?? 0), 2);
-                if ($overageAmount > 0) {
-                    $comprobantesOverageMeta = $overageResponse;
-                    $lineRows[] = [
-                        'catalog_sku_id' => null,
-                        'product_name_snapshot' => 'VetSaaS',
-                        'sku_name_snapshot' => (string) ($overageResponse['description'] ?? 'Comprobantes electrónicos adicionales'),
-                        'quantity' => 1,
-                        'unit_price' => $overageAmount,
-                        'line_discount' => 0.0,
-                        'tax_amount' => 0.0,
-                        'line_total' => $overageAmount,
-                        'metadata' => [
-                            'type' => 'vetsaas_comprobantes_overage',
-                            'tenant_slug' => $renewTenantSlug,
-                            'used' => $overageResponse['used'] ?? null,
-                            'included' => $overageResponse['included'] ?? null,
-                            'overage_blocks' => $overageResponse['overage_blocks'] ?? null,
-                            'igv_applies' => false,
-                        ],
-                    ];
-                    $subtotal = round($subtotal + $overageAmount, 2);
-                    $lineTotalSum = round($lineTotalSum + $overageAmount, 2);
+            if (! $comprobantesInRenewalAddons) {
+                $overageResponse = $this->comprobantesOverageClient->forTenantSlug($renewTenantSlug);
+                if (is_array($overageResponse) && ($overageResponse['applies'] ?? false)) {
+                    $overageAmount = round((float) ($overageResponse['overage_cost'] ?? 0), 2);
+                    if ($overageAmount > 0) {
+                        $comprobantesOverageMeta = $overageResponse;
+                        $lineRows[] = [
+                            'catalog_sku_id' => null,
+                            'product_name_snapshot' => 'VetSaaS',
+                            'sku_name_snapshot' => (string) ($overageResponse['description'] ?? 'Comprobantes electrónicos adicionales'),
+                            'quantity' => 1,
+                            'unit_price' => $overageAmount,
+                            'line_discount' => 0.0,
+                            'tax_amount' => 0.0,
+                            'line_total' => $overageAmount,
+                            'metadata' => [
+                                'type' => 'vetsaas_comprobantes_overage',
+                                'tenant_slug' => $renewTenantSlug,
+                                'used' => $overageResponse['used'] ?? null,
+                                'included' => $overageResponse['included'] ?? null,
+                                'overage_blocks' => $overageResponse['overage_blocks'] ?? null,
+                                'igv_applies' => false,
+                            ],
+                        ];
+                        $subtotal = round($subtotal + $overageAmount, 2);
+                        $lineTotalSum = round($lineTotalSum + $overageAmount, 2);
+                    }
                 }
             }
         }

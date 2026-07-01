@@ -301,6 +301,12 @@ export default function MarketingCart() {
             return;
         }
 
+        if (renewalAddons.some((row) => row.key === 'comprobantes_overage')) {
+            setComprobantesOverage(null);
+            setComprobantesOverageLoading(false);
+            return;
+        }
+
         const fetchId = ++overageFetchId.current;
         const ac = new AbortController();
 
@@ -347,7 +353,7 @@ export default function MarketingCart() {
         return () => {
             ac.abort();
         };
-    }, [mounted, vetsaasRenewTenantSlug]);
+    }, [mounted, vetsaasRenewTenantSlug, renewalAddons]);
 
     const renewalAddonsPen = useMemo(() => {
         const sum = renewalAddons.reduce((acc, row) => acc + row.amount, 0);
