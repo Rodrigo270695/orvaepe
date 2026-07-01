@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Log;
 final class VetSaaSShowcaseClient
 {
     /**
-     * @return list<array{slug: string, name: string, logo_url: string, plan: string|null, website_url: string|null}>
+     * @return list<array{slug: string, name: string, logo_url: string}>
      */
     public function clients(): array
     {
@@ -123,7 +123,7 @@ final class VetSaaSShowcaseClient
 
     /**
      * @param  list<array<string, mixed>>  $rows
-     * @return list<array{slug: string, name: string, logo_url: string, plan: string|null, website_url: string|null}>
+     * @return list<array{slug: string, name: string, logo_url: string}>
      */
     private function normalizeRows(array $rows): array
     {
@@ -145,10 +145,6 @@ final class VetSaaSShowcaseClient
                 'slug' => (string) ($row['slug'] ?? ''),
                 'name' => $name,
                 'logo_url' => $logo,
-                'plan' => isset($row['plan']) ? (string) $row['plan'] : null,
-                'website_url' => isset($row['subdomain_url'])
-                    ? (string) $row['subdomain_url']
-                    : (isset($row['website_url']) ? (string) $row['website_url'] : null),
             ];
         }
 

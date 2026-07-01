@@ -8,8 +8,6 @@ export type VetSaaSShowcaseClient = {
     slug: string;
     name: string;
     logo_url: string;
-    plan: string | null;
-    website_url: string | null;
 };
 
 type Props = {
@@ -35,7 +33,7 @@ export default function VetSaaSClientsCarousel({ clients }: Props) {
                 id="clinicas-clientes"
                 eyebrow="Clientes"
                 title="Clínicas que ya operan con VetSaaS"
-                description="Solo mostramos clínicas con plan de pago activo y logo propio configurado en su cuenta."
+                description="Clínicas veterinarias que confían en VetSaaS para su operación diaria."
             >
                 <div className="relative overflow-hidden rounded-3xl border border-border/60 bg-[color-mix(in_oklab,var(--background)_75%,var(--card))] p-1 shadow-[0_20px_50px_-20px_var(--hero-glow-soft)] ring-1 ring-border/40">
                     <GeometricBackground variant="grid-dots" opacity={0.04} />
@@ -43,7 +41,7 @@ export default function VetSaaSClientsCarousel({ clients }: Props) {
                         className="landing-carousel-glow pointer-events-none absolute inset-0 bg-gradient-to-b from-[color-mix(in_oklab,var(--primary)_12%,transparent)] to-transparent opacity-80"
                         aria-hidden
                     />
-                    <div className="carousel-wrapper group/carousel relative overflow-hidden rounded-[1.35rem] bg-background/40 py-3">
+                    <div className="carousel-wrapper group/carousel relative overflow-hidden rounded-[1.35rem] bg-background/40 py-5 md:py-6">
                         <div
                             className="pointer-events-none absolute left-0 top-0 z-10 h-full w-16 bg-gradient-to-r from-background to-transparent md:w-24"
                             aria-hidden
@@ -54,54 +52,26 @@ export default function VetSaaSClientsCarousel({ clients }: Props) {
                         />
 
                         <div
-                            className="carousel-track flex w-max animate-marquee gap-10 px-8 [--duration:45s]"
-                            style={{ animationDuration: 'var(--duration, 45s)' }}
+                            className="carousel-track flex w-max animate-marquee gap-12 px-10 [--duration:50s] md:gap-14"
+                            style={{ animationDuration: 'var(--duration, 50s)' }}
                         >
-                            {duplicated.map((client, index) => {
-                                const href = client.website_url?.trim() || null;
-                                const card = (
-                                    <div className="group/item flex min-w-[9rem] shrink-0 items-center gap-3 rounded-2xl border border-border/70 bg-card/60 px-5 py-4 opacity-90 transition-all duration-300 hover:border-[color-mix(in_oklab,var(--primary)_40%,var(--border))] hover:bg-card hover:opacity-100 md:min-w-[11rem] md:px-6">
-                                        <img
-                                            src={client.logo_url}
-                                            alt={client.name}
-                                            className="size-12 shrink-0 rounded-full border border-border/60 bg-background object-contain p-1 md:size-14"
-                                            loading="lazy"
-                                            decoding="async"
-                                        />
-                                        <div className="min-w-0">
-                                            <p className="truncate font-display text-sm font-semibold text-foreground">
-                                                {client.name}
-                                            </p>
-                                            {client.plan ? (
-                                                <p className="mt-0.5 truncate text-[10px] font-semibold uppercase tracking-wide text-[var(--primary)]">
-                                                    Plan {client.plan}
-                                                </p>
-                                            ) : null}
-                                        </div>
-                                    </div>
-                                );
-
-                                if (href) {
-                                    return (
-                                        <a
-                                            key={`${client.slug}-${index}`}
-                                            href={href}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="block shrink-0 no-underline"
-                                            title={`Abrir ${client.name}`}
-                                        >
-                                            {card}
-                                        </a>
-                                    );
-                                }
-
-                                return (
-                                    <div key={`${client.slug}-${index}`} className="shrink-0">
-                                        {card}
-                                    </div>
-                                );
-                            })}
+                            {duplicated.map((client, index) => (
+                                <div
+                                    key={`${client.slug}-${index}`}
+                                    className="flex min-w-[12rem] shrink-0 items-center gap-4 rounded-2xl border border-border/70 bg-card/60 px-6 py-5 md:min-w-[15rem] md:gap-5 md:px-8 md:py-6"
+                                >
+                                    <img
+                                        src={client.logo_url}
+                                        alt={client.name}
+                                        className="size-16 shrink-0 rounded-full border border-border/60 bg-background object-contain p-1.5 md:size-20"
+                                        loading="lazy"
+                                        decoding="async"
+                                    />
+                                    <p className="min-w-0 font-display text-base font-semibold leading-snug text-foreground md:text-lg">
+                                        {client.name}
+                                    </p>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </div>
