@@ -182,11 +182,24 @@ final class PlatformWhatsAppSessionSync
         try {
             if (! $session->isReady()) {
                 $this->client->startSession($session->openwa_session_id);
-                $session = $this->refresh($session);
+                try {
+                    $session = $this->refresh($session);
+                } catch (\Throwable) {
+                    // Si ya está iniciada, el refresh puede seguir; no bloqueamos.
+                }
             }
         } catch (\Throwable $e) {
+            // "already started" ya se traga en el cliente; otros errores sí se guardan.
             $session->forceFill([
                 'last_error' => $e->getMessage(),
+                'last_synced_at' => now(),
+            ])->save();
+        }
+
+        // Limpia errores viejos de "already started" tras un reset exitoso.
+        if ($session->last_error && str_contains(strtolower((string) $session->last_error), 'already started')) {
+            $session->forceFill([
+                'last_error' => null,
                 'last_synced_at' => now(),
             ])->save();
         }

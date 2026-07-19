@@ -96,13 +96,30 @@ final class OpenWaClient
      */
     public function startSession(string $sessionId): array
     {
-        $response = $this->request('post', '/api/sessions/'.$sessionId.'/start');
+        try {
+            $response = $this->request('post', '/api/sessions/'.$sessionId.'/start');
+        } catch (RuntimeException $e) {
+            // OpenWA responde 400 si la sesión ya está corriendo; no es un fallo real.
+            if ($this->isAlreadyStartedError($e->getMessage())) {
+                return $this->getSession($sessionId);
+            }
+
+            throw $e;
+        }
 
         if (! is_array($response)) {
             throw new RuntimeException('OpenWA no pudo iniciar la sesión.');
         }
 
         return $response;
+    }
+
+    private function isAlreadyStartedError(string $message): bool
+    {
+        $normalized = strtolower($message);
+
+        return str_contains($normalized, 'already started')
+            || str_contains($normalized, 'session is already');
     }
 
     /**

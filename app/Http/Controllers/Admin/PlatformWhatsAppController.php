@@ -71,14 +71,17 @@ class PlatformWhatsAppController extends Controller
             if (! $session->isReady()) {
                 try {
                     $remote = $client->getSession($session->openwa_session_id);
-                    $status = (string) ($remote['status'] ?? $session->status);
+                    $status = strtolower((string) ($remote['status'] ?? $session->status));
 
-                    if (in_array($status, ['created', 'disconnected', 'failed'], true)) {
+                    // Solo arrancar si realmente está detenida. Si ya corre, solo pedimos QR.
+                    if (in_array($status, ['created', 'disconnected', 'failed', 'stopped'], true)) {
                         $client->startSession($session->openwa_session_id);
                     }
-                } catch (\Throwable) {
-                    // Sesión huérfana o gateway caído: recrear y reintentar.
-                    $session = $sync->reset() ?? $session;
+                } catch (\Throwable $e) {
+                    if (! str_contains(strtolower($e->getMessage()), 'already started')) {
+                        // Sesión huérfana o gateway caído: recrear y reintentar.
+                        $session = $sync->reset() ?? $session;
+                    }
                 }
             }
 
@@ -129,11 +132,31 @@ class PlatformWhatsAppController extends Controller
                 'session_id' => $session->openwa_session_id,
             ]);
         } catch (\Throwable $e) {
+            $message = $e->getMessage();
+            // No asustar al usuario con el 400 benigno de OpenWA.
+            if (str_contains(strtolower($message), 'already started')) {
+                try {
+                    $session = $sync->ensure();
+                    if ($session !== null) {
+                        $qr = $client->getQrCode($session->openwa_session_id);
+
+                        return response()->json([
+                            'ready' => false,
+                            'status' => (string) ($qr['status'] ?? $session->status),
+                            'qr_code' => $qr['qrCode'] ?? null,
+                            'session_id' => $session->openwa_session_id,
+                        ]);
+                    }
+                } catch (\Throwable) {
+                    // cae al error genérico abajo
+                }
+            }
+
             report($e);
 
             return response()->json([
                 'ready' => false,
-                'error' => $e->getMessage(),
+                'error' => $message,
                 'qr_code' => null,
             ], 502);
         }
