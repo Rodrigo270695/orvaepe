@@ -25,6 +25,7 @@ class PlatformWhatsAppController extends Controller
             'apiRoutes' => [
                 'sync' => route('panel.operacion-whatsapp.sync'),
                 'qr' => route('panel.operacion-whatsapp.qr'),
+                'reset' => route('panel.operacion-whatsapp.reset'),
                 'logout' => route('panel.operacion-whatsapp.logout'),
                 'test' => route('panel.operacion-whatsapp.test'),
             ],
@@ -63,40 +64,123 @@ class PlatformWhatsAppController extends Controller
     ): JsonResponse {
         abort_unless($client->isConfigured(), 503, 'OpenWA no está configurado en el servidor.');
 
-        $session = $sync->ensure();
-        abort_if($session === null, 422, 'No se pudo crear la sesión de WhatsApp de Orvae.');
+        try {
+            $session = $sync->ensure();
+            abort_if($session === null, 422, 'No se pudo crear la sesión de WhatsApp de Orvae.');
 
-        if (! $session->isReady()) {
-            try {
-                $remote = $client->getSession($session->openwa_session_id);
-                $status = (string) ($remote['status'] ?? $session->status);
+            if (! $session->isReady()) {
+                try {
+                    $remote = $client->getSession($session->openwa_session_id);
+                    $status = (string) ($remote['status'] ?? $session->status);
 
-                if (in_array($status, ['created', 'disconnected', 'failed'], true)) {
-                    $client->startSession($session->openwa_session_id);
+                    if (in_array($status, ['created', 'disconnected', 'failed'], true)) {
+                        $client->startSession($session->openwa_session_id);
+                    }
+                } catch (\Throwable) {
+                    // Sesión huérfana o gateway caído: recrear y reintentar.
+                    $session = $sync->reset() ?? $session;
                 }
-            } catch (\Throwable) {
-                // Continúa e intenta obtener QR.
             }
-        }
 
-        $session = $sync->refresh($session);
+            try {
+                $session = $sync->refresh($session);
+            } catch (\Throwable) {
+                $session = $sync->reset() ?? $session;
+                if ($session !== null) {
+                    try {
+                        $session = $sync->refresh($session);
+                    } catch (\Throwable $e) {
+                        return $this->qrErrorResponse($session, $e->getMessage());
+                    }
+                }
+            }
 
-        if ($session->isReady()) {
+            abort_if($session === null, 422, 'No se pudo sincronizar la sesión de WhatsApp.');
+
+            if ($session->isReady()) {
+                return response()->json([
+                    'ready' => true,
+                    'phone' => $session->phone,
+                    'status' => $session->status,
+                ]);
+            }
+
+            try {
+                $qr = $client->getQrCode($session->openwa_session_id);
+            } catch (\Throwable $e) {
+                // Reintento único tras reset (sesión corrompida / sin QR).
+                $session = $sync->reset() ?? $session;
+                abort_if($session === null, 422, 'No se pudo recrear la sesión de WhatsApp.');
+
+                try {
+                    if (! $session->isReady()) {
+                        $client->startSession($session->openwa_session_id);
+                    }
+                    $qr = $client->getQrCode($session->openwa_session_id);
+                } catch (\Throwable $retry) {
+                    return $this->qrErrorResponse($session, $retry->getMessage());
+                }
+            }
+
             return response()->json([
-                'ready' => true,
-                'phone' => $session->phone,
-                'status' => $session->status,
+                'ready' => false,
+                'status' => (string) ($qr['status'] ?? $session->status),
+                'qr_code' => $qr['qrCode'] ?? null,
+                'session_id' => $session->openwa_session_id,
             ]);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->json([
+                'ready' => false,
+                'error' => $e->getMessage(),
+                'qr_code' => null,
+            ], 502);
+        }
+    }
+
+    public function reset(PlatformWhatsAppSessionSync $sync): RedirectResponse
+    {
+        abort_unless(app(OpenWaClient::class)->isConfigured(), 503, 'OpenWA no está configurado en el servidor.');
+
+        try {
+            $session = $sync->reset();
+        } catch (\Throwable $e) {
+            report($e);
+
+            return back()->with('toast', AdminFlashToast::error(
+                'No se pudo reiniciar WhatsApp',
+                $e->getMessage(),
+            ));
         }
 
-        $qr = $client->getQrCode($session->openwa_session_id);
+        if ($session === null) {
+            return back()->with('toast', AdminFlashToast::error(
+                'No se pudo reiniciar WhatsApp',
+                'Revisa OPENWA_ENABLED y OPENWA_API_KEY.',
+            ));
+        }
+
+        return back()->with('toast', AdminFlashToast::success(
+            'Sesión reiniciada',
+            'Vuelve a pulsar «Vincular WhatsApp» y escanea el QR.',
+        ));
+    }
+
+    private function qrErrorResponse(PlatformWhatsAppSession $session, string $message): JsonResponse
+    {
+        $session->forceFill([
+            'last_error' => $message,
+            'last_synced_at' => now(),
+        ])->save();
 
         return response()->json([
             'ready' => false,
-            'status' => (string) ($qr['status'] ?? $session->status),
-            'qr_code' => $qr['qrCode'] ?? null,
+            'error' => $message,
+            'status' => $session->status,
+            'qr_code' => null,
             'session_id' => $session->openwa_session_id,
-        ]);
+        ], 502);
     }
 
     public function logout(PlatformWhatsAppSessionSync $sync): RedirectResponse

@@ -1,14 +1,15 @@
 <?php
 
-use App\Services\Payments\PayPalClient;
-use App\Services\Payments\MercadoPagoClient;
-use App\Services\Payments\CulqiClient;
+use App\Models\Subscription;
 use App\Services\Access\SubscriptionEntitlementSyncService;
 use App\Services\Notifications\ExpiringAccessNotifier;
+use App\Services\OpenWa\PlatformWhatsAppSessionSync;
+use App\Services\Payments\CulqiClient;
+use App\Services\Payments\MercadoPagoClient;
+use App\Services\Payments\PayPalClient;
 use App\Services\WhatsApp\OrvaeWhatsAppSender;
 use App\Services\WhatsApp\UltraMsgClient;
 use App\Support\WhatsAppPhoneNormalizer;
-use App\Models\Subscription;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 
@@ -37,7 +38,7 @@ Artisan::command('mercadopago:test-connection', function (MercadoPagoClient $mp)
         $mp->getPayment('test-connection-invalid-id');
 
         return 0;
-    } catch (\RuntimeException $e) {
+    } catch (RuntimeException $e) {
         // Si la autenticación es válida, Mercado Pago responderá 404 (u otro error de recurso),
         // pero nuestro cliente ya habrá lanzado una RuntimeException con el mensaje HTTP.
         // Consideramos conexión OK si el mensaje NO es por falta de token.
@@ -96,6 +97,34 @@ Artisan::command('openwa:test-send', function (OrvaeWhatsAppSender $sender): int
         return 1;
     }
 })->purpose('Envía WhatsApp de prueba (OpenWA; UltraMsg solo si OPENWA_ENABLED=false)');
+
+Artisan::command('openwa:reset-platform', function (PlatformWhatsAppSessionSync $sync): int {
+    if (! (bool) config('openwa.enabled')) {
+        $this->error('OPENWA_ENABLED=false. Actívalo en .env primero.');
+
+        return 1;
+    }
+
+    try {
+        $session = $sync->reset();
+    } catch (Throwable $e) {
+        $this->error('Fallo al reiniciar: '.$e->getMessage());
+
+        return 1;
+    }
+
+    if ($session === null) {
+        $this->error('No se pudo reiniciar. Revisa OPENWA_API_KEY / OPENWA_API_URL.');
+
+        return 1;
+    }
+
+    $this->info('Sesión reiniciada: '.$session->openwa_session_name.' ('.$session->openwa_session_id.')');
+    $this->line('Estado: '.$session->status);
+    $this->comment('Entra al panel → Vincular WhatsApp y escanea el QR.');
+
+    return 0;
+})->purpose('Reinicia la sesión OpenWA de plataforma Orvae (borra/recrea para nuevo QR)');
 
 Artisan::command('ultramsg:test-send', function (UltraMsgClient $ultraMsg): int {
     try {

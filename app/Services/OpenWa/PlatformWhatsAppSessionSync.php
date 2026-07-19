@@ -117,4 +117,80 @@ final class PlatformWhatsAppSessionSync
 
         return $session->fresh();
     }
+
+    /**
+     * Fuerza recrear la sesión remota (útil cuando el QR da 500 o el ID quedó huérfano).
+     */
+    public function reset(): ?PlatformWhatsAppSession
+    {
+        if (! $this->client->isConfigured()) {
+            return null;
+        }
+
+        $name = $this->sessionName();
+        if ($name === '') {
+            return null;
+        }
+
+        $local = PlatformWhatsAppSession::query()
+            ->where('openwa_session_name', $name)
+            ->first();
+
+        $remoteIds = [];
+        if ($local?->openwa_session_id) {
+            $remoteIds[] = $local->openwa_session_id;
+        }
+
+        try {
+            $byName = $this->client->findSessionByName($name);
+            if (is_array($byName) && filled($byName['id'] ?? null)) {
+                $remoteIds[] = (string) $byName['id'];
+            }
+        } catch (\Throwable) {
+            // Continúa con lo que tengamos.
+        }
+
+        foreach (array_unique($remoteIds) as $remoteId) {
+            try {
+                $this->client->stopSession($remoteId);
+            } catch (\Throwable) {
+                // ignore
+            }
+            try {
+                $this->client->deleteSession($remoteId);
+            } catch (\Throwable) {
+                // ignore
+            }
+        }
+
+        if ($local instanceof PlatformWhatsAppSession) {
+            $local->forceFill([
+                'status' => 'disconnected',
+                'phone' => null,
+                'push_name' => null,
+                'connected_at' => null,
+                'last_synced_at' => now(),
+                'last_error' => null,
+            ])->save();
+        }
+
+        $session = $this->ensure();
+        if ($session === null) {
+            return null;
+        }
+
+        try {
+            if (! $session->isReady()) {
+                $this->client->startSession($session->openwa_session_id);
+                $session = $this->refresh($session);
+            }
+        } catch (\Throwable $e) {
+            $session->forceFill([
+                'last_error' => $e->getMessage(),
+                'last_synced_at' => now(),
+            ])->save();
+        }
+
+        return $session->fresh();
+    }
 }

@@ -1,20 +1,20 @@
 <?php
 
 use App\Http\Controllers\Admin\AuditLogsController;
-use App\Http\Controllers\Admin\ClientUsersController;
 use App\Http\Controllers\Admin\ClientUserInvoicesController;
+use App\Http\Controllers\Admin\ClientUsersController;
 use App\Http\Controllers\Admin\EntitlementsController;
 use App\Http\Controllers\Admin\EntitlementSecretsController;
 use App\Http\Controllers\Admin\InformesController;
 use App\Http\Controllers\Admin\LicenseActivationsController;
 use App\Http\Controllers\Admin\LicenseKeyExtrasController;
 use App\Http\Controllers\Admin\LicenseKeysController;
+use App\Http\Controllers\Admin\LookupDocumentController;
 use App\Http\Controllers\Admin\NotificationsController;
-use App\Http\Controllers\Admin\PlatformWhatsAppController;
 use App\Http\Controllers\Admin\OemLicenseDeliveriesController;
+use App\Http\Controllers\Admin\PlatformWhatsAppController;
 use App\Http\Controllers\Admin\ShowcaseClientsController;
 use App\Http\Controllers\Admin\SubscriptionsController;
-use App\Http\Controllers\Admin\LookupDocumentController;
 use App\Http\Controllers\Admin\SunatBoletaResumenController;
 use App\Http\Controllers\Admin\SunatLogsController;
 use App\Http\Controllers\Admin\VentasFacturasController;
@@ -518,6 +518,8 @@ Route::middleware(['auth', 'verified', 'client.profile.complete'])->group(functi
             ->name('panel.operacion-whatsapp.sync');
         Route::get('panel/operacion-whatsapp/qr', [PlatformWhatsAppController::class, 'qr'])
             ->name('panel.operacion-whatsapp.qr');
+        Route::post('panel/operacion-whatsapp/reset', [PlatformWhatsAppController::class, 'reset'])
+            ->name('panel.operacion-whatsapp.reset');
         Route::post('panel/operacion-whatsapp/logout', [PlatformWhatsAppController::class, 'logout'])
             ->name('panel.operacion-whatsapp.logout');
         Route::post('panel/operacion-whatsapp/test', [PlatformWhatsAppController::class, 'sendTest'])

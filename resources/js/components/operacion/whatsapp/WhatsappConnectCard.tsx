@@ -50,8 +50,10 @@ function StatusBadge({ isReady, hasError }: { isReady: boolean; hasError: boolea
 
 export function WhatsappConnectCard({ whatsapp, apiRoutes }: Props) {
     const [qrCode, setQrCode] = useState<string | null>(null);
+    const [qrError, setQrError] = useState<string | null>(null);
     const [loadingQr, setLoadingQr] = useState(false);
     const [syncing, setSyncing] = useState(false);
+    const [resetting, setResetting] = useState(false);
     const [disconnectOpen, setDisconnectOpen] = useState(false);
     const [testOpen, setTestOpen] = useState(false);
     const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -72,14 +74,31 @@ export function WhatsappConnectCard({ whatsapp, apiRoutes }: Props) {
                 headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
                 credentials: 'same-origin',
             });
-            const data = (await res.json()) as { ready?: boolean; qr_code?: string };
+            const data = (await res.json()) as {
+                ready?: boolean;
+                qr_code?: string | null;
+                error?: string;
+            };
+
+            if (!res.ok) {
+                setQrError(data.error || `Error ${res.status} al obtener el QR`);
+                setQrCode(null);
+                return;
+            }
+
+            setQrError(null);
             if (data.ready) {
                 setQrCode(null);
                 router.reload({ only: ['whatsapp'] });
                 stopPoll();
             } else if (data.qr_code) {
                 setQrCode(data.qr_code);
+            } else if (data.error) {
+                setQrError(data.error);
             }
+        } catch {
+            setQrError('No se pudo contactar al servidor para obtener el QR.');
+            setQrCode(null);
         } finally {
             setLoadingQr(false);
         }
@@ -87,6 +106,7 @@ export function WhatsappConnectCard({ whatsapp, apiRoutes }: Props) {
 
     const handleConnect = useCallback(() => {
         setSyncing(true);
+        setQrError(null);
         router.post(apiRoutes.sync, {}, {
             preserveScroll: true,
             onFinish: () => setSyncing(false),
@@ -97,6 +117,21 @@ export function WhatsappConnectCard({ whatsapp, apiRoutes }: Props) {
             },
         });
     }, [apiRoutes.sync, fetchQr, stopPoll]);
+
+    const handleReset = useCallback(() => {
+        setResetting(true);
+        setQrError(null);
+        setQrCode(null);
+        stopPoll();
+        router.post(apiRoutes.reset, {}, {
+            preserveScroll: true,
+            onFinish: () => setResetting(false),
+            onSuccess: () => {
+                void fetchQr();
+                pollRef.current = setInterval(() => void fetchQr(), 4000);
+            },
+        });
+    }, [apiRoutes.reset, fetchQr, stopPoll]);
 
     if (!whatsapp.configured) {
         return (
@@ -132,6 +167,9 @@ export function WhatsappConnectCard({ whatsapp, apiRoutes }: Props) {
                             {session?.last_error ? (
                                 <p className="text-[11px] text-destructive">{session.last_error}</p>
                             ) : null}
+                            {qrError ? (
+                                <p className="text-[11px] text-destructive">{qrError}</p>
+                            ) : null}
                         </div>
                         <span className="font-mono text-[10px] text-muted-foreground">
                             {session?.openwa_session_name ?? 'orvae-platform'}
@@ -147,10 +185,21 @@ export function WhatsappConnectCard({ whatsapp, apiRoutes }: Props) {
 
                     <div className="flex flex-wrap gap-2">
                         {!isReady ? (
-                            <NeuButtonRaised type="button" onClick={handleConnect} disabled={syncing || loadingQr}>
-                                {syncing || loadingQr ? <Loader2 className="size-4 animate-spin" /> : <MessageCircle className="size-4" />}
-                                Vincular WhatsApp
-                            </NeuButtonRaised>
+                            <>
+                                <NeuButtonRaised type="button" onClick={handleConnect} disabled={syncing || loadingQr || resetting}>
+                                    {syncing || loadingQr ? <Loader2 className="size-4 animate-spin" /> : <MessageCircle className="size-4" />}
+                                    Vincular WhatsApp
+                                </NeuButtonRaised>
+                                <NeuButtonRaised
+                                    type="button"
+                                    onClick={handleReset}
+                                    disabled={syncing || loadingQr || resetting}
+                                    className="text-muted-foreground"
+                                >
+                                    {resetting ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
+                                    Reiniciar sesión
+                                </NeuButtonRaised>
+                            </>
                         ) : (
                             <>
                                 <NeuButtonRaised type="button" onClick={() => setTestOpen(true)}>

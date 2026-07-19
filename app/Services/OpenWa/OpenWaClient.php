@@ -134,6 +134,27 @@ final class OpenWaClient
     }
 
     /**
+     * Elimina la sesión remota (auth/QR) para poder recrearla limpia.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function deleteSession(string $sessionId): ?array
+    {
+        try {
+            $response = $this->request('delete', '/api/sessions/'.$sessionId);
+
+            return is_array($response) ? $response : null;
+        } catch (RuntimeException $e) {
+            // Algunas versiones solo permiten stop; no bloqueamos el reset.
+            if (str_contains($e->getMessage(), 'OpenWA HTTP 404')) {
+                return null;
+            }
+
+            throw $e;
+        }
+    }
+
+    /**
      * @param  array<string, mixed>|null  $body
      * @return array<string, mixed>|list<array<string, mixed>>|null
      */

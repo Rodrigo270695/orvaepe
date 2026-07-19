@@ -21,6 +21,7 @@ export type WhatsAppProps = {
 export type WhatsAppApiRoutes = {
     sync: string;
     qr: string;
+    reset: string;
     logout: string;
     test: string;
 };
