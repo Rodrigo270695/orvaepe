@@ -52,11 +52,12 @@ final class PlatformWhatsAppSessionSync
             return $local;
         }
 
+        $phone = isset($remote['phone']) ? (string) $remote['phone'] : null;
         $payload = [
             'openwa_session_id' => $sessionId,
             'openwa_session_name' => (string) ($remote['name'] ?? $name),
-            'status' => (string) ($remote['status'] ?? 'created'),
-            'phone' => isset($remote['phone']) ? (string) $remote['phone'] : null,
+            'status' => self::normalizeStatus($remote['status'] ?? null, $phone),
+            'phone' => $phone,
             'push_name' => isset($remote['pushName']) ? (string) $remote['pushName'] : null,
             'connected_at' => filled($remote['connectedAt'] ?? null)
                 ? Carbon::parse($remote['connectedAt'])
@@ -78,9 +79,13 @@ final class PlatformWhatsAppSessionSync
     {
         $remote = $this->client->getSession($session->openwa_session_id);
 
+        $phone = isset($remote['phone'])
+            ? (string) $remote['phone']
+            : $session->phone;
+
         $session->forceFill([
-            'status' => (string) ($remote['status'] ?? $session->status),
-            'phone' => isset($remote['phone']) ? (string) $remote['phone'] : $session->phone,
+            'status' => self::normalizeStatus($remote['status'] ?? $session->status, $phone),
+            'phone' => $phone,
             'push_name' => isset($remote['pushName']) ? (string) $remote['pushName'] : $session->push_name,
             'connected_at' => filled($remote['connectedAt'] ?? null)
                 ? Carbon::parse($remote['connectedAt'])
@@ -90,6 +95,42 @@ final class PlatformWhatsAppSessionSync
         ])->save();
 
         return $session->fresh();
+    }
+
+    /**
+     * Unifica status del gateway OpenWA (WORKING, SCAN_QR_CODE, etc.) al modelo Orvae.
+     */
+    public static function normalizeStatus(mixed $status, ?string $phone = null): string
+    {
+        $raw = strtolower(trim((string) $status));
+        $raw = str_replace(['-', ' '], '_', $raw);
+
+        if (in_array($raw, ['ready', 'working', 'connected', 'authenticated', 'open', 'online'], true)) {
+            return PlatformWhatsAppSession::STATUS_READY;
+        }
+
+        if (in_array($raw, ['scan_qr_code', 'qr', 'qrcode', 'qr_ready', 'need_qr'], true)) {
+            return 'qr_ready';
+        }
+
+        if (in_array($raw, ['starting', 'initializing', 'authenticating'], true)) {
+            return 'initializing';
+        }
+
+        if (in_array($raw, ['stopped', 'disconnected', 'logout', 'logged_out'], true)) {
+            return 'disconnected';
+        }
+
+        if ($raw === 'failed' || $raw === 'error') {
+            return 'failed';
+        }
+
+        // Si hay teléfono vinculado, casi seguro está lista aunque el status sea raro.
+        if (filled($phone) && ! in_array($raw, ['created', 'disconnected', 'failed', 'stopped'], true)) {
+            return PlatformWhatsAppSession::STATUS_READY;
+        }
+
+        return $raw !== '' ? $raw : 'created';
     }
 
     public function disconnect(PlatformWhatsAppSession $session): PlatformWhatsAppSession

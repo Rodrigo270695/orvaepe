@@ -52,6 +52,7 @@ export function WhatsappConnectCard({ whatsapp, apiRoutes }: Props) {
     const [qrCode, setQrCode] = useState<string | null>(null);
     const [qrError, setQrError] = useState<string | null>(null);
     const [waitingQr, setWaitingQr] = useState(false);
+    const [alreadyLinkedHint, setAlreadyLinkedHint] = useState(false);
     const [loadingQr, setLoadingQr] = useState(false);
     const [syncing, setSyncing] = useState(false);
     const [resetting, setResetting] = useState(false);
@@ -78,6 +79,7 @@ export function WhatsappConnectCard({ whatsapp, apiRoutes }: Props) {
             const data = (await res.json()) as {
                 ready?: boolean;
                 waiting?: boolean;
+                already_linked_hint?: boolean;
                 qr_code?: string | null;
                 error?: string;
                 message?: string | null;
@@ -86,6 +88,7 @@ export function WhatsappConnectCard({ whatsapp, apiRoutes }: Props) {
             if (data.ready) {
                 setQrError(null);
                 setWaitingQr(false);
+                setAlreadyLinkedHint(false);
                 setQrCode(null);
                 router.reload({ only: ['whatsapp'] });
                 stopPoll();
@@ -95,24 +98,36 @@ export function WhatsappConnectCard({ whatsapp, apiRoutes }: Props) {
             if (data.qr_code) {
                 setQrError(null);
                 setWaitingQr(false);
+                setAlreadyLinkedHint(false);
                 setQrCode(data.qr_code);
+                return;
+            }
+
+            if (data.already_linked_hint) {
+                setWaitingQr(false);
+                setAlreadyLinkedHint(true);
+                setQrError(null);
+                stopPoll();
                 return;
             }
 
             // OpenWA aún genera el QR: seguir el poll sin error rojo.
             if (data.waiting || (res.ok && !data.error)) {
                 setQrError(null);
+                setAlreadyLinkedHint(false);
                 setWaitingQr(true);
                 return;
             }
 
             if (!res.ok || data.error) {
                 setWaitingQr(false);
+                setAlreadyLinkedHint(false);
                 setQrError(data.error || `Error ${res.status} al obtener el QR`);
                 setQrCode(null);
             }
         } catch {
             setWaitingQr(false);
+            setAlreadyLinkedHint(false);
             setQrError('No se pudo contactar al servidor para obtener el QR.');
             setQrCode(null);
         } finally {
@@ -123,6 +138,7 @@ export function WhatsappConnectCard({ whatsapp, apiRoutes }: Props) {
     const handleConnect = useCallback(() => {
         setSyncing(true);
         setQrError(null);
+        setAlreadyLinkedHint(false);
         router.post(apiRoutes.sync, {}, {
             preserveScroll: true,
             onFinish: () => setSyncing(false),
@@ -137,6 +153,7 @@ export function WhatsappConnectCard({ whatsapp, apiRoutes }: Props) {
     const handleReset = useCallback(() => {
         setResetting(true);
         setQrError(null);
+        setAlreadyLinkedHint(false);
         setQrCode(null);
         stopPoll();
         router.post(apiRoutes.reset, {}, {
@@ -202,6 +219,17 @@ export function WhatsappConnectCard({ whatsapp, apiRoutes }: Props) {
                         <div className="flex items-center gap-2 rounded-xl border border-amber-500/25 bg-amber-500/8 px-3 py-2.5 text-[11px] text-amber-800 dark:text-amber-200">
                             <Loader2 className="size-3.5 animate-spin" />
                             Generando código QR, espera unos segundos…
+                        </div>
+                    ) : null}
+
+                    {!isReady && !waitingQr && !qrCode && alreadyLinkedHint ? (
+                        <div className="rounded-xl border border-sky-500/25 bg-sky-500/8 px-3 py-2.5 text-[11px] text-sky-900 dark:text-sky-100">
+                            <p className="font-medium">WhatsApp en el celular sigue activo</p>
+                            <p className="mt-1 opacity-90">
+                                No hay QR porque la sesión remota ya está autenticada. Pulsa{' '}
+                                <strong>Reiniciar sesión</strong> para cerrarla y generar un QR nuevo, o
+                                desvincula el dispositivo desde WhatsApp en el teléfono.
+                            </p>
                         </div>
                     ) : null}
 

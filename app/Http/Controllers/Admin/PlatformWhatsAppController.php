@@ -68,18 +68,21 @@ class PlatformWhatsAppController extends Controller
             $session = $sync->ensure();
             abort_if($session === null, 422, 'No se pudo crear la sesión de WhatsApp de Orvae.');
 
+            // También trata status remotos tipo WORKING antes de pedir QR.
             if (! $session->isReady()) {
                 try {
                     $remote = $client->getSession($session->openwa_session_id);
                     $status = strtolower((string) ($remote['status'] ?? $session->status));
+                    $status = str_replace(['-', ' '], '_', $status);
 
-                    // Solo arrancar si realmente está detenida. Si ya corre, solo pedimos QR.
-                    if (in_array($status, ['created', 'disconnected', 'failed', 'stopped'], true)) {
+                    if (in_array($status, ['ready', 'working', 'connected', 'authenticated', 'open', 'online'], true)
+                        || filled($remote['phone'] ?? null)) {
+                        $session = $sync->refresh($session);
+                    } elseif (in_array($status, ['created', 'disconnected', 'failed', 'stopped'], true)) {
                         $client->startSession($session->openwa_session_id);
                     }
                 } catch (\Throwable $e) {
                     if (! str_contains(strtolower($e->getMessage()), 'already started')) {
-                        // Sesión huérfana o gateway caído: recrear y reintentar.
                         $session = $sync->reset() ?? $session;
                     }
                 }
@@ -113,19 +116,37 @@ class PlatformWhatsAppController extends Controller
             } catch (\Throwable $e) {
                 $message = $e->getMessage();
 
-                // Normal: OpenWA aún está generando el QR. No resetear ni marcar error.
+                // Sin QR: suele ser porque YA está autenticada en el celular (no hay QR que mostrar).
                 if ($client->isQrNotReadyYetError($message)) {
-                    $session->forceFill([
-                        'status' => 'qr_ready',
-                        'last_error' => null,
-                        'last_synced_at' => now(),
-                    ])->save();
+                    try {
+                        $session = $sync->refresh($session);
+                    } catch (\Throwable) {
+                        // keep current
+                    }
+
+                    if ($session->isReady() || filled($session->phone)) {
+                        if (! $session->isReady()) {
+                            $session->forceFill([
+                                'status' => PlatformWhatsAppSession::STATUS_READY,
+                                'last_error' => null,
+                                'last_synced_at' => now(),
+                            ])->save();
+                        }
+
+                        return response()->json([
+                            'ready' => true,
+                            'phone' => $session->phone,
+                            'status' => $session->status,
+                            'message' => 'Sesión ya vinculada en OpenWA.',
+                        ]);
+                    }
 
                     return response()->json([
                         'ready' => false,
                         'waiting' => true,
-                        'status' => 'qr_pending',
-                        'message' => 'Generando código QR, espera unos segundos…',
+                        'already_linked_hint' => true,
+                        'status' => $session->status,
+                        'message' => 'OpenWA no tiene QR: la sesión del celular puede seguir activa. Usa «Reiniciar sesión» para forzar un QR nuevo (cerrará el vínculo remoto).',
                         'qr_code' => null,
                         'session_id' => $session->openwa_session_id,
                     ]);
