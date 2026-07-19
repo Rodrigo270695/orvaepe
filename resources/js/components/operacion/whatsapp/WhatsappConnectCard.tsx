@@ -51,6 +51,7 @@ function StatusBadge({ isReady, hasError }: { isReady: boolean; hasError: boolea
 export function WhatsappConnectCard({ whatsapp, apiRoutes }: Props) {
     const [qrCode, setQrCode] = useState<string | null>(null);
     const [qrError, setQrError] = useState<string | null>(null);
+    const [waitingQr, setWaitingQr] = useState(false);
     const [loadingQr, setLoadingQr] = useState(false);
     const [syncing, setSyncing] = useState(false);
     const [resetting, setResetting] = useState(false);
@@ -76,27 +77,42 @@ export function WhatsappConnectCard({ whatsapp, apiRoutes }: Props) {
             });
             const data = (await res.json()) as {
                 ready?: boolean;
+                waiting?: boolean;
                 qr_code?: string | null;
                 error?: string;
+                message?: string | null;
             };
 
-            if (!res.ok) {
-                setQrError(data.error || `Error ${res.status} al obtener el QR`);
-                setQrCode(null);
-                return;
-            }
-
-            setQrError(null);
             if (data.ready) {
+                setQrError(null);
+                setWaitingQr(false);
                 setQrCode(null);
                 router.reload({ only: ['whatsapp'] });
                 stopPoll();
-            } else if (data.qr_code) {
+                return;
+            }
+
+            if (data.qr_code) {
+                setQrError(null);
+                setWaitingQr(false);
                 setQrCode(data.qr_code);
-            } else if (data.error) {
-                setQrError(data.error);
+                return;
+            }
+
+            // OpenWA aún genera el QR: seguir el poll sin error rojo.
+            if (data.waiting || (res.ok && !data.error)) {
+                setQrError(null);
+                setWaitingQr(true);
+                return;
+            }
+
+            if (!res.ok || data.error) {
+                setWaitingQr(false);
+                setQrError(data.error || `Error ${res.status} al obtener el QR`);
+                setQrCode(null);
             }
         } catch {
+            setWaitingQr(false);
             setQrError('No se pudo contactar al servidor para obtener el QR.');
             setQrCode(null);
         } finally {
@@ -151,6 +167,12 @@ export function WhatsappConnectCard({ whatsapp, apiRoutes }: Props) {
 
     const session = whatsapp.session;
     const isReady = session?.is_ready === true;
+    const lastError = session?.last_error ?? null;
+    const lastErrorBenign =
+        lastError !== null &&
+        (/already started|not ready yet|qr code is not ready/i.test(lastError) ||
+            /internal server error/i.test(lastError));
+    const showSessionError = Boolean(lastError && !lastErrorBenign);
 
     return (
         <>
@@ -158,14 +180,14 @@ export function WhatsappConnectCard({ whatsapp, apiRoutes }: Props) {
                 <div className="flex flex-col gap-4">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                         <div className="space-y-2">
-                            <StatusBadge isReady={isReady} hasError={Boolean(session?.last_error)} />
+                            <StatusBadge isReady={isReady} hasError={showSessionError} />
                             {isReady && session?.phone ? (
                                 <p className="text-[11px] text-muted-foreground">
                                     Número: <span className="font-medium text-foreground">{session.phone}</span>
                                 </p>
                             ) : null}
-                            {session?.last_error ? (
-                                <p className="text-[11px] text-destructive">{session.last_error}</p>
+                            {showSessionError ? (
+                                <p className="text-[11px] text-destructive">{lastError}</p>
                             ) : null}
                             {qrError ? (
                                 <p className="text-[11px] text-destructive">{qrError}</p>
@@ -175,6 +197,13 @@ export function WhatsappConnectCard({ whatsapp, apiRoutes }: Props) {
                             {session?.openwa_session_name ?? 'orvae-platform'}
                         </span>
                     </div>
+
+                    {!isReady && waitingQr && !qrCode ? (
+                        <div className="flex items-center gap-2 rounded-xl border border-amber-500/25 bg-amber-500/8 px-3 py-2.5 text-[11px] text-amber-800 dark:text-amber-200">
+                            <Loader2 className="size-3.5 animate-spin" />
+                            Generando código QR, espera unos segundos…
+                        </div>
+                    ) : null}
 
                     {!isReady && qrCode ? (
                         <div className="flex flex-col items-center gap-3 rounded-xl border border-border/50 bg-muted/20 p-5">

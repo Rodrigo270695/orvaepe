@@ -122,6 +122,14 @@ final class OpenWaClient
             || str_contains($normalized, 'session is already');
     }
 
+    public function isQrNotReadyYetError(string $message): bool
+    {
+        $normalized = strtolower($message);
+
+        return str_contains($normalized, 'qr code is not ready')
+            || str_contains($normalized, 'not ready yet');
+    }
+
     /**
      * @return array<string, mixed>
      */

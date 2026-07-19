@@ -111,41 +111,114 @@ class PlatformWhatsAppController extends Controller
             try {
                 $qr = $client->getQrCode($session->openwa_session_id);
             } catch (\Throwable $e) {
-                // Reintento único tras reset (sesión corrompida / sin QR).
-                $session = $sync->reset() ?? $session;
-                abort_if($session === null, 422, 'No se pudo recrear la sesión de WhatsApp.');
+                $message = $e->getMessage();
 
-                try {
-                    if (! $session->isReady()) {
-                        $client->startSession($session->openwa_session_id);
-                    }
-                    $qr = $client->getQrCode($session->openwa_session_id);
-                } catch (\Throwable $retry) {
-                    return $this->qrErrorResponse($session, $retry->getMessage());
+                // Normal: OpenWA aún está generando el QR. No resetear ni marcar error.
+                if ($client->isQrNotReadyYetError($message)) {
+                    $session->forceFill([
+                        'status' => 'qr_ready',
+                        'last_error' => null,
+                        'last_synced_at' => now(),
+                    ])->save();
+
+                    return response()->json([
+                        'ready' => false,
+                        'waiting' => true,
+                        'status' => 'qr_pending',
+                        'message' => 'Generando código QR, espera unos segundos…',
+                        'qr_code' => null,
+                        'session_id' => $session->openwa_session_id,
+                    ]);
                 }
+
+                // Solo resetear si el ID está huérfano / fallo real (no “not ready”).
+                if (str_contains($message, 'OpenWA HTTP 404')
+                    || str_contains($message, 'no encontrada')) {
+                    $session = $sync->reset() ?? $session;
+                    abort_if($session === null, 422, 'No se pudo recrear la sesión de WhatsApp.');
+
+                    try {
+                        if (! $session->isReady()) {
+                            $client->startSession($session->openwa_session_id);
+                        }
+                        $qr = $client->getQrCode($session->openwa_session_id);
+                    } catch (\Throwable $retry) {
+                        if ($client->isQrNotReadyYetError($retry->getMessage())) {
+                            return response()->json([
+                                'ready' => false,
+                                'waiting' => true,
+                                'status' => 'qr_pending',
+                                'message' => 'Generando código QR, espera unos segundos…',
+                                'qr_code' => null,
+                                'session_id' => $session->openwa_session_id,
+                            ]);
+                        }
+
+                        return $this->qrErrorResponse($session, $retry->getMessage());
+                    }
+                } else {
+                    return $this->qrErrorResponse($session, $message);
+                }
+            }
+
+            // Limpiar errores viejos si ya tenemos respuesta útil.
+            if ($session->last_error) {
+                $session->forceFill([
+                    'last_error' => null,
+                    'last_synced_at' => now(),
+                ])->save();
             }
 
             return response()->json([
                 'ready' => false,
+                'waiting' => blank($qr['qrCode'] ?? null),
                 'status' => (string) ($qr['status'] ?? $session->status),
                 'qr_code' => $qr['qrCode'] ?? null,
                 'session_id' => $session->openwa_session_id,
+                'message' => blank($qr['qrCode'] ?? null)
+                    ? 'Generando código QR, espera unos segundos…'
+                    : null,
             ]);
         } catch (\Throwable $e) {
             $message = $e->getMessage();
+
+            if (app(OpenWaClient::class)->isQrNotReadyYetError($message)) {
+                return response()->json([
+                    'ready' => false,
+                    'waiting' => true,
+                    'status' => 'qr_pending',
+                    'message' => 'Generando código QR, espera unos segundos…',
+                    'qr_code' => null,
+                ]);
+            }
+
             // No asustar al usuario con el 400 benigno de OpenWA.
             if (str_contains(strtolower($message), 'already started')) {
                 try {
                     $session = $sync->ensure();
                     if ($session !== null) {
-                        $qr = $client->getQrCode($session->openwa_session_id);
+                        try {
+                            $qr = $client->getQrCode($session->openwa_session_id);
 
-                        return response()->json([
-                            'ready' => false,
-                            'status' => (string) ($qr['status'] ?? $session->status),
-                            'qr_code' => $qr['qrCode'] ?? null,
-                            'session_id' => $session->openwa_session_id,
-                        ]);
+                            return response()->json([
+                                'ready' => false,
+                                'waiting' => blank($qr['qrCode'] ?? null),
+                                'status' => (string) ($qr['status'] ?? $session->status),
+                                'qr_code' => $qr['qrCode'] ?? null,
+                                'session_id' => $session->openwa_session_id,
+                            ]);
+                        } catch (\Throwable $qrEx) {
+                            if ($client->isQrNotReadyYetError($qrEx->getMessage())) {
+                                return response()->json([
+                                    'ready' => false,
+                                    'waiting' => true,
+                                    'status' => 'qr_pending',
+                                    'message' => 'Generando código QR, espera unos segundos…',
+                                    'qr_code' => null,
+                                    'session_id' => $session->openwa_session_id,
+                                ]);
+                            }
+                        }
                     }
                 } catch (\Throwable) {
                     // cae al error genérico abajo
