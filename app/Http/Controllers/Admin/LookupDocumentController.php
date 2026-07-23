@@ -80,25 +80,33 @@ class LookupDocumentController extends Controller
             return response()->json([
                 'tipo_doc'    => '6',
                 'name'        => $name,
+                'lastname'    => '',
+                'nombres'     => $name,
+                'apellidos'   => '',
                 'address'     => $address,
                 'estado'      => is_string($estado) ? $estado : null,
                 'condicion'   => is_string($condicion) ? $condicion : null,
             ]);
-        } else {
-            // DNI
-            $nombre    = trim((string) ($info['nombres'] ?? ''));
-            $apellidos = trim((string) ($info['apellido_paterno'] ?? '')) . ' ' . trim((string) ($info['apellido_materno'] ?? ''));
-            $fullName  = trim($nombre . ' ' . trim($apellidos));
-
-            if ($fullName === '') {
-                return response()->json(['message' => 'No se encontró nombre para ese DNI.'], 422);
-            }
-
-            return response()->json([
-                'tipo_doc' => '1',
-                'name'     => $fullName,
-                'address'  => '',
-            ]);
         }
+
+        // DNI
+        $nombre = trim((string) ($info['nombres'] ?? ''));
+        $apPaterno = trim((string) ($info['apellido_paterno'] ?? ''));
+        $apMaterno = trim((string) ($info['apellido_materno'] ?? ''));
+        $apellidos = trim($apPaterno.' '.$apMaterno);
+        $fullName = trim($nombre.' '.$apellidos);
+
+        if ($fullName === '') {
+            return response()->json(['message' => 'No se encontró nombre para ese DNI.'], 422);
+        }
+
+        return response()->json([
+            'tipo_doc' => '1',
+            'name' => $nombre !== '' ? $nombre : $fullName,
+            'lastname' => $apellidos,
+            'nombres' => $nombre,
+            'apellidos' => $apellidos,
+            'address' => '',
+        ]);
     }
 }

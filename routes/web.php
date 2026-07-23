@@ -160,6 +160,10 @@ Route::middleware('guest')->group(function () {
     Route::get('auth/google/callback', [GoogleAuthController::class, 'callback'])->name('auth.google.callback');
 });
 
+Route::post('/register/lookup-doc', LookupDocumentController::class)
+    ->middleware('throttle:20,1')
+    ->name('register.lookup-doc');
+
 Route::middleware('auth')->group(function () {
     Route::get('auth/google/complete', [GoogleAuthController::class, 'showComplete'])->name('auth.google.complete');
     Route::post('auth/google/complete', [GoogleAuthController::class, 'storeComplete'])->name('auth.google.complete.store');
