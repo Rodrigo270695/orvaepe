@@ -1,4 +1,5 @@
 import { Form, Head } from '@inertiajs/react';
+import { Transition } from '@headlessui/react';
 import { IdCard, Loader2, Lock, Mail, Phone, Search, User, UserPlus } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
@@ -9,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import { AdminToast, type AdminToastType } from '@/components/ui/admin-toast';
 import GoogleSignInButton from '@/components/auth/google-sign-in-button';
 import AuthOrvaeLoginLayout from '@/layouts/auth/auth-orvae-login-layout';
 import { getCsrfToken } from '@/lib/csrf';
@@ -18,6 +20,13 @@ import { inertiaFormProps } from '@/lib/inertia-form-props';
 
 type Props = {
     googleOAuthEnabled?: boolean;
+};
+
+type LocalToast = {
+    id: number;
+    type: AdminToastType;
+    title: string;
+    description?: string;
 };
 
 type PasswordChecks = {
@@ -80,9 +89,25 @@ export default function Register({ googleOAuthEnabled = false }: Props) {
     const [passwordFocused, setPasswordFocused] = useState(false);
     const [phoneLen, setPhoneLen] = useState(0);
     const [lookupLoading, setLookupLoading] = useState(false);
-    const [lookupError, setLookupError] = useState<string | null>(null);
-    const [lookupOk, setLookupOk] = useState(false);
+    const [lookupToast, setLookupToast] = useState<LocalToast | null>(null);
+    const [lookupToastOpen, setLookupToastOpen] = useState(false);
     const lastLookupRef = useRef<string | null>(null);
+    const toastIdRef = useRef(0);
+
+    const showLookupToast = (
+        type: AdminToastType,
+        title: string,
+        description?: string,
+    ) => {
+        toastIdRef.current += 1;
+        setLookupToast({
+            id: toastIdRef.current,
+            type,
+            title,
+            description,
+        });
+        setLookupToastOpen(true);
+    };
 
     const documentNumberLen = documentNumber.length;
     const documentNumberMax = documentNumberLen <= 8 ? 8 : 11;
@@ -106,8 +131,6 @@ export default function Register({ googleOAuthEnabled = false }: Props) {
 
         lastLookupRef.current = digits;
         setLookupLoading(true);
-        setLookupError(null);
-        setLookupOk(false);
 
         try {
             const res = await fetch('/register/lookup-doc', {
@@ -132,7 +155,13 @@ export default function Register({ googleOAuthEnabled = false }: Props) {
 
             if (!res.ok) {
                 lastLookupRef.current = null;
-                setLookupError(body.message ?? 'No se pudo consultar el documento.');
+                if (!silent) {
+                    showLookupToast(
+                        'error',
+                        'No se pudo consultar',
+                        body.message ?? 'No se pudo consultar el documento.',
+                    );
+                }
                 return;
             }
 
@@ -148,11 +177,19 @@ export default function Register({ googleOAuthEnabled = false }: Props) {
                 setLastname(nextLast);
             }
 
-            setLookupOk(true);
+            showLookupToast(
+                'success',
+                'Datos obtenidos',
+                'Revisa nombre y apellido.',
+            );
         } catch {
             lastLookupRef.current = null;
             if (!silent) {
-                setLookupError('No se pudo contactar el servicio de consulta.');
+                showLookupToast(
+                    'error',
+                    'Error de conexión',
+                    'No se pudo contactar el servicio de consulta.',
+                );
             }
         } finally {
             setLookupLoading(false);
@@ -160,12 +197,18 @@ export default function Register({ googleOAuthEnabled = false }: Props) {
     };
 
     useEffect(() => {
+        if (!lookupToastOpen) return;
+        const timer = window.setTimeout(() => setLookupToastOpen(false), 2800);
+        return () => window.clearTimeout(timer);
+    }, [lookupToastOpen, lookupToast?.id]);
+
+    useEffect(() => {
         if (!canLookup) {
             return;
         }
 
         const t = window.setTimeout(() => {
-            void lookupDocument(documentNumber, { silent: true });
+            void lookupDocument(documentNumber, { silent: false });
         }, 350);
 
         return () => window.clearTimeout(t);
@@ -194,6 +237,28 @@ export default function Register({ googleOAuthEnabled = false }: Props) {
             maxWidthClass="max-w-[480px]"
         >
             <Head title="Registrarse" />
+            {lookupToast ? (
+                <div className="admin-panel-shell">
+                    <div className="admin-toast-stack">
+                        <Transition
+                            show={lookupToastOpen}
+                            enter="transition ease-out duration-200"
+                            enterFrom="opacity-0 translate-y-[-6px]"
+                            enterTo="opacity-100 translate-y-0"
+                            leave="transition ease-in duration-150"
+                            leaveFrom="opacity-100 translate-y-0"
+                            leaveTo="opacity-0 translate-y-[-6px]"
+                        >
+                            <AdminToast
+                                key={lookupToast.id}
+                                type={lookupToast.type}
+                                title={lookupToast.title}
+                                description={lookupToast.description}
+                            />
+                        </Transition>
+                    </div>
+                </div>
+            ) : null}
             <div className="flex flex-col gap-6">
                 <div className="flex flex-col gap-2">
                     <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--auth-header-icon-bg)]">
@@ -258,8 +323,6 @@ export default function Register({ googleOAuthEnabled = false }: Props) {
                                                 onChange={(e) => {
                                                     const digits = e.target.value.replace(/\D/g, '').slice(0, 11);
                                                     setDocumentNumber(digits);
-                                                    setLookupOk(false);
-                                                    setLookupError(null);
                                                     if (digits.length !== 8 && digits.length !== 11) {
                                                         lastLookupRef.current = null;
                                                     }
@@ -302,14 +365,6 @@ export default function Register({ googleOAuthEnabled = false }: Props) {
                                             )}
                                         </Button>
                                     </div>
-                                    {lookupOk ? (
-                                        <p className="text-[11px] text-emerald-500">
-                                            Datos obtenidos. Revisa nombre y apellido.
-                                        </p>
-                                    ) : null}
-                                    {lookupError ? (
-                                        <p className="text-[11px] text-rose-500">{lookupError}</p>
-                                    ) : null}
                                     <InputError message={errors.document_number} />
                                 </div>
 
