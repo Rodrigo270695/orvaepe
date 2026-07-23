@@ -42,7 +42,7 @@ class CreateNewUser implements CreatesNewUsers
                     'max:20',
                     'regex:/^[0-9]{8}$|^[0-9]{11}$/',
                 ],
-                'phone' => ['nullable', 'string', 'size:9', 'regex:/^9[0-9]{8}$/'],
+                'phone' => ['required', 'string', 'size:9', 'regex:/^9[0-9]{8}$/'],
                 'username' => [
                     'required',
                     'string',
@@ -68,7 +68,7 @@ class CreateNewUser implements CreatesNewUsers
             'email' => $input['email'],
             'password' => $input['password'],
             'document_number' => $input['document_number'],
-            'phone' => $input['phone'] ?? null,
+            'phone' => $input['phone'],
         ]);
 
         UserProfile::updateOrCreate(

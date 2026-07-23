@@ -77,6 +77,7 @@ export default function Register({ googleOAuthEnabled = false }: Props) {
     const [name, setName] = useState('');
     const [lastname, setLastname] = useState('');
     const [password, setPassword] = useState('');
+    const [passwordFocused, setPasswordFocused] = useState(false);
     const [phoneLen, setPhoneLen] = useState(0);
     const [lookupLoading, setLookupLoading] = useState(false);
     const [lookupError, setLookupError] = useState<string | null>(null);
@@ -92,7 +93,7 @@ export default function Register({ googleOAuthEnabled = false }: Props) {
     const tone = scoreTone(score);
 
     const inputUnderlineClassName =
-        'w-full border-0 border-b border-[var(--o-border2)] bg-transparent rounded-none shadow-none py-3 pl-9 pr-3 font-[family-name:var(--font-body)] text-sm text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:border-[var(--auth-focus-border)] focus-visible:outline-none focus-visible:ring-0 focus-visible:border-[var(--auth-focus-border)] transition-colors duration-150';
+        'w-full border-0 border-b border-[var(--o-border2)] bg-transparent rounded-none shadow-none py-2.5 pl-9 pr-3 font-[family-name:var(--font-body)] text-sm text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:border-[var(--auth-focus-border)] focus-visible:outline-none focus-visible:ring-0 focus-visible:border-[var(--auth-focus-border)] transition-colors duration-150';
 
     const lookupDocument = async (doc: string, { silent = false }: { silent?: boolean } = {}) => {
         const digits = doc.replace(/\D/g, '');
@@ -193,8 +194,8 @@ export default function Register({ googleOAuthEnabled = false }: Props) {
             maxWidthClass="max-w-[480px]"
         >
             <Head title="Registrarse" />
-            <div className="flex flex-col gap-8">
-                <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-6">
+                <div className="flex flex-col gap-2">
                     <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--auth-header-icon-bg)]">
                         <UserPlus className="size-6 text-[var(--auth-cta-from)]" />
                     </div>
@@ -225,93 +226,125 @@ export default function Register({ googleOAuthEnabled = false }: Props) {
                     {...inertiaFormProps(store())}
                     resetOnSuccess={['password', 'password_confirmation']}
                     disableWhileProcessing
-                    className="flex flex-col gap-6"
+                    className="flex flex-col gap-4"
                 >
                     {({ processing, errors }) => (
-                        <div className="space-y-6">
-                            {/* Documento primero */}
-                            <div className="grid gap-2">
-                                <Label
-                                    htmlFor="document_number"
-                                    className="font-[family-name:var(--font-mono)] text-[10px] font-normal uppercase tracking-[0.2em] text-[var(--muted-foreground)]"
-                                >
-                                    N.º de documento
-                                    <span className="ml-0.5 text-[var(--auth-cta-from)]">*</span>
-                                </Label>
-                                <div className="flex items-stretch gap-2">
-                                    <div className="relative min-w-0 flex-1">
-                                        <IdCard className="absolute left-0 top-1/2 size-4 -translate-y-1/2 text-[var(--auth-icon)]" />
+                        <div className="space-y-4">
+                            {/* Documento + celular */}
+                            <div className="grid gap-4 sm:grid-cols-2">
+                                <div className="grid gap-1.5">
+                                    <Label
+                                        htmlFor="document_number"
+                                        className="font-[family-name:var(--font-mono)] text-[10px] font-normal uppercase tracking-[0.2em] text-[var(--muted-foreground)]"
+                                    >
+                                        N.º de documento
+                                        <span className="ml-0.5 text-[var(--auth-cta-from)]">*</span>
+                                    </Label>
+                                    <div className="flex items-stretch gap-2">
+                                        <div className="relative min-w-0 flex-1">
+                                            <IdCard className="absolute left-0 top-1/2 size-4 -translate-y-1/2 text-[var(--auth-icon)]" />
+                                            <Input
+                                                id="document_number"
+                                                type="text"
+                                                inputMode="numeric"
+                                                pattern="[0-9]*"
+                                                className={`${inputUnderlineClassName} pr-12`}
+                                                required
+                                                tabIndex={1}
+                                                name="document_number"
+                                                value={documentNumber}
+                                                placeholder="DNI (8) o RUC (11)"
+                                                maxLength={11}
+                                                onChange={(e) => {
+                                                    const digits = e.target.value.replace(/\D/g, '').slice(0, 11);
+                                                    setDocumentNumber(digits);
+                                                    setLookupOk(false);
+                                                    setLookupError(null);
+                                                    if (digits.length !== 8 && digits.length !== 11) {
+                                                        lastLookupRef.current = null;
+                                                    }
+                                                }}
+                                            />
+                                            <span
+                                                className={cn(
+                                                    'pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 font-[family-name:var(--font-mono)] text-[10px]',
+                                                    canLookup
+                                                        ? 'text-emerald-500'
+                                                        : 'text-[var(--auth-icon)]',
+                                                )}
+                                            >
+                                                {documentNumberLen}/{documentNumberMax}
+                                            </span>
+                                        </div>
+                                        <Button
+                                            type="button"
+                                            size="icon"
+                                            variant="ghost"
+                                            tabIndex={2}
+                                            disabled={!canLookup || lookupLoading}
+                                            onClick={() => {
+                                                lastLookupRef.current = null;
+                                                void lookupDocument(documentNumber);
+                                            }}
+                                            className={cn(
+                                                'size-10 shrink-0 rounded-lg border-0 shadow-sm',
+                                                'bg-gradient-to-br from-teal-500 to-emerald-600 text-white',
+                                                'hover:from-teal-600 hover:to-emerald-700',
+                                                'disabled:from-muted disabled:to-muted disabled:text-muted-foreground disabled:opacity-60',
+                                            )}
+                                            aria-label="Consultar DNI o RUC"
+                                            title="Consultar DNI (RENIEC) o RUC (SUNAT)"
+                                        >
+                                            {lookupLoading ? (
+                                                <Loader2 className="size-4 animate-spin" aria-hidden />
+                                            ) : (
+                                                <Search className="size-4" aria-hidden />
+                                            )}
+                                        </Button>
+                                    </div>
+                                    {lookupOk ? (
+                                        <p className="text-[11px] text-emerald-500">
+                                            Datos obtenidos. Revisa nombre y apellido.
+                                        </p>
+                                    ) : null}
+                                    {lookupError ? (
+                                        <p className="text-[11px] text-rose-500">{lookupError}</p>
+                                    ) : null}
+                                    <InputError message={errors.document_number} />
+                                </div>
+
+                                <div className="grid gap-1.5">
+                                    <Label
+                                        htmlFor="phone"
+                                        className="font-[family-name:var(--font-mono)] text-[10px] font-normal uppercase tracking-[0.2em] text-[var(--muted-foreground)]"
+                                    >
+                                        Celular (9 dígitos)
+                                        <span className="ml-0.5 text-[var(--auth-cta-from)]">*</span>
+                                    </Label>
+                                    <div className="relative">
+                                        <Phone className="absolute left-0 top-1/2 size-4 -translate-y-1/2 text-[var(--auth-icon)]" />
                                         <Input
-                                            id="document_number"
+                                            id="phone"
                                             type="text"
                                             inputMode="numeric"
-                                            pattern="[0-9]*"
+                                            pattern="9[0-9]{8}"
                                             className={`${inputUnderlineClassName} pr-12`}
                                             required
-                                            tabIndex={1}
-                                            name="document_number"
-                                            value={documentNumber}
-                                            placeholder="DNI (8) o RUC (11)"
-                                            maxLength={11}
-                                            onChange={(e) => {
-                                                const digits = e.target.value.replace(/\D/g, '').slice(0, 11);
-                                                setDocumentNumber(digits);
-                                                setLookupOk(false);
-                                                setLookupError(null);
-                                                if (digits.length !== 8 && digits.length !== 11) {
-                                                    lastLookupRef.current = null;
-                                                }
-                                            }}
+                                            tabIndex={3}
+                                            name="phone"
+                                            placeholder="987654321"
+                                            maxLength={9}
+                                            onInput={handleDigitsOnlyPhone}
                                         />
-                                        <span
-                                            className={cn(
-                                                'pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 font-[family-name:var(--font-mono)] text-[10px]',
-                                                canLookup
-                                                    ? 'text-emerald-500'
-                                                    : 'text-[var(--auth-icon)]',
-                                            )}
-                                        >
-                                            {documentNumberLen}/{documentNumberMax}
+                                        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 font-[family-name:var(--font-mono)] text-[10px] text-[var(--auth-icon)]">
+                                            {phoneLen}/9
                                         </span>
                                     </div>
-                                    <Button
-                                        type="button"
-                                        size="icon"
-                                        variant="ghost"
-                                        tabIndex={2}
-                                        disabled={!canLookup || lookupLoading}
-                                        onClick={() => {
-                                            lastLookupRef.current = null;
-                                            void lookupDocument(documentNumber);
-                                        }}
-                                        className={cn(
-                                            'size-10 shrink-0 rounded-lg border-0 shadow-sm',
-                                            'bg-gradient-to-br from-teal-500 to-emerald-600 text-white',
-                                            'hover:from-teal-600 hover:to-emerald-700',
-                                            'disabled:from-muted disabled:to-muted disabled:text-muted-foreground disabled:opacity-60',
-                                        )}
-                                        aria-label="Consultar DNI o RUC"
-                                        title="Consultar DNI (RENIEC) o RUC (SUNAT)"
-                                    >
-                                        {lookupLoading ? (
-                                            <Loader2 className="size-4 animate-spin" aria-hidden />
-                                        ) : (
-                                            <Search className="size-4" aria-hidden />
-                                        )}
-                                    </Button>
+                                    <InputError message={errors.phone} />
                                 </div>
-                                {lookupOk ? (
-                                    <p className="text-[11px] text-emerald-500">
-                                        Datos obtenidos. Revisa nombre y apellido.
-                                    </p>
-                                ) : null}
-                                {lookupError ? (
-                                    <p className="text-[11px] text-rose-500">{lookupError}</p>
-                                ) : null}
-                                <InputError message={errors.document_number} className="mt-2" />
                             </div>
 
-                            <div className="grid gap-2 md:col-span-2">
+                            <div className="grid gap-1.5">
                                 <Label
                                     htmlFor="email"
                                     className="font-[family-name:var(--font-mono)] text-[10px] font-normal uppercase tracking-[0.2em] text-[var(--muted-foreground)]"
@@ -326,17 +359,17 @@ export default function Register({ googleOAuthEnabled = false }: Props) {
                                         type="email"
                                         className={inputUnderlineClassName}
                                         required
-                                        tabIndex={3}
+                                        tabIndex={4}
                                         autoComplete="email"
                                         name="email"
                                         placeholder="correo@ejemplo.com"
                                     />
                                 </div>
-                                <InputError message={errors.email} className="mt-2" />
+                                <InputError message={errors.email} />
                             </div>
 
-                            <div className="grid gap-6 md:grid-cols-2">
-                                <div className="grid gap-2">
+                            <div className="grid gap-4 sm:grid-cols-2">
+                                <div className="grid gap-1.5">
                                     <Label
                                         htmlFor="name"
                                         className="font-[family-name:var(--font-mono)] text-[10px] font-normal uppercase tracking-[0.2em] text-[var(--muted-foreground)]"
@@ -351,7 +384,7 @@ export default function Register({ googleOAuthEnabled = false }: Props) {
                                             type="text"
                                             className={inputUnderlineClassName}
                                             required
-                                            tabIndex={4}
+                                            tabIndex={5}
                                             autoComplete="given-name"
                                             name="name"
                                             value={name}
@@ -359,10 +392,10 @@ export default function Register({ googleOAuthEnabled = false }: Props) {
                                             placeholder="Nombre"
                                         />
                                     </div>
-                                    <InputError message={errors.name} className="mt-2" />
+                                    <InputError message={errors.name} />
                                 </div>
 
-                                <div className="grid gap-2">
+                                <div className="grid gap-1.5">
                                     <Label
                                         htmlFor="lastname"
                                         className="font-[family-name:var(--font-mono)] text-[10px] font-normal uppercase tracking-[0.2em] text-[var(--muted-foreground)]"
@@ -377,7 +410,7 @@ export default function Register({ googleOAuthEnabled = false }: Props) {
                                             type="text"
                                             className={inputUnderlineClassName}
                                             required
-                                            tabIndex={5}
+                                            tabIndex={6}
                                             autoComplete="family-name"
                                             name="lastname"
                                             value={lastname}
@@ -385,40 +418,12 @@ export default function Register({ googleOAuthEnabled = false }: Props) {
                                             placeholder="Apellido"
                                         />
                                     </div>
-                                    <InputError message={errors.lastname} className="mt-2" />
+                                    <InputError message={errors.lastname} />
                                 </div>
                             </div>
 
-                            <div className="grid gap-2">
-                                <Label
-                                    htmlFor="phone"
-                                    className="font-[family-name:var(--font-mono)] text-[10px] font-normal uppercase tracking-[0.2em] text-[var(--muted-foreground)]"
-                                >
-                                    Celular (9 dígitos)
-                                </Label>
-                                <div className="relative">
-                                    <Phone className="absolute left-0 top-1/2 size-4 -translate-y-1/2 text-[var(--auth-icon)]" />
-                                    <Input
-                                        id="phone"
-                                        type="text"
-                                        inputMode="numeric"
-                                        pattern="[0-9]*"
-                                        className={`${inputUnderlineClassName} pr-12`}
-                                        tabIndex={6}
-                                        name="phone"
-                                        placeholder="987654321"
-                                        maxLength={9}
-                                        onInput={handleDigitsOnlyPhone}
-                                    />
-                                    <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 font-[family-name:var(--font-mono)] text-[10px] text-[var(--auth-icon)]">
-                                        {phoneLen}/9
-                                    </span>
-                                </div>
-                                <InputError message={errors.phone} className="mt-2" />
-                            </div>
-
-                            <div className="grid gap-6 md:grid-cols-2">
-                                <div className="grid gap-2">
+                            <div className="grid gap-4 sm:grid-cols-2">
+                                <div className="grid gap-1.5">
                                     <Label
                                         htmlFor="password"
                                         className="font-[family-name:var(--font-mono)] text-[10px] font-normal uppercase tracking-[0.2em] text-[var(--muted-foreground)]"
@@ -427,6 +432,50 @@ export default function Register({ googleOAuthEnabled = false }: Props) {
                                         <span className="ml-0.5 text-[var(--auth-cta-from)]">*</span>
                                     </Label>
                                     <div className="relative">
+                                        {passwordFocused ? (
+                                            <div
+                                                role="status"
+                                                className="absolute bottom-[calc(100%+0.5rem)] left-0 z-20 w-[min(100%,18rem)] rounded-lg border border-[var(--o-border2)] bg-[var(--background)] p-3 shadow-lg"
+                                            >
+                                                <div className="mb-2 flex gap-1">
+                                                    {Array.from({ length: 5 }).map((_, i) => (
+                                                        <span
+                                                            key={i}
+                                                            className={cn(
+                                                                'h-1.5 flex-1 rounded-full transition-colors',
+                                                                i < score ? tone.bar : 'bg-[var(--o-border2)]',
+                                                            )}
+                                                        />
+                                                    ))}
+                                                </div>
+                                                <p className={cn('mb-2 text-[11px] font-medium', tone.text)}>
+                                                    Seguridad: {tone.label}
+                                                </p>
+                                                <ul className="space-y-1 text-[11px] text-[var(--muted-foreground)]">
+                                                    {(
+                                                        [
+                                                            ['length', 'Mínimo 12 caracteres'],
+                                                            ['upper', 'Una mayúscula'],
+                                                            ['lower', 'Una minúscula'],
+                                                            ['number', 'Un número'],
+                                                            ['symbol', 'Un carácter especial'],
+                                                        ] as const
+                                                    ).map(([key, label]) => (
+                                                        <li
+                                                            key={key}
+                                                            className={cn(
+                                                                passwordChecks[key]
+                                                                    ? 'text-emerald-500'
+                                                                    : 'text-[var(--muted-foreground)]',
+                                                            )}
+                                                        >
+                                                            {passwordChecks[key] ? '✓' : '○'} {label}
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                                <span className="absolute -bottom-1.5 left-6 size-3 rotate-45 border-b border-r border-[var(--o-border2)] bg-[var(--background)]" />
+                                            </div>
+                                        ) : null}
                                         <Lock className="absolute left-0 top-1/2 size-4 -translate-y-1/2 text-[var(--auth-icon)]" />
                                         <PasswordInput
                                             id="password"
@@ -438,58 +487,16 @@ export default function Register({ googleOAuthEnabled = false }: Props) {
                                             className={`${inputUnderlineClassName} pr-10`}
                                             value={password}
                                             onChange={(e) => setPassword(e.target.value)}
+                                            onFocus={() => setPasswordFocused(true)}
+                                            onBlur={() => {
+                                                window.setTimeout(() => setPasswordFocused(false), 120);
+                                            }}
                                         />
                                     </div>
-
-                                    {password.length > 0 ? (
-                                        <div className="mt-2 space-y-2">
-                                            <div className="flex gap-1">
-                                                {Array.from({ length: 5 }).map((_, i) => (
-                                                    <span
-                                                        key={i}
-                                                        className={cn(
-                                                            'h-1.5 flex-1 rounded-full transition-colors',
-                                                            i < score ? tone.bar : 'bg-[var(--o-border2)]',
-                                                        )}
-                                                    />
-                                                ))}
-                                            </div>
-                                            <p className={cn('text-[11px] font-medium', tone.text)}>
-                                                Seguridad: {tone.label}
-                                            </p>
-                                            <ul className="space-y-1 text-[11px] text-[var(--muted-foreground)]">
-                                                {(
-                                                    [
-                                                        ['length', 'Mínimo 12 caracteres'],
-                                                        ['upper', 'Una mayúscula'],
-                                                        ['lower', 'Una minúscula'],
-                                                        ['number', 'Un número'],
-                                                        ['symbol', 'Un carácter especial'],
-                                                    ] as const
-                                                ).map(([key, label]) => (
-                                                    <li
-                                                        key={key}
-                                                        className={cn(
-                                                            passwordChecks[key]
-                                                                ? 'text-emerald-500'
-                                                                : 'text-[var(--muted-foreground)]',
-                                                        )}
-                                                    >
-                                                        {passwordChecks[key] ? '✓' : '○'} {label}
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        </div>
-                                    ) : (
-                                        <p className="mt-1 text-[11px] text-[var(--muted-foreground)]">
-                                            Mín. 12 caracteres, mayúscula, minúscula, número y carácter especial.
-                                        </p>
-                                    )}
-
-                                    <InputError message={errors.password} className="mt-2" />
+                                    <InputError message={errors.password} />
                                 </div>
 
-                                <div className="grid gap-2">
+                                <div className="grid gap-1.5">
                                     <Label
                                         htmlFor="password_confirmation"
                                         className="font-[family-name:var(--font-mono)] text-[10px] font-normal uppercase tracking-[0.2em] text-[var(--muted-foreground)]"
@@ -509,7 +516,7 @@ export default function Register({ googleOAuthEnabled = false }: Props) {
                                             className={`${inputUnderlineClassName} pr-10`}
                                         />
                                     </div>
-                                    <InputError message={errors.password_confirmation} className="mt-2" />
+                                    <InputError message={errors.password_confirmation} />
                                 </div>
                             </div>
 
