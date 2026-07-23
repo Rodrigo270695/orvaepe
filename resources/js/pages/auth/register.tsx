@@ -234,7 +234,7 @@ export default function Register({ googleOAuthEnabled = false }: Props) {
         <AuthOrvaeLoginLayout
             title="Crea una cuenta"
             description="Ingresa tus datos para crear tu cuenta"
-            maxWidthClass="max-w-[480px]"
+            maxWidthClass="max-w-[520px]"
         >
             <Head title="Registrarse" />
             {lookupToast ? (
@@ -295,9 +295,9 @@ export default function Register({ googleOAuthEnabled = false }: Props) {
                 >
                     {({ processing, errors }) => (
                         <div className="space-y-4">
-                            {/* Documento + celular */}
-                            <div className="grid gap-4 sm:grid-cols-2">
-                                <div className="grid gap-1.5">
+                            {/* Documento + celular (documento más ancho para RUC) */}
+                            <div className="grid gap-3 sm:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]">
+                                <div className="grid gap-1.5 min-w-0">
                                     <Label
                                         htmlFor="document_number"
                                         className="font-[family-name:var(--font-mono)] text-[10px] font-normal uppercase tracking-[0.2em] text-[var(--muted-foreground)]"
@@ -313,7 +313,7 @@ export default function Register({ googleOAuthEnabled = false }: Props) {
                                                 type="text"
                                                 inputMode="numeric"
                                                 pattern="[0-9]*"
-                                                className={`${inputUnderlineClassName} pr-12`}
+                                                className={`${inputUnderlineClassName} pr-11 tracking-wide tabular-nums`}
                                                 required
                                                 tabIndex={1}
                                                 name="document_number"
@@ -330,7 +330,7 @@ export default function Register({ googleOAuthEnabled = false }: Props) {
                                             />
                                             <span
                                                 className={cn(
-                                                    'pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 font-[family-name:var(--font-mono)] text-[10px]',
+                                                    'pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 font-[family-name:var(--font-mono)] text-[10px]',
                                                     canLookup
                                                         ? 'text-emerald-500'
                                                         : 'text-[var(--auth-icon)]',
@@ -368,12 +368,12 @@ export default function Register({ googleOAuthEnabled = false }: Props) {
                                     <InputError message={errors.document_number} />
                                 </div>
 
-                                <div className="grid gap-1.5">
+                                <div className="grid gap-1.5 min-w-0">
                                     <Label
                                         htmlFor="phone"
                                         className="font-[family-name:var(--font-mono)] text-[10px] font-normal uppercase tracking-[0.2em] text-[var(--muted-foreground)]"
                                     >
-                                        Celular (9 dígitos)
+                                        Celular
                                         <span className="ml-0.5 text-[var(--auth-cta-from)]">*</span>
                                     </Label>
                                     <div className="relative">
@@ -383,7 +383,7 @@ export default function Register({ googleOAuthEnabled = false }: Props) {
                                             type="text"
                                             inputMode="numeric"
                                             pattern="9[0-9]{8}"
-                                            className={`${inputUnderlineClassName} pr-12`}
+                                            className={`${inputUnderlineClassName} pr-10 tabular-nums`}
                                             required
                                             tabIndex={3}
                                             name="phone"
@@ -391,7 +391,7 @@ export default function Register({ googleOAuthEnabled = false }: Props) {
                                             maxLength={9}
                                             onInput={handleDigitsOnlyPhone}
                                         />
-                                        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 font-[family-name:var(--font-mono)] text-[10px] text-[var(--auth-icon)]">
+                                        <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 font-[family-name:var(--font-mono)] text-[10px] text-[var(--auth-icon)]">
                                             {phoneLen}/9
                                         </span>
                                     </div>
