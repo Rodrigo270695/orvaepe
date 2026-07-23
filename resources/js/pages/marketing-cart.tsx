@@ -94,6 +94,7 @@ export default function MarketingCart() {
     const [skuPrices, setSkuPrices] = useState<Partial<Record<string, SkuPriceRow>>>({});
     const [skuPricesLoading, setSkuPricesLoading] = useState(false);
     const [checkoutLoading, setCheckoutLoading] = useState(false);
+    const [rememberCard, setRememberCard] = useState(true);
     const [checkoutError, setCheckoutError] = useState<string | null>(null);
     const [comprobantesOverage, setComprobantesOverage] =
         useState<ComprobantesOverageResponse | null>(null);
@@ -575,8 +576,14 @@ export default function MarketingCart() {
                     tokenInput.name = 'token_id';
                     tokenInput.value = tokenId;
 
+                    const rememberInput = document.createElement('input');
+                    rememberInput.type = 'hidden';
+                    rememberInput.name = 'remember_card';
+                    rememberInput.value = rememberCard ? '1' : '0';
+
                     form.appendChild(csrfInput);
                     form.appendChild(tokenInput);
+                    form.appendChild(rememberInput);
                     document.body.appendChild(form);
                     form.submit();
                 };
@@ -1219,6 +1226,22 @@ export default function MarketingCart() {
                                 </Link>
                             ) : (
                                 <>
+                                    <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-xl border border-[var(--border)] bg-background/40 px-3 py-3 text-sm">
+                                        <input
+                                            type="checkbox"
+                                            className="mt-0.5 size-4 shrink-0 cursor-pointer accent-[var(--primary)]"
+                                            checked={rememberCard}
+                                            onChange={(e) => setRememberCard(e.target.checked)}
+                                        />
+                                        <span>
+                                            <span className="font-semibold text-[var(--foreground)]">
+                                                Recordar mi tarjeta para renovaciones
+                                            </span>
+                                            <span className="mt-1 block text-xs leading-relaxed text-[var(--muted-foreground)]">
+                                                Activo por defecto. Solo con tarjeta. Yape/billeteras no se guardan.
+                                            </span>
+                                        </span>
+                                    </label>
                                     <button
                                         type="button"
                                         disabled={
@@ -1230,7 +1253,7 @@ export default function MarketingCart() {
                                             totalPayable === null ||
                                             lines.length === 0
                                         }
-                                        className="mt-6 w-full cursor-pointer rounded-xl bg-[linear-gradient(120deg,var(--state-info),var(--state-success))] px-4 py-3 text-sm font-semibold text-[color-mix(in_oklab,white_95%,var(--foreground))] transition-colors hover:brightness-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--state-info)] focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-60"
+                                        className="mt-4 w-full cursor-pointer rounded-xl bg-[linear-gradient(120deg,var(--state-info),var(--state-success))] px-4 py-3 text-sm font-semibold text-[color-mix(in_oklab,white_95%,var(--foreground))] transition-colors hover:brightness-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--state-info)] focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-60"
                                         onClick={() => void startCulqiCheckout()}
                                     >
                                         {checkoutLoading

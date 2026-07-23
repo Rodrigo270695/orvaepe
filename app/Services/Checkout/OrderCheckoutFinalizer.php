@@ -25,6 +25,7 @@ final class OrderCheckoutFinalizer
     /**
      * @param  array<string, mixed>|null  $rawRequest
      * @param  array<string, mixed>|null  $rawResponse
+     * @param  array{customer_id?: string|null, card_id?: string|null}|null  $gatewayVault
      */
     public function finalizeAsPaid(
         Order $order,
@@ -33,8 +34,9 @@ final class OrderCheckoutFinalizer
         string $gatewayPaymentId,
         ?array $rawRequest = null,
         ?array $rawResponse = null,
+        ?array $gatewayVault = null,
     ): void {
-        DB::transaction(function () use ($order, $user, $gateway, $gatewayPaymentId, $rawRequest, $rawResponse): void {
+        DB::transaction(function () use ($order, $user, $gateway, $gatewayPaymentId, $rawRequest, $rawResponse, $gatewayVault): void {
             $existing = Payment::query()->where('gateway_payment_id', $gatewayPaymentId)->first();
 
             if ($existing !== null) {
@@ -45,7 +47,7 @@ final class OrderCheckoutFinalizer
                     ]);
                 }
 
-                $this->afterPaid($order, $user);
+                $this->afterPaid($order, $user, $gatewayVault);
 
                 return;
             }
@@ -70,11 +72,14 @@ final class OrderCheckoutFinalizer
                 'paid_at' => now(),
             ]);
 
-            $this->afterPaid($order, $user);
+            $this->afterPaid($order, $user, $gatewayVault);
         });
     }
 
-    private function afterPaid(Order $order, User $user): void
+    /**
+     * @param  array{customer_id?: string|null, card_id?: string|null}|null  $gatewayVault
+     */
+    private function afterPaid(Order $order, User $user, ?array $gatewayVault = null): void
     {
         session()->forget(['saas_marketing_renewal', 'vetsaas_renew_tenant_slug']);
 
@@ -85,7 +90,7 @@ final class OrderCheckoutFinalizer
         $this->notifier->notifyAdmin($order, $user);
 
         $freshOrder = $order->fresh(['user', 'lines.sku.product', 'payments']);
-        $this->subscriptionProvisioner->provision($freshOrder);
+        $this->subscriptionProvisioner->provision($freshOrder, $gatewayVault);
         $this->entitlementProvisioner->provision($freshOrder);
         $this->licenseProvisioner->provision($freshOrder);
     }

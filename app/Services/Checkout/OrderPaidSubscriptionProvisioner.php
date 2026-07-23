@@ -24,7 +24,10 @@ final class OrderPaidSubscriptionProvisioner
         private readonly VetSaaSPlanProvisioner $vetsaasProvisioner,
     ) {}
 
-    public function provision(Order $order): void
+    /**
+     * @param  array{customer_id?: string|null, card_id?: string|null}|null  $gatewayVault
+     */
+    public function provision(Order $order, ?array $gatewayVault = null): void
     {
         $order->loadMissing(['user', 'lines.sku.product']);
 
@@ -42,6 +45,7 @@ final class OrderPaidSubscriptionProvisioner
         }
 
         $subscription = $this->resolveSubscription($order, $recurringLines);
+        $this->applyGatewayVault($subscription, $gatewayVault);
         $periodEnd = $subscription->current_period_end;
 
         foreach ($recurringLines as $line) {
@@ -176,6 +180,42 @@ final class OrderPaidSubscriptionProvisioner
                 'order_number' => $order->order_number,
             ],
         ]);
+    }
+
+    /**
+     * @param  array{customer_id?: string|null, card_id?: string|null}|null  $gatewayVault
+     */
+    private function applyGatewayVault(Subscription $subscription, ?array $gatewayVault): void
+    {
+        if ($gatewayVault === null) {
+            return;
+        }
+
+        $customerId = trim((string) ($gatewayVault['customer_id'] ?? ''));
+        $cardId = trim((string) ($gatewayVault['card_id'] ?? ''));
+
+        if ($customerId === '' && $cardId === '') {
+            return;
+        }
+
+        $metadata = is_array($subscription->metadata) ? $subscription->metadata : [];
+        if ($cardId !== '') {
+            $metadata['culqi_card_id'] = $cardId;
+            $metadata['remember_card'] = true;
+            $metadata['remember_card_at'] = now()->toIso8601String();
+        }
+
+        $payload = ['metadata' => $metadata];
+        if ($customerId !== '') {
+            $payload['gateway_customer_id'] = $customerId;
+        }
+        // Reutilizamos gateway_subscription_id para el card_id Culqi (crd_…),
+        // hasta tener columna dedicada: sirve al cobro one-click futuro.
+        if ($cardId !== '') {
+            $payload['gateway_subscription_id'] = $cardId;
+        }
+
+        $subscription->forceFill($payload)->save();
     }
 
     private function extendSubscription(Subscription $subscription, Order $order, CatalogSku $sku): Subscription

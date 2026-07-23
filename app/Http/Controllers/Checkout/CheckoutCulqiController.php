@@ -10,6 +10,7 @@ use App\Services\Checkout\FreeSaasCheckoutHandler;
 use App\Services\Checkout\OrderCheckoutFinalizer;
 use App\Services\Checkout\OrderFromCartLinesBuilder;
 use App\Services\Payments\CulqiClient;
+use App\Services\Payments\CulqiRememberCardService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -111,6 +112,7 @@ class CheckoutCulqiController extends Controller
         Request $request,
         Order $order,
         CulqiClient $culqi,
+        CulqiRememberCardService $rememberCard,
         OrderCheckoutFinalizer $checkoutFinalizer,
     ): RedirectResponse {
         $user = $request->user();
@@ -134,6 +136,7 @@ class CheckoutCulqiController extends Controller
 
         $validated = $request->validate([
             'token_id' => ['required', 'string', 'max:200'],
+            'remember_card' => ['nullable', 'boolean'],
         ]);
 
         $tokenId = trim((string) $validated['token_id']);
@@ -150,16 +153,25 @@ class CheckoutCulqiController extends Controller
                 ->with('status', 'El monto del pedido no es válido para Culqi.');
         }
 
+        // Default ON: si no viene el campo, se intenta recordar (solo aplica a tarjeta).
+        $wantRemember = array_key_exists('remember_card', $validated)
+            ? (bool) $validated['remember_card']
+            : true;
+
+        $vault = $rememberCard->resolveChargeSource($user, $tokenId, $wantRemember);
+
         $payload = [
             'amount' => $amountCents,
             'currency_code' => strtoupper((string) $order->currency),
             'email' => (string) $user->email,
-            'source_id' => $tokenId,
+            'source_id' => $vault['source_id'],
             'description' => 'Pedido '.$order->order_number,
             'capture' => true,
             'metadata' => [
                 'order_id' => $order->id,
                 'order_number' => $order->order_number,
+                'remember_card' => $vault['remembered'] ? '1' : '0',
+                'remember_skipped' => $vault['skipped_reason'] ?? '',
             ],
         ];
 
@@ -199,11 +211,22 @@ class CheckoutCulqiController extends Controller
             $gatewayPaymentId,
             $payload,
             $charge,
+            $vault['remembered'] ? [
+                'customer_id' => $vault['customer_id'],
+                'card_id' => $vault['card_id'],
+            ] : null,
         );
+
+        $status = 'Pago confirmado con Culqi. Pedido '.$order->order_number.'.';
+        if ($vault['remembered']) {
+            $status .= ' Guardamos tu tarjeta para renovaciones automáticas.';
+        } elseif ($wantRemember && ($vault['skipped_reason'] ?? null) === 'not_card') {
+            $status .= ' Yape/billetera no se puede guardar; la próxima renovación será manual.';
+        }
 
         return redirect()
             ->route('marketing-cart')
-            ->with('status', 'Pago confirmado con Culqi. Pedido '.$order->order_number.'.');
+            ->with('status', $status);
     }
 
     private function culqiEnabled(): bool

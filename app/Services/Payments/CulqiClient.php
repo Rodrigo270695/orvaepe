@@ -3,6 +3,7 @@
 namespace App\Services\Payments;
 
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class CulqiClient
 {
@@ -28,21 +29,33 @@ class CulqiClient
      */
     public function createCharge(array $payload): array
     {
-        $response = Http::timeout(25)
-            ->acceptJson()
-            ->withToken($this->secretKey())
-            ->post($this->baseUrl().'/charges', $payload);
+        return $this->postJson('/charges', $payload, 'create charge');
+    }
 
-        if (! $response->successful()) {
-            throw new \RuntimeException(
-                'Culqi create charge falló ('.$response->status().'): '.$response->body(),
-            );
-        }
+    /**
+     * @return array<string, mixed>
+     */
+    public function getToken(string $tokenId): array
+    {
+        return $this->getJson('/tokens/'.rawurlencode($tokenId), 'get token');
+    }
 
-        /** @var array<string, mixed> $json */
-        $json = $response->json() ?? [];
+    /**
+     * @param  array<string, mixed>  $payload
+     * @return array<string, mixed>
+     */
+    public function createCustomer(array $payload): array
+    {
+        return $this->postJson('/customers', $payload, 'create customer');
+    }
 
-        return $json;
+    /**
+     * @param  array<string, mixed>  $payload
+     * @return array<string, mixed>
+     */
+    public function createCard(array $payload): array
+    {
+        return $this->postJson('/cards', $payload, 'create card');
     }
 
     /**
@@ -60,5 +73,55 @@ class CulqiClient
                 'Culqi ping falló ('.$response->status().'): '.$response->body(),
             );
         }
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     * @return array<string, mixed>
+     */
+    private function postJson(string $path, array $payload, string $label): array
+    {
+        $response = Http::timeout(25)
+            ->acceptJson()
+            ->withToken($this->secretKey())
+            ->post($this->baseUrl().$path, $payload);
+
+        if (! $response->successful()) {
+            Log::warning('Culqi '.$label.' falló', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+
+            throw new \RuntimeException(
+                'Culqi '.$label.' falló ('.$response->status().'): '.$response->body(),
+            );
+        }
+
+        /** @var array<string, mixed> $json */
+        $json = $response->json() ?? [];
+
+        return $json;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function getJson(string $path, string $label): array
+    {
+        $response = Http::timeout(25)
+            ->acceptJson()
+            ->withToken($this->secretKey())
+            ->get($this->baseUrl().$path);
+
+        if (! $response->successful()) {
+            throw new \RuntimeException(
+                'Culqi '.$label.' falló ('.$response->status().'): '.$response->body(),
+            );
+        }
+
+        /** @var array<string, mixed> $json */
+        $json = $response->json() ?? [];
+
+        return $json;
     }
 }

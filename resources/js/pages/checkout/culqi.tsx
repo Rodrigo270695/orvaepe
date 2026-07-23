@@ -52,6 +52,7 @@ export default function CulqiCheckoutPage() {
     const { order, culqi, flash } = usePage<CulqiCheckoutPageProps>().props;
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [rememberCard, setRememberCard] = useState(true);
 
     const amountCents = useMemo(
         () => Math.round((order.grand_total ?? 0) * 100),
@@ -73,8 +74,14 @@ export default function CulqiCheckoutPage() {
         tokenInput.name = 'token_id';
         tokenInput.value = tokenId;
 
+        const rememberInput = document.createElement('input');
+        rememberInput.type = 'hidden';
+        rememberInput.name = 'remember_card';
+        rememberInput.value = rememberCard ? '1' : '0';
+
         form.appendChild(csrfInput);
         form.appendChild(tokenInput);
+        form.appendChild(rememberInput);
         document.body.appendChild(form);
         form.submit();
     };
@@ -209,6 +216,24 @@ export default function CulqiCheckoutPage() {
                             <span className="font-medium text-[var(--foreground)]">{order.email}</span>
                         </div>
                     </div>
+
+                    <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-xl border border-[var(--border)] bg-background/40 px-4 py-3 text-sm">
+                        <input
+                            type="checkbox"
+                            className="mt-0.5 size-4 cursor-pointer accent-[var(--primary)]"
+                            checked={rememberCard}
+                            onChange={(e) => setRememberCard(e.target.checked)}
+                        />
+                        <span>
+                            <span className="font-semibold text-[var(--foreground)]">
+                                Recordar mi tarjeta para renovaciones
+                            </span>
+                            <span className="mt-1 block text-xs leading-relaxed text-[var(--muted-foreground)]">
+                                Activo por defecto. Solo aplica si pagas con tarjeta. Yape y billeteras no se pueden
+                                guardar; en ese caso la renovación será manual.
+                            </span>
+                        </span>
+                    </label>
 
                     {typeof flash?.status === 'string' && flash.status !== '' ? (
                         <p className="mt-4 rounded-lg border border-[var(--border)] bg-background/60 px-3 py-2 text-sm text-[var(--foreground)]">
