@@ -21,7 +21,7 @@ import VetSaaSClientsCarousel, {
 } from '@/components/software/VetSaaSClientsCarousel';
 import VetSaaSMotionRoot from '@/components/software/VetSaaSMotionRoot';
 import VetSaaSReveal from '@/components/software/VetSaaSReveal';
-import VetSaaSScrollPet from '@/components/software/VetSaaSScrollPet';
+import VetSaaSWalkingPet from '@/components/software/VetSaaSWalkingPet';
 import type { SoftwarePricingPlan, SoftwareSystem } from '@/marketplace/softwareCatalog';
 import { motion, useReducedMotion } from 'motion/react';
 
@@ -307,8 +307,6 @@ export default function VetSaaSLanding(props: Props) {
                 }
             `}</style>
 
-            <VetSaaSScrollPet />
-
             {/* HERO */}
             <section className="relative min-h-[92svh] overflow-hidden bg-[#021E18] text-white">
                 <div className="absolute inset-0">
@@ -323,7 +321,7 @@ export default function VetSaaSLanding(props: Props) {
                     <div className="vs-aurora pointer-events-none absolute -right-16 bottom-0 size-[22rem] rounded-full bg-[#006D55]/35 blur-3xl [animation-delay:-4s]" />
                 </div>
 
-                <div className="relative mx-auto flex min-h-[92svh] max-w-6xl flex-col justify-end gap-10 px-5 pb-20 pt-28 sm:px-8 lg:flex-row lg:items-end lg:justify-between lg:pb-28">
+                <div className="relative mx-auto flex min-h-[92svh] max-w-6xl flex-col justify-end gap-10 px-5 pb-24 pt-28 sm:px-8 lg:flex-row lg:items-end lg:justify-between lg:pb-28">
                     <motion.div
                         className="max-w-xl"
                         initial={reduceMotion ? false : { opacity: 0, y: 28 }}
@@ -380,34 +378,26 @@ export default function VetSaaSLanding(props: Props) {
                     </motion.div>
 
                     <motion.div
-                        className="vs-float relative w-full max-w-sm space-y-3"
+                        className="relative w-full max-w-sm space-y-3"
                         initial={reduceMotion ? false : { opacity: 0, x: 24 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ duration: 0.9, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
                     >
-                        <div className="relative">
-                            <div className="pointer-events-none absolute -right-6 -top-16 size-28 opacity-90 sm:-right-10 sm:-top-20 sm:size-36">
-                                <img
-                                    src="/images/vetsaas-robot-pet.png"
-                                    alt=""
-                                    className="vs-pet-bob size-full object-contain drop-shadow-[0_20px_40px_rgba(51,160,123,0.45)]"
-                                />
+                        <VetSaaSWalkingPet className="mb-1" />
+                        <div className="rounded-[1.75rem] border border-white/15 bg-[#04362B]/75 p-6 shadow-2xl backdrop-blur-md">
+                            <div className="flex items-center gap-2 text-[#C5E5D9]">
+                                <Sparkles className="size-4" />
+                                <span className="vs-body text-[10px] uppercase tracking-[0.22em]">
+                                    Clínicas con VetSaaS
+                                </span>
                             </div>
-                            <div className="rounded-[1.75rem] border border-white/15 bg-[#04362B]/75 p-6 shadow-2xl backdrop-blur-md">
-                                <div className="flex items-center gap-2 text-[#C5E5D9]">
-                                    <Sparkles className="size-4" />
-                                    <span className="vs-body text-[10px] uppercase tracking-[0.22em]">
-                                        Clínicas con VetSaaS
-                                    </span>
-                                </div>
-                                <p className="vs-display mt-3 text-6xl font-bold tabular-nums text-white sm:text-7xl">
-                                    {countUp}
-                                    <span className="text-3xl text-[#99D2BC]">+</span>
-                                </p>
-                                <p className="vs-body mt-2 text-sm text-[#C5E5D9]/95">
-                                    Equipos que ya operan en su propio subdominio.
-                                </p>
-                            </div>
+                            <p className="vs-display mt-3 text-6xl font-bold tabular-nums text-white sm:text-7xl">
+                                {countUp}
+                                <span className="text-3xl text-[#99D2BC]">+</span>
+                            </p>
+                            <p className="vs-body mt-2 text-sm text-[#C5E5D9]/95">
+                                Equipos que ya operan en su propio subdominio.
+                            </p>
                         </div>
                         <div className="rounded-2xl border border-[#25D366]/35 bg-[#04362B]/80 p-4 shadow-[0_0_40px_rgba(37,211,102,0.12)] backdrop-blur-md">
                             <div className="flex items-start gap-3">
@@ -473,55 +463,48 @@ export default function VetSaaSLanding(props: Props) {
                 </div>
             </section>
 
-            {/* Capabilities */}
-            <VetSaaSReveal>
-                <section className="vs-body relative border-b border-[var(--vs-border)] bg-[var(--vs-bg)] py-14">
-                    <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,color-mix(in_oklab,var(--vs-200)_22%,transparent),transparent_55%)]" />
-                    <div
-                        data-vs-stagger
-                        className="relative mx-auto grid max-w-6xl gap-6 px-5 sm:grid-cols-2 sm:px-8 lg:grid-cols-4"
-                    >
-                        {[
-                            {
-                                icon: Bot,
-                                t: 'IA integrada',
-                                d: 'Apoyo inteligente en flujos clínicos y operativos del día a día.',
-                            },
-                            {
-                                icon: BellRing,
-                                t: 'WhatsApp',
-                                d: 'Recordatorios automáticos de citas y seguimientos al dueño.',
-                            },
-                            {
-                                icon: Globe2,
-                                t: 'Multi-tenant',
-                                d: 'Cada clínica tiene su subdominio y datos aislados.',
-                            },
-                            {
-                                icon: Smartphone,
-                                t: 'PWA',
-                                d: 'Instálalo en el celular o PC como app nativa.',
-                            },
-                        ].map((item) => {
-                            const Icon = item.icon;
-                            return (
-                                <div
-                                    key={item.t}
-                                    className="vs-section-card group rounded-2xl p-5 shadow-sm transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_20px_50px_-20px_rgba(0,109,85,0.45)]"
-                                >
-                                    <span className="inline-flex size-10 items-center justify-center rounded-xl bg-[color-mix(in_oklab,var(--vs-500)_14%,transparent)] text-[var(--vs-500)] transition group-hover:scale-110">
-                                        <Icon className="size-5" />
-                                    </span>
-                                    <h2 className="vs-display mt-3 text-lg font-semibold">
-                                        {item.t}
-                                    </h2>
-                                    <p className="vs-muted mt-1 text-sm">{item.d}</p>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </section>
-            </VetSaaSReveal>
+            {/* Capabilities — visible siempre (sin GSAP que las dejaba transparentes) */}
+            <section className="vs-body relative border-b border-[var(--vs-border)] bg-[var(--vs-bg)] py-10 sm:py-12">
+                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,color-mix(in_oklab,var(--vs-200)_22%,transparent),transparent_55%)]" />
+                <div className="relative mx-auto grid max-w-6xl gap-4 px-5 sm:grid-cols-2 sm:px-8 lg:grid-cols-4 lg:gap-5">
+                    {[
+                        {
+                            icon: Bot,
+                            t: 'IA integrada',
+                            d: 'Apoyo inteligente en flujos clínicos y operativos del día a día.',
+                        },
+                        {
+                            icon: BellRing,
+                            t: 'WhatsApp',
+                            d: 'Recordatorios automáticos de citas y seguimientos al dueño.',
+                        },
+                        {
+                            icon: Globe2,
+                            t: 'Multi-tenant',
+                            d: 'Cada clínica tiene su subdominio y datos aislados.',
+                        },
+                        {
+                            icon: Smartphone,
+                            t: 'PWA',
+                            d: 'Instálalo en el celular o PC como app nativa.',
+                        },
+                    ].map((item) => {
+                        const Icon = item.icon;
+                        return (
+                            <div
+                                key={item.t}
+                                className="vs-section-card group rounded-2xl p-5 shadow-sm transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_20px_50px_-20px_rgba(0,109,85,0.45)]"
+                            >
+                                <span className="inline-flex size-10 items-center justify-center rounded-xl bg-[color-mix(in_oklab,var(--vs-500)_14%,transparent)] text-[var(--vs-500)] transition group-hover:scale-110">
+                                    <Icon className="size-5" />
+                                </span>
+                                <h2 className="vs-display mt-3 text-lg font-semibold">{item.t}</h2>
+                                <p className="vs-muted mt-1 text-sm">{item.d}</p>
+                            </div>
+                        );
+                    })}
+                </div>
+            </section>
 
             {/* How multi-tenant + PWA */}
             <VetSaaSReveal>
@@ -569,13 +552,6 @@ export default function VetSaaSLanding(props: Props) {
                                 <li>3. Te llevamos a tu subdominio</li>
                                 <li>4. Creas tu contraseña y empiezas a operar</li>
                             </ol>
-                            <div className="pointer-events-none absolute -bottom-6 -right-4 size-40 drop-shadow-2xl">
-                                <img
-                                    src="/images/vetsaas-robot-pet.png"
-                                    alt=""
-                                    className="vs-pet-bob size-full object-contain"
-                                />
-                            </div>
                         </div>
                     </div>
                 </section>
