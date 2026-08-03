@@ -11,6 +11,7 @@ use App\Services\Checkout\OrderCheckoutFinalizer;
 use App\Services\Checkout\OrderFromCartLinesBuilder;
 use App\Services\Payments\CulqiClient;
 use App\Services\Payments\CulqiRememberCardService;
+use App\Support\Checkout\SaasCheckoutRedirect;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -222,6 +223,11 @@ class CheckoutCulqiController extends Controller
             $status .= ' Guardamos tu tarjeta para renovaciones automáticas.';
         } elseif ($wantRemember && ($vault['skipped_reason'] ?? null) === 'not_card') {
             $status .= ' Yape/billetera no se puede guardar; la próxima renovación será manual.';
+        }
+
+        $saasRedirect = SaasCheckoutRedirect::responseForOrder($order->fresh());
+        if ($saasRedirect !== null) {
+            return $saasRedirect;
         }
 
         return redirect()

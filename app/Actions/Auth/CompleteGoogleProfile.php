@@ -22,21 +22,23 @@ class CompleteGoogleProfile
                     'max:20',
                     'regex:/^[0-9]{8}$|^[0-9]{11}$/',
                 ],
-                'phone' => ['nullable', 'string', 'size:9', 'regex:/^9[0-9]{8}$/'],
+                'phone' => ['required', 'string', 'size:9', 'regex:/^9[0-9]{8}$/'],
                 'accept_privacy' => ['required', 'accepted'],
             ],
             [
+                'phone.required' => 'El celular es obligatorio.',
                 'accept_privacy.required' => 'Debes aceptar la política de privacidad.',
                 'accept_privacy.accepted' => 'Debes aceptar la política de privacidad.',
             ],
             [
+                'phone' => 'celular',
                 'accept_privacy' => 'política de privacidad',
             ],
         )->validate();
 
         $user->forceFill([
             'document_number' => $input['document_number'],
-            'phone' => $input['phone'] ?? null,
+            'phone' => $input['phone'],
         ])->save();
 
         UserProfile::updateOrCreate(

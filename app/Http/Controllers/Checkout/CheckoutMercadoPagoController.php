@@ -17,6 +17,7 @@ use App\Services\Checkout\OrderPaidLicenseProvisioner;
 use App\Services\Checkout\OrderPaidSubscriptionProvisioner;
 use App\Services\Notifications\OrderPaidNotifier;
 use App\Services\Payments\MercadoPagoClient;
+use App\Support\Checkout\SaasCheckoutRedirect;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -175,6 +176,11 @@ class CheckoutMercadoPagoController extends Controller
         }
 
         if ($order->status === Order::STATUS_PAID) {
+            $saasRedirect = SaasCheckoutRedirect::responseForOrder($order);
+            if ($saasRedirect !== null) {
+                return $saasRedirect;
+            }
+
             return redirect()
                 ->route('marketing-cart')
                 ->with('status', 'Este pedido ya estaba registrado como pagado ('.$order->order_number.').');
@@ -226,6 +232,11 @@ class CheckoutMercadoPagoController extends Controller
             app(OrderPaidSubscriptionProvisioner::class),
             app(OrderPaidLicenseProvisioner::class),
         );
+
+        $saasRedirect = SaasCheckoutRedirect::responseForOrder($order->fresh());
+        if ($saasRedirect !== null) {
+            return $saasRedirect;
+        }
 
         return redirect()
             ->route('marketing-cart')

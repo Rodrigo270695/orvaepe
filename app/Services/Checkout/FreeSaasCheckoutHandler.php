@@ -7,6 +7,7 @@ namespace App\Services\Checkout;
 use App\Models\Order;
 use App\Models\User;
 use App\Support\Checkout\SaasCatalogSku;
+use App\Support\Checkout\SaasCheckoutRedirect;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
 
@@ -57,12 +58,17 @@ final class FreeSaasCheckoutHandler
 
     public function completedJson(Order $order): JsonResponse
     {
+        $redirectUrl = SaasCheckoutRedirect::urlForOrder($order);
+
         return response()->json([
             'free_checkout' => true,
             'completed' => true,
             'order_id' => $order->id,
             'order_number' => $order->order_number,
-            'message' => 'Pedido confirmado. Revisa tu correo con el acceso a tu plataforma.',
+            'redirect_url' => $redirectUrl,
+            'message' => $redirectUrl !== null
+                ? 'Pedido confirmado. Te llevamos a tu clínica.'
+                : 'Pedido confirmado. Revisa tu correo o WhatsApp con el acceso a tu plataforma.',
         ]);
     }
 

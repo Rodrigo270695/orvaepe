@@ -241,6 +241,9 @@ final class SaasProvisionAccessNotifier
                 ."🔑 Contraseña temporal: {$temporaryPassword}\n"
                 ."⚠️ Por seguridad, inicia sesión y cambia tu contraseña en el primer acceso "
                 ."(Menú de usuario → Seguridad, o «Olvidé mi contraseña» en la pantalla de login).\n\n";
+        } elseif ($isVetsaas) {
+            $credentialsBlock = "👤 Usuario: {$loginEmail}\n"
+                ."🔐 Abre el enlace de acceso: entrarás directo a crear tu contraseña.\n\n";
         } else {
             $credentialsBlock = "👤 Usuario: {$loginEmail}\n"
                 ."🔐 Define tu contraseña con «Olvidé mi contraseña» en la pantalla de login si aún no tienes una.\n\n";

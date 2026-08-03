@@ -48,7 +48,7 @@ export default function GoogleComplete({ user }: Props) {
     return (
         <AuthOrvaeLoginLayout
             title="Completa tu perfil"
-            description="Necesitamos tu documento de identidad para continuar"
+            description="Necesitamos tu documento y celular para continuar"
             maxWidthClass="max-w-[480px]"
         >
             <Head title="Completar perfil" />
@@ -60,6 +60,7 @@ export default function GoogleComplete({ user }: Props) {
                     </h1>
                     <p className="mt-1 font-[family-name:var(--font-body)] text-sm text-[var(--muted-foreground)]">
                         Hola {user.name}, confirma tus datos de cliente para Perú.
+                        El celular es obligatorio para avisos de tu cuenta y de VetSaaS.
                     </p>
                     <p className="mt-2 font-mono text-xs text-[var(--muted-foreground)]">
                         {user.email}
@@ -108,7 +109,7 @@ export default function GoogleComplete({ user }: Props) {
                                     htmlFor="phone"
                                     className="font-[family-name:var(--font-mono)] text-[10px] font-normal uppercase tracking-[0.2em] text-[var(--muted-foreground)]"
                                 >
-                                    Celular (opcional)
+                                    Celular
                                 </label>
                                 <div className="relative">
                                     <Phone className="absolute left-0 top-1/2 size-4 -translate-y-1/2 text-[var(--auth-icon)]" />
@@ -117,6 +118,7 @@ export default function GoogleComplete({ user }: Props) {
                                         name="phone"
                                         type="tel"
                                         inputMode="numeric"
+                                        required
                                         maxLength={9}
                                         onInput={handleDigitsOnlyPhone}
                                         placeholder="9XXXXXXXX"

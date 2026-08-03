@@ -145,6 +145,7 @@ class VetSaaSPlanProvisioner
 
         $json = $response->json();
         $loginUrl = is_array($json) ? ($json['login_url'] ?? $json['academy_url'] ?? null) : null;
+        $bootstrapUrl = is_array($json) ? ($json['bootstrap_url'] ?? null) : null;
         $tenantSlugResp = is_array($json) ? ($json['tenant_slug'] ?? $json['tenant']['slug'] ?? null) : null;
 
         if ((! is_string($loginUrl) || $loginUrl === '') && is_string($tenantSlugResp) && $tenantSlugResp !== '') {
@@ -153,21 +154,33 @@ class VetSaaSPlanProvisioner
             $loginUrl = sprintf('%s://%s.%s/login', $scheme, $tenantSlugResp, $domain);
         }
 
-        if ($loginUrl || $tenantSlugResp) {
-            $this->persistAccess($order, $loginUrl, $tenantSlugResp, $temporaryPassword);
+        $accessUrl = (is_string($bootstrapUrl) && $bootstrapUrl !== '')
+            ? $bootstrapUrl
+            : (is_string($loginUrl) ? $loginUrl : null);
+
+        if ($accessUrl || $tenantSlugResp) {
+            $this->persistAccess(
+                $order,
+                $loginUrl,
+                $tenantSlugResp,
+                $temporaryPassword,
+                is_string($bootstrapUrl) ? $bootstrapUrl : null,
+            );
             $this->accessNotifier->notify(
                 $order,
                 'vetsaas',
-                is_string($loginUrl) ? $loginUrl : '',
+                is_string($accessUrl) ? $accessUrl : '',
                 is_string($tenantSlugResp) ? $tenantSlugResp : null,
                 (string) $user->email,
-                $temporaryPassword,
+                // Con bootstrap firmado no hace falta enviar la clave temporal al cliente.
+                (is_string($bootstrapUrl) && $bootstrapUrl !== '') ? null : $temporaryPassword,
             );
         }
 
         Log::info('vetsaas.provision_success', [
             'order_id' => $order->id,
             'login_url' => $loginUrl,
+            'bootstrap_url' => $bootstrapUrl,
             'tenant_slug' => $tenantSlugResp,
         ]);
     }
@@ -453,8 +466,13 @@ class VetSaaSPlanProvisioner
         $order->forceFill(['billing_snapshot' => array_merge($snapshot, $data)])->save();
     }
 
-    private function persistAccess(Order $order, mixed $loginUrl, mixed $tenantSlug, string $temporaryPassword): void
-    {
+    private function persistAccess(
+        Order $order,
+        mixed $loginUrl,
+        mixed $tenantSlug,
+        string $temporaryPassword,
+        ?string $bootstrapUrl = null,
+    ): void {
         $subscription = Subscription::query()
             ->where('user_id', $order->user_id)
             ->where('metadata->checkout_order_id', $order->id)
@@ -463,10 +481,12 @@ class VetSaaSPlanProvisioner
 
         $url = is_string($loginUrl) ? $loginUrl : null;
         $slug = is_string($tenantSlug) ? $tenantSlug : null;
+        $bootstrap = is_string($bootstrapUrl) && $bootstrapUrl !== '' ? $bootstrapUrl : null;
 
         if ($subscription instanceof Subscription) {
             $metadata = is_array($subscription->metadata) ? $subscription->metadata : [];
             $metadata['vetsaas_login_url'] = $url;
+            $metadata['vetsaas_bootstrap_url'] = $bootstrap;
             $metadata['vetsaas_tenant_slug'] = $slug;
             $metadata['vetsaas_initial_password_sent'] = true;
             $subscription->forceFill(['metadata' => $metadata])->save();
@@ -475,6 +495,7 @@ class VetSaaSPlanProvisioner
         $snapshot = is_array($order->billing_snapshot) ? $order->billing_snapshot : [];
         unset($snapshot['vetsaas_provision_error'], $snapshot['vetsaas_provision_skipped']);
         $snapshot['vetsaas_login_url'] = $url;
+        $snapshot['vetsaas_bootstrap_url'] = $bootstrap;
         $snapshot['vetsaas_tenant_slug'] = $slug;
         $snapshot['vetsaas_login_email'] = $order->user?->email;
         $snapshot['vetsaas_temporary_password'] = $temporaryPassword;

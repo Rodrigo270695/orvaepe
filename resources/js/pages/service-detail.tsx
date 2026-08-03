@@ -28,7 +28,7 @@ import {
     postMarketingCheckout,
 } from '@/lib/marketingCheckout';
 import { addMarketingCatalogSkuToCart } from '@/lib/oemCart';
-import { readCartCoupon } from '@/lib/softwareCartStorage';
+import { readCartCoupon, clearSoftwareCart, writeCartCoupon } from '@/lib/softwareCartStorage';
 import {
     Dialog,
     DialogContent,
@@ -371,6 +371,12 @@ export default function ServiceDetail() {
             }
 
             if (result.kind === 'free_completed') {
+                clearSoftwareCart();
+                writeCartCoupon(null);
+                if (result.redirectUrl) {
+                    window.location.href = result.redirectUrl;
+                    return;
+                }
                 window.location.href = `/carrito?status=${encodeURIComponent(result.message)}`;
                 return;
             }

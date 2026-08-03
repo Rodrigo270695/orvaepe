@@ -33,6 +33,7 @@ use App\Http\Controllers\Catalog\SoftwareReleasesController;
 use App\Http\Controllers\Checkout\CheckoutCulqiController;
 use App\Http\Controllers\Checkout\CheckoutMercadoPagoController;
 use App\Http\Controllers\Checkout\CheckoutPayPalController;
+use App\Http\Controllers\Checkout\CheckoutSaasExitController;
 use App\Http\Controllers\Checkout\CulqiWebhookController;
 use App\Http\Controllers\Checkout\PayPalWebhookController;
 use App\Http\Controllers\Client\ClientInvoiceController;
@@ -185,6 +186,8 @@ Route::middleware(['auth', 'verified', 'client.profile.complete'])->group(functi
         ->name('checkout.paypal.simulate_return');
     Route::get('/checkout/paypal/return', [CheckoutPayPalController::class, 'handleReturn'])->name('checkout.paypal.return');
     Route::get('/checkout/paypal/cancel', [CheckoutPayPalController::class, 'cancel'])->name('checkout.paypal.cancel');
+
+    Route::get('/checkout/saas-exit', CheckoutSaasExitController::class)->name('checkout.saas-exit');
 
     // Portal cliente (diseño claro; staff puede entrar para revisar)
     Route::middleware(['role:superadmin|client'])->prefix('cliente')->name('cliente.')->group(function () {

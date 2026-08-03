@@ -551,6 +551,12 @@ export default function MarketingCart() {
             }
 
             if (result.kind === 'free_completed') {
+                clearSoftwareCart();
+                writeCartCoupon(null);
+                if (result.redirectUrl) {
+                    window.location.href = result.redirectUrl;
+                    return;
+                }
                 window.location.href = `/carrito?status=${encodeURIComponent(result.message)}`;
                 return;
             }

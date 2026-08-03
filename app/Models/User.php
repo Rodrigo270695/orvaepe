@@ -106,7 +106,7 @@ class User extends Authenticatable
 
     public function needsProfileCompletion(): bool
     {
-        return blank($this->document_number);
+        return blank($this->document_number) || blank($this->phone);
     }
 
     public function usesGoogleAuth(): bool

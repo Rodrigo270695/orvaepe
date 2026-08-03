@@ -31,6 +31,7 @@ export type MarketingCheckoutPostResult =
           kind: 'free_completed';
           orderNumber: string;
           message: string;
+          redirectUrl?: string | null;
       }
     | {
           kind: 'existing_account';
@@ -77,6 +78,7 @@ export async function postMarketingCheckout(params: {
         free_checkout?: boolean;
         completed?: boolean;
         order_number?: string;
+        redirect_url?: string | null;
         approval_url?: string;
         inline_checkout?: {
             order_id?: string;
@@ -132,6 +134,10 @@ export async function postMarketingCheckout(params: {
                 typeof data.message === 'string' && data.message.trim() !== ''
                     ? data.message
                     : 'Pedido confirmado. Revisa tu correo con el acceso.',
+            redirectUrl:
+                typeof data.redirect_url === 'string' && data.redirect_url.trim() !== ''
+                    ? data.redirect_url.trim()
+                    : null,
         };
     }
 
