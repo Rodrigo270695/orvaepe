@@ -18,6 +18,7 @@ import {
     type SoftwarePlanTier,
 } from '@/lib/softwarePricingPlans';
 import type { SoftwarePricingPlan } from '@/marketplace/softwareCatalog';
+import VetSaaSBillingToggle from '@/components/software/VetSaaSBillingToggle';
 
 function getPlanPriceBefore(p: SoftwarePricingPlan): string | undefined {
     return p.priceBeforeText ?? (p.priceBefore !== undefined ? String(p.priceBefore) : undefined);
@@ -40,6 +41,8 @@ type Props = {
     selectedPlanId: string | null;
     onSelectPlanId: (id: string) => void;
     semanticAccents: readonly string[];
+    /** Branding verde VetSaaS para el toggle mensual/anual. */
+    brand?: 'default' | 'vetsaas';
 };
 
 export default function SoftwareDetailPlansPicker({
@@ -47,6 +50,7 @@ export default function SoftwareDetailPlansPicker({
     selectedPlanId,
     onSelectPlanId,
     semanticAccents,
+    brand = 'default',
 }: Props) {
     const { recurringTiers, standalonePlans } = useMemo(
         () => partitionSoftwarePricingPlans(plans),
@@ -152,30 +156,40 @@ export default function SoftwareDetailPlansPicker({
                             aria-label="Periodo de facturación"
                         >
                             <p className="text-sm text-[var(--muted-foreground)]">
-                                Elige el ciclo de pago. Los precios cambian según mensual o anual.
+                                {brand === 'vetsaas'
+                                    ? 'Cambia el ciclo y ve cómo baja el precio anual.'
+                                    : 'Elige el ciclo de pago. Los precios cambian según mensual o anual.'}
                             </p>
-                            <div className="inline-flex self-start rounded-xl border border-[var(--border)] bg-background/60 p-1">
-                                {(
-                                    [
-                                        ['monthly', 'Mensual'],
-                                        ['annual', 'Anual'],
-                                    ] as const
-                                ).map(([value, label]) => (
-                                    <button
-                                        key={value}
-                                        type="button"
-                                        className={cn(
-                                            'cursor-pointer rounded-lg px-4 py-2 text-sm font-semibold transition-colors',
-                                            billingPeriod === value
-                                                ? 'bg-[var(--primary)] text-[var(--primary-foreground)] shadow-sm'
-                                                : 'text-[var(--muted-foreground)] hover:text-[var(--foreground)]',
-                                        )}
-                                        onClick={() => setBillingPeriod(value)}
-                                    >
-                                        {label}
-                                    </button>
-                                ))}
-                            </div>
+                            {brand === 'vetsaas' ? (
+                                <VetSaaSBillingToggle
+                                    value={billingPeriod}
+                                    onChange={setBillingPeriod}
+                                    className="self-start"
+                                />
+                            ) : (
+                                <div className="inline-flex self-start rounded-xl border border-[var(--border)] bg-background/60 p-1">
+                                    {(
+                                        [
+                                            ['monthly', 'Mensual'],
+                                            ['annual', 'Anual'],
+                                        ] as const
+                                    ).map(([value, label]) => (
+                                        <button
+                                            key={value}
+                                            type="button"
+                                            className={cn(
+                                                'cursor-pointer rounded-lg px-4 py-2 text-sm font-semibold transition-colors',
+                                                billingPeriod === value
+                                                    ? 'bg-[var(--primary)] text-[var(--primary-foreground)] shadow-sm'
+                                                    : 'text-[var(--muted-foreground)] hover:text-[var(--foreground)]',
+                                            )}
+                                            onClick={() => setBillingPeriod(value)}
+                                        >
+                                            {label}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     ) : null}
 

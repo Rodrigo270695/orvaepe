@@ -123,9 +123,10 @@ export default function SoftwareDetailPlanCard({
                     {plan.highlights.map((h) => (
                         <li
                             key={h}
-                            className="text-xs leading-relaxed text-[var(--muted-foreground)]"
+                            className="text-sm leading-relaxed text-[var(--foreground)]/80"
                         >
-                            - {h}
+                            <span className="mr-1.5 text-[var(--primary)]">•</span>
+                            {h}
                         </li>
                     ))}
                 </ul>
