@@ -14,6 +14,9 @@ import SoftwareProductHero from '@/components/software/SoftwareProductHero';
 import VetSaaSClientsCarousel, {
     type VetSaaSShowcaseClient,
 } from '@/components/software/VetSaaSClientsCarousel';
+import VetSaaSLanding, {
+    type VetSaaSMarketingPayload,
+} from '@/components/software/VetSaaSLanding';
 import GeometricBackground from '@/components/welcome/GeometricBackground';
 import ScrollReveal from '@/components/welcome/ScrollReveal';
 import ScrollToTopButton from '@/components/welcome/ScrollToTopButton';
@@ -92,6 +95,7 @@ type SoftwareDetailPageProps = {
     mercadoPagoEnabled?: boolean;
     paypalSimulateCheckout?: boolean;
     vetsaasShowcaseClients?: VetSaaSShowcaseClient[];
+    vetsaasMarketing?: VetSaaSMarketingPayload | null;
 };
 
 export default function SoftwareDetail() {
@@ -110,6 +114,7 @@ export default function SoftwareDetail() {
         mercadoPagoEnabled: mercadoPagoEnabledProp,
         paypalSimulateCheckout: paypalSimulateCheckoutProp,
         vetsaasShowcaseClients = [],
+        vetsaasMarketing = null,
     } = page.props;
     const mercadoPagoEnabled = Boolean(mercadoPagoEnabledProp);
     const paypalSimulateCheckout = Boolean(paypalSimulateCheckoutProp);
@@ -547,6 +552,55 @@ export default function SoftwareDetail() {
 
         return 'Modelo de venta definido por administración';
     };
+
+    const isVetsaasLanding =
+        Boolean(vetsaasMarketing) &&
+        ['vetsaas', 'vet-saas'].includes(system.slug.toLowerCase());
+
+    if (isVetsaasLanding && vetsaasMarketing) {
+        return (
+            <MarketingLayout
+                title={`${system.name} — Software veterinario`}
+                description={system.shortDescription}
+                canonicalPath={`/software/${system.slug}`}
+                ogType="product"
+                ogImageAlt={`${system.name} — VetSaaS`}
+                breadcrumbs={[
+                    { name: 'Inicio', path: '/' },
+                    { name: 'Software', path: '/software' },
+                    { name: system.name, path: `/software/${system.slug}` },
+                ]}
+                jsonLd={softwareApplicationLd ? [softwareApplicationLd] : undefined}
+            >
+                <VetSaaSLanding
+                    system={system}
+                    marketing={vetsaasMarketing}
+                    showcaseClients={vetsaasShowcaseClients}
+                    selectedPlan={selectedPlan}
+                    selectedPlanId={selectedPlanId}
+                    onSelectPlanId={setSelectedPlanId}
+                    purchaseEnabled={purchaseEnabled}
+                    webCheckoutEnabled={webCheckoutEnabled}
+                    isFreeSubscription={isFreeSubscription}
+                    checkoutLoading={checkoutLoading}
+                    checkoutError={checkoutError}
+                    addedCount={addedCount}
+                    selectionTitle={
+                        selectedPlan
+                            ? `${selectedPlan.label} · ${inferSaleModelLabel(selectedPlan)}`
+                            : 'Elige un plan para continuar con el carrito o el checkout.'
+                    }
+                    selectionPriceLine={selectionPriceLine}
+                    selectionPriceCaption={selectionPriceCaption}
+                    consultationWhatsAppHref={consultationWhatsAppHref || undefined}
+                    onAddToCart={onAddToCart}
+                    onStartCheckout={() => {
+                        void handleStartCheckout();
+                    }}
+                />
+            </MarketingLayout>
+        );
+    }
 
     return (
         <MarketingLayout

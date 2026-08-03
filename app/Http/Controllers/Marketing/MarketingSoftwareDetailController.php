@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Marketing;
 
 use App\Http\Controllers\Controller;
 use App\Models\CatalogProduct;
+use App\Services\Checkout\VetSaaSMarketingClient;
 use App\Services\Checkout\VetSaaSShowcaseClient;
 use App\Support\MarketingSoftwareCatalogPresenter;
 use App\Support\Marketing\VetSaaSSoftware;
@@ -14,8 +15,12 @@ use Laravel\Fortify\Features;
 
 class MarketingSoftwareDetailController extends Controller
 {
-    public function show(Request $request, string $system, VetSaaSShowcaseClient $showcaseClient): Response
-    {
+    public function show(
+        Request $request,
+        string $system,
+        VetSaaSShowcaseClient $showcaseClient,
+        VetSaaSMarketingClient $marketingClient,
+    ): Response {
         $saleModels = MarketingSoftwareCatalogPresenter::OWN_SOFTWARE_SALE_MODELS;
 
         $product = CatalogProduct::query()
@@ -43,14 +48,19 @@ class MarketingSoftwareDetailController extends Controller
             ])
             ->first();
 
+        $isVetsaas = VetSaaSSoftware::isProduct($product);
+
         return Inertia::render('software-detail', [
             'canRegister' => Features::enabled(Features::registration()),
             'system' => $product
                 ? MarketingSoftwareCatalogPresenter::productToSystem($product)
                 : null,
-            'vetsaasShowcaseClients' => VetSaaSSoftware::isProduct($product)
+            'vetsaasShowcaseClients' => $isVetsaas
                 ? $showcaseClient->clients()
                 : [],
+            'vetsaasMarketing' => $isVetsaas
+                ? $marketingClient->payload()
+                : null,
         ]);
     }
 }

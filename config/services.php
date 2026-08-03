@@ -79,6 +79,7 @@ return [
         'lookup_url' => env('VETSAAS_LOOKUP_URL'),
         'renew_url' => env('VETSAAS_RENEW_URL'),
         'showcase_url' => env('VETSAAS_SHOWCASE_URL'),
+        'marketing_url' => env('VETSAAS_MARKETING_URL'),
         'hmac_secret' => env('VETSAAS_PROVISION_HMAC_SECRET', env('ORVAE_PROVISION_HMAC_SECRET')),
         'tenant_domain' => env('VETSAAS_TENANT_DOMAIN', 'vetsaas.orvae.pe'),
         'tenant_scheme' => env('VETSAAS_TENANT_SCHEME', 'https'),

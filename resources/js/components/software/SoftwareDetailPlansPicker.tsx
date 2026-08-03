@@ -108,6 +108,17 @@ export default function SoftwareDetailPlansPicker({
             (activeTierKey !== null && activeTierKey === tier.key);
         const accent = semanticAccents[index % semanticAccents.length];
         const isFree = planIsFreeSubscription(plan);
+        const freeFallbackHighlights = [
+            'Suscripción gratuita',
+            'Sin pasarela de pago',
+            'Activación inmediata tras confirmar',
+        ];
+        const planHighlights =
+            Array.isArray(plan.highlights) && plan.highlights.length > 0
+                ? plan.highlights
+                : isFree
+                  ? freeFallbackHighlights
+                  : plan.highlights;
 
         return (
             <SoftwareDetailPlanCard
@@ -115,13 +126,7 @@ export default function SoftwareDetailPlansPicker({
                 plan={{
                     ...plan,
                     label: tier.title,
-                    highlights: isFree
-                        ? [
-                              'Suscripción gratuita',
-                              'Sin pasarela de pago',
-                              'Activación inmediata tras confirmar',
-                          ]
-                        : plan.highlights,
+                    highlights: planHighlights,
                 }}
                 isActive={isActive}
                 accent={accent}
