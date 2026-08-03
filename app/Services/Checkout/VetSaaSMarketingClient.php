@@ -100,12 +100,21 @@ final class VetSaaSMarketingClient
                 }
             }
 
+            $comparison = is_array($remote['comparison'] ?? null) && $remote['comparison'] !== []
+                ? $remote['comparison']
+                : VetSaaSPlanFeaturesCatalog::comparisonRows();
+
+            $modulesNote = is_string($remote['modules_note'] ?? null) && trim((string) $remote['modules_note']) !== ''
+                ? trim((string) $remote['modules_note'])
+                : 'Todos los módulos (historia clínica, agenda, inventario, grooming, hotel, laboratorio, caja) están incluidos en todos los planes. Lo que cambia es la cantidad.';
+
             return [
                 'clinics_count' => $count,
                 'clinics_display' => $display,
                 'clinics_label' => $display.'+',
                 'plans' => $plans,
-                'comparison' => VetSaaSPlanFeaturesCatalog::comparisonRows(),
+                'comparison' => $comparison,
+                'modules_note' => $modulesNote,
                 'clients' => $clients,
             ];
         });

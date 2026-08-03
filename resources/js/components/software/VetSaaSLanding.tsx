@@ -1,5 +1,15 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
-import { Check, PawPrint, Shield, Sparkles, Stethoscope, Waves } from 'lucide-react';
+import {
+    Check,
+    Cloud,
+    Fingerprint,
+    Globe2,
+    PawPrint,
+    Smartphone,
+    Sparkles,
+    Stethoscope,
+    Zap,
+} from 'lucide-react';
 
 import SoftwareDetailPlansPicker from '@/components/software/SoftwareDetailPlansPicker';
 import SoftwareDetailPlanSelectionPanel from '@/components/software/SoftwareDetailPlanSelectionPanel';
@@ -7,6 +17,7 @@ import SoftwareDetailStickyPurchaseBar from '@/components/software/SoftwareDetai
 import VetSaaSClientsCarousel, {
     type VetSaaSShowcaseClient,
 } from '@/components/software/VetSaaSClientsCarousel';
+import ScrollReveal from '@/components/welcome/ScrollReveal';
 import { cn } from '@/lib/utils';
 import type { SoftwarePricingPlan, SoftwareSystem } from '@/marketplace/softwareCatalog';
 
@@ -14,6 +25,7 @@ export type VetSaaSMarketingPayload = {
     clinics_count: number;
     clinics_display: number;
     clinics_label: string;
+    modules_note?: string;
     plans: Array<{
         codigo: string;
         nombre: string;
@@ -21,14 +33,7 @@ export type VetSaaSMarketingPayload = {
         badge?: string | null;
         highlights: string[];
     }>;
-    comparison: Array<{
-        key: string;
-        label: string;
-        free: string;
-        starter: string;
-        pro: string;
-        clinica: string;
-    }>;
+    comparison: Array<Record<string, string>>;
     clients: VetSaaSShowcaseClient[];
 };
 
@@ -53,11 +58,22 @@ type Props = {
     onStartCheckout: () => void;
 };
 
-const MODULES = [
-    { title: 'Historia clínica', detail: 'SOAP, vacunas, recetas y archivos', icon: Stethoscope },
-    { title: 'Agenda viva', detail: 'Citas, grooming y hotel en un solo calendario', icon: Waves },
-    { title: 'Caja & SUNAT', detail: 'Ventas, sesión de caja y comprobantes', icon: Shield },
-    { title: 'Cuidado animal', detail: 'Pacientes, propietarios y recordatorios', icon: PawPrint },
+const NOVELTIES = [
+    {
+        tag: 'Nuevo',
+        title: 'Agenda unificada de servicios',
+        body: 'Grooming y hotel en un calendario, aparte de citas clínicas.',
+    },
+    {
+        tag: 'Mejora',
+        title: 'Activación directa post-pago',
+        body: 'Tras confirmar en Orvae entras a tu subdominio a crear tu contraseña.',
+    },
+    {
+        tag: 'Integración',
+        title: 'AlmaPet ID listo para clínicas',
+        body: 'Identidad digital de mascotas: registro, búsqueda y certificado.',
+    },
 ] as const;
 
 function useCountUp(target: number, durationMs = 1400): number {
@@ -76,16 +92,13 @@ function useCountUp(target: number, durationMs = 1400): number {
         started.current = true;
         const start = performance.now();
         let frame = 0;
-
         const tick = (now: number) => {
             const t = Math.min(1, (now - start) / durationMs);
-            const eased = 1 - Math.pow(1 - t, 3);
-            setValue(Math.round(target * eased));
+            setValue(Math.round(target * (1 - Math.pow(1 - t, 3))));
             if (t < 1) {
                 frame = requestAnimationFrame(tick);
             }
         };
-
         frame = requestAnimationFrame(tick);
         return () => cancelAnimationFrame(frame);
     }, [target, durationMs]);
@@ -99,48 +112,39 @@ function planCodigoFromSku(plan: SoftwarePricingPlan): string {
         .replace(/^(vetsaas|saas|orvae)-/i, '')
         .replace(/-?(mensual|anual|monthly|annual)$/i, '')
         .trim();
-
     if (['free', 'starter', 'pro', 'clinica'].includes(cleaned)) {
         return cleaned;
     }
-
     const label = plan.label.toLowerCase();
-    if (label.includes('free') || label.includes('gratis')) {
-        return 'free';
-    }
-    if (label.includes('starter')) {
-        return 'starter';
-    }
-    if (label.includes('pro')) {
-        return 'pro';
-    }
-    if (label.includes('clínica') || label.includes('clinica')) {
-        return 'clinica';
-    }
-
+    if (label.includes('free') || label.includes('gratis')) return 'free';
+    if (label.includes('starter')) return 'starter';
+    if (label.includes('pro')) return 'pro';
+    if (label.includes('clínica') || label.includes('clinica')) return 'clinica';
     return cleaned || 'starter';
 }
 
-export default function VetSaaSLanding({
-    system,
-    marketing,
-    showcaseClients,
-    selectedPlan,
-    selectedPlanId,
-    onSelectPlanId,
-    purchaseEnabled,
-    webCheckoutEnabled,
-    isFreeSubscription,
-    checkoutLoading,
-    checkoutError,
-    addedCount,
-    selectionTitle,
-    selectionPriceLine,
-    selectionPriceCaption,
-    consultationWhatsAppHref,
-    onAddToCart,
-    onStartCheckout,
-}: Props) {
+export default function VetSaaSLanding(props: Props) {
+    const {
+        system,
+        marketing,
+        showcaseClients,
+        selectedPlan,
+        selectedPlanId,
+        onSelectPlanId,
+        purchaseEnabled,
+        webCheckoutEnabled,
+        isFreeSubscription,
+        checkoutLoading,
+        checkoutError,
+        addedCount,
+        selectionTitle,
+        selectionPriceLine,
+        selectionPriceCaption,
+        consultationWhatsAppHref,
+        onAddToCart,
+        onStartCheckout,
+    } = props;
+
     const display = marketing.clinics_display || 100;
     const countUp = useCountUp(display);
     const clients = showcaseClients.length > 0 ? showcaseClients : marketing.clients;
@@ -157,13 +161,8 @@ export default function VetSaaSLanding({
         return system.pricingPlans.map((plan) => {
             const codigo = planCodigoFromSku(plan);
             const extras = highlightsByCodigo.get(codigo);
-            if (!extras || extras.length === 0) {
-                return plan;
-            }
-            return {
-                ...plan,
-                highlights: extras,
-            };
+            if (!extras?.length) return plan;
+            return { ...plan, highlights: extras };
         });
     }, [system.pricingPlans, highlightsByCodigo]);
 
@@ -172,9 +171,13 @@ export default function VetSaaSLanding({
         return order.filter((c) => marketing.plans.some((p) => p.codigo === c));
     }, [marketing.plans]);
 
+    const modulesNote =
+        marketing.modules_note ??
+        'Todos los módulos están incluidos en todos los planes. Lo que cambia es la cantidad.';
+
     return (
         <div
-            className="vs-landing relative isolate overflow-hidden"
+            className="vs-landing relative isolate overflow-hidden bg-[var(--vs-bg)] text-[var(--vs-ink)]"
             style={
                 {
                     '--vs-50': '#E6F4EF',
@@ -186,159 +189,304 @@ export default function VetSaaSLanding({
                     '--vs-700': '#015743',
                     '--vs-900': '#04362B',
                     '--vs-ink': '#06241C',
-                    '--vs-cream': '#F3FBF7',
+                    '--vs-bg': '#F3FBF7',
+                    '--vs-card': '#ffffff',
+                    '--vs-muted': 'rgba(1, 87, 67, 0.72)',
+                    '--font-vs-display': '"Fraunces", "Iowan Old Style", Georgia, serif',
+                    '--font-vs-body': '"Manrope", "Segoe UI", sans-serif',
                 } as CSSProperties
             }
         >
+            <link
+                rel="stylesheet"
+                href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Manrope:wght@400;500;600;700&display=swap"
+            />
             <style>{`
-                @keyframes vs-float {
-                    0%, 100% { transform: translateY(0) rotate(-2deg); }
-                    50% { transform: translateY(-12px) rotate(1deg); }
+                .dark .vs-landing {
+                    --vs-ink: #E6F4EF;
+                    --vs-bg: #021E18;
+                    --vs-card: #04362B;
+                    --vs-muted: rgba(197, 229, 217, 0.78);
+                    --vs-50: #04362B;
+                    --vs-900: #021E18;
                 }
-                @keyframes vs-pulse-ring {
-                    0% { transform: scale(0.92); opacity: 0.55; }
-                    70% { transform: scale(1.08); opacity: 0; }
-                    100% { transform: scale(1.08); opacity: 0; }
+                @keyframes vs-kenburns {
+                    from { transform: scale(1.05) translate3d(0,0,0); }
+                    to { transform: scale(1.14) translate3d(-1.5%, 1%, 0); }
+                }
+                @keyframes vs-float {
+                    0%,100% { transform: translateY(0); }
+                    50% { transform: translateY(-10px); }
                 }
                 @keyframes vs-shimmer {
                     0% { background-position: 0% 50%; }
                     100% { background-position: 200% 50%; }
                 }
-                .vs-landing .vs-hero-orb {
-                    animation: vs-float 7s ease-in-out infinite;
-                }
-                .vs-landing .vs-ring {
-                    animation: vs-pulse-ring 2.8s ease-out infinite;
-                }
+                .vs-landing .vs-display { font-family: var(--font-vs-display); }
+                .vs-landing .vs-body { font-family: var(--font-vs-body); }
+                .vs-landing .vs-kenburns { animation: vs-kenburns 22s ease-out forwards; }
+                .vs-landing .vs-float { animation: vs-float 6s ease-in-out infinite; }
                 .vs-landing .vs-shimmer-text {
-                    background: linear-gradient(110deg, #E6F4EF 0%, #99D2BC 35%, #ffffff 50%, #99D2BC 65%, #E6F4EF 100%);
+                    background: linear-gradient(110deg, #E6F4EF, #99D2BC, #fff, #99D2BC, #E6F4EF);
                     background-size: 200% auto;
                     -webkit-background-clip: text;
                     background-clip: text;
                     color: transparent;
-                    animation: vs-shimmer 4.5s linear infinite;
+                    animation: vs-shimmer 5s linear infinite;
                 }
             `}</style>
 
-            <section className="relative min-h-[88vh] overflow-hidden bg-[linear-gradient(155deg,#021E18_0%,#015743_42%,#006D55_70%,#33A07B_100%)]">
-                <div
-                    className="pointer-events-none absolute inset-0 opacity-[0.14]"
-                    style={{
-                        backgroundImage:
-                            'radial-gradient(circle at 20% 20%, #E6F4EF 0.6px, transparent 0.7px), radial-gradient(circle at 80% 40%, #99D2BC 0.5px, transparent 0.6px)',
-                        backgroundSize: '28px 28px, 42px 42px',
-                    }}
-                />
-                <div className="vs-hero-orb pointer-events-none absolute -right-16 top-24 h-72 w-72 rounded-full bg-[#33A07B]/30 blur-3xl" />
-                <div className="pointer-events-none absolute -left-20 bottom-10 h-80 w-80 rounded-full bg-[#E6F4EF]/10 blur-3xl" />
+            {/* HERO */}
+            <section className="relative min-h-[92svh] overflow-hidden bg-[#021E18] text-white">
+                <div className="absolute inset-0">
+                    <img
+                        src="/images/vetsaas-hero-pets.png"
+                        alt=""
+                        className="vs-kenburns size-full object-cover object-[60%_center] opacity-55"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#021E18] via-[#021E18]/88 to-[#021E18]/25" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#021E18] via-transparent to-[#021E18]/50" />
+                </div>
 
-                <div className="relative mx-auto flex max-w-6xl flex-col justify-center gap-10 px-5 pb-24 pt-20 sm:px-8 lg:min-h-[88vh] lg:flex-row lg:items-end lg:gap-16 lg:pb-28 lg:pt-28">
-                    <div className="max-w-2xl flex-1">
-                        <p className="font-[family-name:var(--font-mono)] text-[11px] uppercase tracking-[0.28em] text-[#C5E5D9]/90">
+                <div className="relative mx-auto flex min-h-[92svh] max-w-6xl flex-col justify-end gap-10 px-5 pb-20 pt-28 sm:px-8 lg:flex-row lg:items-end lg:justify-between lg:pb-28">
+                    <div className="max-w-xl">
+                        <p className="vs-body inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-[#C5E5D9]">
+                            <PawPrint className="size-3.5" />
                             Software veterinario · Perú
                         </p>
-                        <h1 className="mt-4 font-[family-name:var(--font-display)] text-5xl font-bold leading-[0.95] tracking-tight text-white sm:text-6xl lg:text-7xl">
+                        <h1 className="vs-display mt-4 text-5xl font-bold leading-[0.95] tracking-tight sm:text-6xl lg:text-7xl">
                             <span className="vs-shimmer-text">VetSaaS</span>
                         </h1>
-                        <p className="mt-5 max-w-xl text-base leading-relaxed text-[#E6F4EF]/90 sm:text-lg">
-                            La clínica completa en la nube: historia clínica, agenda, caja y
-                            WhatsApp — lista el mismo día que la activas.
+                        <p className="vs-body mt-5 max-w-lg text-base leading-relaxed text-[#E6F4EF]/92 sm:text-lg">
+                            Tu clínica en la nube: historia clínica, agenda, caja, SUNAT y
+                            WhatsApp — con subdominio propio, PWA y multi-tenant.
                         </p>
-                        <div className="mt-8 flex flex-wrap items-center gap-3">
+                        <div className="mt-8 flex flex-wrap gap-3">
                             <a
                                 href="#planes"
-                                className="inline-flex items-center justify-center rounded-xl bg-white px-5 py-3 text-sm font-semibold text-[#006D55] shadow-[0_12px_40px_-12px_rgba(0,0,0,0.45)] transition hover:bg-[#E6F4EF]"
+                                className="vs-body inline-flex rounded-xl bg-white px-5 py-3 text-sm font-semibold text-[#006D55] transition hover:bg-[#E6F4EF]"
                             >
                                 Ver planes
                             </a>
                             <a
                                 href="#comparar"
-                                className="inline-flex items-center justify-center rounded-xl border border-white/25 bg-white/5 px-5 py-3 text-sm font-medium text-white backdrop-blur transition hover:bg-white/10"
+                                className="vs-body inline-flex rounded-xl border border-white/25 bg-white/5 px-5 py-3 text-sm font-medium text-white backdrop-blur transition hover:bg-white/10"
                             >
-                                Comparar qué incluye
+                                Comparar cantidades
                             </a>
                         </div>
                     </div>
 
-                    <div className="relative w-full max-w-sm shrink-0">
-                        <div className="vs-ring absolute inset-0 rounded-[2rem] border border-[#99D2BC]/40" />
-                        <div className="relative overflow-hidden rounded-[2rem] border border-white/15 bg-[#04362B]/55 p-6 shadow-2xl backdrop-blur-md">
+                    <div className="vs-float relative w-full max-w-sm">
+                        <div className="rounded-[1.75rem] border border-white/15 bg-[#04362B]/70 p-6 shadow-2xl backdrop-blur-md dark:bg-[#021E18]/75">
                             <div className="flex items-center gap-2 text-[#C5E5D9]">
                                 <Sparkles className="size-4" />
-                                <span className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-[0.22em]">
+                                <span className="vs-body text-[10px] uppercase tracking-[0.22em]">
                                     Clínicas con VetSaaS
                                 </span>
                             </div>
-                            <p className="mt-4 font-[family-name:var(--font-display)] text-6xl font-bold tabular-nums text-white sm:text-7xl">
+                            <p className="vs-display mt-3 text-6xl font-bold tabular-nums sm:text-7xl">
                                 {countUp}
                                 <span className="text-3xl text-[#99D2BC]">+</span>
                             </p>
-                            <p className="mt-2 text-sm leading-relaxed text-[#C5E5D9]/95">
-                                Equipos veterinarios ya operan agenda, historia y caja en su
-                                propio subdominio.
-                            </p>
-                            <div className="mt-5 h-px w-full bg-gradient-to-r from-transparent via-[#99D2BC]/50 to-transparent" />
-                            <p className="mt-4 text-xs text-[#99D2BC]/90">
-                                Hecho en Perú · Activación en minutos · Plan free disponible
+                            <p className="vs-body mt-2 text-sm text-[#C5E5D9]/95">
+                                Equipos que ya operan en su propio subdominio.
                             </p>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <section className="relative border-b border-[#C5E5D9]/60 bg-[var(--vs-cream)]">
-                <div className="mx-auto grid max-w-6xl gap-px bg-[#C5E5D9]/50 sm:grid-cols-2 lg:grid-cols-4">
-                    {MODULES.map((m) => {
-                        const Icon = m.icon;
-                        return (
-                            <div
-                                key={m.title}
-                                className="bg-[var(--vs-cream)] px-6 py-8 transition hover:bg-white"
-                            >
-                                <Icon className="size-5 text-[var(--vs-600)]" />
-                                <h2 className="mt-3 font-[family-name:var(--font-display)] text-lg font-semibold text-[var(--vs-ink)]">
-                                    {m.title}
-                                </h2>
-                                <p className="mt-1 text-sm text-[var(--vs-700)]/80">{m.detail}</p>
-                            </div>
-                        );
-                    })}
-                </div>
-            </section>
-
-            {clients.length > 0 ? (
-                <section className="bg-white py-14">
-                    <div className="mx-auto max-w-6xl px-5 sm:px-8">
-                        <p className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-[0.24em] text-[var(--vs-500)]">
-                            Ya confían en VetSaaS
-                        </p>
-                        <h2 className="mt-2 font-[family-name:var(--font-display)] text-2xl font-bold text-[var(--vs-ink)] sm:text-3xl">
-                            Clínicas reales, marca propia
-                        </h2>
-                    </div>
-                    <div className="mt-8">
-                        <VetSaaSClientsCarousel clients={clients} />
+            {/* Capabilities */}
+            <ScrollReveal direction="up">
+                <section className="vs-body border-b border-[#C5E5D9]/50 bg-[var(--vs-bg)] py-14 dark:border-white/10">
+                    <div className="mx-auto grid max-w-6xl gap-6 px-5 sm:grid-cols-2 sm:px-8 lg:grid-cols-4">
+                        {[
+                            {
+                                icon: Globe2,
+                                t: 'Multi-tenant',
+                                d: 'Cada clínica tiene su subdominio y datos aislados.',
+                            },
+                            {
+                                icon: Smartphone,
+                                t: 'PWA',
+                                d: 'Instálalo en el celular o PC como app nativa.',
+                            },
+                            {
+                                icon: Cloud,
+                                t: 'Listo en minutos',
+                                d: 'Activas en Orvae y entras directo a tu clínica.',
+                            },
+                            {
+                                icon: Stethoscope,
+                                t: 'Clínica completa',
+                                d: 'Historia, agenda, caja, inventario y más.',
+                            },
+                        ].map((item) => {
+                            const Icon = item.icon;
+                            return (
+                                <div
+                                    key={item.t}
+                                    className="rounded-2xl border border-[#C5E5D9]/70 bg-[var(--vs-card)] p-5 shadow-sm dark:border-white/10"
+                                >
+                                    <Icon className="size-5 text-[var(--vs-600)] dark:text-[var(--vs-400)]" />
+                                    <h2 className="vs-display mt-3 text-lg font-semibold">
+                                        {item.t}
+                                    </h2>
+                                    <p className="mt-1 text-sm text-[var(--vs-muted)]">{item.d}</p>
+                                </div>
+                            );
+                        })}
                     </div>
                 </section>
+            </ScrollReveal>
+
+            {/* How multi-tenant + PWA */}
+            <ScrollReveal direction="up">
+                <section className="bg-[var(--vs-card)] py-16 dark:bg-[#032820]">
+                    <div className="mx-auto grid max-w-6xl gap-10 px-5 sm:px-8 lg:grid-cols-2 lg:items-center">
+                        <div>
+                            <p className="vs-body text-[10px] font-semibold uppercase tracking-[0.24em] text-[var(--vs-500)]">
+                                Arquitectura
+                            </p>
+                            <h2 className="vs-display mt-2 text-3xl font-bold sm:text-4xl">
+                                Un producto, muchas clínicas
+                            </h2>
+                            <p className="vs-body mt-3 text-sm leading-relaxed text-[var(--vs-muted)] sm:text-base">
+                                VetSaaS es multi-tenant: tu marca vive en{' '}
+                                <span className="font-semibold text-[var(--vs-600)] dark:text-[var(--vs-200)]">
+                                    tuclinica.vetsaas.orvae.pe
+                                </span>
+                                . Los datos no se mezclan entre clínicas. La PWA permite abrir el
+                                panel desde el icono del teléfono, con sesión segura.
+                            </p>
+                            <ul className="vs-body mt-6 space-y-3 text-sm">
+                                {[
+                                    'Subdominio y branding de tu clínica',
+                                    'Permisos por rol (admin, recepción, médico…)',
+                                    'Offline-friendly en módulos clave vía PWA',
+                                    'Activación desde Orvae sin instalar servidores',
+                                ].map((line) => (
+                                    <li key={line} className="flex items-start gap-2">
+                                        <Check className="mt-0.5 size-4 shrink-0 text-[var(--vs-500)]" />
+                                        <span>{line}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                        <div className="relative overflow-hidden rounded-[1.75rem] border border-[#C5E5D9]/60 bg-[linear-gradient(160deg,#015743,#006D55_55%,#33A07B)] p-6 text-white shadow-xl dark:border-white/10">
+                            <Zap className="size-6 text-[#E6F4EF]" />
+                            <p className="vs-display mt-4 text-2xl font-bold">Flujo real</p>
+                            <ol className="vs-body mt-4 space-y-3 text-sm text-[#E6F4EF]/95">
+                                <li>1. Eliges plan Free o de pago en Orvae</li>
+                                <li>2. Confirmas (sin pasarela si es Free)</li>
+                                <li>3. Te llevamos a tu subdominio</li>
+                                <li>4. Creas tu contraseña y empiezas a operar</li>
+                            </ol>
+                        </div>
+                    </div>
+                </section>
+            </ScrollReveal>
+
+            {/* Clients — one section only */}
+            {clients.length > 0 ? (
+                <ScrollReveal direction="up">
+                    <section className="bg-[var(--vs-bg)] py-14">
+                        <div className="mx-auto max-w-6xl px-5 sm:px-8">
+                            <p className="vs-body text-[10px] font-semibold uppercase tracking-[0.24em] text-[var(--vs-500)]">
+                                En producción
+                            </p>
+                            <h2 className="vs-display mt-2 text-2xl font-bold sm:text-3xl">
+                                Clínicas con marca propia
+                            </h2>
+                        </div>
+                        <div className="mt-8">
+                            <VetSaaSClientsCarousel clients={clients} compact />
+                        </div>
+                    </section>
+                </ScrollReveal>
             ) : null}
 
+            {/* Novelties + AlmaPet */}
+            <ScrollReveal direction="up">
+                <section className="bg-[var(--vs-card)] py-16 dark:bg-[#032820]">
+                    <div className="mx-auto max-w-6xl px-5 sm:px-8">
+                        <p className="vs-body text-[10px] font-semibold uppercase tracking-[0.24em] text-[var(--vs-500)]">
+                            Novedades
+                        </p>
+                        <h2 className="vs-display mt-2 text-3xl font-bold">
+                            Lo que está llegando a VetSaaS
+                        </h2>
+                        <div className="mt-8 grid gap-4 md:grid-cols-3">
+                            {NOVELTIES.map((n) => (
+                                <article
+                                    key={n.title}
+                                    className="rounded-2xl border border-[#C5E5D9]/70 bg-[var(--vs-bg)] p-5 dark:border-white/10"
+                                >
+                                    <span className="vs-body rounded-full bg-[var(--vs-600)] px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+                                        {n.tag}
+                                    </span>
+                                    <h3 className="vs-display mt-3 text-lg font-semibold">
+                                        {n.title}
+                                    </h3>
+                                    <p className="vs-body mt-2 text-sm text-[var(--vs-muted)]">
+                                        {n.body}
+                                    </p>
+                                </article>
+                            ))}
+                        </div>
+
+                        <div className="mt-10 overflow-hidden rounded-[1.75rem] border border-[#0A1A24]/15 bg-[linear-gradient(120deg,#0A1A24_0%,#123447_55%,#1B4B5C_100%)] p-6 text-white shadow-xl sm:p-8 dark:border-white/10">
+                            <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+                                <div className="max-w-xl">
+                                    <div className="inline-flex items-center gap-2 text-[#9FD6E8]">
+                                        <Fingerprint className="size-4" />
+                                        <span className="vs-body text-[10px] uppercase tracking-[0.22em]">
+                                            AlmaPet ID
+                                        </span>
+                                    </div>
+                                    <h3 className="vs-display mt-3 text-2xl font-bold sm:text-3xl">
+                                        Identidad digital para mascotas
+                                    </h3>
+                                    <p className="vs-body mt-3 text-sm leading-relaxed text-white/80">
+                                        Complementa VetSaaS con el registro nacional de mascotas:
+                                        perfil público, búsqueda, certificados y activación para
+                                        clínicas. Ideal para fidelizar dueños y dar trazabilidad.
+                                    </p>
+                                </div>
+                                <a
+                                    href="https://almapetid.com"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="vs-body inline-flex shrink-0 items-center justify-center rounded-xl bg-white px-5 py-3 text-sm font-semibold text-[#0A1A24] transition hover:bg-[#E8F4F8]"
+                                >
+                                    Conocer AlmaPet ID
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </ScrollReveal>
+
+            {/* Plans */}
             <section
                 id="planes"
-                className="scroll-mt-24 bg-[linear-gradient(180deg,#F3FBF7_0%,#FFFFFF_40%)] py-16 sm:py-20"
+                className="scroll-mt-24 bg-[var(--vs-bg)] py-16 sm:py-20"
             >
                 <div className="mx-auto max-w-6xl px-5 sm:px-8">
-                    <div className="max-w-2xl">
-                        <p className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-[0.24em] text-[var(--vs-500)]">
-                            Planes
-                        </p>
-                        <h2 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-bold text-[var(--vs-ink)] sm:text-4xl">
-                            Elige el tamaño de tu clínica
-                        </h2>
-                        <p className="mt-3 text-sm leading-relaxed text-[var(--vs-700)]/85 sm:text-base">
-                            Precios de Orvae. Cada plan muestra lo que incluye VetSaaS de verdad:
-                            límites, módulos y soporte.
-                        </p>
-                    </div>
+                    <ScrollReveal direction="up">
+                        <div className="max-w-2xl">
+                            <p className="vs-body text-[10px] font-semibold uppercase tracking-[0.24em] text-[var(--vs-500)]">
+                                Planes
+                            </p>
+                            <h2 className="vs-display mt-2 text-3xl font-bold sm:text-4xl">
+                                Mismos módulos. Distintas cantidades.
+                            </h2>
+                            <p className="vs-body mt-3 text-sm leading-relaxed text-[var(--vs-muted)] sm:text-base">
+                                {modulesNote}
+                            </p>
+                        </div>
+                    </ScrollReveal>
 
                     <div className="mt-10">
                         <SoftwareDetailPlansPicker
@@ -370,35 +518,37 @@ export default function VetSaaSLanding({
                 </div>
             </section>
 
-            <section id="comparar" className="scroll-mt-24 bg-[var(--vs-900)] py-16 text-white sm:py-20">
+            {/* Comparison — quantities only */}
+            <section id="comparar" className="scroll-mt-24 bg-[#021E18] py-16 text-white sm:py-20">
                 <div className="mx-auto max-w-6xl px-5 sm:px-8">
-                    <p className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-[0.24em] text-[var(--vs-200)]">
+                    <p className="vs-body text-[10px] font-semibold uppercase tracking-[0.24em] text-[#99D2BC]">
                         Comparativa
                     </p>
-                    <h2 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-bold sm:text-4xl">
-                        Qué viene en cada plan
+                    <h2 className="vs-display mt-2 text-3xl font-bold sm:text-4xl">
+                        Límites por plan
                     </h2>
-                    <p className="mt-3 max-w-xl text-sm text-[var(--vs-100)]/85">
-                        Misma fuente que el sistema: límites y módulos reales de VetSaaS.
+                    <p className="vs-body mt-3 max-w-2xl text-sm text-[#C5E5D9]/90">
+                        Sedes, usuarios, pacientes, propietarios, productos y comprobantes SUNAT.
+                        Los módulos operativos están en todos.
                     </p>
 
-                    <div className="mt-10 overflow-x-auto rounded-2xl border border-white/10 bg-[#04362B]/60 shadow-2xl">
-                        <table className="w-full min-w-[720px] border-collapse text-left text-sm">
+                    <div className="mt-10 overflow-x-auto rounded-2xl border border-white/10 bg-[#04362B]/70 shadow-2xl">
+                        <table className="vs-body w-full min-w-[720px] border-collapse text-left text-sm">
                             <thead>
                                 <tr className="border-b border-white/10">
-                                    <th className="px-4 py-4 font-medium text-[var(--vs-200)]">
-                                        Capacidad
+                                    <th className="px-4 py-4 font-medium text-[#99D2BC]">
+                                        Cantidad
                                     </th>
                                     {comparisonCols.map((col) => {
                                         const meta = marketing.plans.find((p) => p.codigo === col);
                                         return (
                                             <th
                                                 key={col}
-                                                className="px-4 py-4 font-[family-name:var(--font-display)] text-base font-semibold text-white"
+                                                className="vs-display px-4 py-4 text-base font-semibold"
                                             >
                                                 {meta?.nombre ?? col}
                                                 {meta?.badge ? (
-                                                    <span className="ml-2 rounded-full bg-[var(--vs-500)] px-2 py-0.5 font-sans text-[10px] font-medium uppercase tracking-wide text-white">
+                                                    <span className="ml-2 rounded-full bg-[#008762] px-2 py-0.5 font-[family-name:var(--font-vs-body)] text-[10px] font-medium uppercase tracking-wide">
                                                         {meta.badge}
                                                     </span>
                                                 ) : null}
@@ -413,35 +563,17 @@ export default function VetSaaSLanding({
                                         key={row.key}
                                         className="border-b border-white/5 last:border-0"
                                     >
-                                        <td className="px-4 py-3.5 text-[var(--vs-100)]">
+                                        <td className="px-4 py-3.5 text-[#C5E5D9]">
                                             {row.label}
                                         </td>
-                                        {comparisonCols.map((col) => {
-                                            const value = String(
-                                                row[col as keyof typeof row] ?? '—',
-                                            );
-                                            const positive =
-                                                value !== '—' && value.toLowerCase() !== 'docs';
-                                            return (
-                                                <td
-                                                    key={col}
-                                                    className={cn(
-                                                        'px-4 py-3.5 tabular-nums',
-                                                        positive
-                                                            ? 'text-white'
-                                                            : 'text-white/35',
-                                                    )}
-                                                >
-                                                    {positive && value === 'Sí' ? (
-                                                        <span className="inline-flex items-center gap-1.5 text-[var(--vs-200)]">
-                                                            <Check className="size-3.5" /> Sí
-                                                        </span>
-                                                    ) : (
-                                                        value
-                                                    )}
-                                                </td>
-                                            );
-                                        })}
+                                        {comparisonCols.map((col) => (
+                                            <td
+                                                key={col}
+                                                className="px-4 py-3.5 tabular-nums text-white"
+                                            >
+                                                {row[col] ?? '—'}
+                                            </td>
+                                        ))}
                                     </tr>
                                 ))}
                             </tbody>
@@ -450,23 +582,22 @@ export default function VetSaaSLanding({
                 </div>
             </section>
 
-            <section className="relative overflow-hidden bg-[var(--vs-cream)] py-16 sm:py-20">
-                <div className="pointer-events-none absolute inset-y-0 right-0 w-1/2 bg-[radial-gradient(circle_at_80%_50%,#99D2BC55,transparent_60%)]" />
+            {/* Closing */}
+            <section className="relative overflow-hidden bg-[var(--vs-bg)] py-16 sm:py-20">
+                <div className="pointer-events-none absolute inset-y-0 right-0 w-1/2 bg-[radial-gradient(circle_at_80%_50%,#99D2BC55,transparent_60%)] dark:bg-[radial-gradient(circle_at_80%_50%,#01574388,transparent_60%)]" />
                 <div className="relative mx-auto flex max-w-6xl flex-col gap-6 px-5 sm:flex-row sm:items-end sm:justify-between sm:px-8">
                     <div className="max-w-xl">
-                        <h2 className="font-[family-name:var(--font-display)] text-3xl font-bold text-[var(--vs-ink)] sm:text-4xl">
+                        <h2 className="vs-display text-3xl font-bold sm:text-4xl">
                             Tu clínica, tu subdominio
                         </h2>
-                        <p className="mt-3 text-sm leading-relaxed text-[var(--vs-700)]/90 sm:text-base">
-                            Activa Free o un plan de pago en{' '}
-                            <span className="font-medium text-[var(--vs-600)]">orvae.pe</span>. Al
-                            confirmar, entras directo a crear tu contraseña en tu propia clínica
-                            VetSaaS.
+                        <p className="vs-body mt-3 text-sm leading-relaxed text-[var(--vs-muted)] sm:text-base">
+                            Activa Free o un plan de pago en Orvae. Al confirmar, entras a crear tu
+                            contraseña en VetSaaS.
                         </p>
                     </div>
                     <a
                         href="#planes"
-                        className="inline-flex shrink-0 items-center justify-center rounded-xl bg-[var(--vs-600)] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-[#006D55]/25 transition hover:bg-[var(--vs-700)]"
+                        className="vs-body inline-flex shrink-0 rounded-xl bg-[var(--vs-600)] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-[#006D55]/25 transition hover:bg-[var(--vs-700)]"
                     >
                         Empezar ahora
                     </a>

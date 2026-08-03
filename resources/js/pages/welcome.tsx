@@ -11,6 +11,7 @@ import ScrollReveal from '@/components/welcome/ScrollReveal';
 import ScrollToTopButton from '@/components/welcome/ScrollToTopButton';
 import TestimonialsSection from '@/components/welcome/TestimonialsSection';
 import HomeFeaturedServices from '@/components/welcome/HomeFeaturedServices';
+import HomeVetSaaSSpotlight from '@/components/welcome/HomeVetSaaSSpotlight';
 import WelcomeFooter from '@/components/welcome/WelcomeFooter';
 import type { ShowcaseClientPublic } from '@/types/showcase-client';
 
@@ -64,6 +65,9 @@ export default function Welcome({
                         description="Sistemas de contabilidad, ventas, inventario y más: ya construidos, probados y listos. Elige SaaS, licencia perpetua o módulos sueltos — en días, no en meses."
                         ctas={getMarketingHeroNavCtas('home')}
                     />
+                    <ScrollReveal direction="up">
+                        <HomeVetSaaSSpotlight />
+                    </ScrollReveal>
                     <HomeFeaturedServices />
                     <div className="landing-section-flair mx-4 px-4" aria-hidden />
                     <ScrollReveal direction="up">
