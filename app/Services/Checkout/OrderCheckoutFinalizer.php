@@ -8,10 +8,11 @@ use App\Models\Order;
 use App\Models\Payment;
 use App\Models\User;
 use App\Services\Notifications\OrderPaidNotifier;
+use App\Support\Checkout\WhatsAppRecipientDeduper;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Marca un pedido como pagado, registra el pago y dispara provisionamiento post-compra.
+ * Marca un pedido como pagado, provisiona y notifica (notificaciones diferidas).
  */
 final class OrderCheckoutFinalizer
 {
@@ -86,12 +87,19 @@ final class OrderCheckoutFinalizer
         $order->refresh();
         $order->coupon?->increment('used_count');
 
-        $this->notifier->notifyCustomer($order, $user);
-        $this->notifier->notifyAdmin($order, $user);
-
+        // 1) Provisionar primero (necesitamos bootstrap_url para el redirect).
         $freshOrder = $order->fresh(['user', 'lines.sku.product', 'payments']);
         $this->subscriptionProvisioner->provision($freshOrder, $gatewayVault);
         $this->entitlementProvisioner->provision($freshOrder);
         $this->licenseProvisioner->provision($freshOrder);
+
+        // 2) Notificar después (WhatsApp/email diferidos; no bloquean la respuesta).
+        $deduper = WhatsAppRecipientDeduper::forOrder($order);
+        $notifyOrder = $order->fresh(['user', 'lines.sku.product']) ?? $order;
+
+        dispatch(function () use ($notifyOrder, $user, $deduper): void {
+            app(OrderPaidNotifier::class)->notifyCustomer($notifyOrder, $user, $deduper);
+            app(OrderPaidNotifier::class)->notifyAdmin($notifyOrder, $user, $deduper);
+        })->afterResponse();
     }
 }

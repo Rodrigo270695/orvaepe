@@ -8,17 +8,13 @@ use App\Models\Order;
 use App\Models\Payment;
 use App\Models\User;
 use App\Services\Checkout\FreeSaasCheckoutHandler;
+use App\Services\Checkout\OrderCheckoutFinalizer;
 use App\Services\Checkout\OrderFromCartLinesBuilder;
-use App\Services\Checkout\OrderPaidEntitlementProvisioner;
-use App\Services\Checkout\OrderPaidLicenseProvisioner;
-use App\Services\Checkout\OrderPaidSubscriptionProvisioner;
-use App\Services\Notifications\OrderPaidNotifier;
 use App\Services\Payments\PayPalClient;
 use App\Support\Checkout\SaasCheckoutRedirect;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
@@ -198,10 +194,6 @@ class CheckoutPayPalController extends Controller
                 'simulated' => true,
                 'environment' => app()->environment(),
             ],
-            app(OrderPaidNotifier::class),
-            app(OrderPaidEntitlementProvisioner::class),
-            app(OrderPaidSubscriptionProvisioner::class),
-            app(OrderPaidLicenseProvisioner::class),
         );
 
         $saasRedirect = SaasCheckoutRedirect::responseForOrder($order->fresh());
@@ -282,10 +274,6 @@ class CheckoutPayPalController extends Controller
             $captureId,
             'paypal',
             $capture,
-            app(OrderPaidNotifier::class),
-            app(OrderPaidEntitlementProvisioner::class),
-            app(OrderPaidSubscriptionProvisioner::class),
-            app(OrderPaidLicenseProvisioner::class),
         );
 
         $saasRedirect = SaasCheckoutRedirect::responseForOrder($order->fresh());
@@ -340,40 +328,15 @@ class CheckoutPayPalController extends Controller
         string $gatewayPaymentId,
         string $gateway,
         array $rawResponse,
-        OrderPaidNotifier $notifier,
-        OrderPaidEntitlementProvisioner $entitlementProvisioner,
-        OrderPaidSubscriptionProvisioner $subscriptionProvisioner,
-        OrderPaidLicenseProvisioner $licenseProvisioner,
     ): void {
-        DB::transaction(function () use ($order, $user, $gatewayPaymentId, $gateway, $rawResponse, $notifier, $entitlementProvisioner, $subscriptionProvisioner, $licenseProvisioner) {
-            $order->update([
-                'status' => Order::STATUS_PAID,
-                'placed_at' => now(),
-            ]);
-
-            Payment::query()->create([
-                'order_id' => $order->id,
-                'user_id' => $user->id,
-                'gateway' => $gateway,
-                'gateway_payment_id' => $gatewayPaymentId,
-                'amount' => $order->grand_total,
-                'currency' => $order->currency,
-                'status' => 'completed',
-                'raw_response' => $rawResponse,
-                'paid_at' => now(),
-            ]);
-
-            $order->refresh();
-            $order->coupon?->increment('used_count');
-
-            $notifier->notifyCustomer($order, $user);
-            $notifier->notifyAdmin($order, $user);
-
-            $freshOrder = $order->fresh();
-            $subscriptionProvisioner->provision($freshOrder);
-            $entitlementProvisioner->provision($freshOrder);
-            $licenseProvisioner->provision($freshOrder);
-        });
+        app(OrderCheckoutFinalizer::class)->finalizeAsPaid(
+            $order,
+            $user,
+            $gateway,
+            $gatewayPaymentId,
+            null,
+            $rawResponse,
+        );
     }
 
     /**

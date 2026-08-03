@@ -5,16 +5,18 @@ namespace App\Services\Notifications;
 use App\Models\Notification;
 use App\Models\Order;
 use App\Models\User;
+use App\Support\Checkout\SaasCatalogSku;
+use App\Support\Checkout\WhatsAppRecipientDeduper;
 use App\Support\WhatsAppPhoneNormalizer;
 
 /**
- * Tras un pago confirmado: notificación in-app, intento de WhatsApp (UltraMsg) y correo
- * al cliente y a cada superadmin (ver {@see NotificationSender}).
+ * Tras un pago confirmado: notificación in-app, intento de WhatsApp y correo
+ * al cliente y a cada superadmin (envío diferido vía {@see DeferredNotificationSender}).
  */
 final class OrderPaidNotifier
 {
     public function __construct(
-        private readonly NotificationSender $sender,
+        private readonly DeferredNotificationSender $sender,
     ) {}
 
     private function orderLinesSummary(Order $order): string
@@ -68,29 +70,34 @@ final class OrderPaidNotifier
         return $fallback;
     }
 
-    private function resolveWhatsAppToFromUser(User $user): ?string
+    /**
+     * Pedidos solo SaaS (VetSaaS / Aula): el acceso se notifica aparte;
+     * no spamear "pago confirmado" + "acción requerida licencias" por WhatsApp.
+     */
+    private function isSaasOnlyOrder(Order $order): bool
     {
-        $user->loadMissing('profile');
+        $order->loadMissing(['lines.sku.product']);
 
-        if (is_string($user->phone) && trim($user->phone) !== '') {
-            return WhatsAppPhoneNormalizer::toUltraMsgTo($user->phone);
+        $skus = $order->lines->map(fn ($line) => $line->sku)->filter();
+
+        if ($skus->isEmpty()) {
+            return false;
         }
 
-        $profilePhone = $user->profile?->phone;
-        if (is_string($profilePhone) && trim($profilePhone) !== '') {
-            return WhatsAppPhoneNormalizer::toUltraMsgTo($profilePhone);
-        }
-
-        return null;
+        return $skus->every(
+            fn ($sku) => $sku !== null && SaasCatalogSku::isSaasSubscription($sku)
+        );
     }
 
-    public function notifyCustomer(Order $order, User $user): void
+    public function notifyCustomer(Order $order, User $user, ?WhatsAppRecipientDeduper $deduper = null): void
     {
         $customer = $this->resolveCustomerFromOrder($order, $user);
         $customer->refresh();
         $order->loadMissing(['lines.sku']);
         $linesSummary = $this->orderLinesSummary($order);
         $body = $this->customerPaidMessage($order, $linesSummary);
+        $saasOnly = $this->isSaasOnlyOrder($order);
+        $deduper ??= WhatsAppRecipientDeduper::forOrder($order);
 
         Notification::query()->create([
             'user_id' => $customer->id,
@@ -110,57 +117,70 @@ final class OrderPaidNotifier
             'sent_at' => now(),
         ]);
 
-        $notification = Notification::query()->create([
-            'user_id' => $customer->id,
-            'type' => 'order.paid.customer',
-            'channel' => 'whatsapp',
-            'subject' => 'Pago confirmado',
-            'message' => $body,
-            'data' => [
-                'order_id' => $order->id,
-                'order_number' => $order->order_number,
-                'amount' => (string) $order->grand_total,
-                'currency' => (string) $order->currency,
-                'lines_summary' => $linesSummary,
-                'phone_snapshot' => $customer->phone,
-                'whatsapp_to' => $this->resolveWhatsAppToFromUser($customer),
-                'customer_email' => (string) $customer->email,
-            ],
-            'status' => 'pending',
-        ]);
+        // SaaS auto-provisionado: el WhatsApp útil es el de acceso (bootstrap), no este.
+        if (! $saasOnly) {
+            $customerTo = $deduper->resolveFromUser($customer);
+            [$to, $skipWa] = $deduper->claim($customerTo);
 
-        $this->sender->send($notification);
+            if (! $skipWa && $to !== null) {
+                $notification = Notification::query()->create([
+                    'user_id' => $customer->id,
+                    'type' => 'order.paid.customer',
+                    'channel' => 'whatsapp',
+                    'subject' => '',
+                    'message' => $body,
+                    'data' => [
+                        'order_id' => $order->id,
+                        'order_number' => $order->order_number,
+                        'amount' => (string) $order->grand_total,
+                        'currency' => (string) $order->currency,
+                        'lines_summary' => $linesSummary,
+                        'phone_snapshot' => $customer->phone,
+                        'whatsapp_to' => $to,
+                        'customer_email' => (string) $customer->email,
+                    ],
+                    'status' => 'pending',
+                ]);
 
-        $customerEmail = trim((string) $customer->email);
-        if ($customerEmail !== '' && filter_var($customerEmail, FILTER_VALIDATE_EMAIL)) {
-            $emailNotification = Notification::query()->create([
-                'user_id' => $customer->id,
-                'type' => 'order.paid.customer',
-                'channel' => 'email',
-                'subject' => 'Pago confirmado – '.$order->order_number,
-                'message' => $body,
-                'data' => [
-                    'order_id' => $order->id,
-                    'order_number' => $order->order_number,
-                    'amount' => (string) $order->grand_total,
-                    'currency' => (string) $order->currency,
-                    'lines_summary' => $linesSummary,
-                    'customer_email' => $customerEmail,
-                    'email_to' => $customerEmail,
-                ],
-                'status' => 'pending',
-            ]);
+                $this->sender->send($notification);
+            }
 
-            $this->sender->send($emailNotification);
+            $customerEmail = trim((string) $customer->email);
+            if ($customerEmail !== '' && filter_var($customerEmail, FILTER_VALIDATE_EMAIL)) {
+                $emailNotification = Notification::query()->create([
+                    'user_id' => $customer->id,
+                    'type' => 'order.paid.customer',
+                    'channel' => 'email',
+                    'subject' => 'Pago confirmado – '.$order->order_number,
+                    'message' => $body,
+                    'data' => [
+                        'order_id' => $order->id,
+                        'order_number' => $order->order_number,
+                        'amount' => (string) $order->grand_total,
+                        'currency' => (string) $order->currency,
+                        'lines_summary' => $linesSummary,
+                        'customer_email' => $customerEmail,
+                        'email_to' => $customerEmail,
+                    ],
+                    'status' => 'pending',
+                ]);
+
+                $this->sender->send($emailNotification);
+            }
+        } else {
+            // Reservar el número del cliente para que el admin no reciba WA duplicado.
+            $deduper->remember($deduper->resolveFromUser($customer));
         }
     }
 
-    public function notifyAdmin(Order $order, User $user): void
+    public function notifyAdmin(Order $order, User $user, ?WhatsAppRecipientDeduper $deduper = null): void
     {
         $customer = $this->resolveCustomerFromOrder($order, $user);
         $order->loadMissing(['lines.sku']);
         $linesSummary = $this->orderLinesSummary($order);
         $body = $this->adminPaidMessage($order, $customer, $linesSummary);
+        $saasOnly = $this->isSaasOnlyOrder($order);
+        $deduper ??= WhatsAppRecipientDeduper::forOrder($order);
 
         $adminUsers = User::query()
             ->role('superadmin')
@@ -177,9 +197,6 @@ final class OrderPaidNotifier
         ];
 
         foreach ($adminUsers as $admin) {
-            $adminTo = $this->resolveWhatsAppToFromUser($admin)
-                ?: WhatsAppPhoneNormalizer::toUltraMsgTo((string) config('openwa.admin_notification_number'));
-
             Notification::query()->create([
                 'user_id' => $admin->id,
                 'type' => 'order.paid.admin',
@@ -191,35 +208,45 @@ final class OrderPaidNotifier
                 'sent_at' => now(),
             ]);
 
-            $notification = Notification::query()->create([
-                'user_id' => $admin->id,
-                'type' => 'order.paid.admin',
-                'channel' => 'whatsapp',
-                'subject' => 'Pedido '.$order->order_number,
-                'message' => $body,
-                'data' => array_merge($data, [
-                    'whatsapp_to' => $adminTo,
-                ]),
-                'status' => 'pending',
-            ]);
+            // SaaS: no pedir "carga de licencias" por WhatsApp; la provisión es automática.
+            if (! $saasOnly) {
+                $adminTo = $deduper->resolveFromUser($admin)
+                    ?: WhatsAppPhoneNormalizer::toUltraMsgTo((string) config('openwa.admin_notification_number'));
 
-            $this->sender->send($notification);
+                [$to, $skipWa] = $deduper->claim($adminTo);
 
-            $adminEmail = trim((string) $admin->email);
-            if ($adminEmail !== '' && filter_var($adminEmail, FILTER_VALIDATE_EMAIL)) {
-                $emailNotification = Notification::query()->create([
-                    'user_id' => $admin->id,
-                    'type' => 'order.paid.admin',
-                    'channel' => 'email',
-                    'subject' => 'Nuevo pedido pagado – '.$order->order_number,
-                    'message' => $body,
-                    'data' => array_merge($data, [
-                        'email_to' => $adminEmail,
-                    ]),
-                    'status' => 'pending',
-                ]);
+                if (! $skipWa && $to !== null) {
+                    $notification = Notification::query()->create([
+                        'user_id' => $admin->id,
+                        'type' => 'order.paid.admin',
+                        'channel' => 'whatsapp',
+                        'subject' => '',
+                        'message' => $body,
+                        'data' => array_merge($data, [
+                            'whatsapp_to' => $to,
+                        ]),
+                        'status' => 'pending',
+                    ]);
 
-                $this->sender->send($emailNotification);
+                    $this->sender->send($notification);
+                }
+
+                $adminEmail = trim((string) $admin->email);
+                if ($adminEmail !== '' && filter_var($adminEmail, FILTER_VALIDATE_EMAIL)) {
+                    $emailNotification = Notification::query()->create([
+                        'user_id' => $admin->id,
+                        'type' => 'order.paid.admin',
+                        'channel' => 'email',
+                        'subject' => 'Nuevo pedido pagado – '.$order->order_number,
+                        'message' => $body,
+                        'data' => array_merge($data, [
+                            'email_to' => $adminEmail,
+                        ]),
+                        'status' => 'pending',
+                    ]);
+
+                    $this->sender->send($emailNotification);
+                }
             }
         }
     }

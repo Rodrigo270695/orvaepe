@@ -469,12 +469,17 @@ class CheckoutMercadoPagoController extends Controller
                 $order->refresh();
                 $order->coupon?->increment('used_count');
 
-                $notifier->notifyCustomer($order, $user);
-                $notifier->notifyAdmin($order, $user);
-                $freshOrder = $order->fresh();
+                $freshOrder = $order->fresh(['user', 'lines.sku.product', 'payments']);
                 $subscriptionProvisioner->provision($freshOrder);
                 $entitlementProvisioner->provision($freshOrder);
                 $licenseProvisioner->provision($freshOrder);
+
+                $notifyOrder = $order->fresh(['user', 'lines.sku.product']) ?? $order;
+                dispatch(function () use ($notifyOrder, $user, $notifier): void {
+                    $deduper = \App\Support\Checkout\WhatsAppRecipientDeduper::forOrder($notifyOrder);
+                    $notifier->notifyCustomer($notifyOrder, $user, $deduper);
+                    $notifier->notifyAdmin($notifyOrder, $user, $deduper);
+                })->afterResponse();
 
                 return;
             }
@@ -522,12 +527,17 @@ class CheckoutMercadoPagoController extends Controller
             $order->refresh();
             $order->coupon?->increment('used_count');
 
-            $notifier->notifyCustomer($order, $user);
-            $notifier->notifyAdmin($order, $user);
-            $freshOrder = $order->fresh();
+            $freshOrder = $order->fresh(['user', 'lines.sku.product', 'payments']);
             $subscriptionProvisioner->provision($freshOrder);
             $entitlementProvisioner->provision($freshOrder);
             $licenseProvisioner->provision($freshOrder);
+
+            $notifyOrder = $order->fresh(['user', 'lines.sku.product']) ?? $order;
+            dispatch(function () use ($notifyOrder, $user, $notifier): void {
+                $deduper = \App\Support\Checkout\WhatsAppRecipientDeduper::forOrder($notifyOrder);
+                $notifier->notifyCustomer($notifyOrder, $user, $deduper);
+                $notifier->notifyAdmin($notifyOrder, $user, $deduper);
+            })->afterResponse();
         });
     }
 

@@ -7,16 +7,18 @@ namespace App\Services\Checkout;
 use App\Models\Notification;
 use App\Models\Order;
 use App\Models\User;
-use App\Services\Notifications\NotificationSender;
+use App\Services\Notifications\DeferredNotificationSender;
+use App\Support\Checkout\WhatsAppRecipientDeduper;
 use App\Support\WhatsAppPhoneNormalizer;
 
 /**
- * WhatsApp, correo e in-app tras provisión SaaS (VetSaaS / Aula Virtual) con URL y credenciales iniciales.
+ * WhatsApp, correo e in-app tras provisión SaaS (VetSaaS / Aula Virtual).
+ * Un solo WhatsApp por número (cliente gana; admin se omite si es el mismo celular).
  */
 final class SaasProvisionAccessNotifier
 {
     public function __construct(
-        private readonly NotificationSender $notificationSender,
+        private readonly DeferredNotificationSender $notificationSender,
     ) {}
 
     public function notify(
@@ -26,6 +28,7 @@ final class SaasProvisionAccessNotifier
         ?string $tenantSlug,
         string $loginEmail,
         ?string $temporaryPassword,
+        ?WhatsAppRecipientDeduper $deduper = null,
     ): void {
         $loginUrl = trim($loginUrl);
         if ($loginUrl === '') {
@@ -36,6 +39,8 @@ final class SaasProvisionAccessNotifier
         if (! $user instanceof User) {
             return;
         }
+
+        $deduper ??= WhatsAppRecipientDeduper::forOrder($order);
 
         [$subject, $message] = $this->buildCustomerCopy(
             $productKey,
@@ -59,21 +64,26 @@ final class SaasProvisionAccessNotifier
             'sent_at' => now(),
         ]);
 
-        $whatsappNotification = Notification::query()->create([
-            'user_id' => $user->id,
-            'type' => $productKey.'.access.customer',
-            'channel' => 'whatsapp',
-            'subject' => $subject,
-            'message' => $message,
-            'data' => array_merge($data, [
-                'phone_snapshot' => $user->phone,
-                'whatsapp_to' => $this->resolveWhatsAppToFromUser($user),
-                'customer_email' => $loginEmail,
-            ]),
-            'status' => 'pending',
-        ]);
+        $customerTo = $deduper->resolveFromUser($user);
+        [$to, $skipWa] = $deduper->claim($customerTo);
 
-        $this->notificationSender->send($whatsappNotification);
+        if (! $skipWa && $to !== null) {
+            $whatsappNotification = Notification::query()->create([
+                'user_id' => $user->id,
+                'type' => $productKey.'.access.customer',
+                'channel' => 'whatsapp',
+                'subject' => '',
+                'message' => $message,
+                'data' => array_merge($data, [
+                    'phone_snapshot' => $user->phone,
+                    'whatsapp_to' => $to,
+                    'customer_email' => $loginEmail,
+                ]),
+                'status' => 'pending',
+            ]);
+
+            $this->notificationSender->send($whatsappNotification);
+        }
 
         $customerEmail = trim($loginEmail);
         if ($customerEmail !== '' && filter_var($customerEmail, FILTER_VALIDATE_EMAIL)) {
@@ -101,6 +111,7 @@ final class SaasProvisionAccessNotifier
             $tenantSlug,
             $loginEmail,
             $temporaryPassword,
+            $deduper,
         );
     }
 
@@ -112,6 +123,7 @@ final class SaasProvisionAccessNotifier
         ?string $tenantSlug,
         string $loginEmail,
         ?string $temporaryPassword,
+        WhatsAppRecipientDeduper $deduper,
     ): void {
         $isVetsaas = $productKey === 'vetsaas';
         $productLabel = $isVetsaas ? 'VetSaaS' : 'Aula Virtual';
@@ -142,9 +154,6 @@ final class SaasProvisionAccessNotifier
             ->get(['id', 'phone', 'email']);
 
         foreach ($adminUsers as $admin) {
-            $adminTo = $this->resolveWhatsAppToFromUser($admin)
-                ?: WhatsAppPhoneNormalizer::toUltraMsgTo((string) config('openwa.admin_notification_number'));
-
             Notification::query()->create([
                 'user_id' => $admin->id,
                 'type' => $productKey.'.access.admin',
@@ -156,19 +165,26 @@ final class SaasProvisionAccessNotifier
                 'sent_at' => now(),
             ]);
 
-            $whatsappNotification = Notification::query()->create([
-                'user_id' => $admin->id,
-                'type' => $productKey.'.access.admin',
-                'channel' => 'whatsapp',
-                'subject' => $subject,
-                'message' => $body,
-                'data' => array_merge($data, [
-                    'whatsapp_to' => $adminTo,
-                ]),
-                'status' => 'pending',
-            ]);
+            $adminTo = $deduper->resolveFromUser($admin)
+                ?: WhatsAppPhoneNormalizer::toUltraMsgTo((string) config('openwa.admin_notification_number'));
 
-            $this->notificationSender->send($whatsappNotification);
+            [$to, $skipWa] = $deduper->claim($adminTo);
+
+            if (! $skipWa && $to !== null) {
+                $whatsappNotification = Notification::query()->create([
+                    'user_id' => $admin->id,
+                    'type' => $productKey.'.access.admin',
+                    'channel' => 'whatsapp',
+                    'subject' => '',
+                    'message' => $body,
+                    'data' => array_merge($data, [
+                        'whatsapp_to' => $to,
+                    ]),
+                    'status' => 'pending',
+                ]);
+
+                $this->notificationSender->send($whatsappNotification);
+            }
 
             $adminEmail = trim((string) $admin->email);
             if ($adminEmail !== '' && filter_var($adminEmail, FILTER_VALIDATE_EMAIL)) {
@@ -235,51 +251,27 @@ final class SaasProvisionAccessNotifier
             ? '🌐 Subdominio: '.$tenantSlug."\n"
             : '';
 
+        $isBootstrap = $isVetsaas && str_contains($loginUrl, '/auth/bienvenida/');
+
         $credentialsBlock = '';
-        if ($temporaryPassword !== null && $temporaryPassword !== '') {
+        if ($isBootstrap) {
+            $credentialsBlock = "👤 Usuario: {$loginEmail}\n"
+                ."🔐 Abre el enlace: entrarás directo a crear tu contraseña.\n\n";
+        } elseif ($temporaryPassword !== null && $temporaryPassword !== '') {
             $credentialsBlock = "👤 Usuario: {$loginEmail}\n"
                 ."🔑 Contraseña temporal: {$temporaryPassword}\n"
-                ."⚠️ Por seguridad, inicia sesión y cambia tu contraseña en el primer acceso "
-                ."(Menú de usuario → Seguridad, o «Olvidé mi contraseña» en la pantalla de login).\n\n";
-        } elseif ($isVetsaas) {
-            $credentialsBlock = "👤 Usuario: {$loginEmail}\n"
-                ."🔐 Abre el enlace de acceso: entrarás directo a crear tu contraseña.\n\n";
+                ."⚠️ Cambia tu contraseña en el primer acceso.\n\n";
         } else {
             $credentialsBlock = "👤 Usuario: {$loginEmail}\n"
-                ."🔐 Define tu contraseña con «Olvidé mi contraseña» en la pantalla de login si aún no tienes una.\n\n";
-        }
-
-        $forgotPath = $isVetsaas ? '/login' : '/forgot-password';
-        $forgotHint = rtrim($loginUrl, '/');
-        if (str_contains($forgotHint, '/login')) {
-            $forgotHint = preg_replace('#/login$#', $forgotPath, $forgotHint) ?? $forgotHint.$forgotPath;
-        } else {
-            $forgotHint .= $forgotPath;
+                ."🔐 Define tu contraseña con «Olvidé mi contraseña» en el login si aún no tienes una.\n\n";
         }
 
         $message = "✅ *{$productLabel} activado*\n"
             .'📦 Pedido: '.$order->order_number."\n"
             .$subdomainLine
             .'🔗 Acceso: '.$loginUrl."\n"
-            .$credentialsBlock
-            .'Si no puedes entrar: '.$forgotHint;
+            .$credentialsBlock;
 
         return [$subject, $message];
-    }
-
-    private function resolveWhatsAppToFromUser(User $user): ?string
-    {
-        $user->loadMissing('profile');
-
-        if (is_string($user->phone) && trim($user->phone) !== '') {
-            return WhatsAppPhoneNormalizer::toUltraMsgTo($user->phone);
-        }
-
-        $profilePhone = $user->profile?->phone;
-        if (is_string($profilePhone) && trim($profilePhone) !== '') {
-            return WhatsAppPhoneNormalizer::toUltraMsgTo($profilePhone);
-        }
-
-        return null;
     }
 }
