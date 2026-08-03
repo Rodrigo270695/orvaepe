@@ -33,6 +33,14 @@ export const marketingSeo = {
         description:
             'Desarrollo a medida sobre bases probadas: alcance, tiempos y entregables alineados a tu operación en Perú.',
     },
+    vetsaas: {
+        title: 'Software veterinario VetSaaS | Historia clínica, agenda e IA | ORVAE',
+        description:
+            'Software veterinario en Perú: historia clínica, agenda, IA, recordatorios WhatsApp, SUNAT y PWA. Activa VetSaaS con tu subdominio desde Orvae.',
+        h1: 'Software veterinario VetSaaS',
+        keywords:
+            'software veterinario, software veterinario Perú, historia clínica veterinaria, sistema para clínicas veterinarias, VetSaaS',
+    },
     correos: {
         title: 'Correos corporativos — ORVAE',
         description:

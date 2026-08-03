@@ -16,6 +16,7 @@ type Props = {
     jsonLd?: Record<string, unknown> | Record<string, unknown>[];
     structuredData?: 'full' | 'minimal' | 'none';
     breadcrumbs?: SeoBreadcrumbItem[];
+    keywords?: string;
     children: ReactNode;
 };
 
@@ -30,6 +31,7 @@ export default function MarketingLayout({
     jsonLd,
     structuredData = 'full',
     breadcrumbs,
+    keywords,
     children,
 }: Props) {
     return (
@@ -45,6 +47,7 @@ export default function MarketingLayout({
                 jsonLd={jsonLd}
                 structuredData={structuredData}
                 breadcrumbs={breadcrumbs}
+                keywords={keywords}
             />
             <div className="min-h-screen bg-background text-foreground">
                 <MarketingUnifiedNavbar />

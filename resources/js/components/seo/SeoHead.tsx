@@ -263,6 +263,8 @@ type Props = {
     structuredData?: 'full' | 'minimal' | 'none';
     /** Migas de pan (JSON-LD BreadcrumbList + ruta semántica) */
     breadcrumbs?: SeoBreadcrumbItem[];
+    /** Meta keywords (opcional; Google casi no las usa, pero no molesta). */
+    keywords?: string;
     children?: ReactNode;
 };
 
@@ -277,6 +279,7 @@ export default function SeoHead({
     jsonLd,
     structuredData = 'full',
     breadcrumbs,
+    keywords,
     children,
 }: Props) {
     const page = usePage<PageWithSeo>();
@@ -317,6 +320,7 @@ export default function SeoHead({
     return (
         <Head title={title}>
             <meta name="description" content={description} />
+            {keywords ? <meta name="keywords" content={keywords} /> : null}
             <meta name="author" content={seo.siteName} />
             <meta name="publisher" content={seo.siteName} />
             <meta name="geo.region" content={seo.geoRegion} />

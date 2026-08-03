@@ -93,7 +93,7 @@ return [
          */
         'knows_about' => array_values(array_filter(array_map('trim', explode(',', (string) env(
             'SEO_ORG_KNOWS_ABOUT',
-            'Software empresarial,ERP,Facturación electrónica,Licencias de software,Soporte técnico,SaaS',
+            'Software empresarial,ERP,Facturación electrónica,Licencias de software,Soporte técnico,SaaS,Software veterinario,VetSaaS',
         ))))),
         /**
          * Tipos Schema.org además de Organization (p. ej. SoftwareCompany). Separados por comas.

@@ -332,15 +332,20 @@ export default function VetSaaSLanding(props: Props) {
                     >
                         <p className="vs-body inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-[#C5E5D9]">
                             <PawPrint className="size-3.5" />
-                            Software veterinario · Perú
+                            Clínicas · Perú · Orvae
                         </p>
-                        <h1 className="vs-display mt-4 text-5xl font-bold leading-[0.95] tracking-tight text-white sm:text-6xl lg:text-7xl">
-                            <span className="vs-shimmer-text">VetSaaS</span>
+                        <h1 className="vs-display mt-4 text-4xl font-bold leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-6xl">
+                            <span className="block text-[0.42em] font-semibold uppercase tracking-[0.18em] text-[#99D2BC] vs-body">
+                                Software veterinario
+                            </span>
+                            <span className="vs-shimmer-text mt-1 inline-block text-5xl sm:text-6xl lg:text-7xl">
+                                VetSaaS
+                            </span>
                         </h1>
                         <p className="vs-body mt-5 max-w-lg text-base leading-relaxed text-[#E6F4EF]/95 sm:text-lg">
-                            Tu clínica en la nube con historia clínica, agenda, caja y SUNAT.
-                            Además: asistente con IA, recordatorios por WhatsApp y PWA en tu
-                            subdominio.
+                            El software veterinario para clínicas en la nube: historia clínica,
+                            agenda, caja, SUNAT, asistente con IA, recordatorios por WhatsApp y PWA
+                            en tu subdominio.
                         </p>
 
                         <div className="mt-5 flex flex-wrap gap-2">
@@ -649,6 +654,48 @@ export default function VetSaaSLanding(props: Props) {
                                     Conocer AlmaPet ID
                                 </a>
                             </div>
+                        </div>
+                    </div>
+                </section>
+            </VetSaaSReveal>
+
+            <VetSaaSReveal>
+                <section
+                    id="faq-software-veterinario"
+                    className="scroll-mt-24 border-t border-[var(--vs-border)] bg-[var(--vs-bg)] py-16"
+                >
+                    <div className="mx-auto max-w-6xl px-5 sm:px-8">
+                        <p className="vs-body text-[10px] font-semibold uppercase tracking-[0.24em] text-[var(--vs-500)]">
+                            Preguntas frecuentes
+                        </p>
+                        <h2 className="vs-display mt-2 text-3xl font-bold">
+                            Software veterinario: lo esencial
+                        </h2>
+                        <div className="mt-8 grid gap-4 md:grid-cols-3">
+                            {[
+                                {
+                                    q: '¿Qué es un software veterinario?',
+                                    a: 'Centraliza historia clínica, agenda, inventario, caja y facturación. VetSaaS lo entrega en la nube con subdominio, IA y WhatsApp.',
+                                },
+                                {
+                                    q: '¿Sirve para clínicas en Perú?',
+                                    a: 'Sí: multi-tenant, comprobantes SUNAT, PWA y activación desde Orvae para operar en minutos.',
+                                },
+                                {
+                                    q: '¿Cómo lo activo?',
+                                    a: 'Eliges Free o un plan de pago en Orvae, confirmas y entras a tu subdominio a crear tu contraseña.',
+                                },
+                            ].map((item) => (
+                                <article
+                                    key={item.q}
+                                    className="vs-section-card rounded-2xl p-5"
+                                >
+                                    <h3 className="vs-display text-lg font-semibold">{item.q}</h3>
+                                    <p className="vs-body vs-muted mt-2 text-sm leading-relaxed">
+                                        {item.a}
+                                    </p>
+                                </article>
+                            ))}
                         </div>
                     </div>
                 </section>

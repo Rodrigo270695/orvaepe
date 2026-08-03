@@ -45,6 +45,11 @@ import {
     type SoftwarePricingPlan,
     type SoftwareSystem,
 } from '@/marketplace/softwareCatalog';
+import {
+    buildVideoObjectLd,
+    isAbsoluteHttpUrl,
+    isVideoMediaUrl,
+} from '@/lib/seoVideoObject';
 
 function getPlanPriceBefore(p: SoftwarePricingPlan): string | undefined {
     const anyPlan = p as SoftwarePricingPlan & {
@@ -372,19 +377,45 @@ export default function SoftwareDetail() {
         const productUrl = `${seo.siteUrl}/software/${system.slug}`;
         const orgId = `${seo.siteUrl}#organization`;
         const webpageId = `${productUrl}#webpage`;
+        const isVetsaas = ['vetsaas', 'vet-saas'].includes(system.slug.toLowerCase());
 
         const base: Record<string, unknown> = {
             '@type': 'SoftwareApplication',
             '@id': `${productUrl}#product`,
-            name: system.name,
-            description: system.shortDescription,
+            name: isVetsaas
+                ? 'VetSaaS — Software veterinario'
+                : system.name,
+            description: isVetsaas
+                ? marketingSeo.vetsaas.description
+                : system.shortDescription,
             applicationCategory: 'BusinessApplication',
             operatingSystem: 'Web',
             url: productUrl,
             mainEntityOfPage: { '@id': webpageId },
             brand: { '@id': orgId },
             provider: { '@id': orgId },
+            inLanguage: 'es-PE',
+            countriesSupported: 'PE',
         };
+
+        if (isVetsaas) {
+            base.alternateName = [
+                'Software veterinario',
+                'Software veterinario Perú',
+                'Sistema para clínicas veterinarias',
+                'Vet SaaS',
+            ];
+            base.keywords = marketingSeo.vetsaas.keywords;
+            base.featureList = [
+                'Historia clínica',
+                'Agenda',
+                'IA integrada',
+                'Recordatorios WhatsApp',
+                'Facturación SUNAT',
+                'PWA multi-tenant',
+            ];
+            base.image = `${seo.siteUrl}/images/vetsaas-hero-pets.png`;
+        }
 
         const first = system.pricingPlans[0];
         if (first) {
@@ -402,18 +433,27 @@ export default function SoftwareDetail() {
             base.offers = offer;
         }
 
-        if (system.demoUrl) {
+        if (isVideoMediaUrl(system.demoUrl)) {
+            const thumb =
+                system.images?.[0] && isAbsoluteHttpUrl(system.images[0])
+                    ? system.images[0]
+                    : `${seo.siteUrl}${seo.defaultImage.startsWith('/') ? '' : '/'}${seo.defaultImage}`;
             base.video = [
-                {
-                    '@type': 'VideoObject',
+                buildVideoObjectLd({
                     name: `${system.name} — demo`,
+                    description:
+                        system.shortDescription ||
+                        `Demostración de ${system.name} en ORVAE.`,
                     contentUrl: system.demoUrl,
-                },
+                    thumbnailUrl: thumb,
+                    uploadDate: '2025-01-15T12:00:00-05:00',
+                    pageUrl: productUrl,
+                }),
             ];
         }
 
         return base;
-    }, [system, seo.siteUrl]);
+    }, [system, seo.siteUrl, seo.defaultImage]);
 
     const consultationWhatsAppHref = useMemo(() => {
         if (!system || !selectedPlan) {
@@ -560,17 +600,58 @@ export default function SoftwareDetail() {
     if (isVetsaasLanding && vetsaasMarketing) {
         return (
             <MarketingLayout
-                title={`${system.name} — Software veterinario`}
-                description={system.shortDescription}
+                title={marketingSeo.vetsaas.title}
+                description={marketingSeo.vetsaas.description}
                 canonicalPath={`/software/${system.slug}`}
                 ogType="product"
-                ogImageAlt={`${system.name} — VetSaaS`}
+                ogImage="/images/vetsaas-hero-pets.png"
+                ogImageAlt="Software veterinario VetSaaS — clínicas en Perú"
+                keywords={marketingSeo.vetsaas.keywords}
                 breadcrumbs={[
                     { name: 'Inicio', path: '/' },
                     { name: 'Software', path: '/software' },
-                    { name: system.name, path: `/software/${system.slug}` },
+                    {
+                        name: 'Software veterinario VetSaaS',
+                        path: `/software/${system.slug}`,
+                    },
                 ]}
-                jsonLd={softwareApplicationLd ? [softwareApplicationLd] : undefined}
+                jsonLd={
+                    softwareApplicationLd
+                        ? [
+                              softwareApplicationLd,
+                              {
+                                  '@type': 'FAQPage',
+                                  '@id': `${seo.siteUrl}/software/${system.slug}#faq`,
+                                  mainEntity: [
+                                      {
+                                          '@type': 'Question',
+                                          name: '¿Qué es un software veterinario?',
+                                          acceptedAnswer: {
+                                              '@type': 'Answer',
+                                              text: 'Un software veterinario centraliza historia clínica, agenda, inventario, caja y facturación de una clínica. VetSaaS lo ofrece en la nube con subdominio propio, IA y recordatorios por WhatsApp.',
+                                          },
+                                      },
+                                      {
+                                          '@type': 'Question',
+                                          name: '¿VetSaaS es un software veterinario para Perú?',
+                                          acceptedAnswer: {
+                                              '@type': 'Answer',
+                                              text: 'Sí. VetSaaS es software veterinario multi-tenant para clínicas en Perú, con comprobantes SUNAT, PWA y activación desde Orvae.',
+                                          },
+                                      },
+                                      {
+                                          '@type': 'Question',
+                                          name: '¿Cómo activo el software veterinario VetSaaS?',
+                                          acceptedAnswer: {
+                                              '@type': 'Answer',
+                                              text: 'Eliges un plan Free o de pago en Orvae, confirmas y entras a tu subdominio a crear tu contraseña para empezar a operar.',
+                                          },
+                                      },
+                                  ],
+                              },
+                          ]
+                        : undefined
+                }
             >
                 <VetSaaSLanding
                     system={system}

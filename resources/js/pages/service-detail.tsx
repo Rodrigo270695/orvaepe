@@ -36,6 +36,11 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { type SoftwarePricingPlan, type SoftwareSystem } from '@/marketplace/softwareCatalog';
+import {
+    buildVideoObjectLd,
+    isAbsoluteHttpUrl,
+    isVideoMediaUrl,
+} from '@/lib/seoVideoObject';
 
 function getPlanPriceBefore(p: SoftwarePricingPlan): string | undefined {
     const anyPlan = p as SoftwarePricingPlan & {
@@ -304,18 +309,27 @@ export default function ServiceDetail() {
             base.offers = offer;
         }
 
-        if (system.demoUrl) {
+        if (isVideoMediaUrl(system.demoUrl)) {
+            const thumb =
+                system.images?.[0] && isAbsoluteHttpUrl(system.images[0])
+                    ? system.images[0]
+                    : `${seo.siteUrl}${seo.defaultImage.startsWith('/') ? '' : '/'}${seo.defaultImage}`;
             base.video = [
-                {
-                    '@type': 'VideoObject',
+                buildVideoObjectLd({
                     name: `${system.name} — demo`,
+                    description:
+                        system.shortDescription ||
+                        `Demostración de ${system.name} en ORVAE.`,
                     contentUrl: system.demoUrl,
-                },
+                    thumbnailUrl: thumb,
+                    uploadDate: '2025-01-15T12:00:00-05:00',
+                    pageUrl: productUrl,
+                }),
             ];
         }
 
         return base;
-    }, [system, seo.siteUrl, visiblePlans]);
+    }, [system, seo.siteUrl, seo.defaultImage, visiblePlans]);
 
     const purchaseEnabled = Boolean(selectedPlan && planHasPurchasablePrice(selectedPlan));
     const webCheckoutEnabled = Boolean(selectedPlan && planAllowsWebCheckout(selectedPlan));

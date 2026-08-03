@@ -570,9 +570,26 @@ final class MarketingSoftwareCatalogPresenter
             return null;
         }
 
-        // Si guardan solo el dominio (ej. example.com) lo convertimos a https.
+        // Textos tipo "Próximamente…" no son URLs: no prefixear https://.
+        if (preg_match('/\s|—|–|[áéíóúñ¿¡]/iu', $t) === 1 && ! Str::startsWith($t, ['http://', 'https://'])) {
+            return null;
+        }
+
         if (! Str::startsWith($t, ['http://', 'https://'])) {
+            // Solo dominios simples (ej. demo.example.com/path)
+            if (! preg_match('/^[a-z0-9][a-z0-9.-]+\.[a-z]{2,}(\/.*)?$/i', $t)) {
+                return null;
+            }
             $t = 'https://'.ltrim($t, '/');
+        }
+
+        if (filter_var($t, FILTER_VALIDATE_URL) === false) {
+            return null;
+        }
+
+        $host = parse_url($t, PHP_URL_HOST);
+        if (! is_string($host) || $host === '' || ! str_contains($host, '.')) {
+            return null;
         }
 
         return $t;
