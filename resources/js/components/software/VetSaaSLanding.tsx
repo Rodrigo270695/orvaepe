@@ -19,9 +19,11 @@ import SoftwareDetailStickyPurchaseBar from '@/components/software/SoftwareDetai
 import VetSaaSClientsCarousel, {
     type VetSaaSShowcaseClient,
 } from '@/components/software/VetSaaSClientsCarousel';
+import VetSaaSMotionRoot from '@/components/software/VetSaaSMotionRoot';
+import VetSaaSReveal from '@/components/software/VetSaaSReveal';
 import VetSaaSScrollPet from '@/components/software/VetSaaSScrollPet';
-import ScrollReveal from '@/components/welcome/ScrollReveal';
 import type { SoftwarePricingPlan, SoftwareSystem } from '@/marketplace/softwareCatalog';
+import { motion, useReducedMotion } from 'motion/react';
 
 export type VetSaaSMarketingPayload = {
     clinics_count: number;
@@ -183,8 +185,10 @@ export default function VetSaaSLanding(props: Props) {
     const modulesNote =
         marketing.modules_note ??
         'Todos los módulos están incluidos en todos los planes. Lo que cambia es la cantidad.';
+    const reduceMotion = useReducedMotion();
 
     return (
+        <VetSaaSMotionRoot>
         <div className="vs-landing relative isolate overflow-hidden">
             <link
                 rel="stylesheet"
@@ -247,6 +251,21 @@ export default function VetSaaSLanding(props: Props) {
                     0%,100% { opacity: 0.45; }
                     50% { opacity: 0.85; }
                 }
+                @keyframes vs-aurora {
+                    0% { transform: translate3d(-4%,0,0) scale(1); }
+                    50% { transform: translate3d(4%,2%,0) scale(1.08); }
+                    100% { transform: translate3d(-4%,0,0) scale(1); }
+                }
+                @keyframes vs-marquee {
+                    from { transform: translateX(0); }
+                    to { transform: translateX(-50%); }
+                }
+                .vs-landing .vs-aurora {
+                    animation: vs-aurora 14s ease-in-out infinite;
+                }
+                .vs-landing .vs-marquee {
+                    animation: vs-marquee 28s linear infinite;
+                }
                 .vs-landing .vs-display { font-family: var(--font-vs-display); }
                 .vs-landing .vs-body { font-family: var(--font-vs-body); }
                 .vs-landing .vs-kenburns { animation: vs-kenburns 22s ease-out forwards; }
@@ -282,7 +301,9 @@ export default function VetSaaSLanding(props: Props) {
                     .vs-landing .vs-kenburns,
                     .vs-landing .vs-float,
                     .vs-landing .vs-pet-bob,
-                    .vs-landing .vs-shimmer-text { animation: none !important; }
+                    .vs-landing .vs-shimmer-text,
+                    .vs-landing .vs-aurora,
+                    .vs-landing .vs-marquee { animation: none !important; }
                 }
             `}</style>
 
@@ -298,14 +319,17 @@ export default function VetSaaSLanding(props: Props) {
                     />
                     <div className="absolute inset-0 bg-gradient-to-r from-[#021E18] via-[#021E18]/88 to-[#021E18]/25" />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#021E18] via-transparent to-[#021E18]/50" />
-                    <div
-                        className="pointer-events-none absolute -left-20 top-1/3 size-72 rounded-full bg-[#33A07B]/25 blur-3xl"
-                        style={{ animation: 'vs-glow-pulse 5s ease-in-out infinite' }}
-                    />
+                    <div className="vs-aurora pointer-events-none absolute -left-24 top-1/4 size-[28rem] rounded-full bg-[#33A07B]/30 blur-3xl" />
+                    <div className="vs-aurora pointer-events-none absolute -right-16 bottom-0 size-[22rem] rounded-full bg-[#006D55]/35 blur-3xl [animation-delay:-4s]" />
                 </div>
 
                 <div className="relative mx-auto flex min-h-[92svh] max-w-6xl flex-col justify-end gap-10 px-5 pb-20 pt-28 sm:px-8 lg:flex-row lg:items-end lg:justify-between lg:pb-28">
-                    <div className="max-w-xl">
+                    <motion.div
+                        className="max-w-xl"
+                        initial={reduceMotion ? false : { opacity: 0, y: 28 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+                    >
                         <p className="vs-body inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-[#C5E5D9]">
                             <PawPrint className="size-3.5" />
                             Software veterinario · Perú
@@ -320,21 +344,24 @@ export default function VetSaaSLanding(props: Props) {
                         </p>
 
                         <div className="mt-5 flex flex-wrap gap-2">
-                            {HERO_PILLS.map(({ icon: Icon, label }) => (
-                                <span
+                            {HERO_PILLS.map(({ icon: Icon, label }, i) => (
+                                <motion.span
                                     key={label}
-                                    className="vs-body inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-medium text-[#E6F4EF] backdrop-blur-sm"
+                                    initial={reduceMotion ? false : { opacity: 0, y: 12 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.25 + i * 0.08, duration: 0.45 }}
+                                    className="vs-body inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-medium text-[#E6F4EF] shadow-[0_0_24px_rgba(51,160,123,0.15)] backdrop-blur-sm"
                                 >
                                     <Icon className="size-3.5 text-[#99D2BC]" />
                                     {label}
-                                </span>
+                                </motion.span>
                             ))}
                         </div>
 
                         <div className="mt-8 flex flex-wrap gap-3">
                             <a
                                 href="#planes"
-                                className="vs-body inline-flex rounded-xl bg-white px-5 py-3 text-sm font-semibold text-[#006D55] shadow-lg shadow-black/20 transition hover:bg-[#E6F4EF] hover:shadow-xl"
+                                className="vs-body inline-flex rounded-xl bg-white px-5 py-3 text-sm font-semibold text-[#006D55] shadow-lg shadow-black/20 transition hover:-translate-y-0.5 hover:bg-[#E6F4EF] hover:shadow-xl"
                             >
                                 Ver planes
                             </a>
@@ -345,25 +372,39 @@ export default function VetSaaSLanding(props: Props) {
                                 Comparar cantidades
                             </a>
                         </div>
-                    </div>
+                    </motion.div>
 
-                    <div className="vs-float relative w-full max-w-sm space-y-3">
-                        <div className="rounded-[1.75rem] border border-white/15 bg-[#04362B]/75 p-6 shadow-2xl backdrop-blur-md">
-                            <div className="flex items-center gap-2 text-[#C5E5D9]">
-                                <Sparkles className="size-4" />
-                                <span className="vs-body text-[10px] uppercase tracking-[0.22em]">
-                                    Clínicas con VetSaaS
-                                </span>
+                    <motion.div
+                        className="vs-float relative w-full max-w-sm space-y-3"
+                        initial={reduceMotion ? false : { opacity: 0, x: 24 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.9, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
+                    >
+                        <div className="relative">
+                            <div className="pointer-events-none absolute -right-6 -top-16 size-28 opacity-90 sm:-right-10 sm:-top-20 sm:size-36">
+                                <img
+                                    src="/images/vetsaas-robot-pet.png"
+                                    alt=""
+                                    className="vs-pet-bob size-full object-contain drop-shadow-[0_20px_40px_rgba(51,160,123,0.45)]"
+                                />
                             </div>
-                            <p className="vs-display mt-3 text-6xl font-bold tabular-nums text-white sm:text-7xl">
-                                {countUp}
-                                <span className="text-3xl text-[#99D2BC]">+</span>
-                            </p>
-                            <p className="vs-body mt-2 text-sm text-[#C5E5D9]/95">
-                                Equipos que ya operan en su propio subdominio.
-                            </p>
+                            <div className="rounded-[1.75rem] border border-white/15 bg-[#04362B]/75 p-6 shadow-2xl backdrop-blur-md">
+                                <div className="flex items-center gap-2 text-[#C5E5D9]">
+                                    <Sparkles className="size-4" />
+                                    <span className="vs-body text-[10px] uppercase tracking-[0.22em]">
+                                        Clínicas con VetSaaS
+                                    </span>
+                                </div>
+                                <p className="vs-display mt-3 text-6xl font-bold tabular-nums text-white sm:text-7xl">
+                                    {countUp}
+                                    <span className="text-3xl text-[#99D2BC]">+</span>
+                                </p>
+                                <p className="vs-body mt-2 text-sm text-[#C5E5D9]/95">
+                                    Equipos que ya operan en su propio subdominio.
+                                </p>
+                            </div>
                         </div>
-                        <div className="rounded-2xl border border-[#25D366]/35 bg-[#04362B]/80 p-4 backdrop-blur-md">
+                        <div className="rounded-2xl border border-[#25D366]/35 bg-[#04362B]/80 p-4 shadow-[0_0_40px_rgba(37,211,102,0.12)] backdrop-blur-md">
                             <div className="flex items-start gap-3">
                                 <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#25D366]/20 text-[#25D366]">
                                     <MessageCircle className="size-5" />
@@ -379,14 +420,62 @@ export default function VetSaaSLanding(props: Props) {
                                 </div>
                             </div>
                         </div>
+                        <div className="rounded-2xl border border-[#33A07B]/35 bg-[#04362B]/80 p-4 backdrop-blur-md">
+                            <div className="flex items-start gap-3">
+                                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#33A07B]/20 text-[#99D2BC]">
+                                    <Bot className="size-5" />
+                                </span>
+                                <div>
+                                    <p className="vs-body text-sm font-semibold text-white">
+                                        IA a tu lado
+                                    </p>
+                                    <p className="vs-body mt-1 text-xs leading-relaxed text-[#C5E5D9]/95">
+                                        Apoyo inteligente en consultas y operación diaria, sin
+                                        cambiar de herramienta.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </motion.div>
+                </div>
+
+                <div className="absolute inset-x-0 bottom-0 overflow-hidden border-t border-white/10 bg-[#021E18]/70 py-2.5 backdrop-blur-md">
+                    <div className="vs-marquee flex w-max gap-10 whitespace-nowrap vs-body text-[11px] font-semibold uppercase tracking-[0.2em] text-[#99D2BC]/90">
+                        {[
+                            'Historia clínica',
+                            'Agenda',
+                            'IA',
+                            'WhatsApp',
+                            'SUNAT',
+                            'PWA',
+                            'Multi-tenant',
+                            'AlmaPet ID',
+                            'Historia clínica',
+                            'Agenda',
+                            'IA',
+                            'WhatsApp',
+                            'SUNAT',
+                            'PWA',
+                            'Multi-tenant',
+                            'AlmaPet ID',
+                        ].map((label, i) => (
+                            <span key={`${label}-${i}`} className="inline-flex items-center gap-2">
+                                <span className="size-1.5 rounded-full bg-[#33A07B]" />
+                                {label}
+                            </span>
+                        ))}
                     </div>
                 </div>
             </section>
 
             {/* Capabilities */}
-            <ScrollReveal direction="up">
-                <section className="vs-body border-b border-[var(--vs-border)] bg-[var(--vs-bg)] py-14">
-                    <div className="mx-auto grid max-w-6xl gap-6 px-5 sm:grid-cols-2 sm:px-8 lg:grid-cols-4">
+            <VetSaaSReveal>
+                <section className="vs-body relative border-b border-[var(--vs-border)] bg-[var(--vs-bg)] py-14">
+                    <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,color-mix(in_oklab,var(--vs-200)_22%,transparent),transparent_55%)]" />
+                    <div
+                        data-vs-stagger
+                        className="relative mx-auto grid max-w-6xl gap-6 px-5 sm:grid-cols-2 sm:px-8 lg:grid-cols-4"
+                    >
                         {[
                             {
                                 icon: Bot,
@@ -413,9 +502,11 @@ export default function VetSaaSLanding(props: Props) {
                             return (
                                 <div
                                     key={item.t}
-                                    className="vs-section-card rounded-2xl p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg"
+                                    className="vs-section-card group rounded-2xl p-5 shadow-sm transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_20px_50px_-20px_rgba(0,109,85,0.45)]"
                                 >
-                                    <Icon className="size-5 text-[var(--vs-500)]" />
+                                    <span className="inline-flex size-10 items-center justify-center rounded-xl bg-[color-mix(in_oklab,var(--vs-500)_14%,transparent)] text-[var(--vs-500)] transition group-hover:scale-110">
+                                        <Icon className="size-5" />
+                                    </span>
                                     <h2 className="vs-display mt-3 text-lg font-semibold">
                                         {item.t}
                                     </h2>
@@ -425,12 +516,13 @@ export default function VetSaaSLanding(props: Props) {
                         })}
                     </div>
                 </section>
-            </ScrollReveal>
+            </VetSaaSReveal>
 
             {/* How multi-tenant + PWA */}
-            <ScrollReveal direction="up">
-                <section className="bg-[var(--vs-card)] py-16">
-                    <div className="mx-auto grid max-w-6xl gap-10 px-5 sm:px-8 lg:grid-cols-2 lg:items-center">
+            <VetSaaSReveal>
+                <section className="relative overflow-hidden bg-[var(--vs-card)] py-16">
+                    <div className="pointer-events-none absolute -left-20 top-0 size-64 rounded-full bg-[color-mix(in_oklab,var(--vs-400)_18%,transparent)] blur-3xl" />
+                    <div className="relative mx-auto grid max-w-6xl gap-10 px-5 sm:px-8 lg:grid-cols-2 lg:items-center">
                         <div>
                             <p className="vs-body text-[10px] font-semibold uppercase tracking-[0.24em] text-[var(--vs-500)]">
                                 Arquitectura
@@ -461,7 +553,7 @@ export default function VetSaaSLanding(props: Props) {
                                 ))}
                             </ul>
                         </div>
-                        <div className="relative overflow-hidden rounded-[1.75rem] border border-white/10 bg-[linear-gradient(160deg,#015743,#006D55_55%,#33A07B)] p-6 text-white shadow-xl">
+                        <div className="relative overflow-hidden rounded-[1.75rem] border border-white/10 bg-[linear-gradient(160deg,#015743,#006D55_55%,#33A07B)] p-6 text-white shadow-[0_30px_80px_-30px_rgba(0,109,85,0.7)]">
                             <Zap className="size-6 text-[#E6F4EF]" />
                             <p className="vs-display mt-4 text-2xl font-bold text-white">
                                 Flujo real
@@ -472,7 +564,7 @@ export default function VetSaaSLanding(props: Props) {
                                 <li>3. Te llevamos a tu subdominio</li>
                                 <li>4. Creas tu contraseña y empiezas a operar</li>
                             </ol>
-                            <div className="pointer-events-none absolute -bottom-8 -right-6 size-36 opacity-40">
+                            <div className="pointer-events-none absolute -bottom-6 -right-4 size-40 drop-shadow-2xl">
                                 <img
                                     src="/images/vetsaas-robot-pet.png"
                                     alt=""
@@ -482,11 +574,11 @@ export default function VetSaaSLanding(props: Props) {
                         </div>
                     </div>
                 </section>
-            </ScrollReveal>
+            </VetSaaSReveal>
 
             {/* Clients */}
             {clients.length > 0 ? (
-                <ScrollReveal direction="up">
+                <VetSaaSReveal>
                     <section className="bg-[var(--vs-bg)] py-14">
                         <div className="mx-auto max-w-6xl px-5 sm:px-8">
                             <p className="vs-body text-[10px] font-semibold uppercase tracking-[0.24em] text-[var(--vs-500)]">
@@ -500,11 +592,11 @@ export default function VetSaaSLanding(props: Props) {
                             <VetSaaSClientsCarousel clients={clients} compact />
                         </div>
                     </section>
-                </ScrollReveal>
+                </VetSaaSReveal>
             ) : null}
 
             {/* Novelties + AlmaPet */}
-            <ScrollReveal direction="up">
+            <VetSaaSReveal>
                 <section className="bg-[var(--vs-card)] py-16">
                     <div className="mx-auto max-w-6xl px-5 sm:px-8">
                         <p className="vs-body text-[10px] font-semibold uppercase tracking-[0.24em] text-[var(--vs-500)]">
@@ -513,11 +605,11 @@ export default function VetSaaSLanding(props: Props) {
                         <h2 className="vs-display mt-2 text-3xl font-bold">
                             Lo que está llegando a VetSaaS
                         </h2>
-                        <div className="mt-8 grid gap-4 md:grid-cols-3">
+                        <div data-vs-stagger className="mt-8 grid gap-4 md:grid-cols-3">
                             {NOVELTIES.map((n) => (
                                 <article
                                     key={n.title}
-                                    className="rounded-2xl border border-[var(--vs-border)] bg-[var(--vs-bg)] p-5 transition duration-300 hover:-translate-y-1 hover:shadow-lg"
+                                    className="rounded-2xl border border-[var(--vs-border)] bg-[var(--vs-bg)] p-5 transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_20px_50px_-24px_rgba(0,109,85,0.4)]"
                                 >
                                     <span className="vs-body rounded-full bg-[#006D55] px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
                                         {n.tag}
@@ -552,7 +644,7 @@ export default function VetSaaSLanding(props: Props) {
                                     href="https://almapetid.com"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="vs-body inline-flex shrink-0 items-center justify-center rounded-xl bg-white px-5 py-3 text-sm font-semibold text-[#0A1A24] transition hover:bg-[#E8F4F8]"
+                                    className="vs-body inline-flex shrink-0 items-center justify-center rounded-xl bg-white px-5 py-3 text-sm font-semibold text-[#0A1A24] transition hover:-translate-y-0.5 hover:bg-[#E8F4F8]"
                                 >
                                     Conocer AlmaPet ID
                                 </a>
@@ -560,7 +652,7 @@ export default function VetSaaSLanding(props: Props) {
                         </div>
                     </div>
                 </section>
-            </ScrollReveal>
+            </VetSaaSReveal>
 
             {/* Plans */}
             <section
@@ -568,7 +660,7 @@ export default function VetSaaSLanding(props: Props) {
                 className="vs-planes scroll-mt-24 bg-[var(--vs-bg)] py-16 text-[var(--vs-ink)] sm:py-20"
             >
                 <div className="mx-auto max-w-6xl px-5 sm:px-8">
-                    <ScrollReveal direction="up">
+                    <VetSaaSReveal>
                         <div className="max-w-2xl">
                             <p className="vs-body text-[10px] font-semibold uppercase tracking-[0.24em] text-[var(--vs-500)]">
                                 Planes
@@ -580,7 +672,7 @@ export default function VetSaaSLanding(props: Props) {
                                 {modulesNote}
                             </p>
                         </div>
-                    </ScrollReveal>
+                    </VetSaaSReveal>
 
                     <div className="mt-10">
                         <SoftwareDetailPlansPicker
@@ -679,26 +771,28 @@ export default function VetSaaSLanding(props: Props) {
             </section>
 
             {/* Closing */}
-            <section className="relative overflow-hidden bg-[var(--vs-bg)] py-16 sm:py-20">
-                <div className="pointer-events-none absolute inset-y-0 right-0 w-1/2 bg-[radial-gradient(circle_at_80%_50%,color-mix(in_oklab,var(--vs-200)_45%,transparent),transparent_60%)]" />
-                <div className="relative mx-auto flex max-w-6xl flex-col gap-6 px-5 sm:flex-row sm:items-end sm:justify-between sm:px-8">
-                    <div className="max-w-xl">
-                        <h2 className="vs-display text-3xl font-bold sm:text-4xl">
-                            Tu clínica, tu subdominio
-                        </h2>
-                        <p className="vs-body vs-muted mt-3 text-sm leading-relaxed sm:text-base">
-                            Activa Free o un plan de pago en Orvae. Al confirmar, entras a crear tu
-                            contraseña en VetSaaS — con IA y WhatsApp listos para tu equipo.
-                        </p>
+            <VetSaaSReveal>
+                <section className="relative overflow-hidden bg-[var(--vs-bg)] py-16 sm:py-20">
+                    <div className="pointer-events-none absolute inset-y-0 right-0 w-1/2 bg-[radial-gradient(circle_at_80%_50%,color-mix(in_oklab,var(--vs-200)_45%,transparent),transparent_60%)]" />
+                    <div className="relative mx-auto flex max-w-6xl flex-col gap-6 px-5 sm:flex-row sm:items-end sm:justify-between sm:px-8">
+                        <div className="max-w-xl">
+                            <h2 className="vs-display text-3xl font-bold sm:text-4xl">
+                                Tu clínica, tu subdominio
+                            </h2>
+                            <p className="vs-body vs-muted mt-3 text-sm leading-relaxed sm:text-base">
+                                Activa Free o un plan de pago en Orvae. Al confirmar, entras a crear
+                                tu contraseña en VetSaaS — con IA y WhatsApp listos para tu equipo.
+                            </p>
+                        </div>
+                        <a
+                            href="#planes"
+                            className="vs-body inline-flex shrink-0 rounded-xl bg-[#006D55] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-[#006D55]/35 transition hover:-translate-y-0.5 hover:bg-[#015743]"
+                        >
+                            Empezar ahora
+                        </a>
                     </div>
-                    <a
-                        href="#planes"
-                        className="vs-body inline-flex shrink-0 rounded-xl bg-[#006D55] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-[#006D55]/35 transition hover:bg-[#015743]"
-                    >
-                        Empezar ahora
-                    </a>
-                </div>
-            </section>
+                </section>
+            </VetSaaSReveal>
 
             {selectedPlan ? (
                 <SoftwareDetailStickyPurchaseBar
@@ -716,5 +810,6 @@ export default function VetSaaSLanding(props: Props) {
                 />
             ) : null}
         </div>
+        </VetSaaSMotionRoot>
     );
 }
