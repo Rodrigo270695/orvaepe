@@ -112,6 +112,7 @@ return [
 
     'sitemap_static' => [
         '/' => ['priority' => '1.0', 'changefreq' => 'weekly'],
+        '/portafolio' => ['priority' => '0.92', 'changefreq' => 'weekly'],
         '/software' => ['priority' => '0.95', 'changefreq' => 'weekly'],
         '/servicios' => ['priority' => '0.9', 'changefreq' => 'monthly'],
         '/contacto' => ['priority' => '0.85', 'changefreq' => 'monthly'],

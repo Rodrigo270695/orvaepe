@@ -44,6 +44,7 @@ use App\Http\Controllers\Marketing\ComplaintBookController;
 use App\Http\Controllers\Marketing\MarketingCartController;
 use App\Http\Controllers\Marketing\MarketingContactController;
 use App\Http\Controllers\Marketing\MarketingLicensesController;
+use App\Http\Controllers\Marketing\MarketingPortfolioController;
 use App\Http\Controllers\Marketing\MarketingServiceDetailController;
 use App\Http\Controllers\Marketing\MarketingServicesController;
 use App\Http\Controllers\Marketing\MarketingSoftwareController;
@@ -64,7 +65,6 @@ use App\Http\Controllers\Sunat\InvoiceDocumentSequencesController;
 use App\Http\Controllers\Sunat\SunatEmitterSettingsController;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RedirectClientUsersFromStaffArea;
-use App\Models\ShowcaseClient;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -85,25 +85,12 @@ Route::withoutMiddleware([
 });
 
 Route::get('/', function () use ($canRegister) {
-    $showcaseClients = ShowcaseClient::query()
-        ->published()
-        ->get()
-        ->map(fn (ShowcaseClient $c) => [
-            'id' => $c->id,
-            'name' => $c->publicName(),
-            'logo' => $c->logo_public_url,
-            'website_url' => $c->website_url,
-            'sector' => $c->sector,
-        ])
-        ->values()
-        ->all();
-
     return Inertia::render('welcome', [
         'canRegister' => $canRegister,
-        'showcaseClients' => $showcaseClients,
     ]);
 })->name('home');
 
+Route::get('/portafolio', MarketingPortfolioController::class)->name('marketing-portfolio');
 Route::get('/software', MarketingSoftwareController::class)->name('marketing-software');
 Route::get('/renovar/vetsaas', VetSaaSRenewalRedirectController::class)
     ->name('marketing.vetsaas-renew');

@@ -2,8 +2,10 @@
 
 namespace App\Support;
 
+use App\Models\CatalogCategory;
 use App\Models\CatalogProduct;
 use App\Models\CatalogSku;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 /**
@@ -23,6 +25,61 @@ final class MarketingSoftwareCatalogPresenter
         'service_project',
         'service_subscription',
     ];
+
+    /**
+     * Categorías públicas de sistemas propios con productos activos (catálogo / portafolio).
+     *
+     * @return list<array{slug: string, title: string, description: string, systems: list<array<string, mixed>>}>
+     */
+    public static function publishedCategorySections(): array
+    {
+        $saleModels = self::OWN_SOFTWARE_SALE_MODELS;
+
+        return CatalogCategory::query()
+            ->where('is_active', true)
+            ->where('revenue_line', 'software_system')
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->with([
+                'products' => function ($q) use ($saleModels) {
+                    $q->where('is_active', true)
+                        ->whereHas('skus', function ($sq) use ($saleModels) {
+                            $sq->where('is_active', true)
+                                ->whereIn('sale_model', $saleModels);
+                        })
+                        ->with([
+                            'category:id,slug,name',
+                            'skus' => function ($sq) use ($saleModels) {
+                                $sq->where('is_active', true)
+                                    ->whereIn('sale_model', $saleModels)
+                                    ->orderBy('sort_order')
+                                    ->orderBy('name');
+                            },
+                            'softwareReleases' => function ($rq) {
+                                $rq->orderByDesc('released_at')->limit(1);
+                            },
+                        ])
+                        ->orderBy('name');
+                },
+            ])
+            ->get()
+            ->map(function (CatalogCategory $category) {
+                $systems = $category->products
+                    ->map(fn ($product) => self::productToSystem($product))
+                    ->values()
+                    ->all();
+
+                return [
+                    'slug' => $category->slug,
+                    'title' => $category->name,
+                    'description' => (string) ($category->description ?? ''),
+                    'systems' => $systems,
+                ];
+            })
+            ->filter(fn (array $c) => count($c['systems']) > 0)
+            ->values()
+            ->all();
+    }
 
     /**
      * Extrae el primer string no vacío de `specs[$key]`.
@@ -103,7 +160,7 @@ final class MarketingSoftwareCatalogPresenter
             $needle = strtolower($key);
 
             foreach ($specs as $specKey => $specValue) {
-                if (!is_string($specKey)) {
+                if (! is_string($specKey)) {
                     continue;
                 }
 
@@ -129,7 +186,7 @@ final class MarketingSoftwareCatalogPresenter
 
             if (is_array($v)) {
                 foreach ($v as $item) {
-                    if (!is_scalar($item)) {
+                    if (! is_scalar($item)) {
                         continue;
                     }
 
@@ -461,6 +518,7 @@ final class MarketingSoftwareCatalogPresenter
                         if ($t !== '') {
                             $values[] = $t;
                         }
+
                         continue;
                     }
 
@@ -540,7 +598,7 @@ final class MarketingSoftwareCatalogPresenter
     }
 
     /**
-     * @param  \Illuminate\Support\Collection<int, CatalogSku>  $skus
+     * @param  Collection<int, CatalogSku>  $skus
      * @return list<string>
      */
     private static function badgesFromServiceSkus($skus): array
@@ -631,7 +689,7 @@ final class MarketingSoftwareCatalogPresenter
      */
     private static function serviceIncludesFromSpecs(array $specs): array
     {
-        if (!array_key_exists('incluye', $specs)) {
+        if (! array_key_exists('incluye', $specs)) {
             return [];
         }
 
@@ -685,13 +743,13 @@ final class MarketingSoftwareCatalogPresenter
         $out = [];
 
         foreach ($specs as $specKey => $specValue) {
-            if (!is_string($specKey)) {
+            if (! is_string($specKey)) {
                 continue;
             }
 
             $keyLower = strtolower($specKey);
 
-            if (!in_array($keyLower, $aliases, true)) {
+            if (! in_array($keyLower, $aliases, true)) {
                 continue;
             }
 
@@ -706,7 +764,7 @@ final class MarketingSoftwareCatalogPresenter
                 }
             } elseif (is_array($specValue)) {
                 foreach ($specValue as $item) {
-                    if (!is_scalar($item)) {
+                    if (! is_scalar($item)) {
                         continue;
                     }
                     $t = trim((string) $item);
@@ -738,7 +796,7 @@ final class MarketingSoftwareCatalogPresenter
     }
 
     /**
-     * @param  \Illuminate\Support\Collection<int, CatalogSku>  $skus
+     * @param  Collection<int, CatalogSku>  $skus
      * @return list<string>
      */
     private static function badgesFromSkus($skus): array

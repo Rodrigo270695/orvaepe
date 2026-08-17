@@ -104,9 +104,13 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
         pathname === '/contacto' ||
         (pathname === '/' && (hash === '#contacto' || activeLandingSection === 'contacto'));
     const isInicioActive = pathname === '/' && activeLandingSection === 'inicio';
+    const isPortafolioActive = pathname.startsWith('/portafolio');
 
     const getTopFromPath = (): DropdownKey => {
         if (pathname.startsWith('/contacto')) {
+            return null;
+        }
+        if (pathname.startsWith('/portafolio')) {
             return null;
         }
         if (pathname.startsWith('/software')) {
@@ -400,6 +404,7 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
         softwareNavLinks && softwareNavLinks.length > 0
             ? softwareNavLinks
             : [
+                  { label: 'Portafolio', href: '/portafolio' },
                   { label: 'Software desarrollado', href: '/software' },
                   { label: 'Contabilidad', href: '/software#contabilidad' },
                   { label: 'Ventas', href: '/software#ventas' },
@@ -657,6 +662,25 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                             {renderDesktopDropdown('software', softwareLinks, openDropdown === 'software', 'dropdown-software')}
                         </div>
 
+                        <Link
+                            href="/portafolio"
+                            className={cx(
+                                topLinkClass,
+                                isPortafolioActive
+                                    ? 'text-[var(--state-info)]'
+                                    : 'text-[var(--foreground)]',
+                            )}
+                            onClick={closeAll}
+                        >
+                            Portafolio
+                            <span
+                                className={activeUnderline}
+                                style={{
+                                    transform: isPortafolioActive ? 'scaleX(1)' : 'scaleX(0)',
+                                }}
+                            />
+                        </Link>
+
                         <div
                             className="relative"
                             onKeyDown={(e) =>
@@ -866,6 +890,17 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                                         </div>
                                     </div>
                                 </div>
+
+                                <Link
+                                    href="/portafolio"
+                                    className={cx(
+                                        'cursor-pointer rounded-xl px-3 py-2 text-sm font-semibold hover:bg-[color-mix(in_oklab,var(--o-amber)_10%,transparent)]',
+                                        isPortafolioActive ? 'text-[var(--state-info)]' : 'text-[var(--foreground)]',
+                                    )}
+                                    onClick={closeAll}
+                                >
+                                    Portafolio
+                                </Link>
 
                                 <button
                                     type="button"

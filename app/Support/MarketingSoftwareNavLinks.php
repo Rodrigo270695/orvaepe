@@ -31,6 +31,7 @@ final class MarketingSoftwareNavLinks
             ->get(['slug', 'name']);
 
         $links = [
+            ['label' => 'Portafolio', 'href' => '/portafolio'],
             ['label' => 'Software desarrollado', 'href' => '/software'],
         ];
 

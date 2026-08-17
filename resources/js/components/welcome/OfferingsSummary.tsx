@@ -17,6 +17,7 @@ const semanticCycle = [
 ] as const;
 
 const defaultSoftwareLinks: { label: string; href: string }[] = [
+    { label: 'Portafolio', href: '/portafolio' },
     { label: 'Software desarrollado', href: '/software' },
     { label: 'Contabilidad', href: '/software#contabilidad' },
     { label: 'Ventas', href: '/software#ventas' },

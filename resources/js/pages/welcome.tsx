@@ -4,23 +4,20 @@ import { marketingSeo } from '@/marketing/seoCopy';
 import PageHero from '@/components/marketing/PageHero';
 import { getMarketingHeroNavCtas } from '@/marketing/marketingHeroNavCtas';
 import AppearanceFloatingRailToggle from '@/components/welcome/AppearanceFloatingRailToggle';
-import ClientsCarousel from '@/components/welcome/ClientsCarousel';
 import MissionVision from '@/components/welcome/MissionVision';
 import OfferingsSummary from '@/components/welcome/OfferingsSummary';
+import PortfolioHomeTeaser from '@/components/welcome/PortfolioHomeTeaser';
 import ScrollReveal from '@/components/welcome/ScrollReveal';
 import ScrollToTopButton from '@/components/welcome/ScrollToTopButton';
 import TestimonialsSection from '@/components/welcome/TestimonialsSection';
 import HomeFeaturedServices from '@/components/welcome/HomeFeaturedServices';
 import HomeVetSaaSSpotlight from '@/components/welcome/HomeVetSaaSSpotlight';
 import WelcomeFooter from '@/components/welcome/WelcomeFooter';
-import type { ShowcaseClientPublic } from '@/types/showcase-client';
 
 export default function Welcome({
     canRegister = true,
-    showcaseClients = [],
 }: {
     canRegister?: boolean;
-    showcaseClients?: ShowcaseClientPublic[];
 }) {
     return (
         <>
@@ -79,7 +76,7 @@ export default function Welcome({
                     </ScrollReveal>
                     <div className="landing-section-flair mx-4 px-4" aria-hidden />
                     <ScrollReveal direction="up">
-                        <ClientsCarousel clients={showcaseClients} />
+                        <PortfolioHomeTeaser />
                     </ScrollReveal>
                     <div className="landing-section-flair mx-4 px-4" aria-hidden />
                     <ScrollReveal direction="up">

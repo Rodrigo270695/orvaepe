@@ -95,6 +95,7 @@ export function MarketingGlobalSearchProvider({
         const base: SearchItem[] = [
             { label: 'Inicio', href: '/', section: 'General' },
             { label: 'Software', href: '/software', section: 'General' },
+            { label: 'Portafolio', href: '/portafolio', section: 'General', keywords: ['sistemas', 'empresas', 'casos'] },
             { label: 'Licencias', href: '/licencias', section: 'General' },
             { label: 'Servicios', href: '/servicios', section: 'General' },
             { label: 'Contacto', href: '/contacto', section: 'General' },

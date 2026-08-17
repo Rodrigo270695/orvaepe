@@ -14,6 +14,7 @@ import {
 
 const footerNav = [
     { href: '/software', label: 'Software' },
+    { href: '/portafolio', label: 'Portafolio' },
     { href: '/licencias', label: 'Precios' },
     { href: '/servicios', label: 'Servicios' },
     { href: '/terminos-y-condiciones', label: 'Términos' },

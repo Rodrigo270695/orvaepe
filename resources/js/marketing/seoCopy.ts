@@ -13,6 +13,11 @@ export const marketingSeo = {
         description:
             'Explora sistemas listos para usar: ERP, RR.HH., inventario y más. Modelos licencia perpetua, rental o suscripción. Precios y planes visibles.',
     },
+    portafolio: {
+        title: 'Portafolio — Sistemas desarrollados por ORVAE',
+        description:
+            'Portafolio de sistemas ORVAE: contabilidad, ventas, inventario, veterinaria y más. Casos reales y empresas que ya operan con nuestras soluciones.',
+    },
     servicios: {
         title: 'Servicios — Integraciones, correos y operación ORVAE',
         description:

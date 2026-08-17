@@ -68,6 +68,35 @@ class ShowcaseClient extends Model
     }
 
     /**
+     * Shape público para landing / portafolio (carrusel de empresas).
+     *
+     * @return array{id: string, name: string, logo: string|null, website_url: string|null, sector: string|null}
+     */
+    public function toPublicArray(): array
+    {
+        return [
+            'id' => $this->id,
+            'name' => $this->publicName(),
+            'logo' => $this->logo_public_url,
+            'website_url' => $this->website_url,
+            'sector' => $this->sector,
+        ];
+    }
+
+    /**
+     * @return list<array{id: string, name: string, logo: string|null, website_url: string|null, sector: string|null}>
+     */
+    public static function publishedForPublic(): array
+    {
+        return static::query()
+            ->published()
+            ->get()
+            ->map(fn (self $c) => $c->toPublicArray())
+            ->values()
+            ->all();
+    }
+
+    /**
      * Ruta relativa al mismo host (evita fallos si APP_URL no coincide con el host del navegador).
      */
     public function getLogoPublicUrlAttribute(): ?string

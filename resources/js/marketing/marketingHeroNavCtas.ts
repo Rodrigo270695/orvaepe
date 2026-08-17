@@ -4,7 +4,13 @@ import type { PageHeroCTA } from '@/components/marketing/PageHero';
  * Contexto de la página marketing donde se muestra el PageHero.
  * Los CTAs guían al visitante hacia las otras áreas (nunca repiten la página actual).
  */
-export type MarketingHeroNavContext = 'home' | 'software' | 'licencias' | 'servicios' | 'contacto';
+export type MarketingHeroNavContext =
+    | 'home'
+    | 'software'
+    | 'licencias'
+    | 'servicios'
+    | 'contacto'
+    | 'portafolio';
 
 /**
  * Tres accesos rápidos al resto del sitio según la página actual.
@@ -12,6 +18,7 @@ export type MarketingHeroNavContext = 'home' | 'software' | 'licencias' | 'servi
  * En software: Contacto, Licencias, Servicios.
  * En licencias: Software, Contacto, Servicios.
  * En servicios: Software, Contacto, Licencias.
+ * En portafolio: Catálogo y Contacto (el hero ya tiene “Ver sistemas”).
  */
 export function getMarketingHeroNavCtas(context: MarketingHeroNavContext): PageHeroCTA[] {
     const outline = 'outline' as const;
@@ -47,6 +54,11 @@ export function getMarketingHeroNavCtas(context: MarketingHeroNavContext): PageH
                 { href: '/software', label: 'Software', variant: primary },
                 { href: '/licencias', label: 'Licencias', variant: outline },
                 { href: '/servicios', label: 'Servicios', variant: outline },
+            ];
+        case 'portafolio':
+            return [
+                { href: '/software', label: 'Catálogo', variant: outline },
+                { href: '/contacto', label: 'Contacto', variant: outline },
             ];
     }
 }
