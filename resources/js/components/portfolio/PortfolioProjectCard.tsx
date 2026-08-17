@@ -1,40 +1,50 @@
-'use client';
+import { Link } from '@inertiajs/react';
+import { ArrowUpRight, ExternalLink, Layers } from 'lucide-react';
 
-import { ArrowUpRight, Layers } from 'lucide-react';
-
+import { isVideoMediaUrl } from '@/lib/seoVideoObject';
 import type { SoftwareSystem } from '@/marketplace/softwareCatalog';
 
 type Props = {
     system: SoftwareSystem;
     categoryTitle: string;
     accent: string;
-    featured?: boolean;
 };
+
+function platformHref(system: SoftwareSystem): string | null {
+    const url = system.demoUrl?.trim() ?? '';
+    if (url === '' || isVideoMediaUrl(url)) {
+        return null;
+    }
+    return url;
+}
 
 export default function PortfolioProjectCard({
     system,
     categoryTitle,
     accent,
-    featured = false,
 }: Props) {
     const coverUrl =
         system.images?.find((u) => typeof u === 'string' && u.trim() !== '')?.trim() ??
         null;
-    const modules = (system.modules ?? []).slice(0, featured ? 6 : 4);
+    const liveUrl = platformHref(system);
+    const href = liveUrl ?? `/software/${system.slug}`;
+    const opensPlatform = Boolean(liveUrl);
+    const modules = (system.modules ?? []).slice(0, 4);
 
-    return (
-        <article
-            className={[
-                'group relative flex h-full flex-col overflow-hidden rounded-[1.35rem] border bg-card/80 shadow-sm backdrop-blur-md transition-all duration-300',
-                'hover:-translate-y-0.5 hover:shadow-[0_24px_50px_-24px_color-mix(in_oklab,var(--foreground)_22%,transparent)]',
-                featured ? 'lg:flex-row' : '',
-            ].join(' ')}
-            style={{
-                borderColor: `color-mix(in oklab, ${accent} 28%, var(--border))`,
-                boxShadow:
-                    '0 0 0 1px var(--hero-card-inset) inset, 0 14px 40px -28px color-mix(in oklab, var(--foreground) 18%, transparent)',
-            }}
-        >
+    const className = [
+        'group relative flex h-full flex-col overflow-hidden rounded-[1.5rem] border bg-card/80 text-left no-underline shadow-sm backdrop-blur-md transition-all duration-300',
+        'hover:-translate-y-1 hover:shadow-[0_28px_56px_-28px_color-mix(in_oklab,var(--foreground)_24%,transparent)]',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+    ].join(' ');
+
+    const style = {
+        borderColor: `color-mix(in oklab, ${accent} 28%, var(--border))`,
+        boxShadow:
+            '0 0 0 1px var(--hero-card-inset) inset, 0 14px 40px -28px color-mix(in oklab, var(--foreground) 18%, transparent)',
+    } as const;
+
+    const body = (
+        <>
             <div
                 className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
                 style={{
@@ -43,28 +53,17 @@ export default function PortfolioProjectCard({
                 aria-hidden
             />
 
-            <div
-                className={[
-                    'relative overflow-hidden bg-[color-mix(in_oklab,var(--muted)_35%,transparent)]',
-                    featured ? 'lg:w-[58%] lg:min-h-[22rem]' : '',
-                ].join(' ')}
-            >
+            <div className="relative overflow-hidden bg-[color-mix(in_oklab,var(--muted)_35%,transparent)]">
                 {coverUrl ? (
                     <img
                         src={coverUrl}
-                        alt={`Captura de ${system.name}`}
-                        className={[
-                            'w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]',
-                            featured ? 'aspect-[16/10] h-full lg:aspect-auto' : 'aspect-[16/10]',
-                        ].join(' ')}
+                        alt=""
+                        className="aspect-[4/3] w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
                         loading="lazy"
                     />
                 ) : (
                     <div
-                        className={[
-                            'flex w-full items-center justify-center',
-                            featured ? 'aspect-[16/10] min-h-[16rem] lg:aspect-auto lg:h-full' : 'aspect-[16/10]',
-                        ].join(' ')}
+                        className="flex aspect-[4/3] w-full items-center justify-center"
                         style={{
                             background: `linear-gradient(135deg, color-mix(in oklab, ${accent} 24%, var(--muted)) 0%, color-mix(in oklab, var(--card) 88%, transparent) 100%)`,
                         }}
@@ -88,32 +87,17 @@ export default function PortfolioProjectCard({
                 </span>
             </div>
 
-            <div
-                className={[
-                    'relative z-10 flex flex-1 flex-col p-5 sm:p-6',
-                    featured ? 'lg:justify-center lg:p-8' : '',
-                ].join(' ')}
-            >
-                <h3
-                    className={[
-                        'font-display font-bold tracking-tight text-foreground',
-                        featured ? 'text-2xl md:text-3xl' : 'text-lg md:text-xl',
-                    ].join(' ')}
-                >
+            <div className="relative z-10 flex flex-1 flex-col p-5 sm:p-6">
+                <h3 className="font-display text-lg font-bold tracking-tight text-foreground md:text-xl">
                     {system.name}
                 </h3>
-                <p
-                    className={[
-                        'mt-2 text-muted-foreground',
-                        featured ? 'max-w-lg text-base leading-relaxed' : 'text-sm leading-relaxed',
-                    ].join(' ')}
-                >
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                     {system.shortDescription}
                 </p>
 
                 {system.badges.length > 0 ? (
                     <div className="mt-4 flex flex-wrap gap-2">
-                        {system.badges.slice(0, featured ? 4 : 3).map((badge) => (
+                        {system.badges.slice(0, 3).map((badge) => (
                             <span
                                 key={badge}
                                 className="rounded-full border px-2.5 py-0.5 text-[11px] font-semibold"
@@ -130,12 +114,7 @@ export default function PortfolioProjectCard({
                 ) : null}
 
                 {modules.length > 0 ? (
-                    <ul
-                        className={[
-                            'mt-4 flex flex-wrap gap-1.5',
-                            featured ? '' : 'hidden sm:flex',
-                        ].join(' ')}
-                    >
+                    <ul className="mt-4 hidden flex-wrap gap-1.5 sm:flex">
                         {modules.map((mod) => (
                             <li
                                 key={mod.name}
@@ -148,18 +127,47 @@ export default function PortfolioProjectCard({
                 ) : null}
 
                 <div className="mt-auto pt-5">
-                    <a
-                        href={`/software/${system.slug}`}
-                        className="inline-flex min-h-11 items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold text-foreground transition-[transform,background-color,border-color] hover:-translate-y-px hover:bg-[color-mix(in_oklab,var(--primary)_8%,transparent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    <span
+                        className="inline-flex min-h-11 items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold text-foreground transition-[transform,background-color] group-hover:-translate-y-px group-hover:bg-[color-mix(in_oklab,var(--primary)_8%,transparent)]"
                         style={{
                             borderColor: `color-mix(in oklab, ${accent} 38%, var(--border))`,
                         }}
                     >
-                        Ver sistema
-                        <ArrowUpRight className="size-4 opacity-80" aria-hidden />
-                    </a>
+                        {opensPlatform ? 'Abrir plataforma' : 'Ver sistema'}
+                        {opensPlatform ? (
+                            <ExternalLink className="size-4 opacity-80" aria-hidden />
+                        ) : (
+                            <ArrowUpRight className="size-4 opacity-80" aria-hidden />
+                        )}
+                    </span>
                 </div>
             </div>
-        </article>
+        </>
+    );
+
+    if (opensPlatform && liveUrl) {
+        return (
+            <a
+                href={liveUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={className}
+                style={style}
+                aria-label={`Abrir la plataforma ${system.name}`}
+            >
+                {body}
+            </a>
+        );
+    }
+
+    return (
+        <Link
+            href={href}
+            className={className}
+            style={style}
+            aria-label={`Ver el sistema ${system.name}`}
+        >
+            {body}
+        </Link>
     );
 }

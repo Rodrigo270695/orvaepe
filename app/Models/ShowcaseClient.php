@@ -68,7 +68,7 @@ class ShowcaseClient extends Model
     }
 
     /**
-     * Shape público para landing / portafolio (carrusel de empresas).
+     * Shape público para landing / portafolio (vitrina de empresas).
      *
      * @return array{id: string, name: string, logo: string|null, website_url: string|null, sector: string|null}
      */

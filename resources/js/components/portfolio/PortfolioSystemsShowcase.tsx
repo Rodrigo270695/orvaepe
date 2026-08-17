@@ -54,9 +54,6 @@ export default function PortfolioSystemsShowcase({ catalogSections }: Props) {
         return projects.filter((p) => p.categorySlug === activeSlug);
     }, [activeSlug, projects]);
 
-    const featured = activeSlug === 'todos' ? visible[0] : null;
-    const rest = featured ? visible.slice(1) : visible;
-
     const pills = useMemo(
         () => [
             { slug: 'todos', title: 'Todos' },
@@ -97,7 +94,7 @@ export default function PortfolioSystemsShowcase({ catalogSections }: Props) {
                     <LandingSectionHeader
                         eyebrow="Sistemas desarrollados"
                         title="Portafolio de productos ORVAE"
-                        description="Filtra por rubro y abre cada sistema: capturas, módulos y el detalle comercial en un clic."
+                        description="Filtra por rubro y abre cada sistema: si hay demo en vivo, un clic entra a la plataforma."
                         variant="sparkles"
                         layout="sparkles"
                         titleClassName="font-display text-2xl font-bold tracking-tight md:text-3xl"
@@ -142,20 +139,9 @@ export default function PortfolioSystemsShowcase({ catalogSections }: Props) {
                     </div>
                 </div>
 
-                {featured ? (
-                    <div className="mb-6">
-                        <PortfolioProjectCard
-                            system={featured.system}
-                            categoryTitle={featured.categoryTitle}
-                            accent={featured.accent}
-                            featured
-                        />
-                    </div>
-                ) : null}
-
-                {rest.length > 0 ? (
-                    <div className="grid gap-5 md:grid-cols-2">
-                        {rest.map((project) => (
+                {visible.length > 0 ? (
+                    <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                        {visible.map((project) => (
                             <PortfolioProjectCard
                                 key={`${project.categorySlug}-${project.system.slug}`}
                                 system={project.system}

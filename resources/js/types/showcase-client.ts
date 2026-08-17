@@ -1,4 +1,4 @@
-/** Cliente de vitrina serializado para la landing y el carrusel. */
+/** Cliente de vitrina serializado para la landing y el portafolio. */
 export type ShowcaseClientPublic = {
     id: string;
     name: string;

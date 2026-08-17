@@ -18,7 +18,7 @@ export type MarketingHeroNavContext =
  * En software: Contacto, Licencias, Servicios.
  * En licencias: Software, Contacto, Servicios.
  * En servicios: Software, Contacto, Licencias.
- * En portafolio: Catálogo y Contacto (el hero ya tiene “Ver sistemas”).
+ * En portafolio: Catálogo y Contacto (el hero ya tiene “Ver plataformas”).
  */
 export function getMarketingHeroNavCtas(context: MarketingHeroNavContext): PageHeroCTA[] {
     const outline = 'outline' as const;

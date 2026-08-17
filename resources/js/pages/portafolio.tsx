@@ -2,9 +2,9 @@ import { Link } from '@inertiajs/react';
 
 import MarketingUnifiedNavbar from '@/components/marketing/MarketingUnifiedNavbar';
 import SeoHead from '@/components/seo/SeoHead';
+import PortfolioClientsShowcase from '@/components/portfolio/PortfolioClientsShowcase';
 import PortfolioSystemsShowcase from '@/components/portfolio/PortfolioSystemsShowcase';
 import AppearanceFloatingRailToggle from '@/components/welcome/AppearanceFloatingRailToggle';
-import ClientsCarousel from '@/components/welcome/ClientsCarousel';
 import GeometricBackground from '@/components/welcome/GeometricBackground';
 import LandingSectionHeader from '@/components/welcome/LandingSectionHeader';
 import ScrollReveal from '@/components/welcome/ScrollReveal';
@@ -66,7 +66,7 @@ export default function Portafolio({
                                 <LandingSectionHeader
                                     eyebrow="Portafolio"
                                     title="Sistemas que ya operan con ORVAE"
-                                    description="Una vitrina clara de lo desarrollado: categorías, capturas y empresas reales. Elige un sistema y pasa al detalle, planes y demo."
+                                    description="Sistemas y empresas en operación: tarjetas grandes para entrar a cada plataforma con un clic."
                                     variant="sparkles"
                                     layout="wide"
                                     titleSize="hero"
@@ -95,8 +95,14 @@ export default function Portafolio({
 
                                 <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
                                     <a
-                                        href="#sistemas"
+                                        href="#clientes"
                                         className="inline-flex min-h-12 min-w-[10rem] items-center justify-center rounded-xl bg-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground shadow-[0_6px_24px_-6px_color-mix(in_oklab,var(--primary)_45%,transparent)] transition-[transform,filter] hover:-translate-y-0.5 hover:brightness-[1.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                    >
+                                        Ver plataformas
+                                    </a>
+                                    <a
+                                        href="#sistemas"
+                                        className="inline-flex min-h-12 min-w-[10rem] items-center justify-center rounded-xl border-2 border-[color-mix(in_oklab,var(--foreground)_22%,var(--border))] bg-background px-6 py-3.5 text-sm font-semibold text-foreground transition-[transform,border-color,background-color] hover:-translate-y-0.5 hover:border-[color-mix(in_oklab,var(--primary)_55%,var(--border))] hover:bg-[color-mix(in_oklab,var(--primary)_10%,var(--background))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                                     >
                                         Ver sistemas
                                     </a>
@@ -116,11 +122,11 @@ export default function Portafolio({
                         </section>
 
                         <ScrollReveal direction="up">
-                            <PortfolioSystemsShowcase catalogSections={softwareCategories} />
+                            <PortfolioClientsShowcase clients={showcaseClients} />
                         </ScrollReveal>
                         <div className="landing-section-flair mx-4 px-4" aria-hidden />
                         <ScrollReveal direction="up">
-                            <ClientsCarousel clients={showcaseClients} />
+                            <PortfolioSystemsShowcase catalogSections={softwareCategories} />
                         </ScrollReveal>
                         <div className="landing-section-flair mx-4 px-4" aria-hidden />
 
