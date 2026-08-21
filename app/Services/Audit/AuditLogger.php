@@ -5,6 +5,7 @@ namespace App\Services\Audit;
 use App\Models\AuditLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 
 class AuditLogger
 {
@@ -22,6 +23,10 @@ class AuditLogger
         ?Request $request = null,
     ): void {
         $ctxRequest = $request ?? request();
+
+        if (! Schema::hasTable((new AuditLog)->getTable())) {
+            return;
+        }
 
         AuditLog::query()->create([
             'user_id' => $userId ?? Auth::id(),

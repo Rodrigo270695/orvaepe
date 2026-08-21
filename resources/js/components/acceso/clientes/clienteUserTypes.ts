@@ -8,4 +8,6 @@ export type ClientUserRow = {
     phone: string | null;
     email_verified_at: string | null;
     created_at: string;
+    ruc?: string | null;
+    legal_name?: string | null;
 };

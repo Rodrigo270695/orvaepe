@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Empresas mostradas en la vitrina pública (confían en ORVAE / casos de uso).
@@ -88,6 +89,10 @@ class ShowcaseClient extends Model
      */
     public static function publishedForPublic(): array
     {
+        if (! Schema::hasTable((new static)->getTable())) {
+            return [];
+        }
+
         return static::query()
             ->published()
             ->get()

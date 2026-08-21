@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Models\CatalogCategory;
 use App\Models\CatalogProduct;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Dropdown "Servicios" en la navbar: categoría (revenue_line service) y productos con SKU de servicio activo.
@@ -18,6 +19,10 @@ final class MarketingServicesNavGroups
      */
     public static function all(): array
     {
+        if (! Schema::hasTable((new CatalogCategory)->getTable())) {
+            return self::fallbackGroups();
+        }
+
         $saleModels = MarketingSoftwareCatalogPresenter::SERVICE_SALE_MODELS;
 
         $categories = CatalogCategory::query()

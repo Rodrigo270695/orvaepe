@@ -432,6 +432,12 @@ Route::middleware(['auth', 'verified', 'client.profile.complete'])->group(functi
         Route::get('panel/acceso-clientes', [ClientUsersController::class, 'index'])
             ->name('panel.acceso-clientes.index');
 
+        Route::get('panel/acceso-clientes/{user}/edit', [ClientUsersController::class, 'edit'])
+            ->name('panel.acceso-clientes.edit');
+
+        Route::patch('panel/acceso-clientes/{user}', [ClientUsersController::class, 'update'])
+            ->name('panel.acceso-clientes.update');
+
         Route::get('panel/acceso-clientes/{user}/facturas', [ClientUserInvoicesController::class, 'index'])
             ->name('panel.acceso-clientes.facturas.index');
         Route::get('panel/acceso-clientes/{user}/facturas/{invoice}/xml', [ClientUserInvoicesController::class, 'downloadXml'])

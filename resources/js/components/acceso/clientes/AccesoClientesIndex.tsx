@@ -1,5 +1,11 @@
 import { Link, router, usePage } from '@inertiajs/react';
-import { ArrowDown, ArrowUp, ArrowUpDown, Receipt } from 'lucide-react';
+import {
+    ArrowDown,
+    ArrowUp,
+    ArrowUpDown,
+    Pencil,
+    Receipt,
+} from 'lucide-react';
 
 import AdminCrudIndex from '@/components/admin/crud/AdminCrudIndex';
 import type { AdminCrudTableColumn } from '@/components/admin/crud/AdminCrudTable';
@@ -41,9 +47,11 @@ export default function AccesoClientesIndex({
     const totalUsers = users?.total ?? rows.length;
     const handleSort = (sortBy: string) => {
         const currentUrl = new URL(page.url, window.location.origin);
-        const currentSortBy = currentUrl.searchParams.get('sort_by') ?? initialSortBy ?? '';
+        const currentSortBy =
+            currentUrl.searchParams.get('sort_by') ?? initialSortBy ?? '';
         const currentSortDir =
-            (currentUrl.searchParams.get('sort_dir') as 'asc' | 'desc' | null) ?? initialSortDir;
+            (currentUrl.searchParams.get('sort_dir') as 'asc' | 'desc' | null) ??
+            initialSortDir;
         const nextDir: 'asc' | 'desc' =
             currentSortBy === sortBy && currentSortDir === 'asc' ? 'desc' : 'asc';
 
@@ -58,7 +66,9 @@ export default function AccesoClientesIndex({
         });
     };
     const sortIcon = (key: string) => {
-        if (initialSortBy !== key) return <ArrowUpDown className="size-3.5 opacity-70" />;
+        if (initialSortBy !== key) {
+            return <ArrowUpDown className="size-3.5 opacity-70" />;
+        }
         return initialSortDir === 'asc' ? (
             <ArrowUp className="size-3.5 text-[#4A80B8]" />
         ) : (
@@ -96,6 +106,11 @@ export default function AccesoClientesIndex({
                     <span className="text-[10px] font-mono text-muted-foreground">
                         {r.email}
                     </span>
+                    {r.legal_name?.trim() ? (
+                        <span className="truncate text-[10px] text-muted-foreground">
+                            {r.legal_name}
+                        </span>
+                    ) : null}
                 </div>
             ),
         },
@@ -105,13 +120,19 @@ export default function AccesoClientesIndex({
             render: (r) => r.document_number?.trim() || '—',
         },
         {
+            header: 'RUC fiscal',
+            cellClassName: 'px-3 py-2 align-middle font-mono text-xs',
+            render: (r) => r.ruc?.trim() || '—',
+        },
+        {
             header: 'Teléfono',
             cellClassName: 'px-3 py-2 align-middle text-sm',
             render: (r) => r.phone?.trim() || '—',
         },
         {
             header: sortableHeader('Usuario', 'username'),
-            cellClassName: 'px-3 py-2 align-middle font-mono text-xs text-[#4A80B8]',
+            cellClassName:
+                'px-3 py-2 align-middle font-mono text-xs text-[#4A80B8]',
             render: (r) => r.username,
         },
         {
@@ -135,16 +156,25 @@ export default function AccesoClientesIndex({
             render: (r) => formatDateTime(r.created_at),
         },
         {
-            header: 'Portal',
+            header: 'Acciones',
             cellClassName: 'px-3 py-2 align-middle text-right',
             render: (r) => (
-                <Link
-                    href={`/panel/acceso-clientes/${r.id}/facturas`}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-[#4A80B8]/25 bg-[#4A80B8]/8 px-2.5 py-1.5 text-xs font-medium text-[#4A80B8] transition hover:bg-[#4A80B8]/15"
-                >
-                    <Receipt className="size-3.5" />
-                    Ver facturas
-                </Link>
+                <div className="inline-flex flex-wrap items-center justify-end gap-1.5">
+                    <Link
+                        href={`/panel/acceso-clientes/${r.id}/edit`}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-[#D28C3C]/30 bg-[#D28C3C]/10 px-2.5 py-1.5 text-xs font-medium text-[#D28C3C] transition hover:bg-[#D28C3C]/18"
+                    >
+                        <Pencil className="size-3.5" />
+                        Editar
+                    </Link>
+                    <Link
+                        href={`/panel/acceso-clientes/${r.id}/facturas`}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-[#4A80B8]/25 bg-[#4A80B8]/8 px-2.5 py-1.5 text-xs font-medium text-[#4A80B8] transition hover:bg-[#4A80B8]/15"
+                    >
+                        <Receipt className="size-3.5" />
+                        Facturas
+                    </Link>
+                </div>
             ),
         },
     ];

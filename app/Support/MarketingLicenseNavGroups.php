@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\CatalogCategory;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Estructura dinámica para dropdown "Licencias":
@@ -15,6 +16,10 @@ final class MarketingLicenseNavGroups
      */
     public static function all(): array
     {
+        if (! Schema::hasTable((new CatalogCategory)->getTable())) {
+            return self::fallbackGroups();
+        }
+
         $categories = CatalogCategory::query()
             ->where('is_active', true)
             ->where('revenue_line', 'oem_license')
@@ -66,6 +71,14 @@ final class MarketingLicenseNavGroups
             return $groups;
         }
 
+        return self::fallbackGroups();
+    }
+
+    /**
+     * @return list<array{categoryLabel: string, items: list<array{label: string, href: string}>}>
+     */
+    private static function fallbackGroups(): array
+    {
         return [
             [
                 'categoryLabel' => 'Licencias',

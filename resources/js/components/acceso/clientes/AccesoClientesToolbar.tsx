@@ -21,8 +21,9 @@ export default function AccesoClientesToolbar({ totalUsers }: Props) {
                             <span className="font-mono font-medium text-foreground">
                                 client
                             </span>{' '}
-                            (portal cliente). Busca por nombre, correo, documento
-                            o usuario.
+                            (portal cliente). Busca por nombre, correo, documento,
+                            RUC fiscal o usuario. Usa <strong>Editar</strong> para
+                            corregir datos antes de crear una orden.
                         </p>
                     </div>
                 </div>

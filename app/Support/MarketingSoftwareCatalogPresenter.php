@@ -6,6 +6,7 @@ use App\Models\CatalogCategory;
 use App\Models\CatalogProduct;
 use App\Models\CatalogSku;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 /**
@@ -33,6 +34,10 @@ final class MarketingSoftwareCatalogPresenter
      */
     public static function publishedCategorySections(): array
     {
+        if (! Schema::hasTable((new CatalogCategory)->getTable())) {
+            return [];
+        }
+
         $saleModels = self::OWN_SOFTWARE_SALE_MODELS;
 
         return CatalogCategory::query()

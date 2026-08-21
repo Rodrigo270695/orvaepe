@@ -67,6 +67,12 @@ export default function AccesoClientesMobileCards({
                             </p>
                         </div>
                         <div>
+                            <p className="text-muted-foreground">RUC fiscal</p>
+                            <p className="font-mono text-foreground">
+                                {row.ruc?.trim() || '—'}
+                            </p>
+                        </div>
+                        <div>
                             <p className="text-muted-foreground">Teléfono</p>
                             <p className="text-foreground">
                                 {row.phone?.trim() || '—'}
@@ -101,12 +107,20 @@ export default function AccesoClientesMobileCards({
                             </p>
                         </div>
                     </div>
-                    <Link
-                        href={`/panel/acceso-clientes/${row.id}/facturas`}
-                        className="mt-3 inline-flex w-full items-center justify-center rounded-lg border border-[#4A80B8]/25 bg-[#4A80B8]/8 px-3 py-2 text-xs font-medium text-[#4A80B8]"
-                    >
-                        Ver facturas del portal
-                    </Link>
+                    <div className="mt-3 flex flex-col gap-2">
+                        <Link
+                            href={`/panel/acceso-clientes/${row.id}/edit`}
+                            className="inline-flex w-full items-center justify-center rounded-lg border border-[#D28C3C]/30 bg-[#D28C3C]/10 px-3 py-2 text-xs font-medium text-[#D28C3C]"
+                        >
+                            Editar cliente
+                        </Link>
+                        <Link
+                            href={`/panel/acceso-clientes/${row.id}/facturas`}
+                            className="inline-flex w-full items-center justify-center rounded-lg border border-[#4A80B8]/25 bg-[#4A80B8]/8 px-3 py-2 text-xs font-medium text-[#4A80B8]"
+                        >
+                            Ver facturas del portal
+                        </Link>
+                    </div>
                 </div>
             ))}
         </div>

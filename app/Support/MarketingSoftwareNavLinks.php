@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\CatalogCategory;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Enlaces del dropdown "Software" en la navbar (misma regla que el catálogo público).
@@ -14,6 +15,15 @@ final class MarketingSoftwareNavLinks
      */
     public static function all(): array
     {
+        $links = [
+            ['label' => 'Portafolio', 'href' => '/portafolio'],
+            ['label' => 'Software desarrollado', 'href' => '/software'],
+        ];
+
+        if (! Schema::hasTable((new CatalogCategory)->getTable())) {
+            return array_merge($links, self::fallbackCategoryAnchors());
+        }
+
         $saleModels = MarketingSoftwareCatalogPresenter::OWN_SOFTWARE_SALE_MODELS;
 
         $categories = CatalogCategory::query()
@@ -29,11 +39,6 @@ final class MarketingSoftwareNavLinks
             ->orderBy('sort_order')
             ->orderBy('name')
             ->get(['slug', 'name']);
-
-        $links = [
-            ['label' => 'Portafolio', 'href' => '/portafolio'],
-            ['label' => 'Software desarrollado', 'href' => '/software'],
-        ];
 
         if ($categories->isEmpty()) {
             foreach (self::fallbackCategoryAnchors() as $row) {
