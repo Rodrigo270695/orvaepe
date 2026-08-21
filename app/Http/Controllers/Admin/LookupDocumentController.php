@@ -70,6 +70,7 @@ class LookupDocumentController extends Controller
             // RUC
             $name    = trim((string) ($info['nombre_o_razon_social'] ?? $info['razon_social'] ?? ''));
             $address = trim((string) ($info['direccion_completa'] ?? $info['direccion'] ?? ''));
+            $city = trim((string) ($info['distrito'] ?? $info['provincia'] ?? $info['ubigeo'] ?? ''));
             $estado  = $info['estado'] ?? null;
             $condicion = $info['condicion'] ?? null;
 
@@ -84,6 +85,7 @@ class LookupDocumentController extends Controller
                 'nombres'     => $name,
                 'apellidos'   => '',
                 'address'     => $address,
+                'city'        => $city !== '' ? $city : null,
                 'estado'      => is_string($estado) ? $estado : null,
                 'condicion'   => is_string($condicion) ? $condicion : null,
             ]);
