@@ -85,6 +85,17 @@ Route::withoutMiddleware([
 });
 
 Route::get('/', function () use ($canRegister) {
+    $ref = request()->query('ref')
+        ?? request()->query('referral')
+        ?? request()->query('referral_code');
+
+    if (is_string($ref) && trim($ref) !== '') {
+        return redirect()->to(
+            '/software/VETSAAS?ref='.urlencode(trim($ref)),
+            302,
+        );
+    }
+
     return Inertia::render('welcome', [
         'canRegister' => $canRegister,
     ]);

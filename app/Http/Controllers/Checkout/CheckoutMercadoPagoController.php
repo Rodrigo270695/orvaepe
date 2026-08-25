@@ -47,8 +47,10 @@ class CheckoutMercadoPagoController extends Controller
 
         $couponCode = isset($data['coupon_code']) ? trim((string) $data['coupon_code']) : null;
         $couponCode = $couponCode === '' ? null : $couponCode;
+        $referralCode = isset($data['referral_code']) ? trim((string) $data['referral_code']) : null;
+        $referralCode = $referralCode === '' ? null : $referralCode;
 
-        $order = $builder->createPendingOrder($user, $lines, $couponCode);
+        $order = $builder->createPendingOrder($user, $lines, $couponCode, $referralCode);
 
         if ($response = $freeSaasCheckout->tryFinalizeAndRespond($order, $user)) {
             return $response;

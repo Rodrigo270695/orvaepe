@@ -26,7 +26,12 @@ final class OrderFromCartLinesBuilder
     /**
      * @param  list<array{plan_id: string, qty: int}>  $lines
      */
-    public function createPendingOrder(User $user, array $lines, ?string $couponCode): Order
+    public function createPendingOrder(
+        User $user,
+        array $lines,
+        ?string $couponCode,
+        ?string $referralCode = null,
+    ): Order
     {
         if ($lines === []) {
             throw ValidationException::withMessages(['lines' => 'El carrito está vacío.']);
@@ -308,6 +313,13 @@ final class OrderFromCartLinesBuilder
             $notesInternal .= ' | Renovación VetSaaS: '.$renewTenantSlug;
         }
 
+        $normalizedReferral = $this->normalizeReferralCode($referralCode);
+        if ($normalizedReferral !== null) {
+            $billingSnapshot = is_array($billingSnapshot) ? $billingSnapshot : [];
+            $billingSnapshot['vetsaas_referral_code'] = $normalizedReferral;
+            $notesInternal .= ' | Ref: '.$normalizedReferral;
+        }
+
         return DB::transaction(function () use ($user, $lineRows, $subtotal, $taxTotal, $discountTotal, $grandTotal, $currency, $coupon, $notesInternal, $billingSnapshot) {
             $order = Order::create([
                 'order_number' => Order::generateOrderNumber(),
@@ -330,5 +342,17 @@ final class OrderFromCartLinesBuilder
 
             return $order->fresh(['lines']);
         });
+    }
+
+    private function normalizeReferralCode(?string $code): ?string
+    {
+        if ($code === null) {
+            return null;
+        }
+
+        $normalized = strtoupper(trim($code));
+        $normalized = preg_replace('/[^A-Z0-9\-]/', '', $normalized) ?? '';
+
+        return $normalized !== '' ? $normalized : null;
     }
 }

@@ -111,11 +111,18 @@ class VetSaaSPlanProvisioner
             ],
         ];
 
+        $referralCode = $this->resolveReferralCode($order);
+        if ($referralCode !== null) {
+            $payload['referral_code'] = $referralCode;
+            $payload['canal_adquisicion'] = 'referido';
+        }
+
         Log::info('vetsaas.provision_request', [
             'order_id' => $order->id,
             'order_number' => $order->order_number,
             'plan_slug' => $planSlug,
             'tenant_slug' => $tenantSlug,
+            'referral_code' => $referralCode,
         ]);
 
         $response = OrvaeSignedHttpClient::post(
@@ -460,6 +467,20 @@ class VetSaaSPlanProvisioner
     /**
      * @param  array<string, mixed>  $data
      */
+    private function resolveReferralCode(Order $order): ?string
+    {
+        $snapshot = is_array($order->billing_snapshot) ? $order->billing_snapshot : [];
+        $raw = $snapshot['vetsaas_referral_code'] ?? null;
+        if (! is_string($raw)) {
+            return null;
+        }
+
+        $code = strtoupper(trim($raw));
+        $code = preg_replace('/[^A-Z0-9\-]/', '', $code) ?? '';
+
+        return $code !== '' ? $code : null;
+    }
+
     private function noteSnapshot(Order $order, array $data): void
     {
         $snapshot = is_array($order->billing_snapshot) ? $order->billing_snapshot : [];

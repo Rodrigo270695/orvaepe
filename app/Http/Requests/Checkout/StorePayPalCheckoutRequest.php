@@ -18,6 +18,7 @@ class StorePayPalCheckoutRequest extends FormRequest
             'lines.*.plan_id' => ['required', 'uuid'],
             'lines.*.qty' => ['required', 'integer', 'min:1'],
             'coupon_code' => ['nullable', 'string', 'max:120'],
+            'referral_code' => ['nullable', 'string', 'max:40'],
         ];
     }
 }

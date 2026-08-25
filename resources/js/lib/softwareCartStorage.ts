@@ -152,3 +152,75 @@ export function writeCartCoupon(data: StoredCartCoupon | null): void {
     localStorage.setItem(CART_COUPON_STORAGE_KEY, JSON.stringify(data));
 }
 
+/** Código de referido VetSaaS (?ref=) — distinto del cupón de descuento Orvae. */
+export const VETSAAS_REFERRAL_STORAGE_KEY = 'orvae_vetsaas_referral_v1';
+
+export function readVetSaaSReferralCode(): string | null {
+    if (typeof window === 'undefined') {
+        return null;
+    }
+
+    try {
+        const raw = localStorage.getItem(VETSAAS_REFERRAL_STORAGE_KEY);
+        if (!raw) {
+            return null;
+        }
+        const code = raw.trim().toUpperCase();
+
+        return code !== '' ? code : null;
+    } catch {
+        return null;
+    }
+}
+
+export function writeVetSaaSReferralCode(code: string | null): void {
+    if (typeof window === 'undefined') {
+        return;
+    }
+
+    if (!code || code.trim() === '') {
+        localStorage.removeItem(VETSAAS_REFERRAL_STORAGE_KEY);
+
+        return;
+    }
+
+    const normalized = code.trim().toUpperCase().replace(/[^A-Z0-9\-]/g, '');
+    if (normalized === '') {
+        localStorage.removeItem(VETSAAS_REFERRAL_STORAGE_KEY);
+
+        return;
+    }
+
+    localStorage.setItem(VETSAAS_REFERRAL_STORAGE_KEY, normalized);
+}
+
+/** Lee ?ref= / ?referral= de la URL y lo persiste. */
+export function captureVetSaaSReferralFromUrl(options?: {
+    replaceUrl?: boolean;
+}): string | null {
+    if (typeof window === 'undefined') {
+        return null;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const raw =
+        params.get('ref') ?? params.get('referral') ?? params.get('referral_code');
+    if (!raw || raw.trim() === '') {
+        return readVetSaaSReferralCode();
+    }
+
+    writeVetSaaSReferralCode(raw);
+    const code = readVetSaaSReferralCode();
+
+    if (options?.replaceUrl !== false) {
+        params.delete('ref');
+        params.delete('referral');
+        params.delete('referral_code');
+        const qs = params.toString();
+        const next = `${window.location.pathname}${qs ? `?${qs}` : ''}${window.location.hash}`;
+        window.history.replaceState({}, '', next);
+    }
+
+    return code;
+}
+

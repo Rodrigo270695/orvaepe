@@ -22,6 +22,9 @@ import {
     setCartLineQty,
     writeCartCoupon,
     writeSoftwareCart,
+    captureVetSaaSReferralFromUrl,
+    readVetSaaSReferralCode,
+    writeVetSaaSReferralCode,
     type SoftwareCartItem,
 } from '@/lib/softwareCartStorage';
 
@@ -152,6 +155,7 @@ export default function MarketingCart() {
                 setEligibleSubtotalPen(stored.eligibleSubtotalPen);
             }
         }
+        captureVetSaaSReferralFromUrl();
         window.addEventListener('orvae-cart-updated', sync);
         window.addEventListener('storage', sync);
         return () => {
@@ -543,6 +547,7 @@ export default function MarketingCart() {
                 gateway: 'culqi',
                 lines: lines.map((l) => ({ plan_id: l.planId, qty: l.qty })),
                 coupon_code: appliedCoupon,
+                referral_code: readVetSaaSReferralCode(),
             });
 
             if (result.kind === 'unauthorized') {
@@ -553,6 +558,7 @@ export default function MarketingCart() {
             if (result.kind === 'free_completed') {
                 clearSoftwareCart();
                 writeCartCoupon(null);
+                writeVetSaaSReferralCode(null);
                 if (result.redirectUrl) {
                     window.location.href = result.redirectUrl;
                     return;

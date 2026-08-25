@@ -33,7 +33,7 @@ import {
     defaultMarketingCheckoutGateway,
     postMarketingCheckout,
 } from '@/lib/marketingCheckout';
-import { readCartCoupon, readSoftwareCart, writeSoftwareCart, clearSoftwareCart, writeCartCoupon } from '@/lib/softwareCartStorage';
+import { readCartCoupon, readSoftwareCart, writeSoftwareCart, clearSoftwareCart, writeCartCoupon, captureVetSaaSReferralFromUrl, readVetSaaSReferralCode, writeVetSaaSReferralCode } from '@/lib/softwareCartStorage';
 import {
     Dialog,
     DialogContent,
@@ -179,6 +179,10 @@ export default function SoftwareDetail() {
         setCheckoutError(null);
     }, [selectedPlanId]);
 
+    useEffect(() => {
+        captureVetSaaSReferralFromUrl();
+    }, [url]);
+
     const selectedPlan: SoftwarePricingPlan | null = useMemo(() => {
         if (!system) {
             return null;
@@ -323,11 +327,13 @@ export default function SoftwareDetail() {
                 stored && typeof stored.code === 'string' && stored.code.trim() !== ''
                     ? stored.code.trim()
                     : null;
+            const referralCode = readVetSaaSReferralCode();
 
             const result = await postMarketingCheckout({
                 gateway,
                 lines: [{ plan_id: selectedPlan.id, qty: 1 }],
                 coupon_code: couponCode,
+                referral_code: referralCode,
             });
 
             if (result.kind === 'unauthorized') {
@@ -338,6 +344,7 @@ export default function SoftwareDetail() {
             if (result.kind === 'free_completed') {
                 clearSoftwareCart();
                 writeCartCoupon(null);
+                writeVetSaaSReferralCode(null);
                 if (result.redirectUrl) {
                     window.location.href = result.redirectUrl;
                     return;

@@ -48,10 +48,15 @@ export async function postMarketingCheckout(params: {
     gateway: MarketingCheckoutGateway;
     lines: MarketingCheckoutLinePayload[];
     coupon_code?: string | null;
+    referral_code?: string | null;
 }): Promise<MarketingCheckoutPostResult> {
     const trimmedCoupon =
         typeof params.coupon_code === 'string' && params.coupon_code.trim() !== ''
             ? params.coupon_code.trim()
+            : undefined;
+    const trimmedReferral =
+        typeof params.referral_code === 'string' && params.referral_code.trim() !== ''
+            ? params.referral_code.trim().toUpperCase()
             : undefined;
 
     const res = await fetch(CHECKOUT_URLS[params.gateway], {
@@ -66,6 +71,7 @@ export async function postMarketingCheckout(params: {
         body: JSON.stringify({
             lines: params.lines,
             ...(trimmedCoupon ? { coupon_code: trimmedCoupon } : {}),
+            ...(trimmedReferral ? { referral_code: trimmedReferral } : {}),
         }),
     });
 
