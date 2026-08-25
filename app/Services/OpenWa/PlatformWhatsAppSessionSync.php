@@ -52,18 +52,34 @@ final class PlatformWhatsAppSessionSync
             return $local;
         }
 
+        $status = (string) ($remote['status'] ?? 'created');
+        $lastError = null;
+
+        // Sesión nueva o caída: hay que start o no habrá QR (OpenWA Baileys).
+        if (in_array(strtolower($status), ['created', 'disconnected', 'failed', 'stopped'], true)) {
+            try {
+                $this->client->startSession($sessionId);
+                $remote = $this->client->getSession($sessionId);
+                $status = (string) ($remote['status'] ?? $status);
+            } catch (\Throwable $e) {
+                if (! str_contains(strtolower($e->getMessage()), 'already started')) {
+                    $lastError = $e->getMessage();
+                }
+            }
+        }
+
         $phone = isset($remote['phone']) ? (string) $remote['phone'] : null;
         $payload = [
             'openwa_session_id' => $sessionId,
             'openwa_session_name' => (string) ($remote['name'] ?? $name),
-            'status' => self::normalizeStatus($remote['status'] ?? null, $phone),
+            'status' => self::normalizeStatus($status, $phone),
             'phone' => $phone,
             'push_name' => isset($remote['pushName']) ? (string) $remote['pushName'] : null,
             'connected_at' => filled($remote['connectedAt'] ?? null)
                 ? Carbon::parse($remote['connectedAt'])
                 : null,
             'last_synced_at' => now(),
-            'last_error' => null,
+            'last_error' => $lastError,
         ];
 
         if ($local instanceof PlatformWhatsAppSession) {

@@ -208,6 +208,12 @@ final class OpenWaClient
         }
 
         if (! $response->successful()) {
+            if ($response->status() === 401) {
+                throw new RuntimeException(
+                    'OpenWA rechazó la API key (401). Actualiza OPENWA_API_KEY en Orvae con la misma clave del gateway (wa.vetsaas.orvae.pe) y ejecuta php artisan config:clear.',
+                );
+            }
+
             throw new RuntimeException(
                 'OpenWA HTTP '.$response->status().': '.(string) $response->body(),
             );

@@ -10,7 +10,8 @@ return [
     | API compartida con VetSaaS: https://wa.vetsaas.orvae.pe/api
     | Admin/dashboard: https://wa-admin.vetsaas.orvae.pe
     |
-    | Sesión dedicada para mensajes de plataforma Orvae (órdenes, avisos admin).
+    | OPENWA_API_KEY debe coincidir con la del gateway (misma que VetSaaS).
+    | Sesión dedicada: orvae-platform (órdenes, avisos admin).
     |
     */
     'enabled' => (bool) env('OPENWA_ENABLED', false),
