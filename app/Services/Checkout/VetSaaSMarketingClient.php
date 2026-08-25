@@ -47,16 +47,21 @@ final class VetSaaSMarketingClient
                         $highlights = $fallback['highlights'] ?? [];
                     }
 
+                    $trialDays = (int) ($plan['trial_days'] ?? 0);
+                    $highlights = array_values(array_filter(array_map(
+                        static fn ($h) => is_string($h) ? trim($h) : '',
+                        $highlights,
+                    )));
+                    $highlights = self::ensureTrialHighlight($highlights, $trialDays);
+
                     $plans[] = [
                         'codigo' => $codigo,
                         'nombre' => (string) ($plan['nombre'] ?? $fallback['nombre'] ?? ucfirst($codigo)),
                         'descripcion' => (string) ($plan['descripcion'] ?? $fallback['descripcion'] ?? ''),
                         'badge' => $plan['badge'] ?? ($fallback['badge'] ?? null),
+                        'trial_days' => $trialDays,
                         'referral_reward_days' => (int) ($plan['referral_reward_days'] ?? 0),
-                        'highlights' => array_values(array_filter(array_map(
-                            static fn ($h) => is_string($h) ? trim($h) : '',
-                            $highlights,
-                        ))),
+                        'highlights' => $highlights,
                     ];
                 }
             }
@@ -68,6 +73,7 @@ final class VetSaaSMarketingClient
                         'nombre' => $meta['nombre'],
                         'descripcion' => $meta['descripcion'],
                         'badge' => $meta['badge'],
+                        'trial_days' => 0,
                         'referral_reward_days' => 0,
                         'highlights' => $meta['highlights'],
                     ];
@@ -105,6 +111,7 @@ final class VetSaaSMarketingClient
             $comparison = is_array($remote['comparison'] ?? null) && $remote['comparison'] !== []
                 ? $remote['comparison']
                 : VetSaaSPlanFeaturesCatalog::comparisonRows();
+            $comparison = self::ensureTrialComparisonRow($comparison, $plans);
 
             $modulesNote = is_string($remote['modules_note'] ?? null) && trim((string) $remote['modules_note']) !== ''
                 ? trim((string) $remote['modules_note'])
@@ -120,6 +127,77 @@ final class VetSaaSMarketingClient
                 'clients' => $clients,
             ];
         });
+    }
+
+    /**
+     * @param  list<string>  $highlights
+     * @return list<string>
+     */
+    private static function ensureTrialHighlight(array $highlights, int $trialDays): array
+    {
+        if ($trialDays <= 0) {
+            return $highlights;
+        }
+
+        foreach ($highlights as $h) {
+            $lower = mb_strtolower($h);
+            if (str_contains($lower, 'prueba') || str_contains($lower, 'trial')) {
+                return $highlights;
+            }
+        }
+
+        $line = $trialDays >= 28
+            ? '1 mes de prueba'
+            : $trialDays.' días de prueba';
+
+        if ($highlights === []) {
+            return [$line];
+        }
+
+        array_splice($highlights, 1, 0, [$line]);
+
+        return $highlights;
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $comparison
+     * @param  list<array<string, mixed>>  $plans
+     * @return list<array<string, mixed>>
+     */
+    private static function ensureTrialComparisonRow(array $comparison, array $plans): array
+    {
+        foreach ($comparison as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+            $key = strtolower((string) ($row['key'] ?? ''));
+            $label = mb_strtolower((string) ($row['label'] ?? ''));
+            if ($key === 'trial_days' || str_contains($label, 'prueba')) {
+                return $comparison;
+            }
+        }
+
+        $trialByCodigo = [];
+        foreach ($plans as $plan) {
+            $codigo = strtolower((string) ($plan['codigo'] ?? ''));
+            if ($codigo === '') {
+                continue;
+            }
+            $trialByCodigo[$codigo] = (int) ($plan['trial_days'] ?? 0);
+        }
+
+        if ($trialByCodigo === [] || max($trialByCodigo) <= 0) {
+            return $comparison;
+        }
+
+        $row = ['key' => 'trial_days', 'label' => 'Días de prueba'];
+        foreach ($trialByCodigo as $codigo => $days) {
+            $row[$codigo] = $days > 0 ? (string) $days : '—';
+        }
+
+        array_unshift($comparison, $row);
+
+        return $comparison;
     }
 
     public function forgetCache(): void

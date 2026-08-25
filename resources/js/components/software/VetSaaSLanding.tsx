@@ -35,6 +35,7 @@ export type VetSaaSMarketingPayload = {
         nombre: string;
         descripcion: string;
         badge?: string | null;
+        trial_days?: number;
         referral_reward_days?: number;
         highlights: string[];
     }>;
