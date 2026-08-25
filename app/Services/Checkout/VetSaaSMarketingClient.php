@@ -52,6 +52,7 @@ final class VetSaaSMarketingClient
                         'nombre' => (string) ($plan['nombre'] ?? $fallback['nombre'] ?? ucfirst($codigo)),
                         'descripcion' => (string) ($plan['descripcion'] ?? $fallback['descripcion'] ?? ''),
                         'badge' => $plan['badge'] ?? ($fallback['badge'] ?? null),
+                        'referral_reward_days' => (int) ($plan['referral_reward_days'] ?? 0),
                         'highlights' => array_values(array_filter(array_map(
                             static fn ($h) => is_string($h) ? trim($h) : '',
                             $highlights,
@@ -67,6 +68,7 @@ final class VetSaaSMarketingClient
                         'nombre' => $meta['nombre'],
                         'descripcion' => $meta['descripcion'],
                         'badge' => $meta['badge'],
+                        'referral_reward_days' => 0,
                         'highlights' => $meta['highlights'],
                     ];
                 }

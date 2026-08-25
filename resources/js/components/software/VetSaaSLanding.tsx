@@ -35,6 +35,7 @@ export type VetSaaSMarketingPayload = {
         nombre: string;
         descripcion: string;
         badge?: string | null;
+        referral_reward_days?: number;
         highlights: string[];
     }>;
     comparison: Array<Record<string, string>>;
