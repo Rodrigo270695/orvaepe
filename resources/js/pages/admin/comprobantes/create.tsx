@@ -1,5 +1,6 @@
 import { Head, router } from '@inertiajs/react';
 import {
+    Banknote,
     Building2,
     CalendarDays,
     CheckCircle2,
@@ -24,6 +25,27 @@ import InputError from '@/components/input-error';
 import AppLayout from '@/layouts/app-layout';
 import { dashboard } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
+
+const DETRACCION_TIPO_OPTIONS = [
+    { value: '022', label: '022 — Otros servicios empresariales' },
+    { value: '037', label: '037 — Demás servicios gravados IGV' },
+    { value: '012', label: '012 — Intermediación / tercerización' },
+    { value: '019', label: '019 — Arrendamiento de bienes' },
+    { value: '020', label: '020 — Mantenimiento y reparación' },
+    { value: '024', label: '024 — Comisión mercantil' },
+    { value: '025', label: '025 — Fabricación por encargo' },
+    { value: '030', label: '030 — Contratos de construcción' },
+];
+
+type DetraccionDefaults = {
+    cuenta_bn: string;
+    tipo: string;
+    porcentaje: string;
+    medio_pago: string;
+    umbral_soles: number;
+    auto_aplicar?: boolean;
+    sugerir_en_factura?: boolean;
+};
 
 const IGV_RATE = 0.18;
 
@@ -164,6 +186,7 @@ type Props = {
     sequences: Sequence[];
     orders: OrderOption[];
     preOrderId?: string;
+    detraccionDefaults?: DetraccionDefaults;
 };
 
 type Line = {
@@ -188,7 +211,12 @@ function emptyLine(): Line {
     };
 }
 
-export default function ComprobantesCreate({ sequences, orders, preOrderId }: Props) {
+export default function ComprobantesCreate({
+    sequences,
+    orders,
+    preOrderId,
+    detraccionDefaults,
+}: Props) {
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Panel',          href: dashboard() },
         { title: 'Comprobantes',   href: '/panel/ventas-facturas' },
@@ -214,12 +242,26 @@ export default function ComprobantesCreate({ sequences, orders, preOrderId }: Pr
     const [errors,     setErrors]     = React.useState<Record<string, string>>({});
     const [submitting, setSubmitting] = React.useState(false);
 
+    const [detEnabled, setDetEnabled] = React.useState(false);
+    const [detUserTouched, setDetUserTouched] = React.useState(false);
+    const [detTipo, setDetTipo] = React.useState(detraccionDefaults?.tipo ?? '022');
+    const [detPct, setDetPct] = React.useState(String(detraccionDefaults?.porcentaje ?? '12'));
+    const [detTotal, setDetTotal] = React.useState('');
+    const [detMedio, setDetMedio] = React.useState(detraccionDefaults?.medio_pago ?? '001');
+    const [detCuenta, setDetCuenta] = React.useState(detraccionDefaults?.cuenta_bn ?? '');
+    const [detTotalTouched, setDetTotalTouched] = React.useState(false);
+
     // ── Sequence seleccionada ─────────────────────────────────────────────
     const selectedSeq   = sequences.find((s) => s.id === sequenceId);
+    const isFactura     = selectedSeq?.document_type_code === '01';
     const docTypeInfo   = DOC_TYPE_LABELS[selectedSeq?.document_type_code ?? '01'] ?? DOC_TYPE_LABELS['01'];
     const nextNumber    = selectedSeq
         ? `${selectedSeq.serie}-${String(selectedSeq.next_correlative).padStart(8, '0')}`
         : '—';
+
+    const umbralSoles = detraccionDefaults?.umbral_soles ?? 700;
+    const autoAplicar = detraccionDefaults?.auto_aplicar !== false
+        && detraccionDefaults?.sugerir_en_factura !== false;
 
     const sequenceOptions = sequences.map((s) => {
         const info = DOC_TYPE_LABELS[s.document_type_code];
@@ -320,8 +362,42 @@ export default function ComprobantesCreate({ sequences, orders, preOrderId }: Pr
             subtotal += base;
             taxes    += igv;
         }
-        return { subtotal: subtotal.toFixed(2), taxes: taxes.toFixed(2), total: (subtotal + taxes).toFixed(2) };
-    }, [lines]);
+        const total = subtotal + taxes;
+        const calcDet = Math.round(total * (parseFloat(detPct || '0') / 100));
+        return {
+            subtotal: subtotal.toFixed(2),
+            taxes: taxes.toFixed(2),
+            total: total.toFixed(2),
+            totalNum: total,
+            calcDet,
+        };
+    }, [lines, detPct]);
+
+    // SPOT Anexo 3: factura PEN con total > umbral (default S/ 700) → detracción obligatoria
+    const requierePorMonto = isFactura
+        && currency === 'PEN'
+        && totals.totalNum > umbralSoles;
+
+    const detObligatoria = requierePorMonto && autoAplicar;
+    const detActiva = detObligatoria || detEnabled;
+
+    React.useEffect(() => {
+        if (!isFactura) {
+            setDetEnabled(false);
+            return;
+        }
+        if (detObligatoria) {
+            setDetEnabled(true);
+            return;
+        }
+        if (detUserTouched) return;
+        setDetEnabled(false);
+    }, [isFactura, detObligatoria, detUserTouched]);
+
+    React.useEffect(() => {
+        if (!detActiva || detTotalTouched) return;
+        setDetTotal(String(totals.calcDet || ''));
+    }, [detActiva, detTotalTouched, totals.calcDet]);
 
     // ── Líneas CRUD ───────────────────────────────────────────────────────
     function setLine(i: number, field: keyof Line, value: string) {
@@ -346,6 +422,16 @@ export default function ComprobantesCreate({ sequences, orders, preOrderId }: Pr
                 description: l.description, quantity: l.quantity, unit_measure: l.unit_measure,
                 unit_price: l.unit_price, tax_rate: l.tax_rate, igv_code: l.igv_code, product_code: l.product_code,
             })),
+            detraccion: isFactura && detActiva
+                ? {
+                    enabled: true,
+                    tipo: detTipo,
+                    porcentaje: detPct,
+                    total: detTotal || String(totals.calcDet),
+                    medio_pago: detMedio,
+                    cuenta_bn: detCuenta,
+                }
+                : { enabled: false },
         }, {
             onError:  (errs) => { setErrors(errs as Record<string, string>); setSubmitting(false); },
             onFinish: () => setSubmitting(false),
@@ -691,6 +777,133 @@ export default function ComprobantesCreate({ sequences, orders, preOrderId }: Pr
                             </div>
                         </section>
 
+                        {/* ── Detracción (solo facturas) ── */}
+                        {isFactura && (
+                            <section className={cardClass}>
+                                <div className="mb-4 flex items-center justify-between gap-3">
+                                    <div className="flex items-center gap-2.5">
+                                        <span className="block h-5 w-1 rounded-full bg-[#D28C3C]" />
+                                        <Banknote className="size-4 text-[#D28C3C]" />
+                                        <h2 className="text-[13px] font-semibold">Detracción (SPOT)</h2>
+                                    </div>
+                                    <label className={`flex items-center gap-2 text-[12px] ${detObligatoria ? 'cursor-default opacity-90' : 'cursor-pointer'}`}>
+                                        <input
+                                            type="checkbox"
+                                            checked={detActiva}
+                                            disabled={detObligatoria}
+                                            onChange={(e) => {
+                                                setDetUserTouched(true);
+                                                setDetEnabled(e.target.checked);
+                                            }}
+                                            className="size-4 rounded border border-(--o-border2) accent-[#D28C3C] disabled:opacity-70"
+                                        />
+                                        {detObligatoria ? 'Obligatoria (> S/ ' + umbralSoles + ')' : 'Incluir en esta factura'}
+                                    </label>
+                                </div>
+
+                                {detObligatoria && (
+                                    <div className="mb-4 rounded-lg border border-[#D28C3C]/25 bg-[#D28C3C]/8 px-3 py-2 text-[11px] text-[#D28C3C]">
+                                        SUNAT Anexo 3: facturas en PEN mayores a S/ {umbralSoles} deben incluir detracción.
+                                        Se aplica automáticamente con los datos de Config. emisor.
+                                    </div>
+                                )}
+
+                                {!detActiva ? (
+                                    <p className="text-[11px] text-muted-foreground">
+                                        Actívala si la operación está sujeta a detracción SUNAT.
+                                        Con total &gt; S/ {umbralSoles} (PEN) se aplica sola.
+                                    </p>
+                                ) : (
+                                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                        <div className="space-y-2 sm:col-span-2">
+                                            <AdminUnderlineLabel htmlFor="det_cuenta">
+                                                Cuenta Banco de la Nación
+                                            </AdminUnderlineLabel>
+                                            <input
+                                                id="det_cuenta"
+                                                value={detCuenta}
+                                                onChange={(e) => setDetCuenta(e.target.value.replace(/\D/g, ''))}
+                                                placeholder="00001234567"
+                                                required={detActiva}
+                                                className={inputClass}
+                                            />
+                                            <InputError message={errors['detraccion.cuenta_bn']} />
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <AdminUnderlineLabel htmlFor="det_tipo">
+                                                Código cat. 54
+                                            </AdminUnderlineLabel>
+                                            <AdminUnderlineSelect
+                                                id="det_tipo"
+                                                name="det_tipo"
+                                                value={detTipo}
+                                                options={DETRACCION_TIPO_OPTIONS}
+                                                onValueChange={setDetTipo}
+                                            />
+                                        </div>
+
+                                        <div className="space-y-1.5">
+                                            <label htmlFor="det_pct" className={labelClass}>Porcentaje (%)</label>
+                                            <input
+                                                id="det_pct"
+                                                type="number"
+                                                min="0"
+                                                max="100"
+                                                step="0.01"
+                                                value={detPct}
+                                                onChange={(e) => {
+                                                    setDetPct(e.target.value);
+                                                    setDetTotalTouched(false);
+                                                }}
+                                                className={inputClass}
+                                            />
+                                        </div>
+
+                                        <div className="space-y-1.5">
+                                            <label htmlFor="det_total" className={labelClass}>Monto detracción</label>
+                                            <input
+                                                id="det_total"
+                                                type="number"
+                                                min="1"
+                                                step="1"
+                                                value={detTotal}
+                                                onChange={(e) => {
+                                                    setDetTotalTouched(true);
+                                                    setDetTotal(e.target.value);
+                                                }}
+                                                className={inputClass}
+                                            />
+                                            <p className="text-[10px] text-muted-foreground">
+                                                Entero (SPOT). Sugerido: {totals.calcDet || 0}
+                                            </p>
+                                        </div>
+
+                                        <div className="space-y-1.5">
+                                            <label htmlFor="det_medio" className={labelClass}>Medio de pago</label>
+                                            <input
+                                                id="det_medio"
+                                                value={detMedio}
+                                                onChange={(e) => setDetMedio(e.target.value)}
+                                                className={inputClass}
+                                            />
+                                        </div>
+
+                                        <div className="sm:col-span-2 rounded-lg border border-[#D28C3C]/20 bg-[#D28C3C]/6 px-3 py-2 text-[11px] text-[#D28C3C]">
+                                            Cliente deposita <strong>{currency} {detTotal || totals.calcDet || '0'}</strong> en tu cuenta BN.
+                                            Te paga el neto:{' '}
+                                            <strong>
+                                                {currency}{' '}
+                                                {(
+                                                    totals.totalNum - parseFloat(detTotal || String(totals.calcDet) || '0')
+                                                ).toFixed(2)}
+                                            </strong>
+                                        </div>
+                                    </div>
+                                )}
+                            </section>
+                        )}
+
                         {/* Errores globales */}
                         {Object.keys(errors).length > 0 && (
                             <div className="rounded-xl border border-red-400/30 bg-red-400/5 p-3 text-[12px] text-red-500">
@@ -782,6 +995,25 @@ export default function ComprobantesCreate({ sequences, orders, preOrderId }: Pr
                                         {lines.length} {lines.length === 1 ? 'línea' : 'líneas'}
                                     </p>
                                 </div>
+                                {isFactura && detActiva && (
+                                    <div className="rounded-xl border border-[#D28C3C]/20 bg-[#D28C3C]/8 px-3 py-2 text-[11px]">
+                                        <div className="flex justify-between text-[#D28C3C]">
+                                            <span>Detracción</span>
+                                            <span className="tabular-nums font-semibold">
+                                                {currency} {detTotal || totals.calcDet || '0'}
+                                            </span>
+                                        </div>
+                                        <div className="mt-1 flex justify-between text-muted-foreground">
+                                            <span>Neto a cobrar</span>
+                                            <span className="tabular-nums font-medium text-foreground">
+                                                {currency}{' '}
+                                                {(
+                                                    totals.totalNum - parseFloat(detTotal || String(totals.calcDet) || '0')
+                                                ).toFixed(2)}
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
 

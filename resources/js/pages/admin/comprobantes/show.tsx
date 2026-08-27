@@ -104,6 +104,16 @@ type Invoice = {
     cdr_path: string | null;
     pdf_path: string | null;
     buyer_snapshot: { tipo_doc?: string; num_doc?: string; razon_social?: string; direccion?: string } | null;
+    sunat_metadata?: {
+        detraccion?: {
+            enabled?: boolean;
+            tipo?: string;
+            porcentaje?: string | number;
+            total?: number;
+            medio_pago?: string;
+            cuenta_bn?: string;
+        };
+    } | null;
     lines: InvoiceLine[];
     order: { order_number: string; id: string } | null;
     submission_logs: Log[];
@@ -322,6 +332,22 @@ export default function ComprobantesShow({ invoice, company_ruc, portal_client }
                                                 <span>Total</span>
                                                 <span className="text-emerald-600">{fmt(invoice.grand_total, invoice.currency)}</span>
                                             </div>
+                                            {invoice.sunat_metadata?.detraccion?.enabled && (
+                                                <>
+                                                    <div className="flex justify-between pt-1 text-[#D28C3C]">
+                                                        <span>
+                                                            Detracción ({invoice.sunat_metadata.detraccion.porcentaje}% ·{' '}
+                                                            {invoice.sunat_metadata.detraccion.tipo})
+                                                        </span>
+                                                        <span className="font-semibold">
+                                                            {fmt(invoice.sunat_metadata.detraccion.total ?? 0, invoice.currency)}
+                                                        </span>
+                                                    </div>
+                                                    <div className="text-[11px] text-gray-400">
+                                                        Cuenta BN: {invoice.sunat_metadata.detraccion.cuenta_bn}
+                                                    </div>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
                                 </div>

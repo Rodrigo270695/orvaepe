@@ -39,6 +39,14 @@ class SunatEmitterSettingsUpsertRequest extends FormRequest
 
             'default_certificate_id' => ['nullable', 'uuid', 'exists:digital_certificates,id'],
             'is_active'              => ['nullable', 'boolean'],
+
+            // Detracción SPOT (defaults para emitir facturas)
+            'detraccion_cuenta_bn'          => ['nullable', 'string', 'max:20'],
+            'detraccion_tipo'               => ['nullable', 'string', 'max:3'],
+            'detraccion_porcentaje'         => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'detraccion_medio_pago'         => ['nullable', 'string', 'max:3'],
+            'detraccion_umbral_soles'       => ['nullable', 'numeric', 'min:0'],
+            'detraccion_auto_aplicar'      => ['nullable', 'boolean'],
         ];
     }
 

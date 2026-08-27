@@ -5,6 +5,7 @@ namespace App\Services\Sunat;
 use App\Models\CompanyLegalProfile;
 use App\Models\Invoice;
 use App\Models\SunatEmitterSetting;
+use App\Support\Sunat\DetraccionDefaults;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -110,6 +111,42 @@ class ApiSunatEmitterService
             'total'                        => number_format((float) $invoice->grand_total, 2, '.', ''),
         ];
 
+        $detraccion = $invoice->sunat_metadata['detraccion'] ?? null;
+        if (
+            is_array($detraccion)
+            && ($detraccion['enabled'] ?? false)
+            && $invoice->sunat_document_type_code === Invoice::TYPE_FACTURA
+        ) {
+            $detTotal = (float) ($detraccion['total'] ?? 0);
+            $cuentaBn = trim((string) ($detraccion['cuenta_bn'] ?? ''));
+
+            if ($detTotal <= 0 || $cuentaBn === '') {
+                return $this->fail(
+                    $invoice,
+                    'Detracción incompleta: falta monto o cuenta Banco de la Nación. Revisa Config. emisor.',
+                );
+            }
+
+            $payload['tipo_operacion'] = DetraccionDefaults::TIPO_OPERACION;
+            $payload['detraccion'] = [
+                'detraccion_tipo'              => (string) ($detraccion['tipo'] ?? DetraccionDefaults::DEFAULT_TIPO),
+                'detraccion_porcentaje'        => (string) ($detraccion['porcentaje'] ?? DetraccionDefaults::DEFAULT_PORCENTAJE),
+                'detraccion_total'             => number_format($detTotal, 2, '.', ''),
+                'medio_de_pago'                => (string) ($detraccion['medio_pago'] ?? DetraccionDefaults::DEFAULT_MEDIO_PAGO),
+                'numero_cuenta_banco_nacion'   => $cuentaBn,
+            ];
+
+            // Si hay crédito / cuotas, el importe de cuota = total − detracción (docs Lucode).
+            $paymentType = $invoice->sunat_metadata['payment_type'] ?? 'Contado';
+            if ($paymentType === 'Credito') {
+                $cuotaImporte = round((float) $invoice->grand_total - $detTotal, 2);
+                $payload['cuotas'] = [[
+                    'importe'        => number_format(max(0, $cuotaImporte), 2, '.', ''),
+                    'fecha_de_pago'  => ($invoice->due_at ?? $invoice->issued_at->copy()->addDays(30))->format('Y-m-d'),
+                ]];
+            }
+        }
+
         // ── 4. Llamar a la API ────────────────────────────────────────────
         $env = $settings->environment ?? 'beta';
         $url = $env === 'production' ? self::PROD_URL : self::SANDBOX_URL;
@@ -128,8 +165,8 @@ class ApiSunatEmitterService
         // ── 5. Procesar respuesta ─────────────────────────────────────────
         $apiSuccess = $json['success'] ?? false;
         $msg        = $json['message'] ?? 'Sin respuesta de API SUNAT';
-        $payload    = $json['payload'] ?? [];
-        $estado     = strtoupper($payload['estado'] ?? '');  // ACEPTADO | PENDIENTE | RECHAZADO | EXCEPCION
+        $respPayload = $json['payload'] ?? [];
+        $estado     = strtoupper($respPayload['estado'] ?? '');  // ACEPTADO | PENDIENTE | RECHAZADO | EXCEPCION
 
         if (!$apiSuccess) {
             Log::warning('apisunat.rejected', ['invoice' => $invoice->id, 'resp' => $json]);
@@ -148,7 +185,7 @@ class ApiSunatEmitterService
             ? Invoice::STATUS_ISSUED
             : $invoice->status;
 
-        $pdfPayload = $payload['pdf'] ?? [];
+        $pdfPayload = $respPayload['pdf'] ?? [];
         // Guardamos la URL base del ticket; desde ella derivamos A4 en el frontend
         $pdfTicketUrl = $pdfPayload['ticket'] ?? $pdfPayload['a4'] ?? null;
 
@@ -157,8 +194,8 @@ class ApiSunatEmitterService
             'status'                     => $docStatus,
             'sunat_response_code'        => $estado ?: '0',
             'sunat_response_description' => $msg,
-            'xml_signed_path'            => $payload['xml'] ?? null,
-            'cdr_path'                   => $payload['cdr'] ?? null,
+            'xml_signed_path'            => $respPayload['xml'] ?? null,
+            'cdr_path'                   => $respPayload['cdr'] ?? null,
             'pdf_path'                   => $pdfTicketUrl,
         ]);
 

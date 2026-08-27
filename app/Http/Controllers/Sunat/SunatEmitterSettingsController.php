@@ -8,6 +8,7 @@ use App\Models\CompanyLegalProfile;
 use App\Models\DigitalCertificate;
 use App\Models\SunatEmitterSetting;
 use App\Support\AdminFlashToast;
+use App\Support\Sunat\DetraccionDefaults;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Crypt;
 
@@ -40,6 +41,19 @@ class SunatEmitterSettingsController extends Controller
             ->where('company_legal_profile_id', $profile->id)
             ->first();
 
+        $existingOptions = is_array($existing?->options) ? $existing->options : [];
+
+        $detraccion = DetraccionDefaults::fromOptions([
+            'detraccion' => [
+                'cuenta_bn'     => $request->input('detraccion_cuenta_bn'),
+                'tipo'          => $request->input('detraccion_tipo'),
+                'porcentaje'    => $request->input('detraccion_porcentaje'),
+                'medio_pago'    => $request->input('detraccion_medio_pago'),
+                'umbral_soles'  => $request->input('detraccion_umbral_soles'),
+                'auto_aplicar'  => $request->boolean('detraccion_auto_aplicar'),
+            ],
+        ]);
+
         $data = [
             'company_legal_profile_id' => $profile->id,
             'emission_mode'            => $request->validated('emission_mode'),
@@ -49,6 +63,9 @@ class SunatEmitterSettingsController extends Controller
             'sol_username'             => $request->validated('sol_username'),
             'default_certificate_id'   => $request->validated('default_certificate_id'),
             'is_active'                => $request->boolean('is_active'),
+            'options'                  => array_merge($existingOptions, [
+                'detraccion' => $detraccion,
+            ]),
         ];
 
         // Cifrar clave SOL solo si se envió un valor nuevo

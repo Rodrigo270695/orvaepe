@@ -1,5 +1,5 @@
 import { Form } from '@inertiajs/react';
-import { ExternalLink, KeyRound, Link2, Save, SlidersHorizontal, User, Zap } from 'lucide-react';
+import { Banknote, ExternalLink, KeyRound, Link2, Save, SlidersHorizontal, User, Zap } from 'lucide-react';
 import * as React from 'react';
 
 import AdminUnderlineLabel from '@/components/admin/form/admin-underline-label';
@@ -36,6 +36,27 @@ const environmentOptions = [
     { value: 'production', label: 'Producción' },
 ];
 
+const DETRACCION_TIPO_OPTIONS = [
+    { value: '022', label: '022 — Otros servicios empresariales (12%)' },
+    { value: '037', label: '037 — Demás servicios gravados con IGV (12%)' },
+    { value: '012', label: '012 — Intermediación laboral / tercerización (12%)' },
+    { value: '019', label: '019 — Arrendamiento de bienes (10%)' },
+    { value: '020', label: '020 — Mantenimiento y reparación (12%)' },
+    { value: '024', label: '024 — Comisión mercantil (10%)' },
+    { value: '025', label: '025 — Fabricación de bienes por encargo (10%)' },
+    { value: '030', label: '030 — Contratos de construcción (4%)' },
+];
+
+type DetraccionOptions = {
+    cuenta_bn?: string;
+    tipo?: string;
+    porcentaje?: string | number;
+    medio_pago?: string;
+    umbral_soles?: number;
+    auto_aplicar?: boolean;
+    sugerir_en_factura?: boolean;
+};
+
 type Props = {
     profile: CompanyLegalProfileLoaded | null;
     setting: SunatEmitterSettingRow | null;
@@ -50,6 +71,8 @@ export default function EmisorEmitterSettingsPanel({
     const [mode, setMode] = React.useState<string>(
         setting?.emission_mode ?? 'sunat_direct',
     );
+
+    const detraccion = (setting?.options?.detraccion ?? {}) as DetraccionOptions;
 
     if (!profile) {
         return (
@@ -289,6 +312,126 @@ export default function EmisorEmitterSettingsPanel({
                                 </div>
                             </div>
                         )}
+
+                        {/* ── Detracción SPOT ── */}
+                        <div className="space-y-4 rounded-xl border border-[#D28C3C]/25 bg-[#D28C3C]/4 p-4">
+                            <div className="flex items-start gap-2">
+                                <Banknote className="mt-0.5 size-4 shrink-0 text-[#D28C3C]" />
+                                <div>
+                                    <p className="text-[11px] font-semibold text-[#D28C3C]">
+                                        Detracción (SPOT)
+                                    </p>
+                                    <p className="mt-0.5 text-[10px] text-muted-foreground">
+                                        Cuenta del Banco de la Nación y valores por defecto al emitir facturas
+                                        con detracción. En cada CPE puedes activarla o ajustar el monto.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                                <div className="space-y-1.5 md:col-span-2">
+                                    <Label htmlFor="detraccion_cuenta_bn" className={labelClass}>
+                                        Cuenta Banco de la Nación
+                                    </Label>
+                                    <Input
+                                        id="detraccion_cuenta_bn"
+                                        name="detraccion_cuenta_bn"
+                                        defaultValue={detraccion.cuenta_bn ?? ''}
+                                        placeholder="00001234567"
+                                        inputMode="numeric"
+                                        className={inputClass}
+                                    />
+                                    <p className="text-[10px] text-muted-foreground">
+                                        Número de cuenta de detracciones del emisor (obligatorio al emitir con SPOT).
+                                    </p>
+                                    <InputError message={errors.detraccion_cuenta_bn} />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <AdminUnderlineLabel htmlFor="detraccion_tipo">
+                                        Código bien/servicio (cat. 54)
+                                    </AdminUnderlineLabel>
+                                    <AdminUnderlineSelect
+                                        id="detraccion_tipo"
+                                        name="detraccion_tipo"
+                                        defaultValue={String(detraccion.tipo ?? '022')}
+                                        options={DETRACCION_TIPO_OPTIONS}
+                                    />
+                                    <InputError message={errors.detraccion_tipo} />
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="detraccion_porcentaje" className={labelClass}>
+                                        Porcentaje (%)
+                                    </Label>
+                                    <Input
+                                        id="detraccion_porcentaje"
+                                        name="detraccion_porcentaje"
+                                        type="number"
+                                        min="0"
+                                        max="100"
+                                        step="0.01"
+                                        defaultValue={String(detraccion.porcentaje ?? '12')}
+                                        className={inputClass}
+                                    />
+                                    <InputError message={errors.detraccion_porcentaje} />
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="detraccion_medio_pago" className={labelClass}>
+                                        Medio de pago (cat. 59)
+                                    </Label>
+                                    <Input
+                                        id="detraccion_medio_pago"
+                                        name="detraccion_medio_pago"
+                                        defaultValue={String(detraccion.medio_pago ?? '001')}
+                                        placeholder="001"
+                                        className={inputClass}
+                                    />
+                                    <p className="text-[10px] text-muted-foreground">
+                                        001 = Depósito en cuenta (lo habitual).
+                                    </p>
+                                    <InputError message={errors.detraccion_medio_pago} />
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="detraccion_umbral_soles" className={labelClass}>
+                                        Umbral sugerido (S/)
+                                    </Label>
+                                    <Input
+                                        id="detraccion_umbral_soles"
+                                        name="detraccion_umbral_soles"
+                                        type="number"
+                                        min="0"
+                                        step="1"
+                                        defaultValue={String(detraccion.umbral_soles ?? 700)}
+                                        className={inputClass}
+                                    />
+                                    <p className="text-[10px] text-muted-foreground">
+                                        Anexo 3 SUNAT: no aplica si el importe es ≤ este monto (default S/ 700).
+                                        Se aplica solo si es mayor.
+                                    </p>
+                                    <InputError message={errors.detraccion_umbral_soles} />
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-3">
+                                <input
+                                    id="detraccion_auto_aplicar"
+                                    name="detraccion_auto_aplicar"
+                                    type="checkbox"
+                                    value="1"
+                                    defaultChecked={detraccion.auto_aplicar !== false && detraccion.sugerir_en_factura !== false}
+                                    className="size-4 cursor-pointer rounded border border-(--o-border2) accent-[#D28C3C]"
+                                />
+                                <Label
+                                    htmlFor="detraccion_auto_aplicar"
+                                    className={`${labelClass} cursor-pointer`}
+                                >
+                                    Auto-aplicar detracción en facturas PEN sobre el umbral
+                                </Label>
+                            </div>
+                        </div>
 
                         {/* ── Certificado por defecto ── */}
                         <div className="space-y-2">

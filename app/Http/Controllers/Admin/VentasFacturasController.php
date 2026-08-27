@@ -13,6 +13,7 @@ use App\Models\SunatEmitterSetting;
 use App\Services\Sunat\ApiSunatEmitterService;
 use App\Services\Sunat\InvoiceEmitterService;
 use App\Support\AdminFlashToast;
+use App\Support\Sunat\DetraccionDefaults;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
@@ -86,10 +87,17 @@ class VentasFacturasController extends Controller
             ->limit(100)
             ->get(['id', 'order_number', 'grand_total', 'currency', 'placed_at', 'user_id', 'billing_snapshot']);
 
+        $emitterSetting = $profile
+            ? SunatEmitterSetting::query()
+                ->where('company_legal_profile_id', $profile->id)
+                ->first()
+            : null;
+
         return Inertia::render('admin/comprobantes/create', [
-            'sequences'    => $sequences,
-            'orders'       => $orders,
-            'preOrderId'   => $request->input('order_id'),
+            'sequences'          => $sequences,
+            'orders'             => $orders,
+            'preOrderId'         => $request->input('order_id'),
+            'detraccionDefaults' => DetraccionDefaults::fromOptions($emitterSetting?->options),
         ]);
     }
 
@@ -113,6 +121,12 @@ class VentasFacturasController extends Controller
             'lines.*.igv_code'       => ['required', 'string', 'max:10'],
             'lines.*.product_code'   => ['nullable', 'string', 'max:50'],
             'lines.*.unit_measure'   => ['required', 'string', 'max:10'],
+            'detraccion.enabled'     => ['nullable', 'boolean'],
+            'detraccion.tipo'        => ['nullable', 'string', 'max:3'],
+            'detraccion.porcentaje'  => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'detraccion.total'       => ['nullable', 'numeric', 'min:0'],
+            'detraccion.medio_pago'  => ['nullable', 'string', 'max:3'],
+            'detraccion.cuenta_bn'   => ['nullable', 'string', 'max:20'],
         ]);
 
         $profile = CompanyLegalProfile::query()->where('is_default_issuer', true)->first();
@@ -134,7 +148,68 @@ class VentasFacturasController extends Controller
         }
         $grandTotal = round($subtotal + $taxTotal, 2);
 
-        $invoice = DB::transaction(function () use ($data, $profile, $seq, $subtotal, $taxTotal, $grandTotal) {
+        $sunatMetadata = null;
+        $defaults = DetraccionDefaults::fromOptions(
+            SunatEmitterSetting::query()
+                ->where('company_legal_profile_id', $profile->id)
+                ->first()
+                ?->options
+        );
+
+        $requierePorMonto = DetraccionDefaults::requierePorMonto(
+            $seq->document_type_code,
+            $data['currency'],
+            $grandTotal,
+            $defaults['umbral_soles'],
+        );
+
+        // Auto-aplicar SPOT si factura PEN > umbral (Anexo 3) o si el usuario la activó a mano
+        $wantsDetraccion = $seq->document_type_code === Invoice::TYPE_FACTURA
+            && (
+                $request->boolean('detraccion.enabled')
+                || ($defaults['auto_aplicar'] && $requierePorMonto)
+            );
+
+        if ($wantsDetraccion) {
+            $cuentaBn = trim((string) ($data['detraccion']['cuenta_bn'] ?? $defaults['cuenta_bn']));
+            $tipo = trim((string) ($data['detraccion']['tipo'] ?? $defaults['tipo']));
+            $porcentaje = (string) ($data['detraccion']['porcentaje'] ?? $defaults['porcentaje']);
+            $medioPago = trim((string) ($data['detraccion']['medio_pago'] ?? $defaults['medio_pago']));
+            $detTotal = isset($data['detraccion']['total']) && $data['detraccion']['total'] !== ''
+                ? round((float) $data['detraccion']['total'], 0)
+                : DetraccionDefaults::calcularMonto($grandTotal, $porcentaje);
+
+            if ($cuentaBn === '') {
+                return back()
+                    ->withInput()
+                    ->with('toast', AdminFlashToast::error(
+                        $requierePorMonto
+                            ? 'Factura > S/ '.number_format($defaults['umbral_soles'], 0).' requiere detracción. Configura la cuenta BN en Config. emisor → SUNAT / OSE.'
+                            : 'Configura la cuenta del Banco de la Nación en Config. emisor → SUNAT / OSE.',
+                    ));
+            }
+
+            if ($detTotal <= 0 || $detTotal >= $grandTotal) {
+                return back()
+                    ->withInput()
+                    ->with('toast', AdminFlashToast::error('El monto de detracción no es válido.'));
+            }
+
+            $sunatMetadata = [
+                'detraccion' => [
+                    'enabled'    => true,
+                    'tipo'       => $tipo,
+                    'porcentaje' => $porcentaje,
+                    'total'      => $detTotal,
+                    'medio_pago' => $medioPago !== '' ? $medioPago : DetraccionDefaults::DEFAULT_MEDIO_PAGO,
+                    'cuenta_bn'  => $cuentaBn,
+                    'auto'       => $requierePorMonto,
+                ],
+                'payment_type' => $data['payment_type'],
+            ];
+        }
+
+        $invoice = DB::transaction(function () use ($data, $profile, $seq, $subtotal, $taxTotal, $grandTotal, $sunatMetadata) {
             // Tomar y reservar el correlativo de forma atómica
             $correlative = $seq->next_correlative;
             $seq->increment('next_correlative');
@@ -160,6 +235,7 @@ class VentasFacturasController extends Controller
                 'currency'                      => $data['currency'],
                 'issued_at'                     => $data['issued_at'],
                 'buyer_snapshot'                => $data['buyer'],
+                'sunat_metadata'                => $sunatMetadata,
             ]);
 
             foreach ($data['lines'] as $line) {

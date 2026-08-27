@@ -8,11 +8,13 @@ use App\Models\Invoice;
 use App\Models\InvoiceLine;
 use App\Models\SunatEmitterSetting;
 use App\Models\SunatSubmissionLog;
+use App\Support\Sunat\DetraccionDefaults;
 use DateTime;
 use Greenter\Model\Client\Client;
 use Greenter\Model\Company\Address;
 use Greenter\Model\Company\Company;
 use Greenter\Model\Response\BillResult;
+use Greenter\Model\Sale\Detraction;
 use Greenter\Model\Sale\FormaPagos\FormaPagoContado;
 use Greenter\Model\Sale\Invoice as GreenterInvoice;
 use Greenter\Model\Sale\Legend;
@@ -256,9 +258,26 @@ class InvoiceEmitterService
             ->setCode('1000')
             ->setValue($this->montoEnLetras($grandTotal, $invoice->currency ?? 'PEN'));
 
-        return (new GreenterInvoice())
+        $tipoOperacion = '0101';
+        $detraction = null;
+        $metaDet = $invoice->sunat_metadata['detraccion'] ?? null;
+        if (
+            is_array($metaDet)
+            && ($metaDet['enabled'] ?? false)
+            && $invoice->sunat_document_type_code === Invoice::TYPE_FACTURA
+        ) {
+            $tipoOperacion = DetraccionDefaults::TIPO_OPERACION;
+            $detraction = (new Detraction())
+                ->setCodBienDetraccion((string) ($metaDet['tipo'] ?? DetraccionDefaults::DEFAULT_TIPO))
+                ->setPercent((float) ($metaDet['porcentaje'] ?? DetraccionDefaults::DEFAULT_PORCENTAJE))
+                ->setMount((float) ($metaDet['total'] ?? 0))
+                ->setCodMedioPago((string) ($metaDet['medio_pago'] ?? DetraccionDefaults::DEFAULT_MEDIO_PAGO))
+                ->setCtaBanco((string) ($metaDet['cuenta_bn'] ?? ''));
+        }
+
+        $greenter = (new GreenterInvoice())
             ->setUblVersion('2.1')
-            ->setTipoOperacion('0101')
+            ->setTipoOperacion($tipoOperacion)
             ->setTipoDoc($invoice->sunat_document_type_code)
             ->setSerie($invoice->sunat_serie)
             ->setCorrelativo($invoice->sunat_correlative)
@@ -275,6 +294,12 @@ class InvoiceEmitterService
             ->setMtoImpVenta($grandTotal)
             ->setDetails($details)
             ->setLegends([$legend]);
+
+        if ($detraction) {
+            $greenter->setDetraccion($detraction);
+        }
+
+        return $greenter;
     }
 
     // ── Conversión básica de monto a letras en español ───────────────────
