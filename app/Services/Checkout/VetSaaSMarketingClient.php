@@ -21,12 +21,13 @@ final class VetSaaSMarketingClient
      *     clinics_label: string,
      *     plans: list<array<string, mixed>>,
      *     comparison: list<array<string, string>>,
-     *     clients: list<array{slug: string, name: string, logo_url: string}>
+     *     clients: list<array{slug: string, name: string, logo_url: string}>,
+     *     reviews: list<array<string, mixed>>
      * }
      */
     public function payload(): array
     {
-        return Cache::remember('vetsaas.marketing_payload', 600, function (): array {
+        return Cache::remember('vetsaas.marketing_payload', 120, function (): array {
             $remote = $this->fetchRemote();
 
             $catalog = VetSaaSPlanFeaturesCatalog::byCodigo();
@@ -108,6 +109,35 @@ final class VetSaaSMarketingClient
                 }
             }
 
+            $reviews = [];
+            if (is_array($remote['reviews'] ?? null)) {
+                foreach ($remote['reviews'] as $row) {
+                    if (! is_array($row)) {
+                        continue;
+                    }
+                    $comment = trim((string) ($row['comment'] ?? ''));
+                    $clinic = trim((string) ($row['clinic_name'] ?? ''));
+                    $roleLine = trim((string) ($row['role_line'] ?? ''));
+                    if ($comment === '' || $clinic === '') {
+                        continue;
+                    }
+                    $author = trim((string) ($row['author_name'] ?? ''));
+                    $role = trim((string) ($row['role_label'] ?? ''));
+                    if ($roleLine === '') {
+                        $roleLine = trim($role.($clinic !== '' ? ' de '.$clinic : ''));
+                    }
+                    $reviews[] = [
+                        'author_name' => $author !== '' ? $author : 'Equipo clínico',
+                        'role_label' => $role,
+                        'clinic_name' => $clinic,
+                        'role_line' => $roleLine,
+                        'rating' => max(1, min(5, (int) ($row['rating'] ?? 5))),
+                        'comment' => $comment,
+                        'submitted_at' => $row['submitted_at'] ?? null,
+                    ];
+                }
+            }
+
             $comparison = is_array($remote['comparison'] ?? null) && $remote['comparison'] !== []
                 ? $remote['comparison']
                 : VetSaaSPlanFeaturesCatalog::comparisonRows();
@@ -125,6 +155,7 @@ final class VetSaaSMarketingClient
                 'comparison' => $comparison,
                 'modules_note' => $modulesNote,
                 'clients' => $clients,
+                'reviews' => $reviews,
             ];
         });
     }

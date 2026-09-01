@@ -21,6 +21,7 @@ import VetSaaSClientsCarousel, {
 } from '@/components/software/VetSaaSClientsCarousel';
 import VetSaaSMotionRoot from '@/components/software/VetSaaSMotionRoot';
 import VetSaaSReveal from '@/components/software/VetSaaSReveal';
+import VetSaaSReviews, { type VetSaaSPublicReview } from '@/components/software/VetSaaSReviews';
 import VetSaaSWalkingPet from '@/components/software/VetSaaSWalkingPet';
 import type { SoftwarePricingPlan, SoftwareSystem } from '@/marketplace/softwareCatalog';
 import { motion, useReducedMotion } from 'motion/react';
@@ -41,6 +42,7 @@ export type VetSaaSMarketingPayload = {
     }>;
     comparison: Array<Record<string, string>>;
     clients: VetSaaSShowcaseClient[];
+    reviews?: VetSaaSPublicReview[];
 };
 
 type Props = {
@@ -161,6 +163,7 @@ export default function VetSaaSLanding(props: Props) {
     const display = marketing.clinics_display || 100;
     const countUp = useCountUp(display);
     const clients = showcaseClients.length > 0 ? showcaseClients : marketing.clients;
+    const reviews = marketing.reviews ?? [];
 
     const highlightsByCodigo = useMemo(() => {
         const map = new Map<string, string[]>();
@@ -575,6 +578,12 @@ export default function VetSaaSLanding(props: Props) {
                             <VetSaaSClientsCarousel clients={clients} compact />
                         </div>
                     </section>
+                </VetSaaSReveal>
+            ) : null}
+
+            {reviews.length > 0 ? (
+                <VetSaaSReveal>
+                    <VetSaaSReviews reviews={reviews} />
                 </VetSaaSReveal>
             ) : null}
 
