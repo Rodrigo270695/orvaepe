@@ -134,6 +134,7 @@ final class VetSaaSMarketingClient
                         'rating' => max(1, min(5, (int) ($row['rating'] ?? 5))),
                         'comment' => $comment,
                         'submitted_at' => $row['submitted_at'] ?? null,
+                        'logo_url' => ($logo = trim((string) ($row['logo_url'] ?? ''))) !== '' ? $logo : null,
                     ];
                 }
             }

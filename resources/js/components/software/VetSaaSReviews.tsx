@@ -1,4 +1,5 @@
 import { Quote, Star } from 'lucide-react';
+import { useState } from 'react';
 
 export type VetSaaSPublicReview = {
     author_name: string;
@@ -8,6 +9,7 @@ export type VetSaaSPublicReview = {
     rating: number;
     comment: string;
     submitted_at?: string | null;
+    logo_url?: string | null;
 };
 
 function initialsFromName(name: string): string {
@@ -33,6 +35,34 @@ function Stars({ rating }: { rating: number }) {
                     strokeWidth={1.5}
                 />
             ))}
+        </div>
+    );
+}
+
+function ClinicMark({ review }: { review: VetSaaSPublicReview }) {
+    const [failed, setFailed] = useState(false);
+    const logo = (review.logo_url ?? '').trim();
+    const initials = initialsFromName(review.clinic_name || review.author_name);
+
+    if (logo !== '' && !failed) {
+        return (
+            <img
+                src={logo}
+                alt={review.clinic_name}
+                className="size-12 shrink-0 rounded-2xl border border-[var(--vs-border)] bg-white object-contain p-1"
+                loading="lazy"
+                decoding="async"
+                onError={() => setFailed(true)}
+            />
+        );
+    }
+
+    return (
+        <div
+            className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(145deg,#006D55,#33A07B)] font-display text-sm font-semibold text-white"
+            aria-hidden
+        >
+            {initials}
         </div>
     );
 }
@@ -64,12 +94,7 @@ export default function VetSaaSReviews({ reviews }: { reviews: VetSaaSPublicRevi
                         >
                             <Quote className="absolute right-5 top-5 size-8 text-[var(--vs-200)] opacity-70" />
                             <div className="flex items-start gap-3">
-                                <div
-                                    className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(145deg,#006D55,#33A07B)] font-display text-sm font-semibold text-white"
-                                    aria-hidden
-                                >
-                                    {initialsFromName(review.author_name || review.clinic_name)}
-                                </div>
+                                <ClinicMark review={review} />
                                 <div className="min-w-0">
                                     <Stars rating={review.rating} />
                                     <p className="vs-display mt-2 text-sm font-semibold leading-snug">
