@@ -85,4 +85,21 @@ return [
         'tenant_scheme' => env('VETSAAS_TENANT_SCHEME', 'https'),
     ],
 
+    /*
+    | Integración ORVAE -> TallerSaaS (provisión de taller tras pago).
+    | Mismo contrato que "vetsaas": endpoint /api/internal/saas/{provision,renew}
+    | firmado con HMAC-SHA256. TallerSaaS aún no expone showcase/marketing
+    | públicos, por eso esas dos claves quedan en null hasta que existan.
+    */
+    'tallersaas' => [
+        'enabled' => env('TALLERSAAS_PROVISIONING_ENABLED', false),
+        'provision_url' => env('TALLERSAAS_PROVISION_URL'),
+        'renew_url' => env('TALLERSAAS_RENEW_URL'),
+        'showcase_url' => env('TALLERSAAS_SHOWCASE_URL'),
+        'marketing_url' => env('TALLERSAAS_MARKETING_URL'),
+        'hmac_secret' => env('TALLERSAAS_PROVISION_HMAC_SECRET', env('ORVAE_PROVISION_HMAC_SECRET')),
+        'tenant_domain' => env('TALLERSAAS_TENANT_DOMAIN', 'tallersaas.orvae.pe'),
+        'tenant_scheme' => env('TALLERSAAS_TENANT_SCHEME', 'https'),
+    ],
+
 ];
