@@ -172,8 +172,8 @@ final class SaasExistingAccountNotifier
         ?string $tenantSlug,
         string $loginEmail,
     ): array {
-        $isVetsaas = $productKey === 'vetsaas';
-        $productLabel = $isVetsaas ? 'VetSaaS' : 'Aula Virtual';
+        $isVetsaas = $productKey === 'vetsaas' || $productKey === 'sendsaas';
+        $productLabel = \App\Support\Checkout\SaasCatalogSku::productLabel($productKey);
         $subject = 'Ya tienes una cuenta '.$productLabel.' con ORVAE';
 
         $subdomainLine = $tenantSlug !== null && $tenantSlug !== ''

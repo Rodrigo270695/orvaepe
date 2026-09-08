@@ -37,6 +37,22 @@ test('detects vetsaas sku by code without metadata', function (): void {
     expect(SaasCatalogSku::isVetsaas($sku))->toBeTrue();
 });
 
+test('detects sendsaas sku by metadata and normalizes omnidesk plans', function (): void {
+    $sku = new CatalogSku([
+        'metadata' => ['saas_product' => 'sendsaas', 'saas_plan_slug' => 'profesional'],
+        'sale_model' => 'saas_subscription',
+        'code' => 'sendsaas-profesional-mensual',
+        'name' => 'OmniDesk Profesional',
+    ]);
+
+    expect(SaasCatalogSku::isSendsaas($sku))->toBeTrue()
+        ->and(SaasCatalogSku::isVetsaas($sku))->toBeFalse()
+        ->and(SaasCatalogSku::isSaasSubscription($sku))->toBeTrue()
+        ->and(SaasCatalogSku::productKey($sku))->toBe('sendsaas')
+        ->and(SaasCatalogSku::normalizePlanSlug($sku, 'sendsaas-profesional-mensual'))->toBe('profesional')
+        ->and(SaasCatalogSku::normalizePlanSlug($sku, 'enterprise'))->toBe('enterprise');
+});
+
 test('zero total checkout requires all saas skus', function (): void {
     $vetsaas = new CatalogSku([
         'metadata' => ['saas_product' => 'vetsaas'],

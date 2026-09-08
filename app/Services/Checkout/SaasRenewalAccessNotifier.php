@@ -37,11 +37,17 @@ final class SaasRenewalAccessNotifier
             return;
         }
 
-        $isVetsaas = $productKey === 'vetsaas';
-        $productLabel = $isVetsaas ? 'VetSaaS' : 'Aula Virtual';
-        $subject = $isVetsaas
-            ? 'Tu plan VetSaaS fue renovado'
-            : 'Tu plan de Aula Virtual fue renovado';
+        $productLabel = \App\Support\Checkout\SaasCatalogSku::productLabel($productKey);
+        $subject = match ($productKey) {
+            'vetsaas' => 'Tu plan VetSaaS fue renovado',
+            'sendsaas' => 'Tu plan OmniDesk fue renovado',
+            default => 'Tu plan de Aula Virtual fue renovado',
+        };
+        $entity = match ($productKey) {
+            'vetsaas' => 'clínica',
+            'sendsaas' => 'empresa',
+            default => 'cuenta',
+        };
 
         $subdomainLine = $tenantSlug !== null && $tenantSlug !== ''
             ? '🌐 Subdominio: '.$tenantSlug."\n"
@@ -53,7 +59,7 @@ final class SaasRenewalAccessNotifier
             .'📅 Nuevo vencimiento: '.$periodEndFormatted."\n"
             .'🔗 Acceso: '.$loginUrl."\n"
             ."👤 Usuario: {$loginEmail}\n\n"
-            .'Tu clínica sigue en el mismo subdominio; no necesitas crear una cuenta nueva.';
+            ."Tu {$entity} sigue en el mismo subdominio; no necesitas crear una cuenta nueva.";
 
         $data = [
             'order_id' => $order->id,

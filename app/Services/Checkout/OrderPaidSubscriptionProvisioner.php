@@ -22,6 +22,7 @@ final class OrderPaidSubscriptionProvisioner
         private readonly SubscriptionEntitlementSyncService $entitlementSync,
         private readonly AulaVirtualPlanProvisioner $aulaVirtualProvisioner,
         private readonly VetSaaSPlanProvisioner $vetsaasProvisioner,
+        private readonly SendSaaSPlanProvisioner $sendsaasProvisioner,
     ) {}
 
     /**
@@ -116,6 +117,18 @@ final class OrderPaidSubscriptionProvisioner
                         ]);
                     }
                 }
+
+                if (SaasCatalogSku::isSendsaas($sku)) {
+                    try {
+                        $this->sendsaasProvisioner->provision($freshOrder, $sku, $periodEnd);
+                    } catch (\Throwable $e) {
+                        Log::warning('sendsaas.provision_exception', [
+                            'order_id' => $order->id,
+                            'sku_code' => $sku->code,
+                            'exception' => $e->getMessage(),
+                        ]);
+                    }
+                }
             }
         };
 
@@ -142,6 +155,14 @@ final class OrderPaidSubscriptionProvisioner
             if (SaasCatalogSku::isVetsaas($sku)) {
                 $renewable = SaasSubscriptionLookup::findVetsaasRenewable((string) $order->user_id, $sku)
                     ?? $this->findVetsaasRenewableByOrderTenantSlug($order, $sku);
+                if ($renewable instanceof Subscription) {
+                    return $this->extendSubscription($renewable, $order, $sku);
+                }
+            }
+
+            if (SaasCatalogSku::isSendsaas($sku)) {
+                $renewable = SaasSubscriptionLookup::findSendsaasRenewable((string) $order->user_id, $sku)
+                    ?? $this->findSendsaasRenewableByOrderTenantSlug($order, $sku);
                 if ($renewable instanceof Subscription) {
                     return $this->extendSubscription($renewable, $order, $sku);
                 }
@@ -296,5 +317,17 @@ final class OrderPaidSubscriptionProvisioner
         }
 
         return SaasSubscriptionLookup::findVetsaasByTenantSlug(trim($slug), $sku);
+    }
+
+    private function findSendsaasRenewableByOrderTenantSlug(Order $order, CatalogSku $sku): ?Subscription
+    {
+        $snapshot = is_array($order->billing_snapshot) ? $order->billing_snapshot : [];
+        $slug = $snapshot['sendsaas_renew_tenant_slug'] ?? session('sendsaas_renew_tenant_slug');
+
+        if (! is_string($slug) || trim($slug) === '') {
+            return null;
+        }
+
+        return SaasSubscriptionLookup::findSendsaasByTenantSlug(trim($slug), $sku);
     }
 }

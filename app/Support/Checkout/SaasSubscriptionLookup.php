@@ -51,6 +51,60 @@ final class SaasSubscriptionLookup
         return self::findRenewable((string) $userId, $sku, 'aula_virtual_academy_url');
     }
 
+    public static function findSendsaasRenewable(string|int $userId, CatalogSku $sku): ?Subscription
+    {
+        $exact = self::findRenewable((string) $userId, $sku, 'sendsaas_tenant_slug');
+        if ($exact instanceof Subscription) {
+            return $exact;
+        }
+
+        if (! SaasCatalogSku::isPaidSendsaasPlan($sku)) {
+            return null;
+        }
+
+        return self::findSendsaasProvisioned((string) $userId);
+    }
+
+    public static function findSendsaasByTenantSlug(string $tenantSlug, CatalogSku $sku): ?Subscription
+    {
+        $tenantSlug = trim($tenantSlug);
+        if ($tenantSlug === '') {
+            return null;
+        }
+
+        $exact = Subscription::query()
+            ->whereIn('status', self::renewableStatuses())
+            ->whereHas('items', static function ($q) use ($sku): void {
+                $q->where('catalog_sku_id', $sku->id);
+            })
+            ->orderByDesc('current_period_end')
+            ->get()
+            ->first(static function (Subscription $sub) use ($tenantSlug): bool {
+                return self::sendsaasTenantSlugFrom($sub) === $tenantSlug;
+            });
+
+        if ($exact instanceof Subscription) {
+            return $exact;
+        }
+
+        if (! SaasCatalogSku::isPaidSendsaasPlan($sku)) {
+            return null;
+        }
+
+        return Subscription::query()
+            ->whereIn('status', self::renewableStatuses())
+            ->orderByDesc('current_period_end')
+            ->get()
+            ->first(static function (Subscription $sub) use ($tenantSlug): bool {
+                return self::sendsaasTenantSlugFrom($sub) === $tenantSlug;
+            });
+    }
+
+    public static function findSendsaasProvisioned(string|int $userId): ?Subscription
+    {
+        return self::findProvisionedByMetadataKey((string) $userId, 'sendsaas_tenant_slug');
+    }
+
     private static function findRenewable(string $userId, CatalogSku $sku, string $metadataKey): ?Subscription
     {
         return Subscription::query()
@@ -88,10 +142,22 @@ final class SaasSubscriptionLookup
         return is_string($slug) && $slug !== '' ? $slug : null;
     }
 
+    public static function sendsaasTenantSlugFrom(Subscription $subscription): ?string
+    {
+        $metadata = is_array($subscription->metadata) ? $subscription->metadata : [];
+        $slug = $metadata['sendsaas_tenant_slug'] ?? null;
+
+        return is_string($slug) && $slug !== '' ? $slug : null;
+    }
+
     public static function isRenewableSaas(Subscription $subscription, CatalogSku $sku): bool
     {
         if (SaasCatalogSku::isVetsaas($sku)) {
             return self::tenantSlugFrom($subscription) !== null;
+        }
+
+        if (SaasCatalogSku::isSendsaas($sku)) {
+            return self::sendsaasTenantSlugFrom($subscription) !== null;
         }
 
         if (SaasCatalogSku::isAulaVirtual($sku)) {
@@ -130,13 +196,19 @@ final class SaasSubscriptionLookup
             return true;
         }
 
-        if (! SaasCatalogSku::isVetsaas($sku)) {
-            return false;
+        if (SaasCatalogSku::isVetsaas($sku)) {
+            $renewSlug = session('vetsaas_renew_tenant_slug');
+
+            return is_string($renewSlug) && trim($renewSlug) !== '';
         }
 
-        $renewSlug = session('vetsaas_renew_tenant_slug');
+        if (SaasCatalogSku::isSendsaas($sku)) {
+            $renewSlug = session('sendsaas_renew_tenant_slug');
 
-        return is_string($renewSlug) && trim($renewSlug) !== '';
+            return is_string($renewSlug) && trim($renewSlug) !== '';
+        }
+
+        return false;
     }
 
     public static function findActiveSaasSubscription(string|int $userId, string $productKey): ?Subscription
@@ -184,6 +256,7 @@ final class SaasSubscriptionLookup
             ->filter(function (CatalogSku $sku) use ($productKey): bool {
                 return match ($productKey) {
                     'vetsaas' => SaasCatalogSku::isVetsaas($sku),
+                    'sendsaas' => SaasCatalogSku::isSendsaas($sku),
                     'aulavirtual' => SaasCatalogSku::isAulaVirtual($sku),
                     default => false,
                 };

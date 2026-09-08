@@ -9,7 +9,7 @@ use App\Models\Subscription;
 use Illuminate\Support\Collection;
 
 /**
- * Identifica SKUs de suscripción SaaS (VetSaaS / Aula Virtual) y reglas de checkout $0.
+ * Identifica SKUs de suscripción SaaS (VetSaaS / SendSaaS / Aula Virtual) y reglas de checkout $0.
  */
 final class SaasCatalogSku
 {
@@ -57,9 +57,62 @@ final class SaasCatalogSku
             && str_contains($haystack, 'aula');
     }
 
+    public static function isSendsaas(CatalogSku $sku): bool
+    {
+        $metadata = is_array($sku->metadata) ? $sku->metadata : [];
+        $product = strtolower(trim((string) ($metadata['saas_product'] ?? '')));
+
+        if (in_array($product, ['sendsaas', 'send-saas', 'omnidesk', 'omni-desk'], true)) {
+            return true;
+        }
+
+        $haystack = strtolower(implode(' ', array_filter([
+            (string) ($sku->code ?? ''),
+            (string) ($sku->name ?? ''),
+            (string) ($sku->product?->name ?? ''),
+        ])));
+
+        if (str_contains($haystack, 'sendsaas') || str_contains($haystack, 'send-saas')
+            || str_contains($haystack, 'omnidesk') || str_contains($haystack, 'omni-desk')) {
+            return true;
+        }
+
+        $saleModel = strtolower(trim((string) $sku->sale_model));
+
+        return $saleModel === 'saas_subscription'
+            && (str_contains($haystack, 'omni') || str_contains($haystack, 'whatsapp saas'));
+    }
+
     public static function isSaasSubscription(CatalogSku $sku): bool
     {
-        return self::isVetsaas($sku) || self::isAulaVirtual($sku);
+        return self::isVetsaas($sku) || self::isAulaVirtual($sku) || self::isSendsaas($sku);
+    }
+
+    public static function productKey(CatalogSku $sku): ?string
+    {
+        if (self::isSendsaas($sku)) {
+            return 'sendsaas';
+        }
+
+        if (self::isVetsaas($sku)) {
+            return 'vetsaas';
+        }
+
+        if (self::isAulaVirtual($sku)) {
+            return 'aulavirtual';
+        }
+
+        return null;
+    }
+
+    public static function productLabel(string $productKey): string
+    {
+        return match ($productKey) {
+            'vetsaas' => 'VetSaaS',
+            'sendsaas' => 'OmniDesk',
+            'aulavirtual' => 'Aula Virtual',
+            default => 'SaaS',
+        };
     }
 
     /**
@@ -99,6 +152,14 @@ final class SaasCatalogSku
             return 'business';
         }
 
+        if (str_contains($normalized, 'profesional') || str_contains($normalized, 'professional')) {
+            return 'profesional';
+        }
+
+        if (str_contains($normalized, 'enterprise') || str_contains($normalized, 'empresarial')) {
+            return 'enterprise';
+        }
+
         if (preg_match('/\bpro\b/', $normalized) === 1 || str_contains($normalized, ' pro')) {
             return 'pro';
         }
@@ -128,6 +189,11 @@ final class SaasCatalogSku
     public static function isPaidVetsaasPlan(CatalogSku $sku): bool
     {
         return self::isVetsaas($sku) && ! self::isFreePlan($sku);
+    }
+
+    public static function isPaidSendsaasPlan(CatalogSku $sku): bool
+    {
+        return self::isSendsaas($sku) && ! self::isFreePlan($sku);
     }
 
     public static function isFreeSaasSubscription(Subscription $subscription): bool
@@ -162,6 +228,7 @@ final class SaasCatalogSku
 
         return [
             $metadata['vetsaas_plan_slug'] ?? null,
+            $metadata['sendsaas_plan_slug'] ?? null,
             $metadata['saas_plan_slug'] ?? null,
             $metadata['plan_slug'] ?? null,
             $sku->code ?? null,

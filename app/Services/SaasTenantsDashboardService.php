@@ -140,6 +140,7 @@ class SaasTenantsDashboardService
             ->filter(function (CatalogSku $sku) use ($product): bool {
                 return match ($product) {
                     'vetsaas' => SaasCatalogSku::isVetsaas($sku),
+                    'sendsaas' => SaasCatalogSku::isSendsaas($sku),
                     'aulavirtual' => SaasCatalogSku::isAulaVirtual($sku),
                     default => false,
                 };

@@ -102,4 +102,21 @@ return [
         'tenant_scheme' => env('TALLERSAAS_TENANT_SCHEME', 'https'),
     ],
 
+    /*
+    | Integración ORVAE -> SendSaaS / OmniDesk (provisión de empresa tras pago).
+    | Orvae solo cobra. Features y límites viven en el hijo.
+    | Contrato: POST /api/internal/saas/{provision,renew} firmado HMAC-SHA256.
+    */
+    'sendsaas' => [
+        'enabled' => env('SENDSAAS_PROVISIONING_ENABLED', false),
+        'provision_url' => env('SENDSAAS_PROVISION_URL'),
+        'lookup_url' => env('SENDSAAS_LOOKUP_URL'),
+        'renew_url' => env('SENDSAAS_RENEW_URL'),
+        'showcase_url' => env('SENDSAAS_SHOWCASE_URL'),
+        'marketing_url' => env('SENDSAAS_MARKETING_URL'),
+        'hmac_secret' => env('SENDSAAS_PROVISION_HMAC_SECRET', env('ORVAE_PROVISION_HMAC_SECRET')),
+        'tenant_domain' => env('SENDSAAS_TENANT_DOMAIN', 'sendsaas.orvae.pe'),
+        'tenant_scheme' => env('SENDSAAS_TENANT_SCHEME', 'https'),
+    ],
+
 ];

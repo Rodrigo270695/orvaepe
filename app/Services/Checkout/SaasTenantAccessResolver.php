@@ -66,6 +66,24 @@ final class SaasTenantAccessResolver
     /**
      * @return array{login_url: string, tenant_slug: ?string, login_email: string, product_key: string}|null
      */
+    public function resolveSendsaas(User $user): ?array
+    {
+        $subscription = SaasSubscriptionLookup::findSendsaasProvisioned((string) $user->id)
+            ?? SaasSubscriptionLookup::findActiveSaasSubscription((string) $user->id, 'sendsaas');
+
+        if ($subscription instanceof Subscription) {
+            $access = $this->accessFromSubscription($user, $subscription, 'sendsaas');
+            if ($access !== null) {
+                return $access;
+            }
+        }
+
+        return $this->accessFromOrders($user, 'sendsaas');
+    }
+
+    /**
+     * @return array{login_url: string, tenant_slug: ?string, login_email: string, product_key: string}|null
+     */
     private function lookupVetsaasByEmail(string $email): ?array
     {
         if (! (bool) config('services.vetsaas.enabled', false)) {
@@ -178,6 +196,28 @@ final class SaasTenantAccessResolver
             ];
         }
 
+        if ($productKey === 'sendsaas') {
+            $loginUrl = $metadata['sendsaas_login_url'] ?? null;
+            $tenantSlug = SaasSubscriptionLookup::sendsaasTenantSlugFrom($subscription);
+
+            if ((! is_string($loginUrl) || trim($loginUrl) === '') && is_string($tenantSlug) && $tenantSlug !== '') {
+                $scheme = (string) config('services.sendsaas.tenant_scheme', 'https');
+                $domain = (string) config('services.sendsaas.tenant_domain', 'sendsaas.orvae.pe');
+                $loginUrl = sprintf('%s://%s.%s/login', $scheme, $tenantSlug, $domain);
+            }
+
+            if (! is_string($loginUrl) || trim($loginUrl) === '') {
+                return null;
+            }
+
+            return [
+                'login_url' => trim($loginUrl),
+                'tenant_slug' => is_string($tenantSlug) ? $tenantSlug : null,
+                'login_email' => (string) $user->email,
+                'product_key' => 'sendsaas',
+            ];
+        }
+
         $loginUrl = $metadata['aula_virtual_academy_url'] ?? null;
         $tenantSlug = SaasSubscriptionLookup::aulaTenantSlugFrom($subscription);
 
@@ -235,6 +275,33 @@ final class SaasTenantAccessResolver
                 }
             }
 
+            if ($productKey === 'sendsaas') {
+                $loginUrl = $snapshot['sendsaas_login_url'] ?? null;
+                $tenantSlug = $snapshot['sendsaas_tenant_slug'] ?? null;
+                $loginEmail = $snapshot['sendsaas_login_email'] ?? $user->email;
+
+                if (is_string($loginUrl) && trim($loginUrl) !== '') {
+                    return [
+                        'login_url' => trim($loginUrl),
+                        'tenant_slug' => is_string($tenantSlug) ? $tenantSlug : null,
+                        'login_email' => (string) $loginEmail,
+                        'product_key' => 'sendsaas',
+                    ];
+                }
+
+                if (is_string($tenantSlug) && trim($tenantSlug) !== '') {
+                    $scheme = (string) config('services.sendsaas.tenant_scheme', 'https');
+                    $domain = (string) config('services.sendsaas.tenant_domain', 'sendsaas.orvae.pe');
+
+                    return [
+                        'login_url' => sprintf('%s://%s.%s/login', $scheme, trim($tenantSlug), $domain),
+                        'tenant_slug' => trim($tenantSlug),
+                        'login_email' => (string) $loginEmail,
+                        'product_key' => 'sendsaas',
+                    ];
+                }
+            }
+
             if ($productKey === 'aulavirtual') {
                 $loginUrl = $snapshot['aula_virtual_academy_url'] ?? null;
                 $tenantSlug = $snapshot['aula_virtual_tenant_slug'] ?? null;
@@ -256,6 +323,10 @@ final class SaasTenantAccessResolver
     public function userAlreadyHasSaasProduct(User $user, string $productKey): bool
     {
         if ($productKey === 'vetsaas' && $this->resolveVetsaas($user) !== null) {
+            return true;
+        }
+
+        if ($productKey === 'sendsaas' && $this->resolveSendsaas($user) !== null) {
             return true;
         }
 

@@ -125,8 +125,7 @@ final class SaasProvisionAccessNotifier
         ?string $temporaryPassword,
         WhatsAppRecipientDeduper $deduper,
     ): void {
-        $isVetsaas = $productKey === 'vetsaas';
-        $productLabel = $isVetsaas ? 'VetSaaS' : 'Aula Virtual';
+        $productLabel = \App\Support\Checkout\SaasCatalogSku::productLabel($productKey);
         $subject = "Acceso {$productLabel} provisionado – {$order->order_number}";
 
         $subdomainLine = $tenantSlug !== null && $tenantSlug !== ''
@@ -242,16 +241,19 @@ final class SaasProvisionAccessNotifier
         ?string $temporaryPassword,
     ): array {
         $isVetsaas = $productKey === 'vetsaas';
-        $productLabel = $isVetsaas ? 'VetSaaS' : 'Aula Virtual';
-        $subject = $isVetsaas
-            ? 'Tu clínica VetSaaS está lista'
-            : 'Tu acceso a Aula Virtual está listo';
+        $isSendsaas = $productKey === 'sendsaas';
+        $productLabel = \App\Support\Checkout\SaasCatalogSku::productLabel($productKey);
+        $subject = match ($productKey) {
+            'vetsaas' => 'Tu clínica VetSaaS está lista',
+            'sendsaas' => 'Tu empresa OmniDesk está lista',
+            default => 'Tu acceso a Aula Virtual está listo',
+        };
 
         $subdomainLine = $tenantSlug !== null && $tenantSlug !== ''
             ? '🌐 Subdominio: '.$tenantSlug."\n"
             : '';
 
-        $isBootstrap = $isVetsaas && str_contains($loginUrl, '/auth/bienvenida/');
+        $isBootstrap = ($isVetsaas || $isSendsaas) && str_contains($loginUrl, '/auth/bienvenida/');
 
         $credentialsBlock = '';
         if ($isBootstrap) {

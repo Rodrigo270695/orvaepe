@@ -36,15 +36,17 @@ final class SaasDuplicateCheckoutGuard
                 continue;
             }
 
-            $productKey = SaasCatalogSku::isVetsaas($sku) ? 'vetsaas' : 'aulavirtual';
+            $productKey = SaasCatalogSku::productKey($sku) ?? 'aulavirtual';
 
             if (! $this->accessResolver->userAlreadyHasSaasProduct($user, $productKey)) {
                 continue;
             }
 
-            $access = $productKey === 'vetsaas'
-                ? $this->accessResolver->resolveVetsaas($user)
-                : $this->accessResolver->resolveAulaVirtual($user);
+            $access = match ($productKey) {
+                'vetsaas' => $this->accessResolver->resolveVetsaas($user),
+                'sendsaas' => $this->accessResolver->resolveSendsaas($user),
+                default => $this->accessResolver->resolveAulaVirtual($user),
+            };
 
             if ($access === null) {
                 Log::warning('saas.duplicate_checkout_blocked_without_access', [
@@ -69,7 +71,7 @@ final class SaasDuplicateCheckoutGuard
                 'tenant_slug' => $access['tenant_slug'] ?? null,
             ]);
 
-            $productLabel = $productKey === 'vetsaas' ? 'VetSaaS' : 'Aula Virtual';
+            $productLabel = SaasCatalogSku::productLabel($productKey);
 
             throw ValidationException::withMessages([
                 'lines' => "Ya tienes una cuenta activa de {$productLabel}. "
