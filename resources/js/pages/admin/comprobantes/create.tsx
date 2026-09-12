@@ -844,10 +844,20 @@ export default function ComprobantesCreate({
                                 )}
 
                                 {!detActiva ? (
-                                    <p className="text-[11px] text-muted-foreground">
-                                        Actívala si la operación está sujeta a detracción SUNAT.
-                                        Con total &gt; S/ {umbralSoles} (PEN) se aplica sola.
-                                    </p>
+                                    <div className="space-y-2 text-[11px] leading-relaxed text-muted-foreground">
+                                        <p>
+                                            En esta factura no hace falta marcarla si el total es ≤ S/{' '}
+                                            {umbralSoles}: SUNAT exceptúa el SPOT en ese caso (servicios Anexo 3).
+                                        </p>
+                                        <p>
+                                            Cuando sí aplica (total &gt; S/ {umbralSoles} o la activás a mano),
+                                            hay que consignar la <strong className="font-medium text-foreground">cuenta de detracciones del emisor</strong> en el Banco de la Nación
+                                            {detCuenta
+                                                ? ` (ya está cargada: ${detCuenta}).`
+                                                : ' — aún no está en Config. emisor → SUNAT / OSE.'}
+                                            {' '}El cliente deposita el % ahí; el resto te lo paga a vos.
+                                        </p>
+                                    </div>
                                 ) : (
                                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                         <div className="space-y-2 sm:col-span-2">
@@ -862,6 +872,10 @@ export default function ComprobantesCreate({
                                                 required={detActiva}
                                                 className={inputClass}
                                             />
+                                            <p className="text-[10px] text-muted-foreground">
+                                                Cuenta de detracciones de Orvae (el emisor), no la del cliente.
+                                                Se guarda en Config. emisor para no teclearla en cada factura.
+                                            </p>
                                             <InputError message={errors['detraccion.cuenta_bn']} />
                                         </div>
 
