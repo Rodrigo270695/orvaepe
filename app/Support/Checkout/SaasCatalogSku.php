@@ -109,7 +109,7 @@ final class SaasCatalogSku
     {
         return match ($productKey) {
             'vetsaas' => 'VetSaaS',
-            'sendsaas' => 'OmniDesk',
+            'sendsaas' => 'SendSaaS',
             'aulavirtual' => 'Aula Virtual',
             default => 'SaaS',
         };

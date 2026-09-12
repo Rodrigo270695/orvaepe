@@ -40,7 +40,7 @@ final class SaasRenewalAccessNotifier
         $productLabel = \App\Support\Checkout\SaasCatalogSku::productLabel($productKey);
         $subject = match ($productKey) {
             'vetsaas' => 'Tu plan VetSaaS fue renovado',
-            'sendsaas' => 'Tu plan OmniDesk fue renovado',
+            'sendsaas' => 'Tu plan SendSaaS fue renovado',
             default => 'Tu plan de Aula Virtual fue renovado',
         };
         $entity = match ($productKey) {

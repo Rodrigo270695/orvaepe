@@ -245,7 +245,7 @@ final class SaasProvisionAccessNotifier
         $productLabel = \App\Support\Checkout\SaasCatalogSku::productLabel($productKey);
         $subject = match ($productKey) {
             'vetsaas' => 'Tu clínica VetSaaS está lista',
-            'sendsaas' => 'Tu empresa OmniDesk está lista',
+            'sendsaas' => 'Tu empresa SendSaaS está lista',
             default => 'Tu acceso a Aula Virtual está listo',
         };
 

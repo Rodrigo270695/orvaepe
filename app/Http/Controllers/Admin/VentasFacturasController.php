@@ -93,11 +93,15 @@ class VentasFacturasController extends Controller
                 ->first()
             : null;
 
+        $today = now()->toDateString();
+
         return Inertia::render('admin/comprobantes/create', [
             'sequences'          => $sequences,
             'orders'             => $orders,
             'preOrderId'         => $request->input('order_id'),
             'detraccionDefaults' => DetraccionDefaults::fromOptions($emitterSetting?->options),
+            'issuedAtToday'      => $today,
+            'issuedAtMin'        => now()->subDays(3)->toDateString(),
         ]);
     }
 
@@ -106,7 +110,12 @@ class VentasFacturasController extends Controller
         $data = $request->validate([
             'sequence_id'            => ['required', 'uuid', 'exists:invoice_document_sequences,id'],
             'order_id'               => ['nullable', 'uuid', 'exists:orders,id'],
-            'issued_at'              => ['required', 'date'],
+            'issued_at'              => [
+                'required',
+                'date',
+                'before_or_equal:today',
+                'after_or_equal:'.now()->subDays(3)->toDateString(),
+            ],
             'currency'               => ['required', 'in:PEN,USD'],
             'payment_type'           => ['required', 'in:Contado,Credito'],
             'buyer.tipo_doc'         => ['required', 'in:6,1,-'],
@@ -309,6 +318,13 @@ class VentasFacturasController extends Controller
     {
         if ($invoice->isAccepted()) {
             return back()->with('toast', AdminFlashToast::success('Este comprobante ya fue aceptado por SUNAT.'));
+        }
+
+        // SUNAT solo admite hoy (Perú) o 3 días atrás. Un `issued_at` en UTC
+        // puede quedar "mañana" si se emite de noche (p. ej. 20:00 Lima = 01:00 UTC).
+        $today = now()->startOfDay();
+        if ($invoice->issued_at !== null && $invoice->issued_at->gt($today->copy()->endOfDay())) {
+            $invoice->forceFill(['issued_at' => now()])->save();
         }
 
         $accepted = $this->emitInvoice($invoice);

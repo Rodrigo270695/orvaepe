@@ -187,7 +187,19 @@ type Props = {
     orders: OrderOption[];
     preOrderId?: string;
     detraccionDefaults?: DetraccionDefaults;
+    issuedAtToday?: string;
+    issuedAtMin?: string;
 };
+
+/** Fecha calendario en Perú. `toISOString()` es UTC y de noche adelanta un día. */
+function limaCalendarDate(date = new Date()): string {
+    return new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Lima',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+    }).format(date);
+}
 
 type Line = {
     description: string;
@@ -216,6 +228,8 @@ export default function ComprobantesCreate({
     orders,
     preOrderId,
     detraccionDefaults,
+    issuedAtToday,
+    issuedAtMin,
 }: Props) {
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Panel',          href: dashboard() },
@@ -226,7 +240,7 @@ export default function ComprobantesCreate({
     // ── Estado ────────────────────────────────────────────────────────────
     const [sequenceId, setSequenceId] = React.useState(sequences[0]?.id ?? '');
     const [orderId,    setOrderId]    = React.useState(preOrderId ?? '');
-    const [issuedAt,   setIssuedAt]   = React.useState(new Date().toISOString().slice(0, 10));
+    const [issuedAt,   setIssuedAt]   = React.useState(issuedAtToday || limaCalendarDate());
     const [currency,   setCurrency]   = React.useState('PEN');
     const [paymentType]               = React.useState('Contado');
 
@@ -540,6 +554,8 @@ export default function ComprobantesCreate({
                                             id="issued_at"
                                             type="date"
                                             value={issuedAt}
+                                            min={issuedAtMin || undefined}
+                                            max={issuedAtToday || limaCalendarDate()}
                                             onChange={(e) => setIssuedAt(e.target.value)}
                                             className={inputIconClass}
                                             required
