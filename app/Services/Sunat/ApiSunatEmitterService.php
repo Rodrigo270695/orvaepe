@@ -6,6 +6,7 @@ use App\Models\CompanyLegalProfile;
 use App\Models\Invoice;
 use App\Models\SunatEmitterSetting;
 use App\Support\Sunat\DetraccionDefaults;
+use App\Support\Sales\PeruIgvLineCalculator;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -83,12 +84,19 @@ class ApiSunatEmitterService
         $items = $invoice->lines->map(function ($line) {
             $igvCode  = $line->igv_affectation_code ?? '10';
             $tributo  = self::TRIBUTO[$igvCode] ?? self::TRIBUTO['10'];
+            $igvApplies = $igvCode === '10';
+            $qty = (float) $line->quantity;
+            $lineTotal = (float) ($line->line_total ?: 0);
+            $taxRate = ((float) ($tributo['porcentaje'] ?? 18)) / 100;
+            $valorUnitario = $lineTotal > 0
+                ? PeruIgvLineCalculator::sunatUnitValue($qty, $lineTotal, $taxRate, $igvApplies)
+                : number_format((float) $line->unit_price, 6, '.', '');
 
             return [
                 'unidad_de_medida'            => $line->unit_measure_code ?? 'ZZ',
                 'descripcion'                 => $line->description,
-                'cantidad'                    => number_format((float) $line->quantity, 6, '.', ''),
-                'valor_unitario'              => number_format((float) $line->unit_price, 6, '.', ''),
+                'cantidad'                    => number_format($qty, 6, '.', ''),
+                'valor_unitario'              => $valorUnitario,
                 'porcentaje_igv'              => $tributo['porcentaje'],
                 'codigo_tipo_afectacion_igv'  => $igvCode,
                 'nombre_tributo'              => $tributo['nombre'],

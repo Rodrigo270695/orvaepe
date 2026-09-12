@@ -13,6 +13,7 @@ use App\Models\SunatEmitterSetting;
 use App\Services\Sunat\ApiSunatEmitterService;
 use App\Services\Sunat\InvoiceEmitterService;
 use App\Support\AdminFlashToast;
+use App\Support\Sales\PeruIgvLineCalculator;
 use App\Support\Sunat\DetraccionDefaults;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -130,6 +131,7 @@ class VentasFacturasController extends Controller
             'lines.*.igv_code'       => ['required', 'string', 'max:10'],
             'lines.*.product_code'   => ['nullable', 'string', 'max:50'],
             'lines.*.unit_measure'   => ['required', 'string', 'max:10'],
+            'lines.*.line_total'     => ['nullable', 'numeric', 'min:0'],
             'detraccion.enabled'     => ['nullable', 'boolean'],
             'detraccion.tipo'        => ['nullable', 'string', 'max:3'],
             'detraccion.porcentaje'  => ['nullable', 'numeric', 'min:0', 'max:100'],
@@ -146,15 +148,28 @@ class VentasFacturasController extends Controller
         /** @var InvoiceDocumentSequence $seq */
         $seq = InvoiceDocumentSequence::find($data['sequence_id']);
 
-        // Calcular totales
+        // Calcular totales (si la orden trae total con IGV, anclarlo para no perder el céntimo)
         $subtotal = 0.0;
         $taxTotal = 0.0;
-        foreach ($data['lines'] as $line) {
-            $base  = round((float) $line['quantity'] * (float) $line['unit_price'], 2);
-            $igv   = $line['igv_code'] === '10' ? round($base * (float) $line['tax_rate'], 2) : 0.0;
-            $subtotal += $base;
-            $taxTotal += $igv;
+        $lineAmounts = [];
+        foreach ($data['lines'] as $index => $line) {
+            $igvApplies = ($line['igv_code'] ?? '') === '10';
+            $anchored = isset($line['line_total']) && $line['line_total'] !== '' && $line['line_total'] !== null
+                ? (float) $line['line_total']
+                : null;
+            $amounts = PeruIgvLineCalculator::forInvoiceLine(
+                (float) $line['quantity'],
+                (float) $line['unit_price'],
+                (float) $line['tax_rate'],
+                $igvApplies,
+                $anchored,
+            );
+            $lineAmounts[$index] = $amounts;
+            $subtotal += $amounts->baseLine;
+            $taxTotal += $amounts->taxLine;
         }
+        $subtotal = round($subtotal, 2);
+        $taxTotal = round($taxTotal, 2);
         $grandTotal = round($subtotal + $taxTotal, 2);
 
         $sunatMetadata = null;
@@ -218,7 +233,7 @@ class VentasFacturasController extends Controller
             ];
         }
 
-        $invoice = DB::transaction(function () use ($data, $profile, $seq, $subtotal, $taxTotal, $grandTotal, $sunatMetadata) {
+        $invoice = DB::transaction(function () use ($data, $profile, $seq, $subtotal, $taxTotal, $grandTotal, $sunatMetadata, $lineAmounts) {
             // Tomar y reservar el correlativo de forma atómica
             $correlative = $seq->next_correlative;
             $seq->increment('next_correlative');
@@ -247,9 +262,8 @@ class VentasFacturasController extends Controller
                 'sunat_metadata'                => $sunatMetadata,
             ]);
 
-            foreach ($data['lines'] as $line) {
-                $base = round((float) $line['quantity'] * (float) $line['unit_price'], 2);
-                $igv  = $line['igv_code'] === '10' ? round($base * (float) $line['tax_rate'], 2) : 0.0;
+            foreach ($data['lines'] as $index => $line) {
+                $amounts = $lineAmounts[$index];
 
                 InvoiceLine::create([
                     'invoice_id'            => $invoice->id,
@@ -258,7 +272,7 @@ class VentasFacturasController extends Controller
                     'unit_measure_code'     => $line['unit_measure'] ?? 'ZZ',
                     'unit_price'            => $line['unit_price'],
                     'tax_rate'              => $line['tax_rate'],
-                    'line_total'            => round($base + $igv, 2),
+                    'line_total'            => $amounts->lineTotal,
                     'sunat_product_code'    => $line['product_code'] ?? null,
                     'igv_affectation_code'  => $line['igv_code'],
                 ]);

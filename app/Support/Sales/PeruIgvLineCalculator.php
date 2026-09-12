@@ -51,4 +51,62 @@ final class PeruIgvLineCalculator
 
         return new PeruIgvLineAmounts($baseLine, $taxLine, $lineTotal);
     }
+
+    /**
+     * Totales de una línea de CPE.
+     *
+     * Si hay un total bruto anclado (precio de catálogo/orden con IGV, p. ej. 399.00),
+     * el IGV es total − base. Así no aparece el céntimo de 338.14 × 18 % = 60.87 → 399.01.
+     */
+    public static function forInvoiceLine(
+        float $qty,
+        float $netUnitPrice,
+        float $taxRate,
+        bool $igvApplies,
+        ?float $anchoredLineTotal = null,
+    ): PeruIgvLineAmounts {
+        if ($anchoredLineTotal !== null) {
+            $lineTotal = round($anchoredLineTotal, 2);
+
+            if (! $igvApplies) {
+                return new PeruIgvLineAmounts($lineTotal, 0.0, $lineTotal);
+            }
+
+            $baseLine = round($lineTotal / (1 + $taxRate), 2);
+            $taxLine = round($lineTotal - $baseLine, 2);
+
+            return new PeruIgvLineAmounts($baseLine, $taxLine, $lineTotal);
+        }
+
+        $baseLine = round($qty * $netUnitPrice, 2);
+
+        if (! $igvApplies) {
+            return new PeruIgvLineAmounts($baseLine, 0.0, $baseLine);
+        }
+
+        $taxLine = round($baseLine * $taxRate, 2);
+
+        return new PeruIgvLineAmounts($baseLine, $taxLine, round($baseLine + $taxLine, 2));
+    }
+
+    /**
+     * Valor unitario SUNAT (6 decimales) a partir del total de línea con IGV.
+     * API SUNAT recomienda no redondear a 2 decimales antes de emitir.
+     */
+    public static function sunatUnitValue(
+        float $qty,
+        float $lineTotal,
+        float $taxRate,
+        bool $igvApplies,
+    ): string {
+        if ($qty <= 0.0) {
+            return number_format(0, 6, '.', '');
+        }
+
+        $unit = $igvApplies
+            ? $lineTotal / $qty / (1 + $taxRate)
+            : $lineTotal / $qty;
+
+        return number_format($unit, 6, '.', '');
+    }
 }

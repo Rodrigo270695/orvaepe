@@ -9,6 +9,7 @@ use App\Models\InvoiceLine;
 use App\Models\SunatEmitterSetting;
 use App\Models\SunatSubmissionLog;
 use App\Support\Sunat\DetraccionDefaults;
+use App\Support\Sales\PeruIgvLineCalculator;
 use DateTime;
 use Greenter\Model\Client\Client;
 use Greenter\Model\Company\Address;
@@ -220,10 +221,25 @@ class InvoiceEmitterService
         foreach ($invoice->lines as $line) {
             $taxRate   = (float) ($line->tax_rate ?? 0.18);
             $qty       = (float) $line->quantity;
-            $baseUnit  = (float) $line->unit_price;
-            $lineBase  = round($baseUnit * $qty, 10);
             $affCode   = $line->igv_affectation_code ?? '10';
-            $lineIgv   = $affCode === '10' ? round($lineBase * $taxRate, 10) : 0.0;
+            $igvApplies = $affCode === '10';
+            $anchored = $line->line_total !== null ? (float) $line->line_total : null;
+            $amounts = PeruIgvLineCalculator::forInvoiceLine(
+                $qty,
+                (float) $line->unit_price,
+                $taxRate,
+                $igvApplies,
+                $anchored,
+            );
+            $lineBase = $amounts->baseLine;
+            $lineIgv = $amounts->taxLine;
+            $precioUnitario = $qty > 0 ? round($amounts->lineTotal / $qty, 6) : 0.0;
+            $valorUnitario = (float) PeruIgvLineCalculator::sunatUnitValue(
+                $qty,
+                $amounts->lineTotal,
+                $taxRate,
+                $igvApplies,
+            );
 
             $unitCode = $line->unit_measure_code ?? 'ZZ';
 
@@ -232,13 +248,13 @@ class InvoiceEmitterService
                 ->setUnidad($unitCode)
                 ->setDescripcion($line->description)
                 ->setCantidad($qty)
-                ->setMtoValorUnitario($baseUnit)
-                ->setMtoBaseIgv(round($lineBase, 2))
+                ->setMtoValorUnitario($valorUnitario)
+                ->setMtoBaseIgv($lineBase)
                 ->setPorcentajeIgv(round($taxRate * 100, 2))
-                ->setIgv(round($lineIgv, 2))
+                ->setIgv($lineIgv)
                 ->setTipAfeIgv($affCode)
-                ->setMtoPrecioUnitario(round($baseUnit * (1 + $taxRate), 6))
-                ->setMtoValorVenta(round($lineBase, 2));
+                ->setMtoPrecioUnitario($precioUnitario)
+                ->setMtoValorVenta($lineBase);
 
             $details[] = $detail;
 

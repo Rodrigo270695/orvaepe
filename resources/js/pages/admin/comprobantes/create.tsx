@@ -22,6 +22,7 @@ import AdminUnderlineLabel from '@/components/admin/form/admin-underline-label';
 import AdminUnderlineSelect from '@/components/admin/form/admin-underline-select';
 import { LineCodePicker, type CodeGroup } from '@/components/facturas/LineCodePicker';
 import InputError from '@/components/input-error';
+import { peruIgvLineAmounts } from '@/lib/cartPricing';
 import AppLayout from '@/layouts/app-layout';
 import { dashboard } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
@@ -209,6 +210,8 @@ type Line = {
     tax_rate: string;
     igv_code: string;
     product_code: string;
+    /** Total con IGV de la orden; si está, el IGV es residuo (evita 399.01). */
+    line_total?: string;
 };
 
 function emptyLine(): Line {
@@ -305,10 +308,10 @@ export default function ComprobantesCreate({
                 const sku        = ol.sku;
                 const igvApplies = sku != null ? sku.igv_applies : parseFloat(ol.tax_amount ?? '0') > 0;
                 const taxIncluded= sku != null ? sku.tax_included : false;
+                const qty        = Number(ol.quantity || 1);
                 const rawPrice   = parseFloat(ol.unit_price);
-                const unitNoIgv  = igvApplies && taxIncluded
-                    ? (rawPrice / 1.18).toFixed(2)
-                    : rawPrice.toFixed(2);
+                const amounts    = peruIgvLineAmounts(qty, rawPrice, taxIncluded, IGV_RATE, igvApplies);
+                const unitNoIgv  = qty > 0 ? (amounts.baseLine / qty).toFixed(2) : '0.00';
                 return {
                     description:  [ol.product_name_snapshot, ol.sku_name_snapshot].filter(Boolean).join(' — '),
                     quantity:     String(ol.quantity || 1),
@@ -317,6 +320,7 @@ export default function ComprobantesCreate({
                     tax_rate:     igvApplies ? String(IGV_RATE) : '0',
                     igv_code:     igvApplies ? '10' : '30',
                     product_code: '',
+                    line_total:   amounts.lineTotal.toFixed(2),
                 };
             });
             setLines(mapped);
@@ -369,20 +373,27 @@ export default function ComprobantesCreate({
 
     // ── Totales ───────────────────────────────────────────────────────────
     const totals = React.useMemo(() => {
-        let subtotal = 0, taxes = 0;
+        const round2 = (n: number) => Math.round(n * 100) / 100;
+        let subtotal = 0, taxes = 0, total = 0;
         for (const l of lines) {
-            const base = parseFloat(l.quantity || '0') * parseFloat(l.unit_price || '0');
-            const igv  = l.igv_code === '10' ? base * parseFloat(l.tax_rate || '0') : 0;
-            subtotal += base;
-            taxes    += igv;
+            const qty = parseFloat(l.quantity || '0');
+            const unit = parseFloat(l.unit_price || '0');
+            const rate = parseFloat(l.tax_rate || '0');
+            const igvApplies = l.igv_code === '10';
+            const anchored = l.line_total ? parseFloat(l.line_total) : null;
+            const amounts = anchored != null && Number.isFinite(anchored)
+                ? peruIgvLineAmounts(1, anchored, true, rate || IGV_RATE, igvApplies)
+                : peruIgvLineAmounts(qty, unit, false, rate || IGV_RATE, igvApplies);
+            subtotal += amounts.baseLine;
+            taxes += amounts.taxLine;
+            total += amounts.lineTotal;
         }
-        const total = subtotal + taxes;
         const calcDet = Math.round(total * (parseFloat(detPct || '0') / 100));
         return {
-            subtotal: subtotal.toFixed(2),
-            taxes: taxes.toFixed(2),
-            total: total.toFixed(2),
-            totalNum: total,
+            subtotal: round2(subtotal).toFixed(2),
+            taxes: round2(taxes).toFixed(2),
+            total: round2(total).toFixed(2),
+            totalNum: round2(total),
             calcDet,
         };
     }, [lines, detPct]);
@@ -415,7 +426,14 @@ export default function ComprobantesCreate({
 
     // ── Líneas CRUD ───────────────────────────────────────────────────────
     function setLine(i: number, field: keyof Line, value: string) {
-        setLines((prev) => prev.map((l, idx) => idx === i ? { ...l, [field]: value } : l));
+        setLines((prev) => prev.map((l, idx) => {
+            if (idx !== i) return l;
+            const next: Line = { ...l, [field]: value };
+            if (field === 'quantity' || field === 'unit_price' || field === 'tax_rate' || field === 'igv_code') {
+                delete next.line_total;
+            }
+            return next;
+        }));
     }
     const addLine    = () => setLines((prev) => [...prev, emptyLine()]);
     const removeLine = (i: number) => setLines((prev) => prev.filter((_, idx) => idx !== i));
@@ -435,6 +453,7 @@ export default function ComprobantesCreate({
             lines: lines.map((l) => ({
                 description: l.description, quantity: l.quantity, unit_measure: l.unit_measure,
                 unit_price: l.unit_price, tax_rate: l.tax_rate, igv_code: l.igv_code, product_code: l.product_code,
+                ...(l.line_total ? { line_total: l.line_total } : {}),
             })),
             detraccion: isFactura && detActiva
                 ? {

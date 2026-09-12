@@ -37,3 +37,16 @@ test('igv no aplica: total igual al importe de catálogo sin impuesto', function
         ->and($a->taxLine)->toBe(0.0)
         ->and($a->baseLine)->toBe(20.0);
 });
+
+test('cpe con total anclado 399: igv es residuo no 338.14 por 18%', function () {
+    $a = PeruIgvLineCalculator::forInvoiceLine(1, 338.14, 0.18, true, 399.0);
+
+    expect($a->lineTotal)->toBe(399.0)
+        ->and($a->baseLine)->toBe(338.14)
+        ->and($a->taxLine)->toBe(60.86);
+});
+
+test('valor unitario sunat de 399 con igv usa 6 decimales', function () {
+    expect(PeruIgvLineCalculator::sunatUnitValue(1, 399.0, 0.18, true))
+        ->toBe('338.135593');
+});
