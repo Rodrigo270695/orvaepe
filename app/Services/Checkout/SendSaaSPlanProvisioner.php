@@ -89,6 +89,7 @@ class SendSaaSPlanProvisioner
         $tenantName = $this->resolveTenantName($user);
         $tenantSlug = $this->resolveTenantSlug($tenantName, $user->email);
         $temporaryPassword = Str::password(16);
+        $customerPhone = \App\Support\Checkout\CheckoutCustomerPhone::persistOnUser($user, $order) ?? '';
 
         $payload = [
             'external_order_id' => (string) $order->id,
@@ -98,7 +99,7 @@ class SendSaaSPlanProvisioner
             'tenant_slug' => $tenantSlug,
             'razon_social' => $tenantName,
             'nombre_comercial' => $tenantName,
-            'telefono' => (string) ($user->phone ?? ''),
+            'telefono' => $customerPhone,
             'timezone' => 'America/Lima',
             'locale' => 'es_PE',
             'admin_nombres' => trim((string) ($user->name ?? '')) ?: 'Administrador',

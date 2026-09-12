@@ -51,20 +51,9 @@ final class WhatsAppRecipientDeduper
         return [$to, false];
     }
 
-    public function resolveFromUser(User $user): ?string
+    public function resolveFromUser(User $user, ?Order $order = null): ?string
     {
-        $user->loadMissing('profile');
-
-        if (is_string($user->phone) && trim($user->phone) !== '') {
-            return WhatsAppPhoneNormalizer::toUltraMsgTo($user->phone);
-        }
-
-        $profilePhone = $user->profile?->phone;
-        if (is_string($profilePhone) && trim($profilePhone) !== '') {
-            return WhatsAppPhoneNormalizer::toUltraMsgTo($profilePhone);
-        }
-
-        return null;
+        return CheckoutCustomerPhone::ultraMsgTo($user, $order);
     }
 
     public static function forOrder(Order $order): self

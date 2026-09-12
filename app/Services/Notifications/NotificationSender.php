@@ -147,6 +147,7 @@ class NotificationSender
         return in_array($type, [
             'order.paid.customer',
             'vetsaas.access.customer',
+            'sendsaas.access.customer',
             'vetsaas.renewal.customer',
             'vetsaas.existing_account.customer',
             'aulavirtual.access.customer',

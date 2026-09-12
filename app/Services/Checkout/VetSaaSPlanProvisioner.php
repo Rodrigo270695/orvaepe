@@ -88,6 +88,7 @@ class VetSaaSPlanProvisioner
         $tenantName = $this->resolveTenantName($user);
         $tenantSlug = $this->resolveTenantSlug($tenantName, $user->email);
         $temporaryPassword = Str::password(16);
+        $customerPhone = \App\Support\Checkout\CheckoutCustomerPhone::persistOnUser($user, $order) ?? '';
 
         $payload = [
             'external_order_id' => (string) $order->id,
@@ -96,7 +97,7 @@ class VetSaaSPlanProvisioner
             'tenant_slug' => $tenantSlug,
             'razon_social' => $tenantName,
             'nombre_comercial' => $tenantName,
-            'telefono' => (string) ($user->phone ?? ''),
+            'telefono' => $customerPhone,
             'admin_nombres' => trim((string) ($user->name ?? '')) ?: 'Administrador',
             'admin_apellidos' => trim((string) ($user->lastname ?? '')) ?: 'Clínica',
             'admin_email' => (string) $user->email,
@@ -520,6 +521,10 @@ class VetSaaSPlanProvisioner
         $snapshot['vetsaas_tenant_slug'] = $slug;
         $snapshot['vetsaas_login_email'] = $order->user?->email;
         $snapshot['vetsaas_temporary_password'] = $temporaryPassword;
+        $customerPhone = \App\Support\Checkout\CheckoutCustomerPhone::raw($order->user, $order);
+        if ($customerPhone !== null) {
+            $snapshot['customer_phone'] = $customerPhone;
+        }
         $order->forceFill(['billing_snapshot' => $snapshot])->save();
     }
 }
