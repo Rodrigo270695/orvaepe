@@ -24,6 +24,7 @@ type EntregaFormData = {
     legal_name: string;
     product_description: string;
     includes_igv: '1' | '0';
+    sale_amount: string;
     delivered_at: string;
     plan_period: PlanPeriod;
     plan_ends_at: string;
@@ -68,6 +69,7 @@ export default function VentasEntregaForm({ mode, delivery = null }: Props) {
         legal_name: delivery?.legal_name ?? '',
         product_description: delivery?.product_description ?? '',
         includes_igv: delivery?.includes_igv === false ? '0' : '1',
+        sale_amount: delivery?.sale_amount ?? '',
         delivered_at: initialDelivered,
         plan_period: initialPeriod,
         plan_ends_at:
@@ -153,6 +155,7 @@ export default function VentasEntregaForm({ mode, delivery = null }: Props) {
                 legal_name: data.legal_name,
                 product_description: data.product_description,
                 includes_igv: data.includes_igv,
+                sale_amount: data.sale_amount,
                 delivered_at: data.delivered_at,
                 plan_period: data.plan_period,
                 plan_ends_at: data.plan_ends_at,
@@ -287,6 +290,28 @@ export default function VentasEntregaForm({ mode, delivery = null }: Props) {
                             className="w-full rounded-none border-0 border-b border-[var(--o-border2)] bg-transparent py-3 pl-3 pr-3 font-[family-name:var(--font-body)] text-[13px] text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:border-[var(--o-amber)]/60 focus:outline-none"
                         />
                         <InputError message={form.errors.product_description} />
+                    </div>
+                    <div className="space-y-1.5">
+                        <AdminUnderlineLabel htmlFor="entrega_sale_amount" required>
+                            Monto de la venta (S/)
+                        </AdminUnderlineLabel>
+                        <AdminUnderlineInput
+                            id="entrega_sale_amount"
+                            name="sale_amount"
+                            inputMode="decimal"
+                            value={form.data.sale_amount}
+                            onChange={(event) =>
+                                form.setData('sale_amount', event.target.value)
+                            }
+                            placeholder="0.00"
+                            autoComplete="off"
+                        />
+                        <p className="text-[11px] text-muted-foreground">
+                            {form.data.includes_igv === '1'
+                                ? 'Este monto ya incluye IGV.'
+                                : 'Este monto no incluye IGV.'}
+                        </p>
+                        <InputError message={form.errors.sale_amount} />
                     </div>
                     <div className="space-y-1.5">
                         <AdminUnderlineLabel htmlFor="entrega_includes_igv" required>

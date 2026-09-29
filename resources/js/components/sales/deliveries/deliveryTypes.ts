@@ -6,6 +6,7 @@ export type DeliveryRow = {
     legal_name: string;
     product_description: string;
     includes_igv: boolean;
+    sale_amount: string;
     delivered_at: string | null;
     plan_period: PlanPeriod | string | null;
     plan_ends_at: string | null;

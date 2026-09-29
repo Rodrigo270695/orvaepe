@@ -1,4 +1,4 @@
-import { Link } from '@inertiajs/react';
+import { formatOrderMoney } from '@/components/sales/orders/orderDisplay';
 import { Eye, FileCode2, FileText, Pencil, Trash2 } from 'lucide-react';
 
 import {
@@ -44,6 +44,9 @@ export default function VentasEntregasMobileCards({
                             </p>
                             <p className="font-mono text-[10px] text-muted-foreground">
                                 RUC {row.ruc}
+                            </p>
+                            <p className="text-[11px] font-medium text-foreground">
+                                {formatOrderMoney(row.sale_amount ?? '0', 'PEN')}
                             </p>
                             <p className="text-[11px] text-muted-foreground">
                                 {planPeriodLabel(row.plan_period)} · hasta{' '}

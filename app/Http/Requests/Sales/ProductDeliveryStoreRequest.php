@@ -40,6 +40,18 @@ class ProductDeliveryStoreRequest extends FormRequest
                 'includes_igv' => in_array(strtolower($igv), ['1', 'true', 'on', 'si', 'yes'], true),
             ]);
         }
+
+        $amount = $this->input('sale_amount');
+        if (is_string($amount)) {
+            $amount = str_replace(' ', '', trim($amount));
+            if (str_contains($amount, ',') && str_contains($amount, '.')) {
+                $amount = str_replace('.', '', $amount);
+                $amount = str_replace(',', '.', $amount);
+            } elseif (str_contains($amount, ',')) {
+                $amount = str_replace(',', '.', $amount);
+            }
+            $this->merge(['sale_amount' => $amount]);
+        }
     }
 
     /**
@@ -52,6 +64,7 @@ class ProductDeliveryStoreRequest extends FormRequest
             'legal_name' => ['required', 'string', 'max:255'],
             'product_description' => ['required', 'string', 'max:2000'],
             'includes_igv' => ['required', 'boolean'],
+            'sale_amount' => ['required', 'numeric', 'min:0', 'max:9999999999.99'],
             'delivered_at' => ['required', 'date'],
             'plan_period' => ['required', 'string', Rule::in(ProductDelivery::periods())],
             'plan_ends_at' => ['required', 'date', 'after_or_equal:delivered_at'],
@@ -86,6 +99,9 @@ class ProductDeliveryStoreRequest extends FormRequest
             'legal_name.required' => 'Indica la razón social.',
             'product_description.required' => 'Describe el producto o servicio.',
             'includes_igv.required' => 'Indica si el monto incluye IGV.',
+            'sale_amount.required' => 'Indica el monto de la venta.',
+            'sale_amount.numeric' => 'El monto debe ser un número.',
+            'sale_amount.min' => 'El monto no puede ser negativo.',
             'delivered_at.required' => 'Indica la fecha de entrega.',
             'plan_period.required' => 'Indica si el plan es mensual, anual, de 2 años o de 3 años.',
             'plan_period.in' => 'El periodo del plan no es válido.',

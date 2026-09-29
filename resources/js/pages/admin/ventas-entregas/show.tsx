@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { formatOrderMoney } from '@/components/sales/orders/orderDisplay';
 import { ArrowLeft, FileCode2, FileText, Pencil, Receipt } from 'lucide-react';
 
 import {
@@ -88,6 +88,14 @@ export default function VentasEntregaShowPage({ delivery }: Props) {
                             </dt>
                             <dd className="mt-1 text-sm">
                                 {formatDeliveryDate(delivery.plan_ends_at)}
+                            </dd>
+                        </div>
+                        <div>
+                            <dt className="font-mono text-[9px] uppercase tracking-[0.14em] text-(--o-warm)">
+                                Monto de la venta
+                            </dt>
+                            <dd className="mt-1 text-sm font-medium">
+                                {formatOrderMoney(delivery.sale_amount ?? '0', 'PEN')}
                             </dd>
                         </div>
                         <div>

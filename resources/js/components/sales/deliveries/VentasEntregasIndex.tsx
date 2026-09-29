@@ -2,7 +2,7 @@ import { Link, router, usePage } from '@inertiajs/react';
 import * as React from 'react';
 import { ArrowDown, ArrowUp, Eye, FileCode2, FileText, Pencil, Trash2 } from 'lucide-react';
 
-import AdminCrudDeleteModal from '@/components/admin/crud/AdminCrudDeleteModal';
+import { formatOrderMoney } from '@/components/sales/orders/orderDisplay';
 import AdminCrudIndex from '@/components/admin/crud/AdminCrudIndex';
 import type { AdminCrudTableColumn } from '@/components/admin/crud/AdminCrudTable';
 import {
@@ -110,6 +110,11 @@ export default function VentasEntregasIndex({
                     {row.product_description}
                 </span>
             ),
+        },
+        {
+            header: 'Monto',
+            cellClassName: 'px-3 py-2 align-middle whitespace-nowrap font-medium',
+            render: (row) => formatOrderMoney(row.sale_amount ?? '0', 'PEN'),
         },
         {
             header: 'IGV',
