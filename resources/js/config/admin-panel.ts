@@ -19,6 +19,7 @@ export const panelSectionLabels: Record<string, string> = {
     // Ventas
     'ventas-ordenes': 'Órdenes',
     'ventas-cotizaciones': 'Cotizaciones',
+    'ventas-entregas': 'Entregas',
     'ventas-pagos': 'Pagos',
     'ventas-facturas': 'Facturas',
     'ventas-suscripciones': 'Suscripciones',

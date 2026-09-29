@@ -56,6 +56,7 @@ use App\Http\Controllers\Marketing\ValidateMarketingCouponController;
 use App\Http\Controllers\Marketing\VetSaaSRenewalRedirectController;
 use App\Http\Controllers\Sales\LookupSunatRucController;
 use App\Http\Controllers\Sales\OrdersController;
+use App\Http\Controllers\Sales\ProductDeliveriesController;
 use App\Http\Controllers\Sales\QuotesController;
 use App\Http\Controllers\Seo\RobotsController;
 use App\Http\Controllers\Seo\SitemapController;
@@ -420,6 +421,33 @@ Route::middleware(['auth', 'verified', 'client.profile.complete'])->group(functi
 
         Route::get('panel/ventas-cotizaciones/{quote}', [QuotesController::class, 'show'])
             ->name('panel.ventas-cotizaciones.show');
+
+        Route::get('panel/ventas-entregas', [ProductDeliveriesController::class, 'index'])
+            ->name('panel.ventas-entregas.index');
+
+        Route::get('panel/ventas-entregas/create', [ProductDeliveriesController::class, 'create'])
+            ->name('panel.ventas-entregas.create');
+
+        Route::post('panel/ventas-entregas', [ProductDeliveriesController::class, 'store'])
+            ->name('panel.ventas-entregas.store');
+
+        Route::get('panel/ventas-entregas/{productDelivery}/factura', [ProductDeliveriesController::class, 'downloadInvoice'])
+            ->name('panel.ventas-entregas.invoice');
+
+        Route::get('panel/ventas-entregas/{productDelivery}/xml', [ProductDeliveriesController::class, 'downloadXml'])
+            ->name('panel.ventas-entregas.xml');
+
+        Route::get('panel/ventas-entregas/{productDelivery}/edit', [ProductDeliveriesController::class, 'edit'])
+            ->name('panel.ventas-entregas.edit');
+
+        Route::patch('panel/ventas-entregas/{productDelivery}', [ProductDeliveriesController::class, 'update'])
+            ->name('panel.ventas-entregas.update');
+
+        Route::delete('panel/ventas-entregas/{productDelivery}', [ProductDeliveriesController::class, 'destroy'])
+            ->name('panel.ventas-entregas.destroy');
+
+        Route::get('panel/ventas-entregas/{productDelivery}', [ProductDeliveriesController::class, 'show'])
+            ->name('panel.ventas-entregas.show');
 
         Route::get('panel/ventas-suscripciones', [SubscriptionsController::class, 'index'])
             ->name('panel.ventas-suscripciones.index');

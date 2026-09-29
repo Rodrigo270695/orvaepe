@@ -132,6 +132,11 @@ const adminSections: NavSidebarSection[] = [
                         icon: FileText,
                     },
                     {
+                        title: 'Entregas',
+                        href: panelPath('ventas-entregas'),
+                        icon: Truck,
+                    },
+                    {
                         title: 'Pagos',
                         href: panelPath('ventas-pagos'),
                         icon: CreditCard,
