@@ -56,7 +56,7 @@ class ProductDeliveryStoreRequest extends FormRequest
             'plan_period' => ['required', 'string', Rule::in(ProductDelivery::periods())],
             'plan_ends_at' => ['required', 'date', 'after_or_equal:delivered_at'],
             'invoice_file' => ['nullable', 'file', 'max:10240', 'mimes:pdf,jpg,jpeg,png,webp'],
-            'xml_file' => ['nullable', 'file', 'max:5120'],
+            'xml_file' => ['nullable', 'file', 'max:20480'],
         ];
     }
 
@@ -69,8 +69,8 @@ class ProductDeliveryStoreRequest extends FormRequest
             }
 
             $ext = strtolower($xml->getClientOriginalExtension());
-            if ($ext !== 'xml') {
-                $validator->errors()->add('xml_file', 'El XML debe ser un archivo .xml.');
+            if (! in_array($ext, ['xml', 'zip', 'rar'], true)) {
+                $validator->errors()->add('xml_file', 'Sube un archivo .xml, .zip o .rar.');
             }
         });
     }
@@ -93,7 +93,7 @@ class ProductDeliveryStoreRequest extends FormRequest
             'plan_ends_at.after_or_equal' => 'La finalización del plan no puede ser anterior a la entrega.',
             'invoice_file.mimes' => 'La factura debe ser PDF o imagen (JPG, PNG, WEBP).',
             'invoice_file.max' => 'La factura no puede superar 10 MB.',
-            'xml_file.max' => 'El XML no puede superar 5 MB.',
+            'xml_file.max' => 'El archivo no puede superar 20 MB.',
         ];
     }
 }

@@ -411,13 +411,13 @@ export default function VentasEntregaForm({ mode, delivery = null }: Props) {
                             <FileCode2 className="size-4 shrink-0 text-[#8B5CF6]" />
                             <span className="min-w-0 truncate">
                                 {form.data.xml_file?.name ??
-                                    'Archivo .xml (máx. 5 MB)'}
+                                    'XML, ZIP o RAR (máx. 20 MB)'}
                             </span>
                             <input
                                 id="entrega_xml_file"
                                 name="xml_file"
                                 type="file"
-                                accept=".xml,text/xml,application/xml"
+                                accept=".xml,.zip,.rar,text/xml,application/xml,application/zip,application/x-zip-compressed,application/vnd.rar,application/x-rar-compressed"
                                 className="sr-only"
                                 onChange={(event) =>
                                     form.setData(
