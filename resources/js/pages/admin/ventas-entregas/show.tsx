@@ -1,5 +1,7 @@
-import { formatOrderMoney } from '@/components/sales/orders/orderDisplay';
+import { Head, Link } from '@inertiajs/react';
 import { ArrowLeft, FileCode2, FileText, Pencil, Receipt } from 'lucide-react';
+
+import { formatOrderMoney } from '@/components/sales/orders/orderDisplay';
 
 import {
     deliveryInvoiceUrl,

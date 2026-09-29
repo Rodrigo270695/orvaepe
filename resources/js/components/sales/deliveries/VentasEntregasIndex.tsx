@@ -3,6 +3,7 @@ import * as React from 'react';
 import { ArrowDown, ArrowUp, Eye, FileCode2, FileText, Pencil, Trash2 } from 'lucide-react';
 
 import { formatOrderMoney } from '@/components/sales/orders/orderDisplay';
+import AdminCrudDeleteModal from '@/components/admin/crud/AdminCrudDeleteModal';
 import AdminCrudIndex from '@/components/admin/crud/AdminCrudIndex';
 import type { AdminCrudTableColumn } from '@/components/admin/crud/AdminCrudTable';
 import {
