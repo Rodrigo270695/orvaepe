@@ -11,6 +11,7 @@ type Props = {
     initialQuery: string;
     initialIgv: string;
     initialPlan: string;
+    initialCobro: string;
     initialDateFrom: string;
     initialDateTo: string;
     className?: string;
@@ -20,6 +21,7 @@ export default function VentasEntregasFilters({
     initialQuery,
     initialIgv,
     initialPlan,
+    initialCobro,
     initialDateFrom,
     initialDateTo,
     className,
@@ -163,6 +165,42 @@ export default function VentasEntregasFilters({
                     options={[
                         { value: '_all_', label: 'Todos' },
                         ...planPeriodOptions,
+                    ]}
+                />
+            </div>
+            <div className="w-[min(100%,14rem)] shrink-0 space-y-1.5">
+                <AdminUnderlineLabel htmlFor="entrega_filter_cobro">
+                    Cobro
+                </AdminUnderlineLabel>
+                <AdminUnderlineSelect
+                    id="entrega_filter_cobro"
+                    name="entrega_filter_cobro"
+                    value={initialCobro || '_all_'}
+                    onValueChange={(next) => {
+                        const currentUrl = new URL(
+                            page.url,
+                            window.location.origin,
+                        );
+                        if (next === '_all_') {
+                            currentUrl.searchParams.delete('cobro');
+                        } else {
+                            currentUrl.searchParams.set('cobro', next);
+                        }
+                        currentUrl.searchParams.set('page', '1');
+                        router.get(
+                            currentUrl.pathname + currentUrl.search,
+                            {},
+                            {
+                                preserveScroll: true,
+                                preserveState: true,
+                                replace: true,
+                            },
+                        );
+                    }}
+                    options={[
+                        { value: '_all_', label: 'Todos' },
+                        { value: 'pending', label: 'Por cobrar' },
+                        { value: 'collected', label: 'Cobrados' },
                     ]}
                 />
             </div>

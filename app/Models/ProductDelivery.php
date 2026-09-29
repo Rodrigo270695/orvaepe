@@ -56,6 +56,7 @@ class ProductDelivery extends Model
         'product_description',
         'includes_igv',
         'sale_amount',
+        'collected_at',
         'delivered_at',
         'plan_period',
         'plan_ends_at',
@@ -71,6 +72,7 @@ class ProductDelivery extends Model
         'product_description',
         'includes_igv',
         'sale_amount',
+        'collected_at',
         'delivered_at',
         'plan_period',
         'plan_ends_at',
@@ -86,6 +88,7 @@ class ProductDelivery extends Model
         return [
             'includes_igv' => 'boolean',
             'sale_amount' => 'decimal:2',
+            'collected_at' => 'datetime',
             'delivered_at' => 'date',
             'plan_ends_at' => 'date',
         ];
@@ -108,6 +111,7 @@ class ProductDelivery extends Model
             'product_description' => $this->product_description,
             'includes_igv' => (bool) $this->includes_igv,
             'sale_amount' => number_format((float) $this->sale_amount, 2, '.', ''),
+            'is_collected' => $this->collected_at !== null,
             'delivered_at' => $this->delivered_at?->format('Y-m-d'),
             'plan_period' => $this->plan_period,
             'plan_ends_at' => $this->plan_ends_at?->format('Y-m-d'),

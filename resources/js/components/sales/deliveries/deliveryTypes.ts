@@ -7,6 +7,7 @@ export type DeliveryRow = {
     product_description: string;
     includes_igv: boolean;
     sale_amount: string;
+    is_collected: boolean;
     delivered_at: string | null;
     plan_period: PlanPeriod | string | null;
     plan_ends_at: string | null;
@@ -73,6 +74,16 @@ export function deliveryInvoiceUrl(id: string): string {
 export function deliveryXmlUrl(id: string): string {
     return `/panel/ventas-entregas/${id}/xml`;
 }
+
+export type DeliverySummary = {
+    count: number;
+    total_amount: string;
+    pending_amount: string;
+    collected_amount: string;
+    with_igv: number;
+    without_igv: number;
+    with_docs: number;
+};
 
 export function formatDeliveryDate(ymd: string | null | undefined): string {
     if (!ymd) {

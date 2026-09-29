@@ -74,6 +74,15 @@ class ProductDeliveriesController extends Controller
             $dateTo = '';
         }
 
+        $cobro = trim((string) $request->input('cobro', ''));
+        if ($cobro === 'pending') {
+            $query->whereNull('collected_at');
+        } elseif ($cobro === 'collected') {
+            $query->whereNotNull('collected_at');
+        } else {
+            $cobro = '';
+        }
+
         $append = [
             'per_page' => $perPage,
             'sort_dir' => $sortDir,
@@ -87,12 +96,17 @@ class ProductDeliveriesController extends Controller
         if ($plan !== '') {
             $append['plan'] = $plan;
         }
+        if ($cobro !== '') {
+            $append['cobro'] = $cobro;
+        }
         if ($dateFrom !== '') {
             $append['date_from'] = $dateFrom;
         }
         if ($dateTo !== '') {
             $append['date_to'] = $dateTo;
         }
+
+        $summary = $this->filteredSummary(clone $query);
 
         $deliveries = $query
             ->orderBy('delivered_at', $sortDir)
@@ -103,10 +117,12 @@ class ProductDeliveriesController extends Controller
 
         return Inertia::render('admin/ventas-entregas/index', [
             'deliveries' => $deliveries,
+            'summary' => $summary,
             'filters' => [
                 'q' => $q,
                 'igv' => $igv,
                 'plan' => $plan,
+                'cobro' => $cobro,
                 'sort_dir' => $sortDir,
                 'date_from' => $dateFrom,
                 'date_to' => $dateTo,
@@ -192,6 +208,16 @@ class ProductDeliveriesController extends Controller
             ->with('toast', AdminFlashToast::success('Entrega eliminada'));
     }
 
+    public function toggleCollected(ProductDelivery $productDelivery): RedirectResponse
+    {
+        $productDelivery->collected_at = $productDelivery->collected_at ? null : now();
+        $productDelivery->save();
+
+        return back()->with('toast', AdminFlashToast::success(
+            $productDelivery->collected_at ? 'Marcada como cobrada' : 'Volvió a por cobrar',
+        ));
+    }
+
     public function downloadInvoice(ProductDelivery $productDelivery): StreamedResponse
     {
         return $this->downloadStored(
@@ -206,6 +232,26 @@ class ProductDeliveriesController extends Controller
             $productDelivery->xml_path,
             $productDelivery->xml_original_name ?: 'factura.xml',
         );
+    }
+
+    /**
+     * @return array{count: int, total_amount: string, pending_amount: string, collected_amount: string, with_igv: int, without_igv: int, with_docs: int}
+     */
+    private function filteredSummary(\Illuminate\Database\Eloquent\Builder $query): array
+    {
+        $money = fn (mixed $value): string => number_format((float) $value, 2, '.', '');
+
+        return [
+            'count' => (clone $query)->count(),
+            'total_amount' => $money((clone $query)->sum('sale_amount')),
+            'pending_amount' => $money((clone $query)->whereNull('collected_at')->sum('sale_amount')),
+            'collected_amount' => $money((clone $query)->whereNotNull('collected_at')->sum('sale_amount')),
+            'with_igv' => (clone $query)->where('includes_igv', true)->count(),
+            'without_igv' => (clone $query)->where('includes_igv', false)->count(),
+            'with_docs' => (clone $query)->where(function ($sub): void {
+                $sub->whereNotNull('invoice_path')->orWhereNotNull('xml_path');
+            })->count(),
+        ];
     }
 
     private function persistUploads(Request $request, ProductDelivery $delivery): void

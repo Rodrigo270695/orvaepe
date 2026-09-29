@@ -437,6 +437,9 @@ Route::middleware(['auth', 'verified', 'client.profile.complete'])->group(functi
         Route::get('panel/ventas-entregas/{productDelivery}/xml', [ProductDeliveriesController::class, 'downloadXml'])
             ->name('panel.ventas-entregas.xml');
 
+        Route::post('panel/ventas-entregas/{productDelivery}/cobro', [ProductDeliveriesController::class, 'toggleCollected'])
+            ->name('panel.ventas-entregas.collected');
+
         Route::get('panel/ventas-entregas/{productDelivery}/edit', [ProductDeliveriesController::class, 'edit'])
             ->name('panel.ventas-entregas.edit');
 

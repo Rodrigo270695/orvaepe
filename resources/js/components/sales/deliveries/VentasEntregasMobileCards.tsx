@@ -1,5 +1,5 @@
-import { Link } from '@inertiajs/react';
-import { Eye, FileCode2, FileText, Pencil, Trash2 } from 'lucide-react';
+import { Link, router } from '@inertiajs/react';
+import { CheckCircle2, Eye, FileCode2, FileText, Pencil, Trash2 } from 'lucide-react';
 
 import { formatOrderMoney } from '@/components/sales/orders/orderDisplay';
 
@@ -49,6 +49,15 @@ export default function VentasEntregasMobileCards({
                             </p>
                             <p className="text-[11px] font-medium text-foreground">
                                 {formatOrderMoney(row.sale_amount ?? '0', 'PEN')}
+                                <span
+                                    className={
+                                        row.is_collected
+                                            ? 'ml-2 text-[#4A9A72]'
+                                            : 'ml-2 text-[#C05050]'
+                                    }
+                                >
+                                    {row.is_collected ? 'Cobrado' : 'Por cobrar'}
+                                </span>
                             </p>
                             <p className="text-[11px] text-muted-foreground">
                                 {planPeriodLabel(row.plan_period)} · hasta{' '}
@@ -105,6 +114,30 @@ export default function VentasEntregasMobileCards({
                                 <FileCode2 className="size-4 text-[#8B5CF6]/80" />
                             </a>
                         ) : null}
+                        <button
+                            type="button"
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg"
+                            aria-label={
+                                row.is_collected
+                                    ? 'Volver a por cobrar'
+                                    : 'Marcar como cobrado'
+                            }
+                            onClick={() =>
+                                router.post(
+                                    `/panel/ventas-entregas/${row.id}/cobro`,
+                                    {},
+                                    { preserveScroll: true },
+                                )
+                            }
+                        >
+                            <CheckCircle2
+                                className={
+                                    row.is_collected
+                                        ? 'size-4 text-[#4A9A72]'
+                                        : 'size-4 text-[#C05050]/70'
+                                }
+                            />
+                        </button>
                         <button
                             type="button"
                             className="inline-flex h-8 w-8 items-center justify-center rounded-lg"

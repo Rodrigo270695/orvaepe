@@ -1,6 +1,6 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import * as React from 'react';
-import { ArrowDown, ArrowUp, Eye, FileCode2, FileText, Pencil, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, CheckCircle2, Eye, FileCode2, FileText, Pencil, Trash2 } from 'lucide-react';
 
 import { formatOrderMoney } from '@/components/sales/orders/orderDisplay';
 import AdminCrudDeleteModal from '@/components/admin/crud/AdminCrudDeleteModal';
@@ -12,6 +12,7 @@ import {
     formatDeliveryDate,
     planPeriodLabel,
     type DeliveryRow,
+    type DeliverySummary,
 } from '@/components/sales/deliveries/deliveryTypes';
 import VentasEntregasFilters from '@/components/sales/deliveries/VentasEntregasFilters';
 import VentasEntregasMobileCards from '@/components/sales/deliveries/VentasEntregasMobileCards';
@@ -19,9 +20,11 @@ import VentasEntregasToolbar from '@/components/sales/deliveries/VentasEntregasT
 
 type Props = {
     deliveries: any;
+    summary: DeliverySummary;
     initialQuery: string;
     initialIgv: string;
     initialPlan: string;
+    initialCobro: string;
     initialSortDir: 'asc' | 'desc';
     initialDateFrom: string;
     initialDateTo: string;
@@ -29,16 +32,17 @@ type Props = {
 
 export default function VentasEntregasIndex({
     deliveries,
+    summary,
     initialQuery,
     initialIgv,
     initialPlan,
+    initialCobro,
     initialSortDir,
     initialDateFrom,
     initialDateTo,
 }: Props) {
     const page = usePage();
     const rows: DeliveryRow[] = (deliveries?.data ?? []) as DeliveryRow[];
-    const total = deliveries?.total ?? rows.length;
     const [deleteTarget, setDeleteTarget] = React.useState<DeliveryRow | null>(
         null,
     );
@@ -115,7 +119,21 @@ export default function VentasEntregasIndex({
         {
             header: 'Monto',
             cellClassName: 'px-3 py-2 align-middle whitespace-nowrap font-medium',
-            render: (row) => formatOrderMoney(row.sale_amount ?? '0', 'PEN'),
+            render: (row) => (
+                <div className="flex flex-col gap-0.5">
+                    <span>{formatOrderMoney(row.sale_amount ?? '0', 'PEN')}</span>
+                    <span
+                        className={[
+                            'text-[10px] font-medium',
+                            row.is_collected
+                                ? 'text-[#4A9A72]'
+                                : 'text-[#C05050]',
+                        ].join(' ')}
+                    >
+                        {row.is_collected ? 'Cobrado' : 'Por cobrar'}
+                    </span>
+                </div>
+            ),
         },
         {
             header: 'IGV',
@@ -188,13 +206,14 @@ export default function VentasEntregasIndex({
                 columns={columns}
                 emptyState="No hay entregas todavía. Registra una con «Nueva entrega»."
                 renderToolbar={() => (
-                    <VentasEntregasToolbar totalDeliveries={total} rows={rows} />
+                    <VentasEntregasToolbar summary={summary} />
                 )}
                 renderAboveTable={() => (
                     <VentasEntregasFilters
                         initialQuery={initialQuery}
                         initialIgv={initialIgv}
                         initialPlan={initialPlan}
+                        initialCobro={initialCobro}
                         initialDateFrom={initialDateFrom}
                         initialDateTo={initialDateTo}
                         className="mt-1"
@@ -218,6 +237,35 @@ export default function VentasEntregasIndex({
                         >
                             <Pencil className="size-4 text-[#4A80B8]/60 transition-colors group-hover:text-[#4A80B8]" />
                         </Link>
+                        <button
+                            type="button"
+                            className="group inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4A9A72]/30"
+                            aria-label={
+                                row.is_collected
+                                    ? 'Volver a por cobrar'
+                                    : 'Marcar como cobrado'
+                            }
+                            title={
+                                row.is_collected
+                                    ? 'Volver a por cobrar'
+                                    : 'Marcar como cobrado'
+                            }
+                            onClick={() =>
+                                router.post(
+                                    `/panel/ventas-entregas/${row.id}/cobro`,
+                                    {},
+                                    { preserveScroll: true },
+                                )
+                            }
+                        >
+                            <CheckCircle2
+                                className={
+                                    row.is_collected
+                                        ? 'size-4 text-[#4A9A72]'
+                                        : 'size-4 text-[#C05050]/70 transition-colors group-hover:text-[#4A9A72]'
+                                }
+                            />
+                        </button>
                         <button
                             type="button"
                             className="group inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C05050]/30"
