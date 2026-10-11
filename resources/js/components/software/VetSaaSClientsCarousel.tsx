@@ -49,7 +49,7 @@ function Marquee({ clients }: { clients: VetSaaSShowcaseClient[] }) {
                                 loading="lazy"
                                 decoding="async"
                             />
-                            <p className="min-w-0 font-display text-base font-semibold leading-snug text-foreground md:text-lg">
+                            <p className="min-w-0 font-display text-base font-semibold leading-snug text-[#06241C] md:text-lg">
                                 {client.name}
                             </p>
                         </div>
