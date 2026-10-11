@@ -11,6 +11,7 @@ import VetSaaSClientsCarousel, {
 import VetSaaSMotionRoot from '@/components/software/VetSaaSMotionRoot';
 import VetSaaSReveal from '@/components/software/VetSaaSReveal';
 import VetSaaSReviews, { type VetSaaSPublicReview } from '@/components/software/VetSaaSReviews';
+import VetSaaSWalkingPet from '@/components/software/VetSaaSWalkingPet';
 import type { SoftwarePricingPlan, SoftwareSystem } from '@/marketplace/softwareCatalog';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -150,6 +151,83 @@ const CLINIC_MODULES = [
         body: 'Recordatorios de citas y vacunas al celular del dueño.',
     },
 ] as const;
+
+const FAQS = [
+    {
+        q: '¿Qué es VetSaaS?',
+        a: 'Es el sistema de la clínica en la nube: historia clínica, sala de espera, agenda, grooming, hotel, inventario, caja y comprobantes SUNAT. Cada veterinaria entra por su propio subdominio.',
+    },
+    {
+        q: '¿La inteligencia artificial responde en WhatsApp?',
+        a: 'Sí. Un asistente de IA atiende el WhatsApp de la clínica: responde consultas de citas y operación, sin reemplazar el criterio del veterinario.',
+    },
+    {
+        q: '¿Qué recordatorios salen solos?',
+        a: 'La cita se avisa 48 horas antes y otra vez 2 horas antes. También puedes activar recordatorios de vacunas, cumpleaños de la mascota y el aviso de que el grooming está listo.',
+    },
+    {
+        q: '¿Sirve para clínicas en Perú?',
+        a: 'Sí. Emite comprobantes electrónicos SUNAT, cobra en soles y los datos de cada clínica quedan aislados de las demás.',
+    },
+    {
+        q: '¿Grooming y hotel van en el mismo sistema?',
+        a: 'Sí. Peluquería y guardería comparten calendario con las citas clínicas. Los cargos pasan a caja.',
+    },
+    {
+        q: '¿Cómo lo activo?',
+        a: 'Eliges Free o un plan de pago en Orvae, confirmas y entras a tu subdominio a crear la contraseña.',
+    },
+] as const;
+
+function FaqAccordion() {
+    const [open, setOpen] = useState(0);
+
+    return (
+        <div className="mt-8 space-y-3">
+            {FAQS.map((item, index) => {
+                const isOpen = open === index;
+                return (
+                    <div
+                        key={item.q}
+                        className="overflow-hidden rounded-2xl border border-[#99D2BC] bg-white"
+                    >
+                        <button
+                            type="button"
+                            className="flex w-full cursor-pointer items-center justify-between gap-4 px-5 py-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#006D55]"
+                            aria-expanded={isOpen}
+                            onClick={() => setOpen(isOpen ? -1 : index)}
+                        >
+                            <span className="font-display text-base font-semibold text-[#06241C]">
+                                {item.q}
+                            </span>
+                            <span
+                                className={[
+                                    'grid size-7 shrink-0 place-items-center rounded-full border border-[#99D2BC] text-lg leading-none text-[#006D55] transition-transform duration-300',
+                                    isOpen ? 'rotate-45 bg-[#E7F6EF]' : '',
+                                ].join(' ')}
+                                aria-hidden
+                            >
+                                +
+                            </span>
+                        </button>
+                        <div
+                            className={[
+                                'grid transition-[grid-template-rows] duration-300 ease-out',
+                                isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
+                            ].join(' ')}
+                        >
+                            <div className="overflow-hidden">
+                                <p className="font-body px-5 pb-5 text-sm leading-relaxed text-[#1F6B52]">
+                                    {item.a}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                );
+            })}
+        </div>
+    );
+}
 
 function HeroStage() {
     const [frame, setFrame] = useState(0);
@@ -450,9 +528,15 @@ export default function VetSaaSLanding(props: Props) {
                 }
                 .vs-landing .vs-hero-copy { animation: vs-hero-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both; }
                 .vs-landing .vs-hero-drift { animation: vs-hero-drift 18s ease-in-out infinite alternate; }
+                @keyframes vs-scan {
+                    from { transform: translateY(-20%); }
+                    to { transform: translateY(420%); }
+                }
+                .vs-landing .vs-scan { animation: vs-scan 7s linear infinite; }
                 @media (prefers-reduced-motion: reduce) {
                     .vs-landing .vs-hero-copy,
-                    .vs-landing .vs-hero-drift { animation: none !important; }
+                    .vs-landing .vs-hero-drift,
+                    .vs-landing .vs-scan { animation: none !important; }
                 }
             `}</style>
 
@@ -487,6 +571,40 @@ export default function VetSaaSLanding(props: Props) {
             <p className="bg-[#006D55] px-5 py-4 font-body text-sm text-[#E8F7F1] sm:px-10 lg:px-14">
                 {display}+ veterinarias ya operan con nosotros.
             </p>
+
+            <section className="relative overflow-hidden bg-[#041910] py-16 text-white sm:py-20">
+                <div
+                    className="pointer-events-none absolute inset-0 opacity-40"
+                    style={{
+                        backgroundImage:
+                            'linear-gradient(rgba(60,184,138,0.18) 1px, transparent 1px), linear-gradient(90deg, rgba(60,184,138,0.18) 1px, transparent 1px)',
+                        backgroundSize: '48px 48px',
+                    }}
+                    aria-hidden
+                />
+                <div className="vs-scan pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-[#3CB88A]/25 to-transparent" />
+                <div className="relative mx-auto grid max-w-6xl items-center gap-10 px-5 sm:px-8 lg:grid-cols-[1.1fr_0.9fr]">
+                    <div>
+                        <p className="font-body text-sm font-medium text-[#7DCAA8]">
+                            Inteligencia artificial en el WhatsApp de la clínica
+                        </p>
+                        <h2 className="font-display mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
+                            El asistente responde. Los recordatorios salen solos.
+                        </h2>
+                        <ul className="font-body mt-6 space-y-3 text-sm leading-relaxed text-[#D5EBE2] sm:text-base">
+                            <li>Atiende mensajes de citas y operación en el WhatsApp de la veterinaria.</li>
+                            <li>Avisa la cita 48 horas antes y otra vez 2 horas antes.</li>
+                            <li>Recuerda vacunas, cumpleaños de la mascota y cuando el grooming está listo.</li>
+                        </ul>
+                    </div>
+                    <div className="rounded-3xl border border-[#3CB88A]/40 bg-[#06241C]/80 px-4 py-6 shadow-[0_0_40px_rgba(60,184,138,0.18)]">
+                        <VetSaaSWalkingPet className="scale-125" />
+                        <p className="font-body mt-2 text-center text-xs text-[#7DCAA8]">
+                            Compañero de la clínica. La IA trabaja en el chat.
+                        </p>
+                    </div>
+                </div>
+            </section>
 
             <ClinicDayScroll />
 
@@ -600,32 +718,10 @@ export default function VetSaaSLanding(props: Props) {
                     className="scroll-mt-24 border-t border-[var(--vs-border)] bg-[var(--vs-bg)] py-16"
                 >
                     <div className="mx-auto max-w-3xl px-5 sm:px-8">
-                        <h2 className="font-display text-3xl font-semibold tracking-tight">
+                        <h2 className="font-display text-3xl font-semibold tracking-tight text-[#006D55]">
                             Preguntas de la clínica
                         </h2>
-                        <div className="mt-8 divide-y divide-[#06241C]/10 border-y border-[#06241C]/10">
-                            {[
-                                {
-                                    q: '¿Qué es un software veterinario?',
-                                    a: 'Centraliza historia clínica, agenda, inventario, caja y facturación. VetSaaS lo entrega en la nube, con subdominio, IA y WhatsApp.',
-                                },
-                                {
-                                    q: '¿Sirve para clínicas en Perú?',
-                                    a: 'Sí. Es multi-tenant, emite comprobantes SUNAT y se activa desde Orvae.',
-                                },
-                                {
-                                    q: '¿Cómo lo activo?',
-                                    a: 'Eliges Free o un plan de pago, confirmas y entras a tu subdominio a crear la contraseña.',
-                                },
-                            ].map((item) => (
-                                <article key={item.q} className="py-6">
-                                    <h3 className="font-display text-lg font-semibold">{item.q}</h3>
-                                    <p className="font-body vs-muted mt-2 text-sm leading-relaxed">
-                                        {item.a}
-                                    </p>
-                                </article>
-                            ))}
-                        </div>
+                        <FaqAccordion />
                     </div>
                 </section>
             </VetSaaSReveal>
