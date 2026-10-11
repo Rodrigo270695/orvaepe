@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 
-import SoftwareDetailStickyPurchaseBar from '@/components/software/SoftwareDetailStickyPurchaseBar';
 import type { VetSaaSShowcaseClient } from '@/components/software/VetSaaSClientsCarousel';
 import VetSaaSMotionRoot from '@/components/software/VetSaaSMotionRoot';
 import VetSaaSReveal from '@/components/software/VetSaaSReveal';
@@ -14,6 +13,7 @@ import ComparisonSection from '@/components/software/vetsaas/sections/Comparison
 import FaqSection from '@/components/software/vetsaas/sections/FaqSection';
 import ModulesSection from '@/components/software/vetsaas/sections/ModulesSection';
 import NoveltiesSection from '@/components/software/vetsaas/sections/NoveltiesSection';
+import MobilePlanBar from '@/components/software/vetsaas/pricing/MobilePlanBar';
 import PricingSection from '@/components/software/vetsaas/pricing/PricingSection';
 import StatsBand from '@/components/software/vetsaas/sections/StatsBand';
 import type { VetSaaSMarketingPayload, VetSaaSPurchaseProps } from '@/components/software/vetsaas/types';
@@ -78,19 +78,7 @@ export default function VetSaaSLanding({ system, marketing, showcaseClients, ...
                 <ClosingCta clinics={clinics} whatsappHref={purchase.consultationWhatsAppHref} />
 
                 {purchase.selectedPlan ? (
-                    <SoftwareDetailStickyPurchaseBar
-                        selectedPlanLabel={purchase.selectionTitle}
-                        priceLine={purchase.selectionPriceLine}
-                        planReady
-                        webCheckoutEnabled={purchase.webCheckoutEnabled}
-                        isFreeSubscription={purchase.isFreeSubscription}
-                        purchaseEnabled={purchase.purchaseEnabled}
-                        whatsappHref={purchase.consultationWhatsAppHref}
-                        payInProgress={purchase.checkoutLoading}
-                        payError={purchase.checkoutError}
-                        onPay={purchase.onStartCheckout}
-                        onAdd={purchase.onAddToCart}
-                    />
+                    <MobilePlanBar title={purchase.selectionTitle} priceLine={purchase.selectionPriceLine} />
                 ) : null}
             </div>
         </VetSaaSMotionRoot>

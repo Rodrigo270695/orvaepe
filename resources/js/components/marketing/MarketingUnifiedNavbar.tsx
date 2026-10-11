@@ -573,7 +573,7 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                     'fixed inset-x-0 top-0 z-40 w-full transition-[box-shadow,background-color,border-color,backdrop-filter] duration-500 ease-out',
                     'border-b',
                     scrolled
-                        ? 'border-[color-mix(in_oklab,var(--state-info)_18%,var(--border))] bg-background/50 shadow-[0_8px_32px_-12px_color-mix(in_oklab,var(--foreground)_18%,transparent),0_1px_0_0_color-mix(in_oklab,var(--state-info)_14%,transparent)] backdrop-blur-2xl'
+                        ? 'border-[color-mix(in_oklab,var(--state-info)_18%,var(--border))] bg-background/88 shadow-[0_8px_32px_-12px_color-mix(in_oklab,var(--foreground)_18%,transparent),0_1px_0_0_color-mix(in_oklab,var(--state-info)_14%,transparent)] backdrop-blur-2xl'
                         : 'border-[color-mix(in_oklab,var(--state-info)_14%,var(--border))] bg-background/92 shadow-[0_1px_0_0_color-mix(in_oklab,var(--state-info)_10%,transparent)] backdrop-blur-sm',
                 ].join(' ')}
             >
@@ -594,12 +594,12 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
 
                     <Link href="/" className="flex shrink-0 items-center gap-3" onClick={closeAll}>
                         <img
-                            src="/logo/orvae-logo-h-transparent-light.png"
+                            src="/logo/orvae-logo-h-transparent-light.webp"
                             alt="ORVAE"
                             className="h-11 w-auto sm:h-12 dark:hidden"
                         />
                         <img
-                            src="/logo/orvae-logo-h-transparent-dark.png"
+                            src="/logo/orvae-logo-h-transparent-dark.webp"
                             alt="ORVAE"
                             className="hidden h-11 w-auto sm:h-12 dark:block"
                         />

@@ -11,7 +11,7 @@ function ChatHeader() {
     return (
         <div className="flex items-center gap-3 border-b border-[#3CB88A]/25 bg-[#06241C] px-5 py-4">
             <span className="grid size-10 place-items-center overflow-hidden rounded-full border border-[#3CB88A]/60 bg-[#0F3B2E]">
-                <img src="/images/vetsaas-robot-pet.png" alt="" className="size-9 object-contain" />
+                <img src="/images/vetsaas-robot-pet.webp" alt="" loading="lazy" decoding="async" className="size-9 object-contain" />
             </span>
             <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-white">Asistente IA · Tu veterinaria</p>

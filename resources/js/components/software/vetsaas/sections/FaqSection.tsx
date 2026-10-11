@@ -64,7 +64,7 @@ function FaqItem({ index, question, answer, open, onToggle }: ItemProps) {
 function HelpCard({ whatsappHref }: { whatsappHref?: string }) {
     return (
         <div className="mt-8 flex items-center gap-4 rounded-2xl border border-[#99D2BC] bg-white p-4">
-            <img src="/images/vetsaas-robot-pet.png" alt="" className="size-16 shrink-0 object-contain" />
+            <img src="/images/vetsaas-robot-pet.webp" alt="" loading="lazy" decoding="async" className="size-16 shrink-0 object-contain" />
             <div className="min-w-0">
                 <p className="font-display text-base font-semibold text-[#06241C]">¿Otra pregunta?</p>
                 <p className="text-sm text-[#1F6B52]">Te respondemos por WhatsApp.</p>

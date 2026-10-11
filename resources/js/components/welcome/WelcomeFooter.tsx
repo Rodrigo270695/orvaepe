@@ -72,12 +72,12 @@ export default function WelcomeFooter() {
                     <div className="lg:col-span-4">
                         <div className="flex items-center">
                             <img
-                                src="/logo/orvae-logo-h-transparent-light.png"
+                                src="/logo/orvae-logo-h-transparent-light.webp"
                                 alt="ORVAE"
                                 className="h-14 w-auto dark:hidden"
                             />
                             <img
-                                src="/logo/orvae-logo-h-transparent-dark.png"
+                                src="/logo/orvae-logo-h-transparent-dark.webp"
                                 alt="ORVAE"
                                 className="hidden h-14 w-auto dark:block"
                             />

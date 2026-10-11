@@ -31,12 +31,12 @@ export function ClientPortalSidebar() {
                     prefetch
                 >
                     <img
-                        src="/logo/orvae-logo-h-transparent-light.png"
+                        src="/logo/orvae-logo-h-transparent-light.webp"
                         alt="ORVAE"
                         className="h-10 w-auto dark:hidden"
                     />
                     <img
-                        src="/logo/orvae-logo-h-transparent-dark.png"
+                        src="/logo/orvae-logo-h-transparent-dark.webp"
                         alt="ORVAE"
                         className="hidden h-10 w-auto dark:block"
                     />

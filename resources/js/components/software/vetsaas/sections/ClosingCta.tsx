@@ -69,7 +69,7 @@ export default function ClosingCta({ clinics, whatsappHref }: Props) {
                     </div>
 
                     <motion.img
-                        src="/images/vetsaas-robot-pet.png"
+                        src="/images/vetsaas-robot-pet.webp"
                         alt=""
                         style={reduce ? undefined : { y: petY }}
                         className="mx-auto hidden w-full max-w-xs drop-shadow-[0_30px_40px_rgba(0,0,0,0.35)] lg:block"

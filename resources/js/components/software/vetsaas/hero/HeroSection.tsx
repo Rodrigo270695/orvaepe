@@ -34,13 +34,13 @@ export default function HeroSection({ clinics, clients }: Props) {
 
                     <p
                         className="vs-fade-up font-body mt-6 max-w-xl text-lg leading-relaxed text-[#1F6B52]"
-                        style={{ animationDelay: '0.9s' }}
+                        style={{ animationDelay: '0.4s' }}
                     >
                         Historia clínica, agenda, grooming, hotel, caja y SUNAT en el subdominio de tu
                         clínica. El asistente responde en WhatsApp y los recordatorios salen solos.
                     </p>
 
-                    <div className="vs-fade-up mt-8 flex flex-wrap items-center gap-3" style={{ animationDelay: '1.05s' }}>
+                    <div className="vs-fade-up mt-8 flex flex-wrap items-center gap-3" style={{ animationDelay: '0.5s' }}>
                         <a
                             href="#planes"
                             className="font-body group inline-flex cursor-pointer items-center gap-2 rounded-xl border border-[#015743] bg-[#006D55] px-6 py-3.5 text-sm font-semibold text-white shadow-[0_14px_30px_-14px_rgba(0,109,85,0.9)] transition-all hover:-translate-y-0.5 hover:bg-[#015743] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#006D55] focus-visible:ring-offset-2 active:translate-y-px"
@@ -61,7 +61,7 @@ export default function HeroSection({ clinics, clients }: Props) {
                     <ClinicsProofBadge clinics={clinics} clients={clients} />
                 </div>
 
-                <div className="vs-fade-up px-4 sm:px-8 lg:px-6" style={{ animationDelay: '0.3s' }}>
+                <div className="vs-fade-up px-4 sm:px-8 lg:px-6" style={{ animationDelay: '0.1s' }}>
                     <HeroStage />
                 </div>
             </div>

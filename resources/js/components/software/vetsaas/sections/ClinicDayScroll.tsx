@@ -12,6 +12,7 @@ function PinnedSteps() {
     const copyRef = useRef<HTMLDivElement>(null);
     const indexRef = useRef<HTMLParagraphElement>(null);
     const titleRef = useRef<HTMLHeadingElement>(null);
+    const preloaded = useRef(false);
     const bodyRef = useRef<HTMLParagraphElement>(null);
     const barRef = useRef<HTMLSpanElement>(null);
     const photoRef = useRef<HTMLImageElement>(null);
@@ -45,6 +46,13 @@ function PinnedSteps() {
                 pin: true,
                 scrub: 0.45,
                 anticipatePin: 1,
+                onEnter: () => {
+                    if (preloaded.current) return;
+                    preloaded.current = true;
+                    DAY_STEPS.slice(1).forEach((step) => {
+                        new Image().src = step.image;
+                    });
+                },
                 onUpdate: (self) => {
                     const next = Math.min(DAY_STEPS.length - 1, Math.floor(self.progress * DAY_STEPS.length));
                     if (next !== current) {
@@ -71,9 +79,9 @@ function PinnedSteps() {
                     <p ref={indexRef} className="font-mono text-sm tabular-nums text-[#7DCAA8]">
                         {first.index}
                     </p>
-                    <h2 ref={titleRef} className="font-display mt-4 text-5xl font-semibold leading-[1.02] tracking-tight xl:text-6xl">
+                    <h3 ref={titleRef} className="font-display mt-4 text-5xl font-semibold leading-[1.02] tracking-tight xl:text-6xl">
                         {first.title}
-                    </h2>
+                    </h3>
                     <p ref={bodyRef} className="font-body mt-5 max-w-md text-lg leading-snug text-[#D5EBE2]">
                         {first.body}
                     </p>
@@ -86,7 +94,14 @@ function PinnedSteps() {
                     </div>
                 </div>
                 <div className="h-[72vh] w-[54%] overflow-hidden rounded-3xl border border-white/15">
-                    <img ref={photoRef} src={first.image} alt={first.alt} className="size-full object-cover" />
+                    <img
+                        ref={photoRef}
+                        src={first.image}
+                        alt={first.alt}
+                        loading="lazy"
+                        decoding="async"
+                        className="size-full object-cover"
+                    />
                 </div>
             </div>
         </section>
@@ -102,10 +117,12 @@ function StackedSteps({ className }: { className: string }) {
                         <img
                             src={step.image}
                             alt={step.alt}
+                            loading="lazy"
+                            decoding="async"
                             className="mb-4 aspect-[4/3] w-full rounded-3xl border border-white/15 object-cover"
                         />
                         <p className="font-mono text-sm text-[#7DCAA8]">{step.index}</p>
-                        <h2 className="font-display mt-2 text-3xl font-semibold tracking-tight">{step.title}</h2>
+                        <h3 className="font-display mt-2 text-3xl font-semibold tracking-tight">{step.title}</h3>
                         <p className="font-body mt-3 text-base leading-snug text-[#D5EBE2]">{step.body}</p>
                     </li>
                 ))}
@@ -117,14 +134,19 @@ function StackedSteps({ className }: { className: string }) {
 export default function ClinicDayScroll() {
     const reduce = useReducedMotion();
 
-    if (reduce) {
-        return <StackedSteps className="" />;
-    }
-
     return (
-        <>
-            <PinnedSteps />
-            <StackedSteps className="md:hidden" />
-        </>
+        <div aria-labelledby="vs-day-title">
+            <h2 id="vs-day-title" className="sr-only">
+                Un día en la clínica con VetSaaS
+            </h2>
+            {reduce ? (
+                <StackedSteps className="" />
+            ) : (
+                <>
+                    <PinnedSteps />
+                    <StackedSteps className="md:hidden" />
+                </>
+            )}
+        </div>
     );
 }

@@ -25,7 +25,13 @@ export default function HeroStage() {
                     <img
                         key={item.src}
                         src={item.src}
-                        alt={item.alt}
+                        alt={index === frame ? item.alt : ''}
+                        aria-hidden={index !== frame}
+                        width={1000}
+                        height={1250}
+                        fetchPriority={index === 0 ? 'high' : 'low'}
+                        loading={index === 0 ? 'eager' : 'lazy'}
+                        decoding={index === 0 ? 'sync' : 'async'}
                         className={[
                             'absolute inset-0 size-full object-cover transition-[opacity,transform,filter] duration-[1400ms] ease-out',
                             index === frame ? 'vs-hero-drift opacity-100 blur-0' : 'scale-110 opacity-0 blur-sm',
@@ -39,6 +45,7 @@ export default function HeroStage() {
                             key={item.src}
                             type="button"
                             aria-label={`Ver imagen ${index + 1}`}
+                            aria-pressed={index === frame}
                             onClick={() => setFrame(index)}
                             className={[
                                 'h-2 cursor-pointer rounded-full border border-white/70 transition-all duration-500',

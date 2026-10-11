@@ -45,7 +45,7 @@ export default function HomeVetSaaSSpotlight() {
                     </div>
                     <div className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-white/15 shadow-2xl">
                         <img
-                            src="/images/vetsaas-hero-pets.png"
+                            src="/images/vetsaas-hero-pets.webp"
                             alt="Mascotas en clínica veterinaria"
                             className="size-full object-cover"
                             loading="lazy"

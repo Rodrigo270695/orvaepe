@@ -421,7 +421,7 @@ export default function SoftwareDetail() {
                 'Facturación SUNAT',
                 'PWA multi-tenant',
             ];
-            base.image = `${seo.siteUrl}/images/vetsaas-hero-pets.png`;
+            base.image = `${seo.siteUrl}/images/vetsaas-hero-pets-og.jpg`;
         }
 
         const first = system.pricingPlans[0];
@@ -611,7 +611,9 @@ export default function SoftwareDetail() {
                 description={marketingSeo.vetsaas.description}
                 canonicalPath={`/software/${system.slug}`}
                 ogType="product"
-                ogImage="/images/vetsaas-hero-pets.png"
+                ogImage="/images/vetsaas-hero-pets-og.jpg"
+                preloadImage="/images/vetsaas-hero-pets.webp"
+                hideAppearanceToggle
                 ogImageAlt="Software veterinario VetSaaS — clínicas en Perú"
                 keywords={marketingSeo.vetsaas.keywords}
                 breadcrumbs={[

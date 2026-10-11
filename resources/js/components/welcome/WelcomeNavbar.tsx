@@ -152,12 +152,12 @@ export default function WelcomeNavbar({ canRegister = true }: Props) {
                     onClick={() => setOpen(false)}
                 >
                     <img
-                        src="/logo/orvae-logo-h-transparent-light.png"
+                        src="/logo/orvae-logo-h-transparent-light.webp"
                         alt="ORVAE"
                         className="h-6 w-auto dark:hidden"
                     />
                     <img
-                        src="/logo/orvae-logo-h-transparent-dark.png"
+                        src="/logo/orvae-logo-h-transparent-dark.webp"
                         alt="ORVAE"
                         className="hidden h-6 w-auto dark:block"
                     />

@@ -6,11 +6,13 @@ import { cn } from '@/lib/utils';
 const DISMISS_KEY = 'orvae-pwa-install-dismiss-until';
 const DISMISS_MS = 7 * 24 * 60 * 60 * 1000;
 
-/** Mismas exclusiones que WhatsApp: sin banner en panel staff / ajustes; sí en marketing y área cliente. */
+/** Sin banner en panel staff / ajustes ni en landings de venta (compite con el CTA de compra). */
 const HIDE_PATH_PREFIXES = [
     '/dashboard',
     '/panel',
     '/settings',
+    '/software',
+    '/checkout',
 ] as const;
 
 function shouldHideBanner(pathname: string): boolean {

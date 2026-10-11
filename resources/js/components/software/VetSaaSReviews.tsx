@@ -67,9 +67,11 @@ function ClinicMark({ review }: { review: VetSaaSPublicReview }) {
     );
 }
 
-function ReviewCard({ review }: { review: VetSaaSPublicReview }) {
+function ReviewCard({ review, duplicate = false }: { review: VetSaaSPublicReview; duplicate?: boolean }) {
     return (
-        <blockquote className="flex w-[20rem] shrink-0 flex-col rounded-2xl border border-[#99D2BC] bg-white p-5 shadow-[0_12px_30px_-18px_rgba(0,109,85,0.55)] sm:w-[24rem]">
+        <blockquote
+            aria-hidden={duplicate || undefined}
+            className="flex w-[20rem] shrink-0 flex-col rounded-2xl border border-[#99D2BC] bg-white p-5 shadow-[0_12px_30px_-18px_rgba(0,109,85,0.55)] sm:w-[24rem]">
             <div className="flex items-start gap-3">
                 <ClinicMark review={review} />
                 <div className="min-w-0">
@@ -135,6 +137,7 @@ export default function VetSaaSReviews({ reviews }: { reviews: VetSaaSPublicRevi
                             <ReviewCard
                                 key={`${review.author_name}-${review.clinic_name}-${idx}`}
                                 review={review}
+                                duplicate={idx >= reviews.length}
                             />
                         ))}
                     </div>

@@ -56,12 +56,12 @@ export default function AuthOrvaeLoginLayout({
                             className="inline-flex shrink-0 items-center gap-3 font-display font-semibold text-(--o-amber)"
                         >
                             <img
-                                src="/logo/orvae-logo-h-transparent-light.png"
+                                src="/logo/orvae-logo-h-transparent-light.webp"
                                 alt="ORVAE"
                                 className="h-9 w-auto dark:hidden"
                             />
                             <img
-                                src="/logo/orvae-logo-h-transparent-dark.png"
+                                src="/logo/orvae-logo-h-transparent-dark.webp"
                                 alt="ORVAE"
                                 className="hidden h-9 w-auto dark:block"
                             />
@@ -70,12 +70,12 @@ export default function AuthOrvaeLoginLayout({
                         <div className="space-y-6 rounded-3xl border border-[color-mix(in_oklab,var(--border)_65%,transparent)] bg-[color-mix(in_oklab,var(--card)_55%,transparent)] p-7 shadow-[0_24px_64px_-32px_color-mix(in_oklab,var(--foreground)_24%,transparent)] backdrop-blur-xl">
                             <div className="flex items-center">
                                 <img
-                                    src="/logo/orvae-logo-h-transparent-light.png"
+                                    src="/logo/orvae-logo-h-transparent-light.webp"
                                     alt="ORVAE"
                                     className="h-24 w-auto dark:hidden"
                                 />
                                 <img
-                                    src="/logo/orvae-logo-h-transparent-dark.png"
+                                    src="/logo/orvae-logo-h-transparent-dark.webp"
                                     alt="ORVAE"
                                     className="hidden h-24 w-auto dark:block"
                                 />
@@ -118,12 +118,12 @@ export default function AuthOrvaeLoginLayout({
                         className="mb-8 flex shrink-0 items-center justify-center gap-2 lg:hidden"
                     >
                         <img
-                            src="/logo/orvae-logo-h-transparent-light.png"
+                            src="/logo/orvae-logo-h-transparent-light.webp"
                             alt="ORVAE"
                             className="h-11 w-auto min-[400px]:h-12 dark:hidden"
                         />
                         <img
-                            src="/logo/orvae-logo-h-transparent-dark.png"
+                            src="/logo/orvae-logo-h-transparent-dark.webp"
                             alt="ORVAE"
                             className="hidden h-11 w-auto min-[400px]:h-12 dark:block"
                         />

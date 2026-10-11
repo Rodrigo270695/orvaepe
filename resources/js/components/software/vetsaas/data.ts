@@ -1,8 +1,8 @@
 export const HERO_FRAMES = [
-    { src: '/images/vetsaas-hero-pets.png', alt: 'Pacientes de una clínica veterinaria' },
-    { src: '/images/vetsaas-consulta.jpg', alt: 'Consulta veterinaria' },
-    { src: '/images/vetsaas-grooming.jpg', alt: 'Grooming en la clínica' },
-    { src: '/images/vetsaas-recepcion.jpg', alt: 'Recepción de la clínica' },
+    { src: '/images/vetsaas-hero-pets.webp', alt: 'Pacientes de una clínica veterinaria' },
+    { src: '/images/vetsaas-consulta.webp', alt: 'Consulta veterinaria' },
+    { src: '/images/vetsaas-grooming.webp', alt: 'Grooming en la clínica' },
+    { src: '/images/vetsaas-recepcion.webp', alt: 'Recepción de la clínica' },
 ] as const;
 
 export const DAY_STEPS = [
@@ -10,21 +10,21 @@ export const DAY_STEPS = [
         index: '01',
         title: 'Historia clínica',
         body: 'Ficha del paciente, vacunas, plan de tratamiento y el historial de cada consulta.',
-        image: '/images/vetsaas-consulta.jpg',
+        image: '/images/vetsaas-consulta.webp',
         alt: 'Consulta veterinaria en la sala de examen',
     },
     {
         index: '02',
         title: 'Agenda, grooming y hotel',
         body: 'Citas, peluquería y guardería en el mismo calendario. El recordatorio sale por WhatsApp.',
-        image: '/images/vetsaas-grooming.jpg',
+        image: '/images/vetsaas-grooming.webp',
         alt: 'Peluquería canina dentro de la clínica',
     },
     {
         index: '03',
         title: 'Caja y SUNAT',
         body: 'Cobras en recepción y emites el comprobante electrónico sin abrir otro sistema.',
-        image: '/images/vetsaas-recepcion.jpg',
+        image: '/images/vetsaas-recepcion.webp',
         alt: 'Recepción de una clínica veterinaria',
     },
 ] as const;

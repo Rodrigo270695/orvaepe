@@ -1,3 +1,4 @@
+import { Head } from '@inertiajs/react';
 import type { ReactNode } from 'react';
 
 import SeoHead, { type SeoBreadcrumbItem } from '@/components/seo/SeoHead';
@@ -17,6 +18,9 @@ type Props = {
     structuredData?: 'full' | 'minimal' | 'none';
     breadcrumbs?: SeoBreadcrumbItem[];
     keywords?: string;
+    /** Imagen LCP de la página: se precarga con prioridad alta. */
+    preloadImage?: string;
+    hideAppearanceToggle?: boolean;
     children: ReactNode;
 };
 
@@ -32,6 +36,8 @@ export default function MarketingLayout({
     structuredData = 'full',
     breadcrumbs,
     keywords,
+    preloadImage,
+    hideAppearanceToggle = false,
     children,
 }: Props) {
     return (
@@ -49,10 +55,15 @@ export default function MarketingLayout({
                 breadcrumbs={breadcrumbs}
                 keywords={keywords}
             />
+            {preloadImage ? (
+                <Head>
+                    <link rel="preload" as="image" href={preloadImage} fetchPriority="high" head-key="lcp-preload" />
+                </Head>
+            ) : null}
             <div className="min-h-screen bg-background text-foreground">
                 <MarketingUnifiedNavbar />
                 <div className="h-20 shrink-0" aria-hidden />
-                <AppearanceFloatingRailToggle />
+                {hideAppearanceToggle ? null : <AppearanceFloatingRailToggle />}
                 <main>{children}</main>
                 <WelcomeFooter />
             </div>

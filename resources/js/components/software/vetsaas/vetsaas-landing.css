@@ -23,7 +23,7 @@
 }
 
 @keyframes vs-word-in {
-    from { opacity: 0; transform: translateY(0.45em); filter: blur(10px); }
+    from { opacity: 0; transform: translateY(0.45em); filter: blur(6px); }
     to { opacity: 1; transform: none; filter: blur(0); }
 }
 
@@ -50,7 +50,7 @@
 .vs-landing .vs-fade-up { animation: vs-fade-up 0.8s cubic-bezier(0.22, 1, 0.36, 1) both; }
 .vs-landing .vs-hero-drift { animation: vs-hero-drift 18s ease-in-out infinite alternate; }
 .vs-landing .vs-scan { animation: vs-scan 7s linear infinite; }
-.vs-landing .vs-word { animation: vs-word-in 0.9s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.vs-landing .vs-word { animation: vs-word-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
 .vs-landing .vs-float-in {
     animation: vs-pop 0.9s cubic-bezier(0.22, 1, 0.36, 1) both, vs-bob 7s ease-in-out infinite;
 }

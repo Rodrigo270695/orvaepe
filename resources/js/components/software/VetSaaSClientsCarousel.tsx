@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
 import SoftwareDetailSection from '@/components/software/SoftwareDetailSection';
+import ClientLogo from '@/components/software/vetsaas/ClientLogo';
 import ScrollReveal from '@/components/welcome/ScrollReveal';
 
 export type VetSaaSShowcaseClient = {
@@ -40,14 +41,13 @@ function Marquee({ clients }: { clients: VetSaaSShowcaseClient[] }) {
                     {duplicated.map((client, index) => (
                         <div
                             key={`${client.slug}-${index}`}
+                            aria-hidden={index >= clients.length || undefined}
                             className="flex min-w-[16rem] shrink-0 items-center gap-4 rounded-2xl border border-[#99D2BC] bg-white px-5 py-4 shadow-[0_12px_30px_-18px_rgba(0,109,85,0.55)]"
                         >
-                            <img
+                            <ClientLogo
+                                name={client.name}
                                 src={client.logo_url}
-                                alt={client.name}
-                                className="size-16 shrink-0 rounded-full border border-[#99D2BC] bg-[#F3FBF7] object-contain p-1.5 md:size-20"
-                                loading="lazy"
-                                decoding="async"
+                                className="size-16 shrink-0 rounded-full border border-[#99D2BC] bg-[#F3FBF7] p-1.5 text-lg md:size-20"
                             />
                             <p className="min-w-0 font-display text-base font-semibold leading-snug text-[#06241C] md:text-lg">
                                 {client.name}

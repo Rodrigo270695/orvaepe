@@ -4,12 +4,12 @@ export default function AppLogo() {
             {/* Expanded sidebar: logo horizontal ORVAE (siempre en móvil/hoja; en escritorio se oculta en modo icono) */}
             <div className="flex items-center gap-2 group-data-[collapsible=icon]:hidden">
                 <img
-                    src="/logo/orvae-logo-h-transparent-light.png"
+                    src="/logo/orvae-logo-h-transparent-light.webp"
                     alt="ORVAE"
                     className="h-10 w-auto dark:hidden"
                 />
                 <img
-                    src="/logo/orvae-logo-h-transparent-dark.png"
+                    src="/logo/orvae-logo-h-transparent-dark.webp"
                     alt="ORVAE"
                     className="h-10 w-auto hidden dark:block"
                 />
