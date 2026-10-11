@@ -1,37 +1,10 @@
 .vs-landing {
-    --vs-500: #008762;
-    --vs-600: #006d55;
-    --vs-700: #015743;
     --vs-ink: #06241c;
     --vs-bg: #f4f7f5;
-    --vs-card: #ffffff;
-    --vs-muted: #3e5c52;
     --vs-border: rgba(6, 36, 28, 0.12);
     color: var(--vs-ink);
     background: var(--vs-bg);
     font-family: var(--font-body), 'DM Sans', sans-serif;
-}
-
-.vs-landing .vs-display {
-    font-family: var(--font-display), Syne, sans-serif;
-}
-
-.vs-landing .vs-body {
-    font-family: var(--font-body), 'DM Sans', sans-serif;
-}
-
-.vs-landing .vs-muted {
-    color: var(--vs-muted);
-}
-
-.vs-landing .vs-plans {
-    --background: #ffffff;
-    --foreground: #06241c;
-    --muted-foreground: #3e5c52;
-    --border: rgba(6, 36, 28, 0.12);
-    --primary: #006d55;
-    --primary-foreground: #ffffff;
-    --card: #ffffff;
 }
 
 @keyframes vs-fade-up {
@@ -85,7 +58,43 @@
 .vs-landing .vs-bubble { animation: vs-bubble-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both; }
 .vs-landing .vs-cross { animation: vs-cross 26s linear infinite; }
 
+@property --vs-angle {
+    syntax: '<angle>';
+    initial-value: 0deg;
+    inherits: false;
+}
+
+@keyframes vs-spin {
+    to { --vs-angle: 360deg; }
+}
+
+@keyframes vs-price-in {
+    from { opacity: 0; transform: translateY(12px); filter: blur(4px); }
+    to { opacity: 1; transform: none; filter: blur(0); }
+}
+
+.vs-landing .vs-glow-border {
+    background: conic-gradient(from var(--vs-angle), #3cb88a, rgba(60, 184, 138, 0.1) 25%, #99d2bc 50%, rgba(60, 184, 138, 0.1) 75%, #3cb88a);
+    animation: vs-spin 6s linear infinite;
+    box-shadow: 0 30px 80px -30px rgba(60, 184, 138, 0.55);
+}
+
+.vs-landing .vs-spotlight::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+    background: radial-gradient(22rem circle at var(--vs-x, 50%) var(--vs-y, 0%), rgba(60, 184, 138, 0.18), transparent 60%);
+}
+
+.vs-landing .vs-spotlight:hover::before { opacity: 1; }
+.vs-landing .vs-price-in { animation: vs-price-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
 @media (prefers-reduced-motion: reduce) {
+    .vs-landing .vs-glow-border,
+    .vs-landing .vs-price-in,
     .vs-landing .vs-fade-up,
     .vs-landing .vs-hero-drift,
     .vs-landing .vs-scan,

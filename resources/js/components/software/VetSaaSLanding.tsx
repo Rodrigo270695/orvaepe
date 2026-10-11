@@ -14,7 +14,7 @@ import ComparisonSection from '@/components/software/vetsaas/sections/Comparison
 import FaqSection from '@/components/software/vetsaas/sections/FaqSection';
 import ModulesSection from '@/components/software/vetsaas/sections/ModulesSection';
 import NoveltiesSection from '@/components/software/vetsaas/sections/NoveltiesSection';
-import PlansSection from '@/components/software/vetsaas/sections/PlansSection';
+import PricingSection from '@/components/software/vetsaas/pricing/PricingSection';
 import StatsBand from '@/components/software/vetsaas/sections/StatsBand';
 import type { VetSaaSMarketingPayload, VetSaaSPurchaseProps } from '@/components/software/vetsaas/types';
 import { planCodigoFromSku } from '@/components/software/vetsaas/utils';
@@ -66,15 +66,16 @@ export default function VetSaaSLanding({ system, marketing, showcaseClients, ...
                     </VetSaaSReveal>
                 ) : null}
 
-                <NoveltiesSection />
-                <FaqSection />
-                <PlansSection
+                <PricingSection
                     {...purchase}
                     plans={plans}
+                    marketingPlans={marketing.plans}
                     modulesNote={marketing.modules_note ?? DEFAULT_MODULES_NOTE}
                 />
                 <ComparisonSection plans={marketing.plans} comparison={marketing.comparison} />
-                <ClosingCta />
+                <NoveltiesSection />
+                <FaqSection whatsappHref={purchase.consultationWhatsAppHref} />
+                <ClosingCta clinics={clinics} whatsappHref={purchase.consultationWhatsAppHref} />
 
                 {purchase.selectedPlan ? (
                     <SoftwareDetailStickyPurchaseBar

@@ -2,6 +2,11 @@ import type { SoftwarePricingPlan } from '@/marketplace/softwareCatalog';
 
 import { PLAN_ORDER } from './data';
 
+export function visiblePlanBadge(badge: string | null | undefined): string | null {
+    const text = badge?.trim();
+    return text && !/^normal$/i.test(text) ? text : null;
+}
+
 export function planCodigoFromSku(plan: SoftwarePricingPlan): string {
     const cleaned = (plan.planCode ?? '')
         .toLowerCase()
