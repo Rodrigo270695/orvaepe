@@ -1,6 +1,6 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import * as React from 'react';
-import { ArrowDown, ArrowUp, CheckCircle2, Eye, FileCode2, FileText, Pencil, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, CheckCircle2, Eye, Pencil, Trash2 } from 'lucide-react';
 
 import { formatOrderMoney } from '@/components/sales/orders/orderDisplay';
 import AdminCrudDeleteModal from '@/components/admin/crud/AdminCrudDeleteModal';
@@ -72,9 +72,9 @@ export default function VentasEntregasIndex({
             (currentUrl.searchParams.get('sort_dir') as 'asc' | 'desc' | null) ??
             initialSortDir;
         return dir === 'asc' ? (
-            <ArrowUp className="size-3.5 text-[#4A80B8]" />
+            <ArrowUp className="size-3.5 text-[#6A7A88]" />
         ) : (
-            <ArrowDown className="size-3.5 text-[#4A80B8]" />
+            <ArrowDown className="size-3.5 text-[#6A7A88]" />
         );
     };
 
@@ -118,16 +118,20 @@ export default function VentasEntregasIndex({
         },
         {
             header: 'Monto',
-            cellClassName: 'px-3 py-2 align-middle whitespace-nowrap font-medium',
+            headerClassName: 'px-3 text-right',
+            cellClassName:
+                'px-3 py-3 align-middle whitespace-nowrap text-right',
             render: (row) => (
-                <div className="flex flex-col gap-0.5">
-                    <span>{formatOrderMoney(row.sale_amount ?? '0', 'PEN')}</span>
+                <div>
+                    <span className="font-medium tabular-nums text-[#1C2430]">
+                        {formatOrderMoney(row.sale_amount ?? '0', 'PEN')}
+                    </span>
                     <span
                         className={[
-                            'text-[10px] font-medium',
+                            'mt-0.5 block text-[11px]',
                             row.is_collected
-                                ? 'text-[#4A9A72]'
-                                : 'text-[#C05050]',
+                                ? 'text-[#6A7A88]'
+                                : 'font-medium text-[#9A5B16]',
                         ].join(' ')}
                     >
                         {row.is_collected ? 'Cobrado' : 'Por cobrar'}
@@ -139,14 +143,7 @@ export default function VentasEntregasIndex({
             header: 'IGV',
             cellClassName: 'px-3 py-2 align-middle',
             render: (row) => (
-                <span
-                    className={[
-                        'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium',
-                        row.includes_igv
-                            ? 'bg-[#4A9A72]/12 text-[#4A9A72]'
-                            : 'bg-[#D28C3C]/12 text-[#D28C3C]',
-                    ].join(' ')}
-                >
+                <span className="text-[13px] text-[#1C2430]">
                     {row.includes_igv ? 'Incluye' : 'No incluye'}
                 </span>
             ),
@@ -173,22 +170,20 @@ export default function VentasEntregasIndex({
                     {row.has_invoice ? (
                         <a
                             href={deliveryInvoiceUrl(row.id)}
-                            className="inline-flex items-center gap-1 rounded-full bg-[#b45309]/10 px-2 py-0.5 text-[11px] font-medium text-[#b45309]"
+                            className="text-[13px] text-[#1C2430] underline decoration-[#C07828]/45 underline-offset-[3px] hover:decoration-[#C07828]"
                         >
-                            <FileText className="size-3" />
                             Factura
                         </a>
                     ) : (
-                        <span className="text-[11px] text-muted-foreground">
+                        <span className="text-[13px] text-[#8A97A3]">
                             Sin factura
                         </span>
                     )}
                     {row.has_xml ? (
                         <a
                             href={deliveryXmlUrl(row.id)}
-                            className="inline-flex items-center gap-1 rounded-full bg-[#8B5CF6]/12 px-2 py-0.5 text-[11px] font-medium text-[#8B5CF6]"
+                            className="text-[13px] text-[#1C2430] underline decoration-[#C07828]/45 underline-offset-[3px] hover:decoration-[#C07828]"
                         >
-                            <FileCode2 className="size-3" />
                             XML
                         </a>
                     ) : null}
@@ -200,46 +195,46 @@ export default function VentasEntregasIndex({
     return (
         <>
             <AdminCrudIndex<DeliveryRow>
+                className="space-y-4"
+                ledger
                 rows={rows}
                 paginator={deliveries ?? null}
                 rowKey={(row) => row.id}
                 columns={columns}
                 emptyState="No hay entregas todavía. Registra una con «Nueva entrega»."
                 renderToolbar={() => (
-                    <VentasEntregasToolbar summary={summary} />
-                )}
-                renderAboveTable={() => (
-                    <VentasEntregasFilters
-                        initialQuery={initialQuery}
-                        initialIgv={initialIgv}
-                        initialPlan={initialPlan}
-                        initialCobro={initialCobro}
-                        initialDateFrom={initialDateFrom}
-                        initialDateTo={initialDateTo}
-                        className="mt-1"
-                    />
+                    <VentasEntregasToolbar summary={summary}>
+                        <VentasEntregasFilters
+                            initialQuery={initialQuery}
+                            initialIgv={initialIgv}
+                            initialPlan={initialPlan}
+                            initialCobro={initialCobro}
+                            initialDateFrom={initialDateFrom}
+                            initialDateTo={initialDateTo}
+                        />
+                    </VentasEntregasToolbar>
                 )}
                 renderRowActions={({ row }) => (
                     <div className="flex items-center gap-1">
                         <Link
                             href={`/panel/ventas-entregas/${row.id}`}
                             prefetch
-                            className="group inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4A80B8]/30"
+                            className="group inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C07828]/30"
                             aria-label="Ver entrega"
                         >
-                            <Eye className="size-4 text-[#4A80B8]/60 transition-colors group-hover:text-[#4A80B8]" />
+                            <Eye className="size-4 text-[#6A7A88] transition-colors group-hover:text-[#1C2430]" />
                         </Link>
                         <Link
                             href={`/panel/ventas-entregas/${row.id}/edit`}
                             prefetch
-                            className="group inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4A80B8]/30"
+                            className="group inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C07828]/30"
                             aria-label="Editar entrega"
                         >
-                            <Pencil className="size-4 text-[#4A80B8]/60 transition-colors group-hover:text-[#4A80B8]" />
+                            <Pencil className="size-4 text-[#6A7A88] transition-colors group-hover:text-[#1C2430]" />
                         </Link>
                         <button
                             type="button"
-                            className="group inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4A9A72]/30"
+                            className="group inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C07828]/30"
                             aria-label={
                                 row.is_collected
                                     ? 'Volver a por cobrar'
@@ -261,8 +256,8 @@ export default function VentasEntregasIndex({
                             <CheckCircle2
                                 className={
                                     row.is_collected
-                                        ? 'size-4 text-[#4A9A72]'
-                                        : 'size-4 text-[#C05050]/70 transition-colors group-hover:text-[#4A9A72]'
+                                        ? 'size-4 text-[#1C2430]'
+                                        : 'size-4 text-[#9A5B16]/80 transition-colors group-hover:text-[#9A5B16]'
                                 }
                             />
                         </button>

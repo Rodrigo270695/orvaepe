@@ -56,7 +56,7 @@ export default function VentasEntregasSearch({ initialQuery }: Props) {
     }, [page.url, query]);
 
     return (
-        <div className="relative w-full max-w-sm rounded-xl px-1 neumorph-inset">
+        <div className="relative w-full max-w-sm rounded-md border border-[rgba(41,50,60,0.14)] bg-white/80 px-1">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
                 ref={inputRef}

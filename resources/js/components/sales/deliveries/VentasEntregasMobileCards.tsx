@@ -1,5 +1,5 @@
 import { Link, router } from '@inertiajs/react';
-import { CheckCircle2, Eye, FileCode2, FileText, Pencil, Trash2 } from 'lucide-react';
+import { CheckCircle2, Eye, Pencil, Trash2 } from 'lucide-react';
 
 import { formatOrderMoney } from '@/components/sales/orders/orderDisplay';
 
@@ -22,21 +22,20 @@ export default function VentasEntregasMobileCards({
 }: Props) {
     if (rows.length === 0) {
         return (
-            <div className="rounded-xl border border-border/60 p-4 text-center text-sm text-muted-foreground neumorph-inset">
+            <div className="rounded-lg border border-[rgba(41,50,60,0.12)] bg-[#F7FAFC] p-4 text-center text-sm text-[#6A7A88]">
                 No hay entregas todavía. Registra una con «Nueva entrega».
             </div>
         );
     }
 
     return (
-        <div className="rounded-xl border border-border/60 neumorph-inset">
+        <div className="overflow-hidden rounded-lg border border-[rgba(41,50,60,0.12)] bg-[#F7FAFC]">
             {rows.map((row, idx) => (
                 <div
                     key={row.id}
                     className={[
                         'px-3 py-3',
-                        idx > 0 ? 'border-t border-border/75' : '',
-                        idx % 2 === 1 ? 'bg-black/3' : '',
+                        idx > 0 ? 'border-t border-[rgba(41,50,60,0.08)]' : '',
                     ].join(' ')}
                 >
                     <div className="flex items-start justify-between gap-3">
@@ -47,35 +46,29 @@ export default function VentasEntregasMobileCards({
                             <p className="font-mono text-[10px] text-muted-foreground">
                                 RUC {row.ruc}
                             </p>
-                            <p className="text-[11px] font-medium text-foreground">
-                                {formatOrderMoney(row.sale_amount ?? '0', 'PEN')}
-                                <span
-                                    className={
-                                        row.is_collected
-                                            ? 'ml-2 text-[#4A9A72]'
-                                            : 'ml-2 text-[#C05050]'
-                                    }
-                                >
-                                    {row.is_collected ? 'Cobrado' : 'Por cobrar'}
-                                </span>
-                            </p>
-                            <p className="text-[11px] text-muted-foreground">
+                            <p className="text-[11px] text-[#6A7A88]">
                                 {planPeriodLabel(row.plan_period)} · hasta{' '}
                                 {formatDeliveryDate(row.plan_ends_at)}
+                                {' · '}
+                                {row.includes_igv ? 'Incluye IGV' : 'Sin IGV'}
                             </p>
                             <p className="line-clamp-2 text-xs text-muted-foreground">
                                 {row.product_description}
                             </p>
                         </div>
-                        <span
-                            className={[
-                                'inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-xs font-medium',
-                                row.includes_igv
-                                    ? 'bg-[#4A9A72]/12 text-[#4A9A72]'
-                                    : 'bg-[#D28C3C]/12 text-[#D28C3C]',
-                            ].join(' ')}
-                        >
-                            {row.includes_igv ? 'Con IGV' : 'Sin IGV'}
+                        <span className="shrink-0 text-right">
+                            <span className="block text-[13px] font-medium tabular-nums text-[#1C2430]">
+                                {formatOrderMoney(row.sale_amount ?? '0', 'PEN')}
+                            </span>
+                            <span
+                                className={
+                                    row.is_collected
+                                        ? 'mt-0.5 block text-[11px] text-[#6A7A88]'
+                                        : 'mt-0.5 block text-[11px] font-medium text-[#9A5B16]'
+                                }
+                            >
+                                {row.is_collected ? 'Cobrado' : 'Por cobrar'}
+                            </span>
                         </span>
                     </div>
                     <p className="mt-2 text-[11px] text-muted-foreground">
@@ -87,31 +80,29 @@ export default function VentasEntregasMobileCards({
                             className="inline-flex h-8 w-8 items-center justify-center rounded-lg"
                             aria-label="Ver entrega"
                         >
-                            <Eye className="size-4 text-[#4A80B8]/70" />
+                            <Eye className="size-4 text-[#6A7A88]" />
                         </Link>
                         <Link
                             href={`/panel/ventas-entregas/${row.id}/edit`}
                             className="inline-flex h-8 w-8 items-center justify-center rounded-lg"
                             aria-label="Editar entrega"
                         >
-                            <Pencil className="size-4 text-[#4A80B8]/70" />
+                            <Pencil className="size-4 text-[#6A7A88]" />
                         </Link>
                         {row.has_invoice ? (
                             <a
                                 href={deliveryInvoiceUrl(row.id)}
-                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg"
-                                aria-label="Descargar factura"
+                                className="inline-flex h-8 items-center px-1.5 text-[12px] text-[#1C2430] underline decoration-[#C07828]/45 underline-offset-[3px]"
                             >
-                                <FileText className="size-4 text-[#b45309]/80" />
+                                Factura
                             </a>
                         ) : null}
                         {row.has_xml ? (
                             <a
                                 href={deliveryXmlUrl(row.id)}
-                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg"
-                                aria-label="Descargar XML"
+                                className="inline-flex h-8 items-center px-1.5 text-[12px] text-[#1C2430] underline decoration-[#C07828]/45 underline-offset-[3px]"
                             >
-                                <FileCode2 className="size-4 text-[#8B5CF6]/80" />
+                                XML
                             </a>
                         ) : null}
                         <button
@@ -133,8 +124,8 @@ export default function VentasEntregasMobileCards({
                             <CheckCircle2
                                 className={
                                     row.is_collected
-                                        ? 'size-4 text-[#4A9A72]'
-                                        : 'size-4 text-[#C05050]/70'
+                                        ? 'size-4 text-[#1C2430]'
+                                        : 'size-4 text-[#9A5B16]/80'
                                 }
                             />
                         </button>

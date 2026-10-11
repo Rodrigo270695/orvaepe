@@ -1,73 +1,94 @@
 import { Link } from '@inertiajs/react';
-import { CheckCircle2, FileText, Plus, Receipt, Wallet } from 'lucide-react';
+import { Plus } from 'lucide-react';
+import type { ReactNode } from 'react';
 
 import type { DeliverySummary } from '@/components/sales/deliveries/deliveryTypes';
 import { formatOrderMoney } from '@/components/sales/orders/orderDisplay';
-import { NeuButtonRaised } from '@/components/ui/neu-button-raised';
-import { NeuCardRaised } from '@/components/ui/neu-card-raised';
 
 type Props = {
     summary: DeliverySummary;
+    children?: ReactNode;
 };
 
-export default function VentasEntregasToolbar({ summary }: Props) {
+function Figure({
+    label,
+    value,
+    hint,
+    tone = 'ink',
+}: {
+    label: string;
+    value: string;
+    hint: string;
+    tone?: 'ink' | 'due';
+}) {
     return (
-        <NeuCardRaised className="rounded-xl p-4 md:p-5">
-            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                <div className="flex items-start gap-3">
-                    <div className="mt-0.5">
-                        <Receipt className="size-4 text-[#D28C3C]" />
-                    </div>
-                    <div>
-                        <h1 className="text-sm font-bold">Entregas</h1>
-                        <p className="mt-1 text-[11px] text-muted-foreground">
-                            Los montos siguen la búsqueda, las fechas y los
-                            filtros de IGV, plan y cobro.
-                        </p>
-                    </div>
-                </div>
+        <div className="min-w-0">
+            <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-[#6A7A88]">
+                {label}
+            </p>
+            <p
+                className={[
+                    'mt-1 text-[1.65rem] font-semibold leading-none tracking-tight tabular-nums',
+                    tone === 'due' ? 'text-[#9A5B16]' : 'text-[#1C2430]',
+                ].join(' ')}
+            >
+                {value}
+            </p>
+            <p className="mt-2 text-xs text-[#6A7A88]">{hint}</p>
+        </div>
+    );
+}
 
-                <div className="flex items-center gap-2">
-                    <Link
-                        href="/panel/ventas-entregas/create"
-                        prefetch
-                        className="inline-flex"
-                    >
-                        <NeuButtonRaised type="button" className="cursor-pointer">
-                            <Plus className="size-4 text-[#4A9A72]" />
-                            Nueva entrega
-                        </NeuButtonRaised>
-                    </Link>
+export default function VentasEntregasToolbar({ summary, children }: Props) {
+    const pending = Number.parseFloat(summary.pending_amount);
+    const dueTone = Number.isFinite(pending) && pending > 0 ? 'due' : 'ink';
+
+    return (
+        <section className="overflow-hidden rounded-lg border border-[rgba(41,50,60,0.12)] bg-[#F4F8FB]">
+            <div className="flex flex-col gap-4 px-5 pt-5 md:flex-row md:items-start md:justify-between">
+                <div>
+                    <h1 className="text-lg font-semibold tracking-tight text-[#1C2430]">
+                        Entregas
+                    </h1>
+                    <p className="mt-1 max-w-xl text-[13px] leading-relaxed text-[#5C6B78]">
+                        A quién se ofreció el servicio, y cuánto de ese filtro
+                        sigue por cobrar.
+                    </p>
                 </div>
+                <Link
+                    href="/panel/ventas-entregas/create"
+                    prefetch
+                    className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md bg-[#C07828] px-3.5 text-[13px] font-semibold text-white transition-colors hover:bg-[#A8661F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C07828]/40"
+                >
+                    <Plus className="size-3.5" strokeWidth={2} />
+                    Nueva entrega
+                </Link>
             </div>
 
-            <div className="mt-4 flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-[#4A80B8]/12 px-3 py-1.5 text-sm font-semibold text-[#4A80B8]">
-                    <Wallet className="size-4" />
-                    Total {formatOrderMoney(summary.total_amount, 'PEN')}
-                </span>
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-[#C05050]/12 px-3 py-1.5 text-sm font-semibold text-[#C05050]">
-                    <Receipt className="size-4" />
-                    Por cobrar {formatOrderMoney(summary.pending_amount, 'PEN')}
-                </span>
-                <span className="inline-flex items-center gap-1 rounded-full bg-[#4A9A72]/12 px-2.5 py-1 text-xs text-[#4A9A72]">
-                    <CheckCircle2 className="size-3.5" />
-                    Cobrado {formatOrderMoney(summary.collected_amount, 'PEN')}
-                </span>
-                <span className="inline-flex items-center gap-1 rounded-full bg-[#4A80B8]/12 px-2.5 py-1 text-xs text-[#4A80B8]">
-                    <FileText className="size-3.5" />
-                    Entregas {summary.count}
-                </span>
-                <span className="inline-flex items-center gap-1 rounded-full bg-[#4A9A72]/12 px-2.5 py-1 text-xs text-[#4A9A72]">
-                    Con IGV {summary.with_igv}
-                </span>
-                <span className="inline-flex items-center gap-1 rounded-full bg-[#D28C3C]/12 px-2.5 py-1 text-xs text-[#D28C3C]">
-                    Sin IGV {summary.without_igv}
-                </span>
-                <span className="inline-flex items-center gap-1 rounded-full bg-[#8B5CF6]/12 px-2.5 py-1 text-xs text-[#8B5CF6]">
-                    Con documentos {summary.with_docs}
-                </span>
+            <div className="mt-5 grid gap-6 border-t border-[rgba(41,50,60,0.08)] px-5 py-5 sm:grid-cols-3">
+                <Figure
+                    label="Total"
+                    value={formatOrderMoney(summary.total_amount, 'PEN')}
+                    hint={`${summary.count} ${summary.count === 1 ? 'entrega' : 'entregas'}`}
+                />
+                <Figure
+                    label="Por cobrar"
+                    value={formatOrderMoney(summary.pending_amount, 'PEN')}
+                    hint="Pendiente en este filtro"
+                    tone={dueTone}
+                />
+                <Figure
+                    label="Cobrado"
+                    value={formatOrderMoney(summary.collected_amount, 'PEN')}
+                    hint={`${summary.with_igv} con IGV · ${summary.with_docs} con documentos`}
+                />
             </div>
-        </NeuCardRaised>
+
+            {children ? (
+                <div className="border-t border-[rgba(41,50,60,0.08)] px-5 py-4">
+                    {children}
+                </div>
+            ) : null}
+        </section>
     );
 }
