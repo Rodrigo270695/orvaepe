@@ -1,40 +1,49 @@
 'use client';
 
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from 'lenis';
 import { useEffect, type ReactNode } from 'react';
 
 import 'lenis/dist/lenis.css';
+
+gsap.registerPlugin(ScrollTrigger);
 
 type Props = {
     children: ReactNode;
 };
 
 /**
- * Smooth scroll (Lenis) solo en la landing VetSaaS.
- * Sin GSAP stagger: evitaba que las cards quedaran invisibles (hueco vacío).
+ * Scroll suave acoplado a ScrollTrigger para que el pin de VetSaaS
+ * avance con la rueda, no en saltos.
  */
 export default function VetSaaSMotionRoot({ children }: Props) {
     useEffect(() => {
         const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        if (reduce) return;
+        if (reduce) {
+            return;
+        }
 
         const lenis = new Lenis({
-            duration: 1.15,
+            duration: 1.05,
             smoothWheel: true,
             touchMultiplier: 1.1,
-            wheelMultiplier: 0.95,
+            wheelMultiplier: 0.9,
         });
 
-        let frame = 0;
-        const raf = (time: number) => {
-            lenis.raf(time);
-            frame = requestAnimationFrame(raf);
+        lenis.on('scroll', ScrollTrigger.update);
+
+        const tick = (time: number) => {
+            lenis.raf(time * 1000);
         };
-        frame = requestAnimationFrame(raf);
+
+        gsap.ticker.add(tick);
+        gsap.ticker.lagSmoothing(0);
 
         return () => {
-            cancelAnimationFrame(frame);
+            gsap.ticker.remove(tick);
             lenis.destroy();
+            ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
         };
     }, []);
 
