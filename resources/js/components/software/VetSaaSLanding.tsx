@@ -331,42 +331,57 @@ export default function VetSaaSLanding(props: Props) {
                     --primary-foreground: #ffffff;
                     --card: #ffffff;
                 }
+                @keyframes vs-hero-in {
+                    from { opacity: 0; transform: translateY(18px); }
+                    to { opacity: 1; transform: none; }
+                }
+                @keyframes vs-hero-drift {
+                    from { transform: scale(1.04); }
+                    to { transform: scale(1.1); }
+                }
+                .vs-landing .vs-hero-copy { animation: vs-hero-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both; }
+                .vs-landing .vs-hero-drift { animation: vs-hero-drift 18s ease-in-out infinite alternate; }
+                @media (prefers-reduced-motion: reduce) {
+                    .vs-landing .vs-hero-copy,
+                    .vs-landing .vs-hero-drift { animation: none !important; }
+                }
             `}</style>
 
-            <section className="grid min-h-[100dvh] bg-[#F4F7F5] text-[#06241C] lg:grid-cols-2">
-                <div className="flex flex-col justify-center px-5 py-16 sm:px-10 lg:px-14 lg:py-20">
-                    <h1 className="font-display text-6xl font-semibold leading-[0.92] tracking-tight sm:text-7xl lg:text-8xl">
+            <section className="grid min-h-[100dvh] bg-[#E7F6EF] text-[#06241C] lg:grid-cols-2">
+                <div className="vs-hero-copy flex flex-col justify-center border-l-[6px] border-[#006D55] px-5 py-16 sm:px-10 lg:px-14 lg:py-20">
+                    <h1 className="font-display text-6xl font-semibold leading-[0.92] tracking-tight text-[#006D55] sm:text-7xl lg:text-8xl">
                         VetSaaS
                     </h1>
-                    <p className="font-body mt-6 max-w-md text-lg leading-snug text-[#31584C]">
+                    <p className="font-body mt-6 max-w-md text-lg leading-snug text-[#1F6B52]">
                         Historia clínica, agenda, caja, SUNAT e IA en el subdominio de tu clínica.
                     </p>
                     <div className="mt-8 flex flex-wrap items-center gap-6">
                         <a
                             href="#planes"
-                            className="font-body inline-flex bg-[#006D55] px-5 py-3 text-sm font-semibold text-white transition-transform hover:bg-[#015743] active:translate-y-px"
+                            className="font-body inline-flex cursor-pointer bg-[#006D55] px-5 py-3 text-sm font-semibold text-white transition-transform hover:bg-[#015743] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#006D55] focus-visible:ring-offset-2 active:translate-y-px"
                         >
                             Ver planes
                         </a>
                         <a
                             href="#comparar"
-                            className="font-body text-sm font-medium text-[#06241C] underline decoration-[#006D55] underline-offset-4"
+                            className="font-body cursor-pointer text-sm font-medium text-[#006D55] underline decoration-[#006D55] underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#006D55]"
                         >
                             Comparar
                         </a>
                     </div>
                 </div>
-                <div className="relative min-h-[52vh] lg:min-h-[100dvh]">
+                <div className="relative min-h-[52vh] overflow-hidden lg:min-h-[100dvh]">
                     <img
                         src="/images/vetsaas-hero-pets.png"
                         alt="Mascotas atendidas en una clínica veterinaria"
-                        className="absolute inset-0 size-full object-cover object-[62%_center]"
+                        className="vs-hero-drift absolute inset-0 size-full object-cover object-[62%_center]"
                     />
+                    <div className="pointer-events-none absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-[#E7F6EF] to-transparent max-lg:inset-x-0 max-lg:top-0 max-lg:h-16 max-lg:w-full max-lg:bg-gradient-to-b" />
                 </div>
             </section>
 
-            <p className="border-y border-[#06241C]/10 bg-[#F4F7F5] px-5 py-4 font-body text-sm text-[#31584C] sm:px-10 lg:px-14">
-                {display}+ clínicas ya operan en su propio subdominio.
+            <p className="bg-[#006D55] px-5 py-4 font-body text-sm text-[#E8F7F1] sm:px-10 lg:px-14">
+                {display}+ veterinarias ya operan con nosotros.
             </p>
 
             <ClinicDayScroll />
@@ -376,9 +391,12 @@ export default function VetSaaSLanding(props: Props) {
                 <VetSaaSReveal>
                     <section className="bg-[var(--vs-bg)] py-14">
                         <div className="mx-auto max-w-6xl px-5 sm:px-8">
-                            <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
-                                Clínicas con marca propia
+                            <h2 className="font-display text-3xl font-semibold tracking-tight text-[#006D55] sm:text-4xl">
+                                Veterinarias que operan con nosotros
                             </h2>
+                            <p className="font-body mt-2 text-sm text-[#1F6B52]">
+                                Cada una con su subdominio y su marca.
+                            </p>
                         </div>
                         <div className="mt-8">
                             <VetSaaSClientsCarousel clients={clients} compact />

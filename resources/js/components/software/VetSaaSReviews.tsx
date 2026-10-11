@@ -1,5 +1,5 @@
-import { Quote, Star } from 'lucide-react';
-import { useState } from 'react';
+import { Star } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 export type VetSaaSPublicReview = {
     author_name: string;
@@ -67,51 +67,79 @@ function ClinicMark({ review }: { review: VetSaaSPublicReview }) {
     );
 }
 
+function ReviewCard({ review }: { review: VetSaaSPublicReview }) {
+    return (
+        <blockquote className="flex w-[20rem] shrink-0 flex-col border border-[#99D2BC] bg-white p-5 shadow-[0_12px_30px_-18px_rgba(0,109,85,0.55)] sm:w-[24rem]">
+            <div className="flex items-start gap-3">
+                <ClinicMark review={review} />
+                <div className="min-w-0">
+                    <Stars rating={review.rating} />
+                    <p className="mt-2 font-display text-sm font-semibold leading-snug text-[#06241C]">
+                        {review.author_name}
+                    </p>
+                    <p className="mt-0.5 text-xs leading-snug text-[#1F6B52]">
+                        {review.role_line}
+                    </p>
+                </div>
+            </div>
+            <p className="mt-4 text-[15px] leading-relaxed text-[#06241C]">
+                &ldquo;{review.comment}&rdquo;
+            </p>
+        </blockquote>
+    );
+}
+
 export default function VetSaaSReviews({ reviews }: { reviews: VetSaaSPublicReview[] }) {
+    const [reduce, setReduce] = useState(false);
+
+    useEffect(() => {
+        const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+        const sync = () => setReduce(mq.matches);
+        sync();
+        mq.addEventListener('change', sync);
+        return () => mq.removeEventListener('change', sync);
+    }, []);
+
     if (reviews.length === 0) {
         return null;
     }
 
-    return (
-        <section className="bg-[var(--vs-card)] py-16" id="reseñas">
-            <div className="mx-auto max-w-6xl px-5 sm:px-8">
-                <p className="vs-body text-[10px] font-semibold uppercase tracking-[0.24em] text-[var(--vs-500)]">
-                    Clínicas reales
-                </p>
-                <h2 className="vs-display mt-2 text-3xl font-bold sm:text-4xl">
-                    Lo que dice el equipo que opera VetSaaS
-                </h2>
-                <p className="vs-body vs-muted mt-3 max-w-2xl text-sm leading-relaxed sm:text-base">
-                    Valoraciones de recepcionistas, veterinarios y administración de cada
-                    clínica. Se publican con el cargo y el nombre de la veterinaria.
-                </p>
+    const loop = reduce ? reviews : [...reviews, ...reviews];
 
-                <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+    return (
+        <section className="bg-[#F3FBF7] py-16" id="reseñas">
+            <div className="mx-auto max-w-6xl px-5 sm:px-8">
+                <h2 className="font-display text-3xl font-semibold tracking-tight text-[#006D55] sm:text-4xl">
+                    Lo que dicen quienes operan con nosotros
+                </h2>
+                <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[#1F6B52]">
+                    Recepcionistas, veterinarios y administración de cada veterinaria.
+                </p>
+            </div>
+
+            {reduce ? (
+                <div className="mx-auto mt-8 grid max-w-6xl gap-4 px-5 sm:px-8 md:grid-cols-2">
                     {reviews.map((review, idx) => (
-                        <blockquote
+                        <ReviewCard
                             key={`${review.author_name}-${review.clinic_name}-${idx}`}
-                            className="relative flex flex-col overflow-hidden rounded-[1.5rem] border border-[var(--vs-border)] bg-[var(--vs-bg)] p-6 shadow-[0_20px_50px_-32px_rgba(0,109,85,0.45)]"
-                        >
-                            <Quote className="absolute right-5 top-5 size-8 text-[var(--vs-200)] opacity-70" />
-                            <div className="flex items-start gap-3">
-                                <ClinicMark review={review} />
-                                <div className="min-w-0">
-                                    <Stars rating={review.rating} />
-                                    <p className="vs-display mt-2 text-sm font-semibold leading-snug">
-                                        {review.author_name}
-                                    </p>
-                                    <p className="vs-body vs-muted mt-0.5 text-xs leading-snug">
-                                        {review.role_line}
-                                    </p>
-                                </div>
-                            </div>
-                            <p className="vs-body mt-4 text-[15px] leading-relaxed text-[var(--vs-ink)]">
-                                &ldquo;{review.comment}&rdquo;
-                            </p>
-                        </blockquote>
+                            review={review}
+                        />
                     ))}
                 </div>
-            </div>
+            ) : (
+                <div className="carousel-wrapper relative mt-8 overflow-hidden">
+                    <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-16 bg-gradient-to-r from-[#F3FBF7] to-transparent md:w-28" />
+                    <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-16 bg-gradient-to-l from-[#F3FBF7] to-transparent md:w-28" />
+                    <div className="carousel-track flex w-max animate-marquee-reverse gap-4 px-6 py-2 [--duration:48s]">
+                        {loop.map((review, idx) => (
+                            <ReviewCard
+                                key={`${review.author_name}-${review.clinic_name}-${idx}`}
+                                review={review}
+                            />
+                        ))}
+                    </div>
+                </div>
+            )}
         </section>
     );
 }

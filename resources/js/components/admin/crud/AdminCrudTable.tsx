@@ -24,8 +24,6 @@ export type AdminCrudTableProps<T> = {
     rowClassName?: (row: T) => string | undefined;
     /** Clic en la fila (ej. marcar como leída). */
     onRowClick?: (row: T) => void;
-    /** Tabla plana, sin filas flotantes. */
-    ledger?: boolean;
 };
 
 export default function AdminCrudTable<T>({
@@ -35,31 +33,12 @@ export default function AdminCrudTable<T>({
     emptyState = 'No hay registros todavía.',
     rowClassName,
     onRowClick,
-    ledger = false,
 }: AdminCrudTableProps<T>) {
     return (
-        <div
-            className={
-                ledger
-                    ? 'overflow-x-auto rounded-lg border border-[rgba(41,50,60,0.12)] bg-[#F7FAFC]'
-                    : 'neumorph-inset overflow-x-auto rounded-xl border border-border/60 p-1'
-            }
-        >
-            <table
-                className={
-                    ledger
-                        ? 'w-full min-w-[900px] border-collapse text-[13px]'
-                        : 'w-full min-w-[900px] border-separate border-spacing-y-2'
-                }
-            >
+        <div className="neumorph-inset overflow-x-auto rounded-xl border border-border/60 p-1">
+            <table className="w-full min-w-[900px] border-separate border-spacing-y-2">
                 <thead>
-                    <tr
-                        className={
-                            ledger
-                                ? 'border-b border-[rgba(41,50,60,0.12)] text-left text-[11px] font-medium uppercase tracking-[0.08em] text-[#6A7A88]'
-                                : 'text-left text-xs text-muted-foreground'
-                        }
-                    >
+                    <tr className="text-left text-xs text-muted-foreground">
                         {columns.map((col, idx) => (
                             <th
                                 key={`header-${idx}`}
@@ -79,9 +58,6 @@ export default function AdminCrudTable<T>({
                             key={rowKey(row)}
                             className={cn(
                                 onRowClick ? 'cursor-pointer transition-colors' : '',
-                                ledger
-                                    ? 'border-b border-[rgba(41,50,60,0.08)] last:border-b-0 hover:bg-[rgba(41,50,60,0.03)]'
-                                    : '',
                                 rowClassName?.(row),
                             )}
                             onClick={onRowClick ? () => onRowClick(row) : undefined}

@@ -1,7 +1,5 @@
 import * as React from 'react';
 
-import { cn } from '@/lib/utils';
-
 import AdminCrudTable, {
     type AdminCrudTableColumn,
 } from '@/components/admin/crud/AdminCrudTable';
@@ -95,10 +93,6 @@ type Props<T> = {
     upsert?: UpsertConfig<T>;
 
     delete?: DeleteConfig<T>;
-
-    className?: string;
-    /** Tabla plana para listados de dinero. */
-    ledger?: boolean;
 };
 
 export default function AdminCrudIndex<T>({
@@ -115,8 +109,6 @@ export default function AdminCrudIndex<T>({
     onRowClick,
     upsert,
     delete: deleteConfig,
-    className,
-    ledger = false,
 }: Props<T>) {
     const [upsertOpen, setUpsertOpen] = React.useState(false);
     const [upsertMode, setUpsertMode] = React.useState<Mode>('create');
@@ -171,7 +163,7 @@ export default function AdminCrudIndex<T>({
     }, [columns, renderRowActions]);
 
     return (
-        <div className={cn('space-y-6', className)}>
+        <div className="space-y-6">
             {renderToolbar ? renderToolbar({ onCreate }) : null}
             {renderAboveTable ? renderAboveTable() : null}
 
@@ -189,7 +181,6 @@ export default function AdminCrudIndex<T>({
                     emptyState={emptyState}
                     rowClassName={rowClassName}
                     onRowClick={onRowClick}
-                    ledger={ledger}
                 />
             </div>
 
