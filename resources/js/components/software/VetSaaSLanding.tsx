@@ -77,19 +77,118 @@ const DAY_STEPS = [
     {
         index: '01',
         title: 'Historia clínica',
-        body: 'La ficha del paciente, las vacunas y los controles quedan en la nube de tu clínica.',
+        body: 'Ficha del paciente, vacunas, plan de tratamiento y el historial de cada consulta.',
+        image: '/images/vetsaas-consulta.jpg',
+        alt: 'Consulta veterinaria en la sala de examen',
     },
     {
         index: '02',
-        title: 'Agenda y WhatsApp',
-        body: 'La cita sale al celular del dueño. Menos ausencias y la agenda se mantiene llena.',
+        title: 'Agenda, grooming y hotel',
+        body: 'Citas, peluquería y guardería en el mismo calendario. El recordatorio sale por WhatsApp.',
+        image: '/images/vetsaas-grooming.jpg',
+        alt: 'Peluquería canina dentro de la clínica',
     },
     {
         index: '03',
         title: 'Caja y SUNAT',
-        body: 'Cobras y emites el comprobante en el mismo panel, sin abrir otro sistema.',
+        body: 'Cobras en recepción y emites el comprobante electrónico sin abrir otro sistema.',
+        image: '/images/vetsaas-recepcion.jpg',
+        alt: 'Recepción de una clínica veterinaria',
     },
 ] as const;
+
+const HERO_FRAMES = [
+    {
+        src: '/images/vetsaas-hero-pets.png',
+        alt: 'Pacientes de una clínica veterinaria',
+    },
+    {
+        src: '/images/vetsaas-consulta.jpg',
+        alt: 'Consulta veterinaria',
+    },
+    {
+        src: '/images/vetsaas-grooming.jpg',
+        alt: 'Grooming en la clínica',
+    },
+    {
+        src: '/images/vetsaas-recepcion.jpg',
+        alt: 'Recepción de la clínica',
+    },
+] as const;
+
+const CLINIC_MODULES = [
+    {
+        title: 'Historia clínica',
+        body: 'Consultas, vacunas, plan de tratamiento y el historial completo del paciente.',
+    },
+    {
+        title: 'Sala de espera',
+        body: 'Ves quién llegó, en qué orden pasa y cuándo entra a consulta.',
+    },
+    {
+        title: 'Agenda',
+        body: 'Citas clínicas, grooming y hotel en un solo calendario por sede.',
+    },
+    {
+        title: 'Grooming',
+        body: 'Servicios, insumos, adelantos y el estado de cada mascota en peluquería.',
+    },
+    {
+        title: 'Hotel y guardería',
+        body: 'Estadías, diario de cuidado y cargos que pasan directo a caja.',
+    },
+    {
+        title: 'Inventario',
+        body: 'Medicinas, alimento y productos de petshop, con stock por sede.',
+    },
+    {
+        title: 'Caja y SUNAT',
+        body: 'Cobros, descuentos y comprobantes electrónicos desde la recepción.',
+    },
+    {
+        title: 'WhatsApp',
+        body: 'Recordatorios de citas y vacunas al celular del dueño.',
+    },
+] as const;
+
+function HeroStage() {
+    const [frame, setFrame] = useState(0);
+    const [reduce, setReduce] = useState(false);
+
+    useEffect(() => {
+        const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+        const sync = () => setReduce(mq.matches);
+        sync();
+        mq.addEventListener('change', sync);
+        return () => mq.removeEventListener('change', sync);
+    }, []);
+
+    useEffect(() => {
+        if (reduce) {
+            return;
+        }
+        const id = window.setInterval(() => {
+            setFrame((current) => (current + 1) % HERO_FRAMES.length);
+        }, 4200);
+        return () => window.clearInterval(id);
+    }, [reduce]);
+
+    return (
+        <div className="relative m-4 min-h-[52vh] overflow-hidden rounded-3xl border border-[#99D2BC] shadow-[0_24px_60px_-28px_rgba(0,109,85,0.55)] lg:m-8 lg:min-h-[calc(100dvh-4rem)]">
+            {HERO_FRAMES.map((item, index) => (
+                <img
+                    key={item.src}
+                    src={item.src}
+                    alt={item.alt}
+                    className={[
+                        'absolute inset-0 size-full object-cover transition-opacity duration-1000',
+                        index === frame ? 'opacity-100' : 'opacity-0',
+                    ].join(' ')}
+                />
+            ))}
+        </div>
+    );
+}
 
 function ClinicDayScroll() {
     const rootRef = useRef<HTMLElement>(null);
@@ -126,6 +225,15 @@ function ClinicDayScroll() {
             if (indexRef.current) indexRef.current.textContent = step.index;
             if (titleRef.current) titleRef.current.textContent = step.title;
             if (bodyRef.current) bodyRef.current.textContent = step.body;
+            if (photoRef.current && photoRef.current.getAttribute('src') !== step.image) {
+                photoRef.current.src = step.image;
+                photoRef.current.alt = step.alt;
+                gsap.fromTo(
+                    photoRef.current,
+                    { opacity: 0.15 },
+                    { opacity: 1, duration: 0.55, overwrite: true },
+                );
+            }
         };
 
         const mm = gsap.matchMedia();
@@ -155,9 +263,6 @@ function ClinicDayScroll() {
                     }
                     if (barRef.current) {
                         barRef.current.style.transform = `scaleX(${Math.max(0.06, self.progress)})`;
-                    }
-                    if (photoRef.current) {
-                        photoRef.current.style.transform = `scale(${1.04 + self.progress * 0.08})`;
                     }
                 },
             });
@@ -202,13 +307,12 @@ function ClinicDayScroll() {
                             />
                         </div>
                     </div>
-                    <div className="h-[72vh] w-[54%] overflow-hidden">
+                    <div className="h-[72vh] w-[54%] overflow-hidden rounded-3xl border border-white/15">
                         <img
                             ref={photoRef}
-                            src="/images/vetsaas-hero-pets.png"
-                            alt="Pacientes de una clínica veterinaria"
-                            className="size-full object-cover object-[60%_center]"
-                            style={{ transform: 'scale(1.04)' }}
+                            src={DAY_STEPS[0].image}
+                            alt={DAY_STEPS[0].alt}
+                            className="size-full object-cover"
                         />
                     </div>
                 </div>
@@ -218,6 +322,11 @@ function ClinicDayScroll() {
                 <ol className="space-y-10">
                     {DAY_STEPS.map((step) => (
                         <li key={step.index}>
+                            <img
+                                src={step.image}
+                                alt={step.alt}
+                                className="mb-4 aspect-[4/3] w-full rounded-3xl border border-white/15 object-cover"
+                            />
                             <p className="font-mono text-sm text-[#7DCAA8]">{step.index}</p>
                             <h2 className="font-display mt-2 text-3xl font-semibold tracking-tight">
                                 {step.title}
@@ -358,25 +467,20 @@ export default function VetSaaSLanding(props: Props) {
                     <div className="mt-8 flex flex-wrap items-center gap-6">
                         <a
                             href="#planes"
-                            className="font-body inline-flex cursor-pointer bg-[#006D55] px-5 py-3 text-sm font-semibold text-white transition-transform hover:bg-[#015743] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#006D55] focus-visible:ring-offset-2 active:translate-y-px"
+                            className="font-body inline-flex cursor-pointer rounded-xl border border-[#015743] bg-[#006D55] px-5 py-3 text-sm font-semibold text-white transition-transform hover:bg-[#015743] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#006D55] focus-visible:ring-offset-2 active:translate-y-px"
                         >
                             Ver planes
                         </a>
                         <a
                             href="#comparar"
-                            className="font-body cursor-pointer text-sm font-medium text-[#006D55] underline decoration-[#006D55] underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#006D55]"
+                            className="font-body inline-flex cursor-pointer rounded-xl border border-[#006D55] bg-white px-5 py-3 text-sm font-medium text-[#006D55] hover:bg-[#F3FBF7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#006D55]"
                         >
                             Comparar
                         </a>
                     </div>
                 </div>
-                <div className="relative min-h-[52vh] overflow-hidden lg:min-h-[100dvh]">
-                    <img
-                        src="/images/vetsaas-hero-pets.png"
-                        alt="Mascotas atendidas en una clínica veterinaria"
-                        className="vs-hero-drift absolute inset-0 size-full object-cover object-[62%_center]"
-                    />
-                    <div className="pointer-events-none absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-[#E7F6EF] to-transparent max-lg:inset-x-0 max-lg:top-0 max-lg:h-16 max-lg:w-full max-lg:bg-gradient-to-b" />
+                <div className="relative min-h-[52vh] lg:min-h-[100dvh]">
+                    <HeroStage />
                 </div>
             </section>
 
@@ -385,6 +489,36 @@ export default function VetSaaSLanding(props: Props) {
             </p>
 
             <ClinicDayScroll />
+
+            <section className="bg-[#F3FBF7] py-16 sm:py-20">
+                <div className="mx-auto max-w-6xl px-5 sm:px-8">
+                    <h2 className="font-display text-3xl font-semibold tracking-tight text-[#006D55] sm:text-4xl">
+                        Lo que ya opera en la clínica
+                    </h2>
+                    <p className="font-body mt-3 max-w-2xl text-sm leading-relaxed text-[#1F6B52] sm:text-base">
+                        El mismo panel cubre la consulta, la peluquería, el hotel, el stock y la caja.
+                        Los módulos van en todos los planes. Lo que cambia es la cantidad.
+                    </p>
+                    <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                        {CLINIC_MODULES.map((item, index) => (
+                            <article
+                                key={item.title}
+                                className={[
+                                    'rounded-2xl border border-[#99D2BC] bg-white p-5 shadow-[0_16px_40px_-28px_rgba(0,109,85,0.65)]',
+                                    index === 0 ? 'sm:col-span-2' : '',
+                                ].join(' ')}
+                            >
+                                <h3 className="font-display text-lg font-semibold text-[#06241C]">
+                                    {item.title}
+                                </h3>
+                                <p className="font-body mt-2 text-sm leading-relaxed text-[#1F6B52]">
+                                    {item.body}
+                                </p>
+                            </article>
+                        ))}
+                    </div>
+                </div>
+            </section>
 
             {/* Clients */}
             {clients.length > 0 ? (
@@ -451,7 +585,7 @@ export default function VetSaaSLanding(props: Props) {
                                 href="https://almapetid.com"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="font-body inline-flex shrink-0 bg-[#06241C] px-5 py-3 text-sm font-semibold text-white transition-transform hover:bg-[#015743] active:translate-y-px"
+                                className="font-body inline-flex shrink-0 cursor-pointer rounded-xl border border-[#06241C] bg-[#06241C] px-5 py-3 text-sm font-semibold text-white transition-transform hover:bg-[#015743] active:translate-y-px"
                             >
                                 Conocer AlmaPet ID
                             </a>
@@ -620,7 +754,7 @@ export default function VetSaaSLanding(props: Props) {
                         </div>
                         <a
                             href="#planes"
-                            className="font-body inline-flex shrink-0 bg-[#006D55] px-6 py-3.5 text-sm font-semibold text-white transition-transform hover:bg-[#015743] active:translate-y-px"
+                            className="font-body inline-flex shrink-0 cursor-pointer rounded-xl border border-[#015743] bg-[#006D55] px-6 py-3.5 text-sm font-semibold text-white transition-transform hover:bg-[#015743] active:translate-y-px"
                         >
                             Ver planes
                         </a>

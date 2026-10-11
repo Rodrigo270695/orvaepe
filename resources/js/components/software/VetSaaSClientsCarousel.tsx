@@ -40,7 +40,7 @@ function Marquee({ clients }: { clients: VetSaaSShowcaseClient[] }) {
                     {duplicated.map((client, index) => (
                         <div
                             key={`${client.slug}-${index}`}
-                            className="flex min-w-[16rem] shrink-0 items-center gap-4 border border-[#99D2BC] bg-white px-5 py-4 shadow-[0_12px_30px_-18px_rgba(0,109,85,0.55)]"
+                            className="flex min-w-[16rem] shrink-0 items-center gap-4 rounded-2xl border border-[#99D2BC] bg-white px-5 py-4 shadow-[0_12px_30px_-18px_rgba(0,109,85,0.55)]"
                         >
                             <img
                                 src={client.logo_url}
