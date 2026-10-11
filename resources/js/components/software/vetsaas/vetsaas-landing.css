@@ -1,0 +1,98 @@
+.vs-landing {
+    --vs-500: #008762;
+    --vs-600: #006d55;
+    --vs-700: #015743;
+    --vs-ink: #06241c;
+    --vs-bg: #f4f7f5;
+    --vs-card: #ffffff;
+    --vs-muted: #3e5c52;
+    --vs-border: rgba(6, 36, 28, 0.12);
+    color: var(--vs-ink);
+    background: var(--vs-bg);
+    font-family: var(--font-body), 'DM Sans', sans-serif;
+}
+
+.vs-landing .vs-display {
+    font-family: var(--font-display), Syne, sans-serif;
+}
+
+.vs-landing .vs-body {
+    font-family: var(--font-body), 'DM Sans', sans-serif;
+}
+
+.vs-landing .vs-muted {
+    color: var(--vs-muted);
+}
+
+.vs-landing .vs-plans {
+    --background: #ffffff;
+    --foreground: #06241c;
+    --muted-foreground: #3e5c52;
+    --border: rgba(6, 36, 28, 0.12);
+    --primary: #006d55;
+    --primary-foreground: #ffffff;
+    --card: #ffffff;
+}
+
+@keyframes vs-fade-up {
+    from { opacity: 0; transform: translateY(18px); }
+    to { opacity: 1; transform: none; }
+}
+
+@keyframes vs-hero-drift {
+    from { transform: scale(1.04); }
+    to { transform: scale(1.1); }
+}
+
+@keyframes vs-scan {
+    from { transform: translateY(-20%); }
+    to { transform: translateY(420%); }
+}
+
+@keyframes vs-word-in {
+    from { opacity: 0; transform: translateY(0.45em); filter: blur(10px); }
+    to { opacity: 1; transform: none; filter: blur(0); }
+}
+
+@keyframes vs-pop {
+    from { opacity: 0; transform: translateY(24px) scale(0.94); filter: blur(6px); }
+    to { opacity: 1; transform: none; filter: blur(0); }
+}
+
+@keyframes vs-bob {
+    0%, 100% { translate: 0 0; }
+    50% { translate: 0 -10px; }
+}
+
+@keyframes vs-bubble-in {
+    from { opacity: 0; transform: translateY(10px) scale(0.96); }
+    to { opacity: 1; transform: none; }
+}
+
+@keyframes vs-cross {
+    from { transform: translateX(-16rem); }
+    to { transform: translateX(calc(100vw + 2rem)); }
+}
+
+.vs-landing .vs-fade-up { animation: vs-fade-up 0.8s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.vs-landing .vs-hero-drift { animation: vs-hero-drift 18s ease-in-out infinite alternate; }
+.vs-landing .vs-scan { animation: vs-scan 7s linear infinite; }
+.vs-landing .vs-word { animation: vs-word-in 0.9s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.vs-landing .vs-float-in {
+    animation: vs-pop 0.9s cubic-bezier(0.22, 1, 0.36, 1) both, vs-bob 7s ease-in-out infinite;
+}
+.vs-landing .vs-float-slow { animation-duration: 0.9s, 9s; }
+.vs-landing .vs-bubble { animation: vs-bubble-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.vs-landing .vs-cross { animation: vs-cross 26s linear infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+    .vs-landing .vs-fade-up,
+    .vs-landing .vs-hero-drift,
+    .vs-landing .vs-scan,
+    .vs-landing .vs-word,
+    .vs-landing .vs-float-in,
+    .vs-landing .vs-bubble,
+    .vs-landing .vs-cross {
+        animation: none !important;
+    }
+}
