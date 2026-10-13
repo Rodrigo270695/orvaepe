@@ -6,11 +6,13 @@ import * as React from 'react';
 type Props = {
     initialQuery: string;
     className?: string;
+    placeholder?: string;
 };
 
 export default function OperacionWebhooksSearch({
     initialQuery,
     className,
+    placeholder = 'Gateway, ID de evento o tipo…',
 }: Props) {
     const page = usePage();
     const [query, setQuery] = React.useState(initialQuery);
@@ -56,15 +58,15 @@ export default function OperacionWebhooksSearch({
 
     return (
         <div className={className}>
-            <div className="relative w-full max-w-sm neumorph-inset rounded-xl px-1">
-                <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <div className="neumorph-inset relative w-full max-w-sm rounded-xl px-1">
+                <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                     ref={inputRef}
                     name="q"
                     type="search"
                     value={query}
                     onChange={(event) => setQuery(event.target.value)}
-                    placeholder="Gateway, ID de evento o tipo…"
+                    placeholder={placeholder}
                     className="h-10 border-0 bg-transparent pl-9 shadow-none focus-visible:ring-0"
                 />
             </div>

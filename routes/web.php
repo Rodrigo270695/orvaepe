@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\SunatLogsController;
 use App\Http\Controllers\Admin\VentasFacturasController;
 use App\Http\Controllers\Admin\VentasPagosController;
 use App\Http\Controllers\Admin\WebhookEventsController;
+use App\Http\Controllers\Admin\WhatsAppCloudWebhooksController;
 use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\Catalog\CatalogCategoriesController;
 use App\Http\Controllers\Catalog\CatalogProductMediaController;
@@ -566,6 +567,9 @@ Route::middleware(['auth', 'verified', 'client.profile.complete'])->group(functi
             ->name('panel.operacion-whatsapp.logout');
         Route::post('panel/operacion-whatsapp/test', [PlatformWhatsAppController::class, 'sendTest'])
             ->name('panel.operacion-whatsapp.test');
+
+        Route::get('panel/operacion-whatsapp-cloud', [WhatsAppCloudWebhooksController::class, 'index'])
+            ->name('panel.operacion-whatsapp-cloud.index');
 
         Route::get('panel/operacion-auditoria', [AuditLogsController::class, 'index'])
             ->name('panel.operacion-auditoria.index');

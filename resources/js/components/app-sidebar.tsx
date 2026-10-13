@@ -13,6 +13,7 @@ import {
     LifeBuoy,
     ListChecks,
     MessageCircle,
+    MessagesSquare,
     Package,
     PlugZap,
     Receipt,
@@ -261,6 +262,11 @@ const adminSections: NavSidebarSection[] = [
                         title: 'WhatsApp',
                         href: panelPath('operacion-whatsapp'),
                         icon: MessageCircle,
+                    },
+                    {
+                        title: 'WhatsApp API',
+                        href: panelPath('operacion-whatsapp-cloud'),
+                        icon: MessagesSquare,
                     },
                     {
                         title: 'Auditoría',

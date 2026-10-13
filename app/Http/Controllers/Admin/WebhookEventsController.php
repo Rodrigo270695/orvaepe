@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\WebhookEvent;
+use App\Services\WhatsAppCloud\WebhookProcessor;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -37,7 +38,7 @@ class WebhookEventsController extends Controller
             return redirect()->route('panel.operacion-webhooks.index', $params);
         }
 
-        $query = WebhookEvent::query();
+        $query = WebhookEvent::query()->where('gateway', '!=', WebhookProcessor::GATEWAY);
 
         if ($q !== '') {
             $like = '%'.$q.'%';
