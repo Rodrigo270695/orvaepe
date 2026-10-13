@@ -16,17 +16,18 @@ function splitPrice(text: string) {
     };
 }
 
-export default function PriceTag({ plan, featured = false }: Props) {
-    const amountClass = [
-        'font-display text-5xl font-extrabold leading-none tracking-tight tabular-nums',
-        featured ? 'text-white' : 'text-[#f4efe6]',
-    ].join(' ');
+export default function PriceTag({ plan }: Props) {
+    const amountClass = 'font-display text-5xl font-extrabold leading-none tracking-tight tabular-nums';
 
     if (planIsFreeSubscription(plan)) {
         return (
             <div>
-                <p className={amountClass}>Gratis</p>
-                <p className="mt-2 text-xs text-[#b7b0a4]">Sin tarjeta ni pasarela</p>
+                <p className={amountClass} style={{ color: 'var(--ts-ink-strong)' }}>
+                    Gratis
+                </p>
+                <p className="mt-2 text-xs" style={{ color: 'var(--ts-muted)' }}>
+                    Sin tarjeta ni pasarela
+                </p>
             </div>
         );
     }
@@ -35,16 +36,28 @@ export default function PriceTag({ plan, featured = false }: Props) {
     const parts = planHasPurchasablePrice(plan) ? splitPrice(text) : null;
 
     if (!parts) {
-        return <p className="font-display text-2xl font-extrabold text-[#f4efe6]">{text || 'A cotizar'}</p>;
+        return (
+            <p className="font-display text-2xl font-extrabold" style={{ color: 'var(--ts-ink)' }}>
+                {text || 'A cotizar'}
+            </p>
+        );
     }
 
     return (
         <div>
             <p className="flex items-start gap-1">
-                <span className="mt-1.5 text-lg font-semibold text-[#ea580c]">{parts.symbol}</span>
-                <span className={amountClass}>{parts.amount}</span>
+                <span className="mt-1.5 text-lg font-semibold" style={{ color: 'var(--ts-ember)' }}>
+                    {parts.symbol}
+                </span>
+                <span className={amountClass} style={{ color: 'var(--ts-ink-strong)' }}>
+                    {parts.amount}
+                </span>
             </p>
-            {parts.suffix ? <p className="mt-2 text-xs text-[#b7b0a4]">{parts.suffix}</p> : null}
+            {parts.suffix ? (
+                <p className="mt-2 text-xs" style={{ color: 'var(--ts-muted)' }}>
+                    {parts.suffix}
+                </p>
+            ) : null}
         </div>
     );
 }

@@ -1,19 +1,72 @@
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Barlow:wght@400;500;600;700&display=swap');
 
 .ts-landing {
-    --ts-ink: #f4efe6;
-    --ts-muted: #b7b0a4;
     --ts-ember: #ea580c;
-    --ts-ember-2: #f97316;
-    --ts-navy: #1e3a5f;
-    --ts-asphalt: #0b1220;
-    --ts-steel: #94a3b8;
-    --ts-paper: #fff7ed;
+    --ts-ember-hover: #c2410c;
+    --ts-ember-soft: rgba(234, 88, 12, 0.16);
+    --ts-on-ember: #ffffff;
+    --ts-plate: #f5c518;
+    --ts-on-plate: #0b1220;
     --ts-display: 'Barlow Condensed', 'Arial Narrow', sans-serif;
     --ts-body: 'Barlow', 'Segoe UI', sans-serif;
+
+    --ts-bg: #fff7ed;
+    --ts-bg-alt: #f3ece2;
+    --ts-surface: #ffffff;
+    --ts-ink: #0b1220;
+    --ts-ink-strong: #0b1220;
+    --ts-muted: #57534e;
+    --ts-line: rgba(11, 18, 32, 0.12);
+    --ts-navy: #1e3a5f;
+    --ts-navy-ink: #f4efe6;
+    --ts-navy-muted: #c5d0de;
+    --ts-ticket: rgba(255, 255, 255, 0.94);
+    --ts-ticket-ink: #0b1220;
+    --ts-ticket-line: rgba(11, 18, 32, 0.12);
+    --ts-ghost-border: rgba(11, 18, 32, 0.16);
+    --ts-ghost-fill: rgba(11, 18, 32, 0.04);
+    --ts-table-head: #fff7ed;
+    --ts-photo-veil: linear-gradient(to top, #fff7ed, rgba(255, 247, 237, 0.18) 42%, transparent);
+    --ts-inverse: #1e3a5f;
+    --ts-inverse-ink: #f4efe6;
+    --ts-inverse-muted: #c5d0de;
+    --ts-inverse-line: rgba(255, 255, 255, 0.14);
+    --ts-inverse-card: #163052;
+    --ts-ring-offset: #fff7ed;
+    --ts-bay-a: rgba(234, 88, 12, 0.1);
+    --ts-bay-b: rgba(30, 58, 95, 0.08);
+
     color: var(--ts-ink);
-    background: var(--ts-asphalt);
+    background: var(--ts-bg);
     font-family: var(--ts-body);
+}
+
+.dark .ts-landing {
+    --ts-bg: #0b1220;
+    --ts-bg-alt: #101826;
+    --ts-surface: #121a2b;
+    --ts-ink: #f4efe6;
+    --ts-ink-strong: #ffffff;
+    --ts-muted: #b7b0a4;
+    --ts-line: rgba(255, 255, 255, 0.12);
+    --ts-navy: #1e3a5f;
+    --ts-navy-ink: #f4efe6;
+    --ts-navy-muted: #d6deea;
+    --ts-ticket: rgba(11, 18, 32, 0.88);
+    --ts-ticket-ink: #ffffff;
+    --ts-ticket-line: rgba(255, 255, 255, 0.12);
+    --ts-ghost-border: rgba(255, 255, 255, 0.2);
+    --ts-ghost-fill: rgba(255, 255, 255, 0.05);
+    --ts-table-head: #121a2b;
+    --ts-photo-veil: linear-gradient(to top, #0b1220, rgba(11, 18, 32, 0.25) 42%, transparent);
+    --ts-inverse: #0b1220;
+    --ts-inverse-ink: #f4efe6;
+    --ts-inverse-muted: #b7b0a4;
+    --ts-inverse-line: rgba(255, 255, 255, 0.12);
+    --ts-inverse-card: #161e2e;
+    --ts-ring-offset: #0b1220;
+    --ts-bay-a: rgba(234, 88, 12, 0.22);
+    --ts-bay-b: rgba(30, 58, 95, 0.45);
 }
 
 .ts-landing .font-display {
@@ -28,9 +81,63 @@
 
 .ts-bay-lines {
     background-image:
-        linear-gradient(90deg, rgba(245, 197, 24, 0.08) 2px, transparent 2px),
-        linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+        linear-gradient(90deg, color-mix(in srgb, var(--ts-plate) 35%, transparent) 2px, transparent 2px),
+        linear-gradient(color-mix(in srgb, var(--ts-ink) 8%, transparent) 1px, transparent 1px);
     background-size: 92px 28px;
+}
+
+.ts-btn {
+    display: inline-flex;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 0.375rem;
+    background: var(--ts-ember);
+    padding: 0.875rem 1.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--ts-on-ember);
+    box-shadow: 0 16px 32px -16px rgba(234, 88, 12, 0.7);
+    transition: background-color 150ms ease;
+}
+
+.ts-btn:hover { background: var(--ts-ember-hover); }
+.ts-btn:disabled,
+.ts-btn-ghost:disabled {
+    pointer-events: none;
+    opacity: 0.5;
+}
+
+.ts-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--ts-ring-offset), 0 0 0 4px var(--ts-ember);
+}
+
+.ts-btn-ghost {
+    display: inline-flex;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 0.375rem;
+    border: 1px solid var(--ts-ghost-border);
+    background: var(--ts-ghost-fill);
+    padding: 0.875rem 1.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--ts-ink);
+    transition: border-color 150ms ease, background-color 150ms ease;
+}
+
+.ts-btn-ghost:hover {
+    border-color: var(--ts-ember);
+    background: var(--ts-ember-soft);
+}
+
+.ts-btn-ghost:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--ts-ember);
 }
 
 @keyframes ts-rise {

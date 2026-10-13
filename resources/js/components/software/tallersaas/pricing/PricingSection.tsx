@@ -28,17 +28,23 @@ export default function PricingSection({ plans, ...checkout }: Props) {
     };
 
     return (
-        <section id="planes" className="relative scroll-mt-24 overflow-hidden bg-[#0b1220] py-20 text-white sm:py-28">
+        <section
+            id="planes"
+            className="relative scroll-mt-24 overflow-hidden py-20 sm:py-28"
+            style={{ background: 'var(--ts-bg)', color: 'var(--ts-ink)' }}
+        >
             <div className="ts-bay-lines pointer-events-none absolute inset-0 opacity-40" aria-hidden />
             <div className="relative mx-auto max-w-7xl px-5 sm:px-8">
                 <TallerSaaSReveal>
                     <div className="mx-auto max-w-3xl text-center">
-                        <p className="font-mono text-xs uppercase tracking-[0.2em] text-[#f97316]">
+                        <p className="font-mono text-xs uppercase tracking-[0.2em]" style={{ color: 'var(--ts-ember)' }}>
                             Precios en soles · IGV incluido
                         </p>
                         <h2 className="font-display mt-5 text-4xl font-extrabold leading-[0.95] sm:text-6xl">
                             Mismos módulos.
-                            <span className="block text-[#ea580c]">Distinto volumen.</span>
+                            <span className="block" style={{ color: 'var(--ts-ember)' }}>
+                                Distinto volumen.
+                            </span>
                         </h2>
                     </div>
                 </TallerSaaSReveal>
@@ -47,7 +53,7 @@ export default function PricingSection({ plans, ...checkout }: Props) {
                     <TallerSaaSReveal delay={0.08}>
                         <div className="mt-10 flex flex-col items-center gap-3">
                             <BillingToggle value={period} onChange={setPeriod} />
-                            <p className="text-xs text-[#b7b0a4]">
+                            <p className="text-xs" style={{ color: 'var(--ts-muted)' }}>
                                 {period === 'annual' ? 'Pagas 10 meses y usas 12.' : 'Cambia a anual y ahorras 2 meses.'}
                             </p>
                         </div>
@@ -69,9 +75,12 @@ export default function PricingSection({ plans, ...checkout }: Props) {
                 </div>
 
                 <TallerSaaSReveal>
-                    <div className="mt-16 overflow-x-auto border border-white/10">
+                    <div className="mt-16 overflow-x-auto border" style={{ borderColor: 'var(--ts-line)' }}>
                         <table className="w-full min-w-[40rem] text-left text-sm">
-                            <thead className="bg-[#121a2b] font-display text-xs uppercase tracking-wide text-[#f97316]">
+                            <thead
+                                className="font-display text-xs uppercase tracking-wide"
+                                style={{ background: 'var(--ts-table-head)', color: 'var(--ts-ember)' }}
+                            >
                                 <tr>
                                     <th className="px-4 py-3 font-semibold">Límite</th>
                                     <th className="px-4 py-3 font-semibold">Gratis</th>
@@ -82,8 +91,10 @@ export default function PricingSection({ plans, ...checkout }: Props) {
                             </thead>
                             <tbody>
                                 {COMPARISON.map((row) => (
-                                    <tr key={row.label} className="border-t border-white/10">
-                                        <td className="px-4 py-3 text-[#cfc6b8]">{row.label}</td>
+                                    <tr key={row.label} className="border-t" style={{ borderColor: 'var(--ts-line)' }}>
+                                        <td className="px-4 py-3" style={{ color: 'var(--ts-muted)' }}>
+                                            {row.label}
+                                        </td>
                                         <td className="px-4 py-3">{row.free}</td>
                                         <td className="px-4 py-3">{row.basico}</td>
                                         <td className="px-4 py-3">{row.pro}</td>

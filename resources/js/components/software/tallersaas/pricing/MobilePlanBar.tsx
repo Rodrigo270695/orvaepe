@@ -42,16 +42,26 @@ export default function MobilePlanBar({ title, priceLine }: Props) {
                 show ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-full opacity-0',
             ].join(' ')}
         >
-            <div className="mr-[4.5rem] flex items-center gap-3 border border-[#ea580c] bg-[#0b1220]/95 py-2.5 pl-4 pr-2.5 backdrop-blur">
+            <div
+                className="mr-[4.5rem] flex items-center gap-3 border py-2.5 pl-4 pr-2.5 backdrop-blur"
+                style={{
+                    borderColor: 'var(--ts-ember)',
+                    background: 'color-mix(in srgb, var(--ts-bg) 92%, transparent)',
+                }}
+            >
                 <div className="min-w-0 flex-1">
-                    <p className="truncate text-xs text-[#b7b0a4]">{title}</p>
-                    <p className="font-display truncate text-base font-extrabold text-white">{priceLine || 'Prueba gratis'}</p>
+                    <p className="truncate text-xs" style={{ color: 'var(--ts-muted)' }}>
+                        {title}
+                    </p>
+                    <p className="font-display truncate text-base font-extrabold" style={{ color: 'var(--ts-ink-strong)' }}>
+                        {priceLine || 'Prueba gratis'}
+                    </p>
                 </div>
                 <button
                     type="button"
                     tabIndex={show ? 0 : -1}
                     onClick={() => document.getElementById('planes')?.scrollIntoView({ behavior: 'smooth' })}
-                    className="shrink-0 cursor-pointer rounded-md bg-[#ea580c] px-4 py-2.5 text-sm font-semibold text-white"
+                    className="ts-btn shrink-0 !px-4 !py-2.5"
                 >
                     Ver planes
                 </button>

@@ -7,7 +7,10 @@ const TICKETS = [
 export default function HeroStage() {
     return (
         <div className="relative">
-            <div className="overflow-hidden rounded-[1.6rem] border border-white/10 shadow-[0_40px_80px_-32px_rgba(0,0,0,0.8)]">
+            <div
+                className="overflow-hidden rounded-[1.6rem] border shadow-[0_40px_80px_-32px_rgba(0,0,0,0.45)]"
+                style={{ borderColor: 'var(--ts-line)' }}
+            >
                 <div className="relative aspect-[4/5] sm:aspect-[5/6] lg:aspect-[4/5]">
                     <img
                         src="/images/tallersaas/hero.jpg"
@@ -15,12 +18,16 @@ export default function HeroStage() {
                         className="absolute inset-0 size-full object-cover"
                         fetchPriority="high"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#0b1220] via-[#0b1220]/25 to-transparent" />
+                    <div className="absolute inset-0" style={{ backgroundImage: 'var(--ts-photo-veil)' }} />
                     <span
-                        className="ts-scan pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-transparent via-[#ea580c]/25 to-transparent"
+                        className="ts-scan pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-transparent to-transparent"
+                        style={{ background: 'linear-gradient(to bottom, transparent, color-mix(in srgb, var(--ts-ember) 28%, transparent), transparent)' }}
                         aria-hidden
                     />
-                    <p className="absolute left-4 top-4 rounded-sm bg-[#f5c518] px-2.5 py-1 font-display text-xs font-extrabold tracking-[0.18em] text-[#0b1220]">
+                    <p
+                        className="absolute left-4 top-4 rounded-sm px-2.5 py-1 font-display text-xs font-extrabold tracking-[0.18em]"
+                        style={{ background: 'var(--ts-plate)', color: 'var(--ts-on-plate)' }}
+                    >
                         ABC-124
                     </p>
                 </div>
@@ -30,11 +37,18 @@ export default function HeroStage() {
                 {TICKETS.map((ticket) => (
                     <li
                         key={ticket.kicker}
-                        className="ts-rise rounded-xl border border-white/10 bg-[#0b1220]/88 px-3.5 py-2.5 backdrop-blur-md"
-                        style={{ animationDelay: ticket.delay }}
+                        className="ts-rise rounded-xl border px-3.5 py-2.5 backdrop-blur-md"
+                        style={{
+                            animationDelay: ticket.delay,
+                            borderColor: 'var(--ts-ticket-line)',
+                            background: 'var(--ts-ticket)',
+                            color: 'var(--ts-ticket-ink)',
+                        }}
                     >
-                        <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#f97316]">{ticket.kicker}</p>
-                        <p className="mt-0.5 text-sm font-medium text-white">{ticket.title}</p>
+                        <p className="font-mono text-[10px] uppercase tracking-[0.16em]" style={{ color: 'var(--ts-ember)' }}>
+                            {ticket.kicker}
+                        </p>
+                        <p className="mt-0.5 text-sm font-medium">{ticket.title}</p>
                     </li>
                 ))}
             </ul>

@@ -729,7 +729,6 @@ export default function SoftwareDetail() {
                 ogType="product"
                 ogImage="/images/tallersaas/og.jpg"
                 preloadImage="/images/tallersaas/hero.jpg"
-                hideAppearanceToggle
                 ogImageAlt="Software para talleres TallerSaaS — órdenes, lavado y SUNAT"
                 keywords={marketingSeo.tallersaas.keywords}
                 breadcrumbs={[

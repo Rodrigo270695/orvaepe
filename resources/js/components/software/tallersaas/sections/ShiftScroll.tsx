@@ -73,28 +73,34 @@ function PinnedShift() {
     const first = SHIFT_STEPS[0];
 
     return (
-        <section ref={rootRef} className="relative hidden bg-[#101826] text-[#f4efe6] md:block">
+        <section
+            ref={rootRef}
+            className="relative hidden md:block"
+            style={{ background: 'var(--ts-bg-alt)', color: 'var(--ts-ink)' }}
+        >
             <div className="mx-auto flex h-[100dvh] max-w-6xl items-center gap-16 px-8">
                 <div ref={copyRef} className="w-[46%]">
-                    <p className="font-mono text-xs uppercase tracking-[0.22em] text-[#ea580c]">Un turno en el taller</p>
-                    <p ref={indexRef} className="font-display mt-6 text-sm tabular-nums text-[#f97316]">
+                    <p className="font-mono text-xs uppercase tracking-[0.22em]" style={{ color: 'var(--ts-ember)' }}>
+                        Un turno en el taller
+                    </p>
+                    <p ref={indexRef} className="font-display mt-6 text-sm tabular-nums" style={{ color: 'var(--ts-ember)' }}>
                         {first.index}
                     </p>
                     <h3 ref={titleRef} className="font-display mt-3 text-5xl font-extrabold leading-[0.95] xl:text-6xl">
                         {first.title}
                     </h3>
-                    <p ref={bodyRef} className="font-body mt-5 max-w-md text-lg leading-snug text-[#cfc6b8]">
+                    <p ref={bodyRef} className="font-body mt-5 max-w-md text-lg leading-snug" style={{ color: 'var(--ts-muted)' }}>
                         {first.body}
                     </p>
-                    <div className="mt-10 h-px w-44 bg-white/15">
+                    <div className="mt-10 h-px w-44" style={{ background: 'var(--ts-line)' }}>
                         <span
                             ref={barRef}
-                            className="block h-px w-full origin-left bg-[#ea580c]"
-                            style={{ transform: 'scaleX(0.08)' }}
+                            className="block h-px w-full origin-left"
+                            style={{ transform: 'scaleX(0.08)', background: 'var(--ts-ember)' }}
                         />
                     </div>
                 </div>
-                <div className="h-[70vh] w-[54%] overflow-hidden rounded-sm border border-white/10">
+                <div className="h-[70vh] w-[54%] overflow-hidden rounded-sm border" style={{ borderColor: 'var(--ts-line)' }}>
                     <img ref={photoRef} src={first.image} alt={first.alt} className="size-full object-cover" />
                 </div>
             </div>
@@ -107,14 +113,14 @@ export default function ShiftScroll() {
 
     if (reduce) {
         return (
-            <section className="bg-[#101826] px-5 py-20 text-[#f4efe6] sm:px-8">
+            <section className="px-5 py-20 sm:px-8" style={{ background: 'var(--ts-bg-alt)', color: 'var(--ts-ink)' }}>
                 <div className="mx-auto grid max-w-6xl gap-10 md:grid-cols-2">
                     {SHIFT_STEPS.map((step) => (
                         <article key={step.index}>
                             <img src={step.image} alt={step.alt} className="aspect-[4/3] w-full object-cover" />
-                            <p className="mt-4 font-mono text-xs text-[#ea580c]">{step.index}</p>
+                            <p className="mt-4 font-mono text-xs" style={{ color: 'var(--ts-ember)' }}>{step.index}</p>
                             <h3 className="font-display mt-1 text-3xl font-extrabold">{step.title}</h3>
-                            <p className="mt-2 text-[#cfc6b8]">{step.body}</p>
+                            <p className="mt-2" style={{ color: 'var(--ts-muted)' }}>{step.body}</p>
                         </article>
                     ))}
                 </div>
@@ -125,15 +131,17 @@ export default function ShiftScroll() {
     return (
         <>
             <PinnedShift />
-            <section className="bg-[#101826] px-5 py-16 text-[#f4efe6] md:hidden">
-                <p className="font-mono text-xs uppercase tracking-[0.22em] text-[#ea580c]">Un turno en el taller</p>
+            <section className="px-5 py-16 md:hidden" style={{ background: 'var(--ts-bg-alt)', color: 'var(--ts-ink)' }}>
+                <p className="font-mono text-xs uppercase tracking-[0.22em]" style={{ color: 'var(--ts-ember)' }}>
+                    Un turno en el taller
+                </p>
                 <div className="mt-8 space-y-12">
                     {SHIFT_STEPS.map((step) => (
                         <article key={step.index}>
                             <img src={step.image} alt={step.alt} className="aspect-[4/3] w-full object-cover" />
-                            <p className="mt-4 font-mono text-xs text-[#f97316]">{step.index}</p>
+                            <p className="mt-4 font-mono text-xs" style={{ color: 'var(--ts-ember)' }}>{step.index}</p>
                             <h3 className="font-display mt-1 text-3xl font-extrabold">{step.title}</h3>
-                            <p className="mt-2 text-[#cfc6b8]">{step.body}</p>
+                            <p className="mt-2" style={{ color: 'var(--ts-muted)' }}>{step.body}</p>
                         </article>
                     ))}
                 </div>

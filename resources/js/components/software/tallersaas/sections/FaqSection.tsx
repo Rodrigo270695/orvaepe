@@ -7,18 +7,26 @@ export default function FaqSection({ whatsappHref }: { whatsappHref?: string }) 
     const [open, setOpen] = useState(0);
 
     return (
-        <section id="faq" className="scroll-mt-24 bg-[#fff7ed] py-20 text-[#0b1220] sm:py-28">
+        <section
+            id="faq"
+            className="scroll-mt-24 py-20 sm:py-28"
+            style={{ background: 'var(--ts-bg-alt)', color: 'var(--ts-ink)' }}
+        >
             <div className="mx-auto max-w-4xl px-5 sm:px-8">
                 <TallerSaaSReveal>
-                    <p className="font-mono text-xs uppercase tracking-[0.22em] text-[#ea580c]">Preguntas del taller</p>
-                    <h2 className="font-display mt-4 text-4xl font-extrabold sm:text-5xl">Antes de subir el auto al elevador.</h2>
+                    <p className="font-mono text-xs uppercase tracking-[0.22em]" style={{ color: 'var(--ts-ember)' }}>
+                        Preguntas del taller
+                    </p>
+                    <h2 className="font-display mt-4 text-4xl font-extrabold sm:text-5xl">
+                        Antes de subir el auto al elevador.
+                    </h2>
                 </TallerSaaSReveal>
 
-                <div className="mt-10 divide-y divide-[#1e3a5f]/15 border-y border-[#1e3a5f]/15">
+                <div className="mt-10 divide-y border-y" style={{ borderColor: 'var(--ts-line)' }}>
                     {FAQ.map((item, i) => {
                         const isOpen = open === i;
                         return (
-                            <div key={item.q}>
+                            <div key={item.q} style={{ borderColor: 'var(--ts-line)' }}>
                                 <button
                                     type="button"
                                     aria-expanded={isOpen}
@@ -28,20 +36,28 @@ export default function FaqSection({ whatsappHref }: { whatsappHref?: string }) 
                                     <span className="font-display text-xl font-bold sm:text-2xl">
                                         {String(i + 1).padStart(2, '0')} {item.q}
                                     </span>
-                                    <span aria-hidden className="text-[#ea580c]">
+                                    <span aria-hidden style={{ color: 'var(--ts-ember)' }}>
                                         {isOpen ? '–' : '+'}
                                     </span>
                                 </button>
-                                {isOpen ? <p className="pb-5 text-[#4b5563]">{item.a}</p> : null}
+                                {isOpen ? (
+                                    <p className="pb-5" style={{ color: 'var(--ts-muted)' }}>
+                                        {item.a}
+                                    </p>
+                                ) : null}
                             </div>
                         );
                     })}
                 </div>
 
                 {whatsappHref ? (
-                    <p className="mt-8 text-sm text-[#4b5563]">
+                    <p className="mt-8 text-sm" style={{ color: 'var(--ts-muted)' }}>
                         ¿Otra duda?{' '}
-                        <a href={whatsappHref} className="font-semibold text-[#ea580c] underline-offset-4 hover:underline">
+                        <a
+                            href={whatsappHref}
+                            className="font-semibold underline-offset-4 hover:underline"
+                            style={{ color: 'var(--ts-ember)' }}
+                        >
                             Escríbenos
                         </a>
                         .

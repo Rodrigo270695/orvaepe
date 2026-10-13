@@ -7,7 +7,10 @@ type Props = {
 
 export default function BillingToggle({ value, onChange }: Props) {
     return (
-        <div className="inline-flex rounded-md border border-white/15 bg-[#0b1220] p-1">
+        <div
+            className="inline-flex rounded-md border p-1"
+            style={{ borderColor: 'var(--ts-line)', background: 'var(--ts-surface)' }}
+        >
             {(
                 [
                     ['monthly', 'Mensual'],
@@ -20,10 +23,12 @@ export default function BillingToggle({ value, onChange }: Props) {
                         key={id}
                         type="button"
                         onClick={() => onChange(id)}
-                        className={[
-                            'cursor-pointer rounded-sm px-4 py-2 text-xs font-semibold uppercase tracking-wide transition',
-                            active ? 'bg-[#ea580c] text-white' : 'text-[#b7b0a4] hover:text-white',
-                        ].join(' ')}
+                        className="cursor-pointer rounded-sm px-4 py-2 text-xs font-semibold uppercase tracking-wide transition"
+                        style={
+                            active
+                                ? { background: 'var(--ts-ember)', color: 'var(--ts-on-ember)' }
+                                : { color: 'var(--ts-muted)' }
+                        }
                     >
                         {label}
                     </button>
