@@ -114,6 +114,9 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
         if (pathname.startsWith('/portafolio')) {
             return null;
         }
+        if (pathname.startsWith('/carrito') || pathname.startsWith('/checkout')) {
+            return null;
+        }
         if (pathname.startsWith('/software')) {
             return 'software';
         }

@@ -1,8 +1,12 @@
 'use client';
 
-import { CheckCircle2, CreditCard, MessageCircle, Sparkles } from 'lucide-react';
+import { Link } from '@inertiajs/react';
+import { ArrowRight, CheckCircle2, CreditCard, MessageCircle, ShoppingCart, Sparkles } from 'lucide-react';
 
+import CheckoutSteps from '@/components/checkout/CheckoutSteps';
 import { cn } from '@/lib/utils';
+
+import '@/components/checkout/checkout-orvae.css';
 
 type Props = {
     eyebrow: string;
@@ -50,214 +54,136 @@ export default function SoftwareDetailPlanSelectionPanel({
     const showConsultation = planSelected && !webCheckoutEnabled;
     const showFreeActivation = planSelected && isFreeSubscription;
     const showPaidCheckout = planSelected && webCheckoutEnabled && !isFreeSubscription;
+    const added = purchaseEnabled && addedCount > 0;
 
     return (
-        <div
-            className={cn(
-                'group relative overflow-hidden rounded-[1.35rem] border p-6 shadow-2xl md:p-8',
-                'border-[color-mix(in_oklab,var(--border)_50%,transparent)]',
-                'bg-[color-mix(in_oklab,var(--card)_38%,transparent)] backdrop-blur-2xl',
-                'shadow-[0_10px_50px_-18px_color-mix(in_oklab,var(--foreground)_18%,transparent),0_0_0_1px_color-mix(in_oklab,var(--primary)_14%,transparent)]',
-                'transition-[box-shadow,transform] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]',
-                'hover:shadow-[0_16px_64px_-16px_color-mix(in_oklab,var(--primary)_26%,transparent)]',
-            )}
-        >
-            <div
-                className="pointer-events-none absolute inset-x-0 top-0 h-px opacity-90"
-                style={{
-                    background:
-                        'linear-gradient(90deg, transparent 0%, color-mix(in oklab, var(--state-info) 60%, transparent) 20%, color-mix(in oklab, var(--state-success) 58%, transparent) 40%, color-mix(in oklab, var(--state-alert) 58%, transparent) 62%, color-mix(in oklab, var(--state-danger) 56%, transparent) 80%, transparent 100%)',
-                }}
-                aria-hidden
-            />
-            <div
-                className="pointer-events-none absolute inset-x-0 -top-24 h-48 opacity-70 blur-3xl"
-                style={{
-                    background:
-                        'radial-gradient(ellipse 70% 60% at 50% 0%, color-mix(in oklab, var(--state-info) 24%, transparent), transparent 72%)',
-                }}
-                aria-hidden
-            />
-            <div
-                className="pointer-events-none absolute inset-0 opacity-[0.035] [background-image:radial-gradient(color-mix(in_oklab,var(--foreground)_100%,transparent)_1px,transparent_1px)] [background-size:18px_18px]"
-                aria-hidden
-            />
-            <div
-                className="pointer-events-none absolute -right-16 -bottom-24 size-56 rounded-full opacity-[0.12] blur-3xl"
-                style={{
-                    background:
-                        'radial-gradient(circle, color-mix(in oklab, var(--primary) 40%, transparent), transparent 68%)',
-                }}
-                aria-hidden
-            />
+        <div className="co-glass relative overflow-hidden rounded-3xl">
+            <div className="co-line" aria-hidden />
+            <div className="p-6 md:p-8">
+                {showPaidCheckout || showFreeActivation ? (
+                    <CheckoutSteps current={added ? 1 : 0} className="mb-7 max-w-2xl" />
+                ) : null}
 
-            <div className="relative z-10 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between lg:gap-10">
-                <div className="min-w-0 flex-1 space-y-3">
-                    <p className="text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-[color-mix(in_oklab,var(--state-alert)_78%,var(--muted-foreground))]">
-                        {eyebrow}
-                    </p>
-                    <p className="text-pretty text-base font-semibold leading-snug text-[color-mix(in_oklab,var(--state-info)_40%,var(--foreground))] md:text-lg">
-                        {selectionTitle}
-                    </p>
+                <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between lg:gap-10">
+                    <div className="min-w-0 flex-1 space-y-2.5">
+                        <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-[#c2410c] dark:text-[#fb923c]">
+                            {eyebrow}
+                        </p>
+                        <p className="text-pretty text-lg font-bold leading-snug text-foreground md:text-xl">
+                            {selectionTitle}
+                        </p>
 
-                    {showConsultation ? (
-                        <p className="text-sm leading-relaxed text-[var(--muted-foreground)]">
-                            Este plan no tiene precio publicado en la web. Te cotizamos el alcance según tu proyecto.
-                        </p>
-                    ) : showFreeActivation ? (
-                        <p className="text-sm leading-relaxed text-[var(--muted-foreground)]">
-                            Activación directa: no pasarás por Mercado Pago ni PayPal. Al confirmar, procesamos tu
-                            suscripción gratuita.
-                        </p>
-                    ) : hasPrice ? (
-                        <div className="pt-1">
-                            <p
-                                className="font-[family-name:var(--font-display)] text-2xl font-bold tracking-tight text-[color-mix(in_oklab,var(--state-success)_40%,var(--foreground))] tabular-nums sm:text-3xl"
-                                style={{ fontFeatureSettings: '"tnum" 1' }}
-                            >
-                                {priceLine}
+                        {showConsultation ? (
+                            <p className="text-sm leading-relaxed text-muted-foreground">
+                                Este plan no tiene precio publicado en la web. Te cotizamos el alcance según tu
+                                proyecto.
                             </p>
-                            {priceCaption ? (
-                                <p className="mt-1.5 max-w-md text-xs leading-relaxed text-[var(--muted-foreground)]">
-                                    {priceCaption}
+                        ) : showFreeActivation ? (
+                            <p className="text-sm leading-relaxed text-muted-foreground">
+                                Activación directa, sin pasarela de pago. Al confirmar procesamos tu suscripción
+                                gratuita.
+                            </p>
+                        ) : hasPrice ? (
+                            <div className="pt-1">
+                                <p
+                                    className="font-display text-3xl font-bold tracking-tight text-foreground tabular-nums sm:text-4xl"
+                                    style={{ fontFeatureSettings: '"tnum" 1' }}
+                                >
+                                    {priceLine}
                                 </p>
-                            ) : null}
-                        </div>
-                    ) : !planSelected ? (
-                        <p className="text-sm text-[var(--muted-foreground)]">
-                            Selecciona un plan para ver el importe estimado y continuar.
-                        </p>
-                    ) : (
-                        <p className="text-sm text-[var(--muted-foreground)]">
-                            No hay precio publicado en texto para este plan; revisa el detalle en el catálogo
-                            administrado.
-                        </p>
-                    )}
-                </div>
+                                {priceCaption ? (
+                                    <p className="mt-1.5 max-w-md text-xs leading-relaxed text-muted-foreground">
+                                        {priceCaption}
+                                    </p>
+                                ) : null}
+                            </div>
+                        ) : !planSelected ? (
+                            <p className="text-sm text-muted-foreground">
+                                Selecciona un plan para ver el importe y continuar.
+                            </p>
+                        ) : (
+                            <p className="text-sm text-muted-foreground">
+                                No hay precio publicado en texto para este plan; revisa el detalle en el
+                                catálogo.
+                            </p>
+                        )}
+                    </div>
 
-                <div className="flex w-full flex-shrink-0 flex-col gap-3 sm:flex-row sm:justify-end lg:w-auto lg:flex-col xl:flex-row">
-                    {showConsultation && whatsappHref ? (
-                        <a
-                            href={whatsappHref}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={cn(
-                                'inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl px-5 py-3.5 text-sm font-semibold',
-                                'bg-[#25D366] text-white shadow-[0_6px_28px_-6px_rgba(37,211,102,0.45)]',
-                                'transition-[transform,filter] duration-200 hover:brightness-110 active:scale-[0.98]',
-                                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25D366] focus-visible:ring-offset-2 focus-visible:ring-offset-background',
-                                'sm:w-auto xl:w-auto',
-                            )}
-                        >
-                            <MessageCircle className="size-4 shrink-0" strokeWidth={2} aria-hidden />
-                            Contactar por WhatsApp
-                        </a>
-                    ) : showFreeActivation ? (
-                        <button
-                            type="button"
-                            disabled={!planSelected || payInProgress}
-                            className={cn(
-                                'inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl px-5 py-3.5 text-sm font-semibold',
-                                'text-[var(--primary-foreground)]',
-                                'shadow-[0_6px_28px_-6px_color-mix(in_oklab,var(--state-success)_55%,transparent),inset_0_1px_0_0_color-mix(in_oklab,var(--primary-foreground)_16%,transparent)]',
-                                'transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]',
-                                'hover:brightness-[1.08]',
-                                'active:scale-[0.98]',
-                                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-background',
-                                (!planSelected || payInProgress) && 'pointer-events-none opacity-45',
-                                'sm:w-auto xl:w-auto',
-                            )}
-                            style={{
-                                background:
-                                    'linear-gradient(135deg, color-mix(in oklab, var(--state-success) 92%, var(--state-info)), color-mix(in oklab, var(--state-info) 72%, var(--state-success)))',
-                            }}
-                            onClick={onPay}
-                        >
-                            <Sparkles className="size-4 opacity-95" aria-hidden />
-                            {payInProgress ? 'Activando…' : 'Activar suscripción gratis'}
-                        </button>
-                    ) : showPaidCheckout ? (
-                        <>
+                    <div className="flex w-full flex-shrink-0 flex-col gap-3 sm:flex-row sm:justify-end lg:w-auto">
+                        {showConsultation && whatsappHref ? (
+                            <a
+                                href={whatsappHref}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={cn(
+                                    'inline-flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-[0.875rem] px-6 py-3 text-sm font-semibold sm:w-auto',
+                                    'bg-[#0e7266] text-white shadow-[0_12px_26px_-14px_#0e7266] transition-colors hover:bg-[#0b5d53]',
+                                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0e7266] focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+                                )}
+                            >
+                                <MessageCircle className="size-4 shrink-0" aria-hidden />
+                                Cotizar por WhatsApp
+                            </a>
+                        ) : showFreeActivation ? (
                             <button
                                 type="button"
                                 disabled={!planSelected || payInProgress}
-                                className={cn(
-                                    'inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border px-5 py-3.5 text-sm font-semibold',
-                                    'border-[color-mix(in_oklab,var(--border)_75%,transparent)]',
-                                    'bg-[color-mix(in_oklab,var(--background)_55%,transparent)] text-[var(--foreground)] backdrop-blur-md',
-                                    'transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]',
-                                    'hover:shadow-[0_0_28px_-6px_color-mix(in_oklab,var(--state-info)_32%,transparent)]',
-                                    'active:scale-[0.98]',
-                                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-background',
-                                    (!planSelected || payInProgress) && 'pointer-events-none opacity-45',
-                                )}
-                                style={{
-                                    borderColor: 'color-mix(in oklab, var(--state-info) 35%, var(--border))',
-                                }}
+                                className="co-cta w-full sm:w-auto"
                                 onClick={onPay}
                             >
-                                <CreditCard className="size-4 opacity-90" aria-hidden />
-                                {payInProgress ? 'Conectando…' : 'Ir a pagar'}
+                                <Sparkles className="size-4" aria-hidden />
+                                {payInProgress ? 'Activando…' : 'Activar suscripción gratis'}
                             </button>
-                            <button
-                                type="button"
-                                disabled={!planSelected || !purchaseEnabled}
-                                className={cn(
-                                    'inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl px-5 py-3.5 text-sm font-semibold',
-                                    'text-[var(--primary-foreground)]',
-                                    'shadow-[0_6px_28px_-6px_color-mix(in_oklab,var(--state-success)_55%,transparent),inset_0_1px_0_0_color-mix(in_oklab,var(--primary-foreground)_16%,transparent)]',
-                                    'transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]',
-                                    'hover:brightness-[1.08]',
-                                    'hover:shadow-[0_10px_40px_-8px_color-mix(in_oklab,var(--state-success)_52%,transparent)]',
-                                    'active:scale-[0.98]',
-                                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-background',
-                                    addedCount > 0 &&
-                                        'ring-2 ring-[color-mix(in_oklab,var(--primary)_38%,transparent)] ring-offset-2 ring-offset-[color-mix(in_oklab,var(--background)_80%,transparent)]',
-                                    (!planSelected || !purchaseEnabled) && 'pointer-events-none opacity-45',
-                                )}
-                                style={{
-                                    background:
-                                        'linear-gradient(135deg, color-mix(in oklab, var(--state-success) 92%, var(--state-info)), color-mix(in oklab, var(--state-info) 72%, var(--state-success)))',
-                                }}
-                                onClick={onAdd}
-                            >
-                                Agregar al carrito
-                                <Sparkles className="size-4 opacity-95" aria-hidden />
-                            </button>
-                        </>
-                    ) : null}
-                </div>
-            </div>
-
-            {payError?.trim() ? (
-                <p className="relative z-10 mt-6 text-sm leading-relaxed text-[var(--state-danger)]" role="alert">
-                    {payError}
-                </p>
-            ) : null}
-
-            {purchaseEnabled && addedCount > 0 ? (
-                <div
-                    className="relative z-10 mt-8 border-t border-[color-mix(in_oklab,var(--border)_65%,transparent)] pt-6"
-                    role="status"
-                >
-                    <div className="flex flex-wrap items-center gap-3">
-                        <span
-                            className={cn(
-                                'inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold',
-                                'border-[color-mix(in_oklab,var(--state-success)_38%,transparent)]',
-                                'bg-[color-mix(in_oklab,var(--state-success)_11%,transparent)]',
-                                'text-[color-mix(in_oklab,var(--state-success)_94%,var(--foreground))]',
-                                'shadow-[inset_0_1px_0_0_color-mix(in_oklab,var(--primary-foreground)_10%,transparent)]',
-                                'animate-in fade-in slide-in-from-bottom-2 fill-mode-both duration-500',
-                            )}
-                        >
-                            <CheckCircle2 className="size-4 shrink-0" aria-hidden />
-                            Agregado al carrito ({addedCount}{' '}
-                            {addedCount === 1 ? 'unidad' : 'unidades'})
-                        </span>
+                        ) : showPaidCheckout ? (
+                            <>
+                                <button
+                                    type="button"
+                                    disabled={!planSelected || payInProgress}
+                                    className="co-ghost w-full sm:w-auto"
+                                    onClick={onPay}
+                                >
+                                    <CreditCard className="size-4" aria-hidden />
+                                    {payInProgress ? 'Conectando…' : 'Comprar ahora'}
+                                </button>
+                                <button
+                                    type="button"
+                                    disabled={!planSelected || !purchaseEnabled}
+                                    className="co-cta w-full sm:w-auto"
+                                    onClick={onAdd}
+                                >
+                                    <ShoppingCart className="size-4" aria-hidden />
+                                    Agregar al carrito
+                                </button>
+                            </>
+                        ) : null}
                     </div>
                 </div>
-            ) : null}
+
+                {payError?.trim() ? (
+                    <p
+                        className="mt-6 rounded-xl border border-[color-mix(in_oklab,var(--destructive)_35%,var(--border))] bg-[color-mix(in_oklab,var(--destructive)_8%,var(--background))] px-3.5 py-3 text-sm text-foreground"
+                        role="alert"
+                    >
+                        {payError}
+                    </p>
+                ) : null}
+
+                {added ? (
+                    <div
+                        className="co-pop mt-7 flex flex-col gap-3 rounded-2xl border border-[color-mix(in_oklab,#0d9488_35%,var(--border))] bg-[color-mix(in_oklab,#0d9488_8%,var(--background))] px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between"
+                        role="status"
+                    >
+                        <p className="inline-flex items-center gap-2 text-sm font-semibold text-foreground">
+                            <CheckCircle2 className="size-5 shrink-0 text-[#0d9488]" aria-hidden />
+                            Agregado al carrito ({addedCount} {addedCount === 1 ? 'unidad' : 'unidades'})
+                        </p>
+                        <Link href="/carrito" className="co-cta min-h-11 px-5 py-2.5 text-sm">
+                            Ver carrito y pagar
+                            <ArrowRight className="size-4" aria-hidden />
+                        </Link>
+                    </div>
+                ) : null}
+            </div>
         </div>
     );
 }

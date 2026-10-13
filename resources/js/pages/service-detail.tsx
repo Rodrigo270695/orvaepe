@@ -348,10 +348,10 @@ export default function ServiceDetail() {
         }
 
         if (hasFree && hasPaid) {
-            return 'Compara paquetes con el interruptor mensual o anual. Los de pago se completan en Mercado Pago o PayPal; el gratuito se activa al instante sin pasarela.';
+            return 'Compara paquetes con el interruptor mensual o anual. Los de pago se completan con Culqi (tarjeta, Yape o billeteras); el gratuito se activa al instante sin pasarela.';
         }
 
-        return 'Elige el SKU y el ciclo mensual o anual. El pago se completa en la pasarela (Mercado Pago o PayPal, según configuración).';
+        return 'Elige el SKU y el ciclo mensual o anual. El pago se completa de forma segura con Culqi: tarjeta, Yape o billeteras.';
     }, [visiblePlans]);
 
     const handleStartCheckout = useCallback(async () => {
@@ -405,6 +405,12 @@ export default function ServiceDetail() {
                 return;
             }
 
+            if (result.kind === 'culqi_inline') {
+                window.location.href = `/checkout/culqi/${result.orderId}`;
+
+                return;
+            }
+
             setCheckoutError(result.message);
         } catch {
             setCheckoutError('Error de red. Inténtalo de nuevo.');
@@ -451,11 +457,11 @@ export default function ServiceDetail() {
         }
 
         if (isFreeSubscription) {
-            return 'Activación directa · sin Mercado Pago ni PayPal';
+            return 'Activación directa · sin pasarela de pago';
         }
 
         if (purchaseEnabled) {
-            return 'Precio de lista · impuestos al confirmar en la pasarela';
+            return 'Precio de lista · el IGV se detalla en el carrito';
         }
 
         return undefined;

@@ -1,8 +1,10 @@
 'use client';
 
-import { CreditCard, MessageCircle, Sparkles } from 'lucide-react';
+import { CreditCard, MessageCircle, ShoppingCart, Sparkles } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
+
+import '@/components/checkout/checkout-orvae.css';
 
 export default function SoftwareDetailStickyPurchaseBar({
     selectedPlanLabel,
@@ -36,46 +38,23 @@ export default function SoftwareDetailStickyPurchaseBar({
     const showPaidCheckout = planReady && webCheckoutEnabled && !isFreeSubscription;
 
     return (
-        <div className="fixed inset-x-0 bottom-0 z-50 md:hidden">
-            <div
-                className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[color-mix(in_oklab,var(--background)_92%,transparent)] to-transparent"
-                aria-hidden
-            />
-            <div
-                className={cn(
-                    'relative mx-auto w-full max-w-6xl border-t px-4 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))]',
-                    'border-[color-mix(in_oklab,var(--border)_55%,transparent)]',
-                    'bg-[color-mix(in_oklab,var(--card)_55%,transparent)] backdrop-blur-2xl',
-                    'shadow-[0_-8px_40px_-12px_color-mix(in_oklab,var(--foreground)_14%,transparent)]',
-                )}
-            >
-                <div
-                    className="pointer-events-none absolute inset-x-0 top-0 h-px opacity-80"
-                    style={{
-                        background:
-                            'linear-gradient(90deg, transparent, color-mix(in oklab, var(--state-info) 52%, transparent), color-mix(in oklab, var(--state-success) 52%, transparent), color-mix(in oklab, var(--state-alert) 48%, transparent), transparent)',
-                    }}
-                    aria-hidden
-                />
-                <div className="relative flex flex-col gap-3 py-3">
-                    <div className="min-w-0">
-                        <p className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-[color-mix(in_oklab,var(--state-alert)_78%,var(--muted-foreground))]">
-                            Selección actual
-                        </p>
-                        <p className="mt-0.5 truncate text-sm font-semibold text-[color-mix(in_oklab,var(--state-info)_42%,var(--foreground))]">
+        <div className="fixed inset-x-0 bottom-0 z-50 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:hidden">
+            <div className="co-glass relative overflow-hidden rounded-2xl">
+                <div className="co-line" aria-hidden />
+                <div className="flex flex-col gap-2.5 p-3">
+                    <div className="flex min-w-0 items-baseline justify-between gap-3">
+                        <p className="min-w-0 truncate text-sm font-semibold text-foreground">
                             {selectedPlanLabel}
                         </p>
                         {hasPrice ? (
                             <p
-                                className="mt-1 font-[family-name:var(--font-display)] text-lg font-bold tabular-nums text-[color-mix(in_oklab,var(--state-success)_70%,var(--foreground))]"
+                                className="shrink-0 font-display text-base font-bold tabular-nums text-foreground"
                                 style={{ fontFeatureSettings: '"tnum" 1' }}
                             >
                                 {priceLine}
                             </p>
                         ) : showFreeActivation ? (
-                            <p className="mt-1 text-sm font-semibold text-[color-mix(in_oklab,var(--state-success)_70%,var(--foreground))]">
-                                Gratis · sin pasarela
-                            </p>
+                            <p className="shrink-0 text-sm font-bold text-[#0f766e] dark:text-[#2dd4bf]">Gratis</p>
                         ) : null}
                     </div>
 
@@ -85,89 +64,50 @@ export default function SoftwareDetailStickyPurchaseBar({
                         </p>
                     ) : null}
 
-                    <div className="flex flex-shrink-0 items-stretch gap-2">
+                    <div className="flex items-stretch gap-2">
                         {showConsultation && whatsappHref ? (
                             <a
                                 href={whatsappHref}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className={cn(
-                                    'inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold',
-                                    'bg-[#25D366] text-white shadow-[0_4px_22px_-6px_rgba(37,211,102,0.45)]',
-                                    'transition-[transform,filter] duration-200 hover:brightness-110 active:scale-[0.98]',
-                                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25D366] focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+                                    'inline-flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-[0.875rem] px-3 text-sm font-semibold',
+                                    'bg-[#0e7266] text-white transition-colors hover:bg-[#0b5d53]',
+                                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0e7266] focus-visible:ring-offset-2 focus-visible:ring-offset-background',
                                 )}
                             >
-                                <MessageCircle className="size-4 shrink-0" strokeWidth={2} aria-hidden />
-                                WhatsApp
+                                <MessageCircle className="size-4 shrink-0" aria-hidden />
+                                Cotizar por WhatsApp
                             </a>
                         ) : showFreeActivation ? (
                             <button
                                 type="button"
                                 disabled={!planReady || payInProgress}
-                                className={cn(
-                                    'inline-flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-xl px-3 py-2.5 text-sm font-semibold',
-                                    'text-[var(--primary-foreground)]',
-                                    'shadow-[0_4px_22px_-6px_color-mix(in_oklab,var(--state-success)_50%,transparent)]',
-                                    'transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]',
-                                    'hover:brightness-[1.07]',
-                                    'active:scale-[0.98]',
-                                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-background',
-                                    (!planReady || payInProgress) && 'pointer-events-none opacity-45',
-                                )}
-                                style={{
-                                    background:
-                                        'linear-gradient(135deg, color-mix(in oklab, var(--state-success) 92%, var(--state-info)), color-mix(in oklab, var(--state-info) 72%, var(--state-success)))',
-                                }}
+                                className="co-cta w-full px-3"
                                 onClick={onPay}
                             >
+                                <Sparkles className="size-4" aria-hidden />
                                 {payInProgress ? 'Activando…' : 'Activar gratis'}
-                                <Sparkles className="size-3.5" aria-hidden />
                             </button>
                         ) : showPaidCheckout ? (
                             <>
                                 <button
                                     type="button"
                                     disabled={!planReady || payInProgress}
-                                    className={cn(
-                                        'inline-flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl border px-3 py-2.5 text-sm font-semibold',
-                                        'border-[color-mix(in_oklab,var(--border)_80%,transparent)]',
-                                        'bg-[color-mix(in_oklab,var(--background)_65%,transparent)] text-[var(--foreground)]',
-                                        'transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]',
-                                        'hover:bg-[color-mix(in_oklab,var(--state-info)_10%,transparent)]',
-                                        'active:scale-[0.98]',
-                                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-background',
-                                        (!planReady || payInProgress) && 'pointer-events-none opacity-45',
-                                    )}
-                                    style={{
-                                        borderColor: 'color-mix(in oklab, var(--state-info) 34%, var(--border))',
-                                    }}
+                                    className="co-ghost flex-1 px-3"
                                     onClick={onPay}
                                 >
-                                    <CreditCard className="size-3.5 shrink-0 opacity-90" aria-hidden />
-                                    {payInProgress ? 'Conectando…' : 'Ir a pagar'}
+                                    <CreditCard className="size-4 shrink-0" aria-hidden />
+                                    {payInProgress ? 'Conectando…' : 'Comprar'}
                                 </button>
                                 <button
                                     type="button"
                                     disabled={!planReady || !purchaseEnabled}
-                                    className={cn(
-                                        'inline-flex flex-[1.15] cursor-pointer items-center justify-center gap-1.5 rounded-xl px-3 py-2.5 text-sm font-semibold',
-                                        'text-[var(--primary-foreground)]',
-                                        'shadow-[0_4px_22px_-6px_color-mix(in_oklab,var(--state-success)_50%,transparent)]',
-                                        'transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]',
-                                        'hover:brightness-[1.07]',
-                                        'active:scale-[0.98]',
-                                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-background',
-                                        (!planReady || !purchaseEnabled) && 'pointer-events-none opacity-45',
-                                    )}
-                                    style={{
-                                        background:
-                                            'linear-gradient(135deg, color-mix(in oklab, var(--state-success) 92%, var(--state-info)), color-mix(in oklab, var(--state-info) 72%, var(--state-success)))',
-                                    }}
+                                    className="co-cta flex-[1.3] px-3"
                                     onClick={onAdd}
                                 >
-                                    Agregar
-                                    <Sparkles className="size-3.5" aria-hidden />
+                                    <ShoppingCart className="size-4 shrink-0" aria-hidden />
+                                    Al carrito
                                 </button>
                             </>
                         ) : null}

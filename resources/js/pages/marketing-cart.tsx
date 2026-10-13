@@ -1,10 +1,25 @@
 import { Link, usePage } from '@inertiajs/react';
-import { ArrowLeft, Minus, Plus, ShoppingBag, Tag, Trash2, X } from 'lucide-react';
+import {
+    ArrowLeft,
+    ArrowRight,
+    CheckCircle2,
+    LockKeyhole,
+    LogIn,
+    Minus,
+    Plus,
+    RefreshCw,
+    ShoppingBag,
+    Sparkles,
+    Tag,
+    Trash2,
+    X,
+} from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import CheckoutSteps from '@/components/checkout/CheckoutSteps';
+import CheckoutTrustRow from '@/components/checkout/CheckoutTrustRow';
 import MarketingLayout from '@/components/marketing/MarketingLayout';
 import { marketingSeo } from '@/marketing/seoCopy';
-import GeometricBackground from '@/components/welcome/GeometricBackground';
 import {
     cartTotalsWithIgv,
     effectiveLineUnit,
@@ -692,8 +707,37 @@ export default function MarketingCart() {
         }
     };
 
-    const pointerBtn =
-        'cursor-pointer inline-flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2';
+    const lineAccent = (slug: string): string => {
+        const s = slug.toLowerCase();
+
+        if (s.includes('vetsaas')) {
+            return '#0f766e';
+        }
+
+        if (s.includes('tallersaas')) {
+            return '#c2410c';
+        }
+
+        if (s.startsWith('svc-')) {
+            return '#7c3aed';
+        }
+
+        return '#2563eb';
+    };
+
+    const isFreeTotal = totalPayable !== null && totalPayable.amount <= 0;
+    const payDisabled =
+        checkoutLoading ||
+        skuPricesLoading ||
+        (vetsaasRenewTenantSlug ? comprobantesOverageLoading : false) ||
+        totalPayable === null ||
+        lines.length === 0;
+
+    const loadingDash = (
+        <span className="text-muted-foreground" aria-label="Cargando">
+            …
+        </span>
+    );
 
     return (
         <MarketingLayout
@@ -703,17 +747,11 @@ export default function MarketingCart() {
             noindex
             structuredData="none"
         >
-            <div className="landing-page relative overflow-hidden border-b border-[color-mix(in_oklab,var(--state-info)_22%,var(--border))]">
-                <div className="landing-grain pointer-events-none absolute inset-0 z-0" aria-hidden />
-                <div className="landing-ambient-orbs pointer-events-none absolute inset-0 z-0" aria-hidden>
-                    <div className="landing-orb landing-orb--a" />
-                    <div className="landing-orb landing-orb--b" />
-                </div>
-                <GeometricBackground variant="grid-dots" opacity={0.08} />
-                <div className="relative mx-auto max-w-6xl px-4 py-10 sm:px-6 md:py-14">
+            <section className="co-hero relative overflow-hidden border-b border-[color-mix(in_oklab,var(--foreground)_8%,var(--border))]">
+                <div className="relative mx-auto max-w-6xl px-4 pb-10 pt-8 sm:px-6 md:pb-12 md:pt-10">
                     <Link
                         href="/software"
-                        className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[color-mix(in_oklab,var(--state-info)_24%,var(--border))] bg-[color-mix(in_oklab,var(--state-info)_8%,transparent)] px-3 py-1.5 text-sm font-medium text-[var(--muted-foreground)] transition-colors hover:text-[var(--foreground)]"
+                        className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full px-1 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ea580c]"
                     >
                         <ArrowLeft className="size-4" aria-hidden />
                         Seguir comprando
@@ -721,578 +759,470 @@ export default function MarketingCart() {
 
                     <div className="mt-6 flex flex-wrap items-end justify-between gap-4">
                         <div>
-                            <h1 className="font-[family-name:var(--font-display)] text-3xl font-bold tracking-tight text-[var(--foreground)] md:text-4xl">
+                            <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-[#c2410c] dark:text-[#fb923c]">
+                                Compra ORVAE
+                            </p>
+                            <h1 className="mt-2 font-display text-3xl font-bold tracking-tight text-foreground md:text-4xl">
                                 Tu carrito
                             </h1>
-                            <p className="mt-2 max-w-xl text-sm text-[var(--muted-foreground)]">
-                                El desglose y el total a pagar están en el resumen.
+                            <p className="mt-2 max-w-xl text-[15px] leading-relaxed text-muted-foreground">
+                                Revisa tus planes, aplica un cupón si tienes uno y paga en un solo paso.
+                                Los precios incluyen el desglose de IGV.
                             </p>
                         </div>
-                        {mounted && totalUnits > 0 && (
-                            <p className="rounded-full border border-[color-mix(in_oklab,var(--state-success)_26%,var(--border))] bg-[color-mix(in_oklab,var(--state-success)_10%,transparent)] px-3 py-1 text-sm font-medium text-[var(--muted-foreground)]">
-                                {totalUnits} {totalUnits === 1 ? 'unidad' : 'unidades'} en total
+                        {mounted && totalUnits > 0 ? (
+                            <p className="inline-flex items-center gap-2 rounded-full border border-[color-mix(in_oklab,#0d9488_30%,var(--border))] bg-[color-mix(in_oklab,#0d9488_9%,var(--background))] px-3.5 py-1.5 text-sm font-semibold text-foreground">
+                                <ShoppingBag className="size-4 text-[#0d9488]" aria-hidden />
+                                {totalUnits} {totalUnits === 1 ? 'unidad' : 'unidades'}
                             </p>
-                        )}
+                        ) : null}
                     </div>
+
+                    <CheckoutSteps current={1} className="mt-8 max-w-3xl" />
                 </div>
-            </div>
+            </section>
 
             <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 md:py-12">
                 {vetsaasRenewTenantSlug ? (
-                    <div className="mb-6 rounded-2xl border border-[color-mix(in_oklab,var(--state-info)_28%,var(--border))] bg-[color-mix(in_oklab,var(--state-info)_10%,transparent)] px-4 py-3 text-sm text-[var(--foreground)]">
-                        Renovación VetSaaS para la clínica{' '}
-                        <span className="font-semibold">{vetsaasRenewTenantSlug}</span>.
-                        Inicia sesión en Orvae con la cuenta que contrató el plan y completa el
-                        pago.
+                    <div className="co-glass mb-6 flex items-start gap-3 rounded-2xl px-4 py-3.5 text-sm text-foreground">
+                        <RefreshCw className="mt-0.5 size-4 shrink-0 text-[#0d9488]" aria-hidden />
+                        <p>
+                            Renovación VetSaaS para la clínica{' '}
+                            <span className="font-semibold">{vetsaasRenewTenantSlug}</span>. Inicia
+                            sesión con la cuenta que contrató el plan y completa el pago.
+                        </p>
                     </div>
                 ) : null}
+
                 {!mounted ? (
-                    <div className="animate-pulse space-y-4 rounded-2xl border border-[color-mix(in_oklab,var(--state-info)_22%,var(--border))] bg-[color-mix(in_oklab,var(--card)_88%,transparent)] p-8">
-                        <div className="h-6 w-1/3 rounded bg-[var(--muted)]" />
-                        <div className="h-16 rounded bg-[var(--muted)]" />
-                        <div className="h-16 rounded bg-[var(--muted)]" />
+                    <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]" aria-busy="true">
+                        <div className="space-y-4">
+                            {[0, 1].map((i) => (
+                                <div key={i} className="co-glass h-36 animate-pulse rounded-2xl motion-reduce:animate-none" />
+                            ))}
+                        </div>
+                        <div className="co-glass h-80 animate-pulse rounded-2xl motion-reduce:animate-none" />
                     </div>
                 ) : lines.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-[color-mix(in_oklab,var(--state-alert)_30%,var(--border))] bg-[color-mix(in_oklab,var(--card)_85%,var(--background))] px-6 py-20 text-center">
-                        <ShoppingBag className="mx-auto size-12 text-[var(--muted-foreground)]" aria-hidden />
-                        <p className="mt-4 text-lg font-semibold text-[var(--foreground)]">
-                            El carrito está vacío
-                        </p>
-                        <p className="mt-2 max-w-md text-sm text-[var(--muted-foreground)]">
-                            Explora el catálogo, abre el detalle de un sistema, elige un plan y agrégalo aquí.
-                        </p>
-                        <Link
-                            href="/software"
-                            className="mt-8 inline-flex cursor-pointer items-center justify-center rounded-xl bg-[linear-gradient(120deg,var(--state-info),var(--state-success))] px-6 py-3 text-sm font-semibold text-[color-mix(in_oklab,white_95%,var(--foreground))] transition-colors hover:brightness-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--state-info)] focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                        >
-                            Ir al catálogo de software
-                        </Link>
+                    <div className="co-glass co-pop mx-auto max-w-2xl overflow-hidden rounded-3xl text-center">
+                        <div className="co-line" aria-hidden />
+                        <div className="px-6 py-14 sm:px-10">
+                            <span className="mx-auto inline-flex size-16 items-center justify-center rounded-2xl bg-[color-mix(in_oklab,#ea580c_12%,var(--background))]">
+                                <ShoppingBag className="size-8 text-[#ea580c]" aria-hidden />
+                            </span>
+                            <h2 className="mt-5 font-display text-2xl font-bold text-foreground">
+                                Tu carrito está vacío
+                            </h2>
+                            <p className="mx-auto mt-2 max-w-md text-[15px] leading-relaxed text-muted-foreground">
+                                Abre un sistema, elige el plan que te sirve y agrégalo aquí. Empieza por
+                                nuestros SaaS más pedidos:
+                            </p>
+                            <div className="mt-8 grid gap-3 sm:grid-cols-2">
+                                <Link
+                                    href="/software/VETSAAS"
+                                    className="group flex min-h-14 cursor-pointer items-center justify-between gap-3 rounded-2xl border border-[color-mix(in_oklab,#0d9488_35%,var(--border))] bg-[color-mix(in_oklab,#0d9488_7%,var(--background))] px-4 py-3 text-left transition-colors hover:bg-[color-mix(in_oklab,#0d9488_13%,var(--background))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0d9488]"
+                                >
+                                    <span>
+                                        <span className="block text-sm font-bold text-foreground">VetSaaS</span>
+                                        <span className="block text-xs text-muted-foreground">Clínicas veterinarias</span>
+                                    </span>
+                                    <ArrowRight className="size-4 text-[#0d9488] transition-transform group-hover:translate-x-0.5" aria-hidden />
+                                </Link>
+                                <Link
+                                    href="/software/TALLERSAAS"
+                                    className="group flex min-h-14 cursor-pointer items-center justify-between gap-3 rounded-2xl border border-[color-mix(in_oklab,#ea580c_35%,var(--border))] bg-[color-mix(in_oklab,#ea580c_7%,var(--background))] px-4 py-3 text-left transition-colors hover:bg-[color-mix(in_oklab,#ea580c_13%,var(--background))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ea580c]"
+                                >
+                                    <span>
+                                        <span className="block text-sm font-bold text-foreground">TallerSaaS</span>
+                                        <span className="block text-xs text-muted-foreground">Talleres mecánicos</span>
+                                    </span>
+                                    <ArrowRight className="size-4 text-[#ea580c] transition-transform group-hover:translate-x-0.5" aria-hidden />
+                                </Link>
+                            </div>
+                            <Link href="/software" className="co-ghost mt-4 w-full sm:w-auto">
+                                Ver todo el catálogo
+                            </Link>
+                        </div>
                     </div>
                 ) : (
-                    <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)] lg:items-start">
-                        <div className="space-y-4 md:hidden" aria-label="Líneas del carrito">
-                            {cartLineRows.map(
-                                ({ line, unit, igvAppliesSku, amounts, productHref }) => (
-                                    <article
-                                        key={`${line.systemSlug}:${line.planId}`}
-                                        className="rounded-2xl border border-[color-mix(in_oklab,var(--state-info)_22%,var(--border))] bg-[linear-gradient(160deg,color-mix(in_oklab,var(--card)_90%,transparent),color-mix(in_oklab,var(--state-info)_7%,transparent))] p-4 shadow-sm backdrop-blur-sm"
-                                    >
-                                        <div className="flex items-start justify-between gap-3">
-                                            <div className="min-w-0 flex-1">
-                                                <Link
-                                                    href={productHref}
-                                                    className="cursor-pointer text-base font-semibold leading-snug text-[var(--foreground)] underline-offset-4 hover:underline"
-                                                >
-                                                    {line.systemName ?? line.systemSlug}
-                                                </Link>
-                                                <p className="mt-1 text-sm text-[var(--muted-foreground)]">
-                                                    {skuPrices[line.planId]?.name ?? formatPlanLabel(line)}
-                                                </p>
-                                                {line.priceText ? (
-                                                    <p className="mt-1 font-mono text-xs text-[var(--muted-foreground)]">
-                                                        {line.priceText}
-                                                    </p>
-                                                ) : null}
-                                            </div>
-                                            <button
-                                                type="button"
-                                                className={`${pointerBtn} shrink-0 gap-1.5 rounded-lg px-2 py-1.5 text-xs font-semibold text-[var(--muted-foreground)] hover:bg-[color-mix(in_oklab,var(--destructive)_14%,transparent)] hover:text-[var(--destructive)] focus-visible:ring-[var(--destructive)] focus-visible:ring-offset-2 focus-visible:ring-offset-background`}
-                                                onClick={() => remove(line)}
-                                            >
-                                                <Trash2 className="size-4" aria-hidden />
-                                                <span className="sr-only">Quitar del carrito</span>
-                                            </button>
-                                        </div>
+                    <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
+                        <section aria-labelledby="cart-lines-title" className="space-y-4">
+                            <div className="flex items-center justify-between gap-3">
+                                <h2 id="cart-lines-title" className="text-lg font-bold text-foreground">
+                                    Productos
+                                    <span className="ml-2 text-sm font-medium text-muted-foreground">
+                                        ({lines.length} {lines.length === 1 ? 'línea' : 'líneas'})
+                                    </span>
+                                </h2>
+                                <Link
+                                    href="/software"
+                                    className="inline-flex min-h-11 cursor-pointer items-center gap-1.5 text-sm font-semibold text-[#c2410c] underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ea580c] dark:text-[#fb923c]"
+                                >
+                                    <Plus className="size-4" aria-hidden />
+                                    Añadir producto
+                                </Link>
+                            </div>
 
-                                        {unit !== null && igvAppliesSku === false ? (
-                                            <p
-                                                className="mt-3 text-[11px] font-medium text-[var(--muted-foreground)]"
-                                                role="status"
-                                            >
-                                                Este producto no aplica IGV (detalle en el resumen).
-                                            </p>
-                                        ) : null}
+                            <ul className="space-y-4">
+                                {cartLineRows.map(({ line, unit, igvAppliesSku, amounts, productHref }) => {
+                                    const accent = lineAccent(line.systemSlug);
+                                    const name = line.systemName ?? line.systemSlug;
+                                    const planName = skuPrices[line.planId]?.name ?? formatPlanLabel(line);
 
-                                        <div className="mt-4 flex flex-col gap-3 border-t border-[color-mix(in_oklab,var(--border)_55%,transparent)] pt-4">
-                                            <div className="flex flex-wrap items-baseline justify-between gap-2">
-                                                <span className="text-xs font-medium uppercase tracking-wide text-[var(--muted-foreground)]">
-                                                    Precio unitario (lista)
-                                                </span>
-                                                <span className="font-mono text-sm font-semibold tabular-nums text-[var(--foreground)]">
-                                                    {unit !== null ? (
-                                                        <>
-                                                            {formatPenValue(unit.list_price)}{' '}
-                                                            <span className="text-[var(--muted-foreground)]">
-                                                                {unit.currency}
-                                                            </span>
-                                                        </>
-                                                    ) : skuPricesLoading ? (
-                                                        <span className="text-[var(--muted-foreground)]">…</span>
-                                                    ) : (
-                                                        <span className="text-[var(--muted-foreground)]">—</span>
-                                                    )}
-                                                </span>
-                                            </div>
-
-                                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                                                <span className="text-xs font-medium uppercase tracking-wide text-[var(--muted-foreground)]">
-                                                    Cantidad
-                                                </span>
-                                                <div className="inline-flex w-full max-w-[11rem] items-center justify-center rounded-xl border border-[var(--border)] bg-background/80 p-1 sm:ml-auto sm:w-auto">
-                                                    <button
-                                                        type="button"
-                                                        className={`${pointerBtn} size-10 shrink-0 rounded-lg text-[var(--foreground)] hover:bg-[color-mix(in_oklab,var(--muted)_50%,transparent)] focus-visible:ring-[var(--primary)]`}
-                                                        aria-label="Reducir cantidad"
-                                                        onClick={() => bumpQty(line, -1)}
+                                    return (
+                                        <li
+                                            key={`${line.systemSlug}:${line.planId}`}
+                                            className="co-glass co-pop relative overflow-hidden rounded-2xl"
+                                        >
+                                            <span
+                                                className="absolute inset-y-0 left-0 w-1"
+                                                style={{ background: accent }}
+                                                aria-hidden
+                                            />
+                                            <div className="flex flex-col gap-4 p-4 pl-5 sm:p-5 sm:pl-6">
+                                                <div className="flex items-start gap-3.5">
+                                                    <span
+                                                        className="inline-flex size-11 shrink-0 items-center justify-center rounded-xl text-base font-bold text-white"
+                                                        style={{ background: accent }}
+                                                        aria-hidden
                                                     >
-                                                        <Minus className="size-4" />
-                                                    </button>
-                                                    <span className="min-w-12 flex-1 text-center text-base font-bold tabular-nums">
-                                                        {line.qty}
+                                                        {name.trim().charAt(0).toUpperCase()}
                                                     </span>
+                                                    <div className="min-w-0 flex-1">
+                                                        <Link
+                                                            href={productHref}
+                                                            className="cursor-pointer text-base font-bold leading-snug text-foreground underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ea580c]"
+                                                        >
+                                                            {name}
+                                                        </Link>
+                                                        <p className="mt-0.5 text-sm text-muted-foreground">{planName}</p>
+                                                        {line.priceText ? (
+                                                            <p className="mt-1 font-mono text-xs text-muted-foreground">
+                                                                {line.priceText}
+                                                            </p>
+                                                        ) : null}
+                                                        {unit !== null && igvAppliesSku === false ? (
+                                                            <p className="mt-2 inline-flex rounded-md bg-[color-mix(in_oklab,var(--foreground)_6%,transparent)] px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
+                                                                No aplica IGV
+                                                            </p>
+                                                        ) : null}
+                                                    </div>
                                                     <button
                                                         type="button"
-                                                        className={`${pointerBtn} size-10 shrink-0 rounded-lg text-[var(--foreground)] hover:bg-[color-mix(in_oklab,var(--muted)_50%,transparent)] focus-visible:ring-[var(--primary)]`}
-                                                        aria-label="Aumentar cantidad"
-                                                        onClick={() => bumpQty(line, 1)}
+                                                        className="inline-flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-[color-mix(in_oklab,var(--destructive)_12%,transparent)] hover:text-[var(--destructive)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--destructive)]"
+                                                        onClick={() => remove(line)}
+                                                        aria-label={`Quitar ${name} del carrito`}
                                                     >
-                                                        <Plus className="size-4" />
+                                                        <Trash2 className="size-4" aria-hidden />
                                                     </button>
                                                 </div>
-                                            </div>
 
-                                            <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-[color-mix(in_oklab,var(--muted)_10%,transparent)] px-3 py-2.5">
-                                                <span className="text-xs font-semibold uppercase tracking-wide text-[var(--muted-foreground)]">
-                                                    Total línea
-                                                </span>
-                                                <span className="font-mono text-base font-bold tabular-nums text-[var(--foreground)]">
-                                                    {amounts !== null && unit !== null ? (
-                                                        <>
-                                                            {formatPenValue(amounts.lineTotal)}{' '}
-                                                            <span className="text-sm font-semibold text-[var(--muted-foreground)]">
-                                                                {unit.currency}
-                                                            </span>
-                                                        </>
-                                                    ) : skuPricesLoading ? (
-                                                        <span className="text-[var(--muted-foreground)]">…</span>
-                                                    ) : (
-                                                        <span className="text-[var(--muted-foreground)]">—</span>
-                                                    )}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </article>
-                                ),
-                            )}
-                        </div>
-
-                        <div className="hidden overflow-x-auto rounded-2xl border border-[color-mix(in_oklab,var(--state-info)_22%,var(--border))] bg-[linear-gradient(165deg,color-mix(in_oklab,var(--card)_92%,transparent),color-mix(in_oklab,var(--state-info)_6%,transparent))] shadow-sm backdrop-blur-sm md:block">
-                            <table className="w-full min-w-0 text-left text-sm">
-                                <caption className="sr-only">
-                                    Líneas del carrito: precio de lista y total por línea
-                                </caption>
-                                <thead className="border-b border-[color-mix(in_oklab,var(--state-info)_20%,var(--border))] bg-[color-mix(in_oklab,var(--state-info)_10%,transparent)] text-xs font-semibold uppercase tracking-wide text-[var(--muted-foreground)]">
-                                    <tr>
-                                        <th className="px-4 py-3">Producto / plan</th>
-                                        <th className="px-2 py-3">Precio unit. (lista)</th>
-                                        <th className="px-4 py-3 text-center">Cant.</th>
-                                        <th className="px-4 py-3 text-right">Total línea</th>
-                                        <th className="w-px px-4 py-3" />
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {cartLineRows.map(
-                                        ({ line, unit, igvAppliesSku, amounts, productHref }) => (
-                                            <tr
-                                                key={`${line.systemSlug}:${line.planId}`}
-                                                className="border-b border-[color-mix(in_oklab,var(--border)_55%,transparent)] last:border-0"
-                                            >
-                                                <td className="align-top px-4 py-4">
-                                                    <Link
-                                                        href={productHref}
-                                                        className="cursor-pointer font-semibold text-[var(--foreground)] underline-offset-4 hover:underline"
-                                                    >
-                                                        {line.systemName ?? line.systemSlug}
-                                                    </Link>
-                                                    <p className="mt-1 text-[13px] text-[var(--muted-foreground)]">
-                                                        {skuPrices[line.planId]?.name ?? formatPlanLabel(line)}
-                                                    </p>
-                                                    {line.priceText && (
-                                                        <p className="mt-1 font-mono text-xs text-[var(--muted-foreground)]">
-                                                            {line.priceText}
+                                                <div className="flex flex-wrap items-end justify-between gap-4 border-t border-[color-mix(in_oklab,var(--foreground)_7%,var(--border))] pt-4">
+                                                    <div>
+                                                        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                                                            Cantidad
                                                         </p>
-                                                    )}
-                                                    {unit !== null && igvAppliesSku === false ? (
-                                                        <p
-                                                            className="mt-2 text-[11px] font-medium text-[var(--muted-foreground)]"
-                                                            role="status"
-                                                        >
-                                                            Este producto no aplica IGV (detalle en el resumen).
-                                                        </p>
-                                                    ) : null}
-                                                </td>
-                                                <td className="align-top px-2 py-4 font-mono tabular-nums text-[var(--foreground)]">
-                                                    {unit !== null ? (
-                                                        <div className="flex flex-col items-end gap-0.5">
-                                                            <span>
-                                                                {formatPenValue(unit.list_price)}{' '}
-                                                                <span className="text-[var(--muted-foreground)]">
-                                                                    {unit.currency}
-                                                                </span>
+                                                        <div className="co-qty mt-1.5" role="group" aria-label={`Cantidad de ${name}`}>
+                                                            <button
+                                                                type="button"
+                                                                aria-label="Reducir cantidad"
+                                                                onClick={() => bumpQty(line, -1)}
+                                                            >
+                                                                <Minus className="size-4" aria-hidden />
+                                                            </button>
+                                                            <span className="min-w-10 text-center text-base font-bold tabular-nums" aria-live="polite">
+                                                                {line.qty}
                                                             </span>
-                                                            <span className="text-[10px] font-normal normal-case text-[var(--muted-foreground)]">
-                                                                Precio catálogo
-                                                            </span>
+                                                            <button
+                                                                type="button"
+                                                                aria-label="Aumentar cantidad"
+                                                                onClick={() => bumpQty(line, 1)}
+                                                            >
+                                                                <Plus className="size-4" aria-hidden />
+                                                            </button>
                                                         </div>
-                                                    ) : skuPricesLoading ? (
-                                                        <span className="text-[var(--muted-foreground)]">…</span>
-                                                    ) : (
-                                                        <span className="text-[var(--muted-foreground)]">
-                                                            —
-                                                        </span>
-                                                    )}
-                                                </td>
-                                                <td className="align-top px-4 py-4">
-                                                    <div className="inline-flex items-center rounded-xl border border-[var(--border)] bg-background/80 p-1">
-                                                        <button
-                                                            type="button"
-                                                            className={`${pointerBtn} size-9 rounded-lg text-[var(--foreground)] hover:bg-[color-mix(in_oklab,var(--muted)_50%,transparent)] focus-visible:ring-[var(--primary)]`}
-                                                            aria-label="Reducir cantidad"
-                                                            onClick={() => bumpQty(line, -1)}
-                                                        >
-                                                            <Minus className="size-4" />
-                                                        </button>
-                                                        <span className="min-w-10 text-center text-sm font-bold tabular-nums">
-                                                            {line.qty}
-                                                        </span>
-                                                        <button
-                                                            type="button"
-                                                            className={`${pointerBtn} size-9 rounded-lg text-[var(--foreground)] hover:bg-[color-mix(in_oklab,var(--muted)_50%,transparent)] focus-visible:ring-[var(--primary)]`}
-                                                            aria-label="Aumentar cantidad"
-                                                            onClick={() => bumpQty(line, 1)}
-                                                        >
-                                                            <Plus className="size-4" />
-                                                        </button>
                                                     </div>
-                                                </td>
-                                                <td className="align-top px-4 py-4 text-right font-mono text-sm font-semibold tabular-nums text-[var(--foreground)]">
-                                                    {amounts !== null && unit !== null ? (
-                                                        <>
-                                                            {formatPenValue(amounts.lineTotal)}{' '}
-                                                            <span className="text-[var(--muted-foreground)]">
-                                                                {unit.currency}
-                                                            </span>
-                                                        </>
-                                                    ) : skuPricesLoading ? (
-                                                        <span className="text-[var(--muted-foreground)]">…</span>
-                                                    ) : (
-                                                        <span className="text-[var(--muted-foreground)]">
-                                                            —
-                                                        </span>
-                                                    )}
-                                                </td>
-                                                <td className="align-top px-4 py-4">
-                                                    <button
-                                                        type="button"
-                                                        className={`${pointerBtn} gap-1.5 rounded-lg px-2 py-1.5 text-xs font-semibold text-[var(--muted-foreground)] hover:bg-[color-mix(in_oklab,var(--destructive)_14%,transparent)] hover:text-[var(--destructive)] focus-visible:ring-[var(--destructive)] focus-visible:ring-offset-2 focus-visible:ring-offset-background`}
-                                                        onClick={() => remove(line)}
-                                                    >
-                                                        <Trash2 className="size-3.5" aria-hidden />
-                                                        <span className="hidden sm:inline">Quitar</span>
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ),
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
+                                                    <dl className="flex items-end gap-6 text-right">
+                                                        <div>
+                                                            <dt className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                                                                Precio unit.
+                                                            </dt>
+                                                            <dd className="mt-1 font-mono text-sm tabular-nums text-foreground">
+                                                                {unit !== null
+                                                                    ? formatMoneyAmount(unit.list_price, unit.currency)
+                                                                    : skuPricesLoading
+                                                                      ? loadingDash
+                                                                      : '—'}
+                                                            </dd>
+                                                        </div>
+                                                        <div>
+                                                            <dt className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                                                                Total
+                                                            </dt>
+                                                            <dd className="mt-1 font-mono text-lg font-bold tabular-nums text-foreground">
+                                                                {amounts !== null && unit !== null
+                                                                    ? formatMoneyAmount(amounts.lineTotal, unit.currency)
+                                                                    : skuPricesLoading
+                                                                      ? loadingDash
+                                                                      : '—'}
+                                                            </dd>
+                                                        </div>
+                                                    </dl>
+                                                </div>
+                                            </div>
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+                        </section>
 
-                        <aside className="rounded-2xl border border-[color-mix(in_oklab,var(--state-info)_24%,var(--border))] bg-[linear-gradient(165deg,color-mix(in_oklab,var(--card)_90%,transparent),color-mix(in_oklab,var(--state-info)_8%,transparent),color-mix(in_oklab,var(--state-success)_7%,transparent))] p-6 shadow-[0_14px_34px_-24px_color-mix(in_oklab,var(--state-info)_65%,transparent)]">
-                            <h2 className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--foreground)]">
-                                Resumen
-                            </h2>
-                            <p className="mt-1.5 text-[11px] leading-snug text-[var(--muted-foreground)]">
-                                Total con impuestos. Cupón: descuento sobre el total.
-                            </p>
+                        <aside
+                            aria-labelledby="cart-summary-title"
+                            className="co-glass overflow-hidden rounded-3xl lg:sticky lg:top-28"
+                        >
+                            <div className="co-line" aria-hidden />
+                            <div className="p-5 sm:p-6">
+                                <h2 id="cart-summary-title" className="font-display text-xl font-bold text-foreground">
+                                    Resumen del pedido
+                                </h2>
 
-                            <div className="mt-4 space-y-2 border-t border-[color-mix(in_oklab,var(--border)_70%,transparent)] pt-4">
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-[var(--muted-foreground)]">Subtotal (base imponible)</span>
-                                    <span className="font-semibold tabular-nums text-[var(--foreground)]">
-                                        {totalsWithIgv !== null ? (
-                                            <>
-                                                {formatMoneyAmount(
-                                                    totalsWithIgv.subtotalBase,
-                                                    totalsWithIgv.currency,
-                                                )}
-                                            </>
-                                        ) : skuPricesLoading ? (
-                                            <span className="text-[var(--muted-foreground)]">…</span>
-                                        ) : (
-                                            <span className="text-[var(--muted-foreground)]">—</span>
-                                        )}
-                                    </span>
-                                </div>
-                                {totalsWithIgv !== null ? (
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-[var(--muted-foreground)]">
-                                            IGV ({Math.round(igvRate * 100)}%)
-                                        </span>
-                                        <span className="font-semibold tabular-nums text-[var(--foreground)]">
-                                            {formatMoneyAmount(
-                                                totalsWithIgv.taxTotal,
-                                                totalsWithIgv.currency,
-                                            )}
-                                        </span>
+                                <dl className="mt-5 space-y-2.5 text-sm">
+                                    <div className="flex justify-between gap-3">
+                                        <dt className="text-muted-foreground">Subtotal (base imponible)</dt>
+                                        <dd className="font-semibold tabular-nums text-foreground">
+                                            {totalsWithIgv !== null
+                                                ? formatMoneyAmount(totalsWithIgv.subtotalBase, totalsWithIgv.currency)
+                                                : skuPricesLoading
+                                                  ? loadingDash
+                                                  : '—'}
+                                        </dd>
                                     </div>
-                                ) : null}
-                                {renewalAddons.map((addon) => (
-                                    <div
-                                        key={addon.key}
-                                        className="flex justify-between text-sm"
-                                    >
-                                        <span className="max-w-[12rem] text-[var(--muted-foreground)]">
-                                            {addon.label}
-                                        </span>
-                                        <span className="text-right font-semibold tabular-nums text-[var(--foreground)]">
-                                            {formatPenValue(addon.amount)}{' '}
-                                            <span className="text-[var(--muted-foreground)]">
-                                                PEN
-                                            </span>
-                                        </span>
-                                    </div>
-                                ))}
-                                {comprobantesOveragePen > 0 ? (
-                                    <div className="flex justify-between text-sm">
-                                        <span className="max-w-[12rem] text-[var(--muted-foreground)]">
-                                            {comprobantesOverage?.description ??
-                                                'Comprobantes electrónicos adicionales'}
-                                        </span>
-                                        <span className="text-right font-semibold tabular-nums text-[var(--foreground)]">
-                                            {comprobantesOverageLoading ? (
-                                                <span className="text-[var(--muted-foreground)]">…</span>
-                                            ) : (
-                                                <>
-                                                    {formatPenValue(comprobantesOveragePen)}{' '}
-                                                    <span className="text-[var(--muted-foreground)]">
-                                                        PEN
-                                                    </span>
-                                                </>
-                                            )}
-                                        </span>
-                                    </div>
-                                ) : vetsaasRenewTenantSlug && comprobantesOverageLoading ? (
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-[var(--muted-foreground)]">
-                                            Comprobantes adicionales
-                                        </span>
-                                        <span className="text-[var(--muted-foreground)]">…</span>
-                                    </div>
-                                ) : null}
-                                {appliedCoupon && discountPen !== null && discountPen > 0 && (
-                                    <>
-                                        <div className="flex justify-between text-sm">
-                                            <span className="text-[var(--muted-foreground)]">
-                                                Base elegible (cupón)
-                                            </span>
-                                            <span className="tabular-nums text-[var(--foreground)]">
-                                                {eligibleSubtotalPen !== null ? (
-                                                    <>
-                                                        {formatPenValue(eligibleSubtotalPen)}{' '}
-                                                        <span className="text-[var(--muted-foreground)]">
-                                                            PEN
-                                                        </span>
-                                                    </>
-                                                ) : (
-                                                    <span className="text-[var(--muted-foreground)]">—</span>
-                                                )}
-                                            </span>
+                                    {totalsWithIgv !== null ? (
+                                        <div className="flex justify-between gap-3">
+                                            <dt className="text-muted-foreground">IGV ({Math.round(igvRate * 100)}%)</dt>
+                                            <dd className="font-semibold tabular-nums text-foreground">
+                                                {formatMoneyAmount(totalsWithIgv.taxTotal, totalsWithIgv.currency)}
+                                            </dd>
                                         </div>
-                                        <div className="flex justify-between text-sm">
-                                            <span className="text-[var(--muted-foreground)]">
-                                                Descuento cupón
-                                            </span>
-                                            <span className="font-semibold tabular-nums text-[color-mix(in_oklab,var(--primary)_90%,var(--foreground))]">
-                                                −{formatPenValue(discountPen)}{' '}
-                                                <span className="text-[var(--muted-foreground)]">PEN</span>
-                                            </span>
+                                    ) : null}
+                                    {renewalAddons.map((addon) => (
+                                        <div key={addon.key} className="flex justify-between gap-3">
+                                            <dt className="max-w-[13rem] text-muted-foreground">{addon.label}</dt>
+                                            <dd className="text-right font-semibold tabular-nums text-foreground">
+                                                {formatMoneyAmount(addon.amount, 'PEN')}
+                                            </dd>
                                         </div>
-                                    </>
-                                )}
-                                <div className="flex justify-between border-t border-[color-mix(in_oklab,var(--border)_55%,transparent)] pt-2 text-base font-bold">
-                                    <span className="text-[var(--foreground)]">Total a pagar</span>
-                                    <span className="tabular-nums text-[var(--foreground)]">
+                                    ))}
+                                    {comprobantesOveragePen > 0 ? (
+                                        <div className="flex justify-between gap-3">
+                                            <dt className="max-w-[13rem] text-muted-foreground">
+                                                {comprobantesOverage?.description ?? 'Comprobantes electrónicos adicionales'}
+                                            </dt>
+                                            <dd className="text-right font-semibold tabular-nums text-foreground">
+                                                {comprobantesOverageLoading
+                                                    ? loadingDash
+                                                    : formatMoneyAmount(comprobantesOveragePen, 'PEN')}
+                                            </dd>
+                                        </div>
+                                    ) : vetsaasRenewTenantSlug && comprobantesOverageLoading ? (
+                                        <div className="flex justify-between gap-3">
+                                            <dt className="text-muted-foreground">Comprobantes adicionales</dt>
+                                            <dd>{loadingDash}</dd>
+                                        </div>
+                                    ) : null}
+                                    {appliedCoupon && discountPen !== null && discountPen > 0 ? (
+                                        <>
+                                            <div className="flex justify-between gap-3">
+                                                <dt className="text-muted-foreground">Base elegible (cupón)</dt>
+                                                <dd className="tabular-nums text-foreground">
+                                                    {eligibleSubtotalPen !== null
+                                                        ? formatMoneyAmount(eligibleSubtotalPen, 'PEN')
+                                                        : '—'}
+                                                </dd>
+                                            </div>
+                                            <div className="flex justify-between gap-3">
+                                                <dt className="inline-flex items-center gap-1.5 font-semibold text-[#0f766e] dark:text-[#2dd4bf]">
+                                                    <Tag className="size-3.5" aria-hidden />
+                                                    Descuento
+                                                </dt>
+                                                <dd className="font-semibold tabular-nums text-[#0f766e] dark:text-[#2dd4bf]">
+                                                    −{formatMoneyAmount(discountPen, 'PEN')}
+                                                </dd>
+                                            </div>
+                                        </>
+                                    ) : null}
+                                </dl>
+
+                                <div className="mt-5 rounded-2xl bg-[color-mix(in_oklab,#ea580c_8%,var(--background))] px-4 py-4">
+                                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                        Total a pagar
+                                    </p>
+                                    <p className="mt-1 font-display text-3xl font-bold tabular-nums tracking-tight text-foreground" aria-live="polite">
                                         {totalPayable !== null ? (
-                                            <>
-                                                {formatMoneyAmount(
-                                                    totalPayable.amount,
-                                                    totalPayable.currency,
-                                                )}
-                                            </>
+                                            formatMoneyAmount(totalPayable.amount, totalPayable.currency)
                                         ) : skuPricesLoading ? (
-                                            <span className="text-sm font-normal text-[var(--muted-foreground)]">
-                                                …
-                                            </span>
+                                            loadingDash
                                         ) : (
-                                            <span className="text-sm font-normal text-[var(--muted-foreground)]">
-                                                No hay precio de catálogo para alguna línea
+                                            <span className="text-sm font-medium text-muted-foreground">
+                                                Falta el precio de catálogo de alguna línea
                                             </span>
                                         )}
-                                    </span>
+                                    </p>
+                                    <p className="mt-1 text-xs text-muted-foreground">
+                                        {lines.length} {lines.length === 1 ? 'línea' : 'líneas'} · {totalUnits}{' '}
+                                        {totalUnits === 1 ? 'unidad' : 'unidades'} · IGV incluido
+                                    </p>
                                 </div>
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-[var(--muted-foreground)]">Líneas</span>
-                                    <span className="font-semibold text-[var(--foreground)]">
-                                        {lines.length}
-                                    </span>
-                                </div>
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-[var(--muted-foreground)]">Unidades</span>
-                                    <span className="font-semibold text-[var(--foreground)]">{totalUnits}</span>
-                                </div>
-                            </div>
 
-                            <div className="mt-6 border-t border-[color-mix(in_oklab,var(--border)_70%,transparent)] pt-6">
-                                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-foreground)]">
-                                    <Tag className="size-3.5 text-[var(--primary)]" aria-hidden />
-                                    Cupón de descuento
+                                <div className="mt-5">
+                                    <label
+                                        htmlFor="cart-coupon"
+                                        className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground"
+                                    >
+                                        <Tag className="size-3.5 text-[#ea580c]" aria-hidden />
+                                        Cupón de descuento
+                                    </label>
+                                    {appliedCoupon ? (
+                                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                                            <span className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-[color-mix(in_oklab,#0d9488_40%,var(--border))] bg-[color-mix(in_oklab,#0d9488_10%,var(--background))] px-3 font-mono text-sm font-semibold text-foreground">
+                                                {appliedCoupon}
+                                            </span>
+                                            <button
+                                                type="button"
+                                                className="inline-flex min-h-11 cursor-pointer items-center gap-1 rounded-lg px-2 text-xs font-semibold text-muted-foreground transition-colors hover:text-[var(--destructive)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--destructive)]"
+                                                onClick={removeCoupon}
+                                            >
+                                                <X className="size-3.5" aria-hidden />
+                                                Quitar cupón
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="mt-2 flex gap-2">
+                                            <input
+                                                id="cart-coupon"
+                                                type="text"
+                                                name="coupon"
+                                                autoComplete="off"
+                                                placeholder="Ej. ORVAE10"
+                                                value={couponInput}
+                                                aria-invalid={couponError ? 'true' : undefined}
+                                                aria-describedby={couponError ? 'cart-coupon-error' : undefined}
+                                                onChange={(e) => {
+                                                    setCouponInput(e.target.value);
+                                                    setCouponError(null);
+                                                }}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                        e.preventDefault();
+                                                        void applyCoupon();
+                                                    }
+                                                }}
+                                                className="co-field min-w-0 flex-1 font-mono uppercase placeholder:normal-case"
+                                            />
+                                            <button
+                                                type="button"
+                                                disabled={couponLoading}
+                                                className="co-ghost shrink-0"
+                                                onClick={() => void applyCoupon()}
+                                            >
+                                                {couponLoading ? 'Validando…' : 'Aplicar'}
+                                            </button>
+                                        </div>
+                                    )}
+                                    {couponError ? (
+                                        <p id="cart-coupon-error" className="mt-2 text-xs font-medium text-[var(--state-danger)]" role="alert">
+                                            {couponError}
+                                        </p>
+                                    ) : null}
+                                    {couponHint && !couponError ? (
+                                        <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{couponHint}</p>
+                                    ) : null}
                                 </div>
-                                {appliedCoupon ? (
-                                    <div className="mt-3 flex flex-wrap items-center gap-2">
-                                        <span className="inline-flex items-center gap-1.5 rounded-full border border-[color-mix(in_oklab,var(--primary)_35%,var(--border))] bg-[color-mix(in_oklab,var(--primary)_10%,transparent)] px-3 py-1 text-sm font-semibold text-[var(--foreground)]">
-                                            {appliedCoupon}
-                                        </span>
-                                        <button
-                                            type="button"
-                                        className="inline-flex cursor-pointer items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-[var(--muted-foreground)] transition-colors hover:bg-[color-mix(in_oklab,var(--state-danger)_12%,transparent)] hover:text-[var(--state-danger)]"
-                                            onClick={removeCoupon}
-                                        >
-                                            <X className="size-3.5" aria-hidden />
-                                            Quitar cupón
-                                        </button>
+
+                                {typeof flash?.status === 'string' && flash.status !== '' ? (
+                                    <div
+                                        role="status"
+                                        className="mt-5 flex items-start gap-2.5 rounded-xl border border-[color-mix(in_oklab,#0d9488_35%,var(--border))] bg-[color-mix(in_oklab,#0d9488_9%,var(--background))] px-3.5 py-3 text-sm text-foreground"
+                                    >
+                                        <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-[#0d9488]" aria-hidden />
+                                        {flash.status}
+                                    </div>
+                                ) : null}
+
+                                {checkoutError ? (
+                                    <p
+                                        className="mt-5 rounded-xl border border-[color-mix(in_oklab,var(--destructive)_35%,var(--border))] bg-[color-mix(in_oklab,var(--destructive)_8%,var(--background))] px-3.5 py-3 text-sm text-foreground"
+                                        role="alert"
+                                    >
+                                        {checkoutError}
+                                    </p>
+                                ) : null}
+
+                                {!auth?.user ? (
+                                    <div className="mt-6">
+                                        <Link href="/login" className="co-cta w-full">
+                                            <LogIn className="size-4" aria-hidden />
+                                            Inicia sesión para pagar
+                                        </Link>
+                                        <p className="mt-2 text-center text-xs text-muted-foreground">
+                                            Tu carrito se mantiene al volver.{' '}
+                                            <Link
+                                                href="/register"
+                                                className="font-semibold text-foreground underline underline-offset-4"
+                                            >
+                                                Crear cuenta
+                                            </Link>
+                                        </p>
                                     </div>
                                 ) : (
-                                    <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-stretch">
-                                        <input
-                                            type="text"
-                                            name="coupon"
-                                            autoComplete="off"
-                                            placeholder="Código"
-                                            value={couponInput}
-                                            onChange={(e) => {
-                                                setCouponInput(e.target.value);
-                                                setCouponError(null);
-                                            }}
-                                            onKeyDown={(e) => {
-                                                if (e.key === 'Enter') {
-                                                    e.preventDefault();
-                                                    void applyCoupon();
-                                                }
-                                            }}
-                                            className="min-h-10 min-w-0 flex-1 rounded-xl border border-[var(--border)] bg-background/80 px-3 py-2 text-sm font-medium text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
-                                        />
+                                    <>
+                                        <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-xl border border-[color-mix(in_oklab,var(--foreground)_9%,var(--border))] bg-[color-mix(in_oklab,var(--background)_60%,transparent)] px-3.5 py-3 text-sm">
+                                            <input
+                                                type="checkbox"
+                                                className="mt-0.5 size-5 shrink-0 cursor-pointer accent-[#ea580c]"
+                                                checked={rememberCard}
+                                                onChange={(e) => setRememberCard(e.target.checked)}
+                                            />
+                                            <span>
+                                                <span className="font-semibold text-foreground">
+                                                    Recordar mi tarjeta para renovaciones
+                                                </span>
+                                                <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">
+                                                    Solo aplica a tarjeta. Yape y billeteras no se guardan.
+                                                </span>
+                                            </span>
+                                        </label>
                                         <button
                                             type="button"
-                                            disabled={couponLoading}
-                                            className="inline-flex shrink-0 cursor-pointer items-center justify-center rounded-xl border border-[color-mix(in_oklab,var(--primary)_40%,var(--border))] bg-background/80 px-4 py-2 text-sm font-semibold text-[var(--foreground)] transition-colors hover:bg-[color-mix(in_oklab,var(--primary)_10%,transparent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-60"
-                                            onClick={() => void applyCoupon()}
+                                            disabled={payDisabled}
+                                            className="co-cta mt-4 w-full"
+                                            onClick={() => void startCulqiCheckout()}
                                         >
-                                            {couponLoading ? 'Validando…' : 'Aplicar'}
+                                            {isFreeTotal ? (
+                                                <Sparkles className="size-4" aria-hidden />
+                                            ) : (
+                                                <LockKeyhole className="size-4" aria-hidden />
+                                            )}
+                                            {checkoutLoading
+                                                ? isFreeTotal
+                                                    ? 'Activando tu plan…'
+                                                    : 'Abriendo pago seguro…'
+                                                : isFreeTotal
+                                                  ? 'Activar plan gratuito'
+                                                  : totalPayable !== null
+                                                    ? `Pagar ${formatMoneyAmount(totalPayable.amount, totalPayable.currency)}`
+                                                    : 'Pagar'}
                                         </button>
-                                    </div>
+                                        <p className="mt-2 text-center text-xs leading-relaxed text-muted-foreground">
+                                            {isFreeTotal
+                                                ? 'Confirmamos tu pedido sin cobro y te enviamos el acceso por correo.'
+                                                : 'Se abrirá la ventana segura de Culqi: tarjeta, Yape, billetera o banca móvil.'}
+                                        </p>
+                                    </>
                                 )}
-                                {couponError && (
-                                    <p className="mt-2 text-xs text-[var(--state-danger)]" role="alert">
-                                        {couponError}
-                                    </p>
-                                )}
-                                {couponHint && !couponError && (
-                                    <p className="mt-2 text-xs leading-relaxed text-[color-mix(in_oklab,var(--primary)_85%,var(--foreground))]">
-                                        {couponHint}
-                                    </p>
-                                )}
+
+                                <CheckoutTrustRow compact className="mt-5" />
                             </div>
-
-                            {typeof flash?.status === 'string' && flash.status !== '' ? (
-                                <div
-                                    role="status"
-                                    className="mt-6 rounded-xl border border-[color-mix(in_oklab,var(--primary)_35%,var(--border))] bg-[color-mix(in_oklab,var(--primary)_10%,transparent)] px-4 py-3 text-sm text-[var(--foreground)]"
-                                >
-                                    {flash.status}
-                                </div>
-                            ) : null}
-
-                            {checkoutError ? (
-                                <p className="mt-4 text-sm text-[var(--state-danger)]" role="alert">
-                                    {checkoutError}
-                                </p>
-                            ) : null}
-
-                            {!auth?.user ? (
-                                <Link
-                                    href="/login"
-                                    className="mt-6 flex w-full cursor-pointer items-center justify-center rounded-xl border border-[color-mix(in_oklab,var(--primary)_40%,var(--border))] bg-transparent px-4 py-3 text-sm font-semibold text-[var(--foreground)] transition-colors hover:bg-[color-mix(in_oklab,var(--primary)_8%,transparent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                                >
-                                    Inicia sesión para pagar con Culqi
-                                </Link>
-                            ) : (
-                                <>
-                                    <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-xl border border-[var(--border)] bg-background/40 px-3 py-3 text-sm">
-                                        <input
-                                            type="checkbox"
-                                            className="mt-0.5 size-4 shrink-0 cursor-pointer accent-[var(--primary)]"
-                                            checked={rememberCard}
-                                            onChange={(e) => setRememberCard(e.target.checked)}
-                                        />
-                                        <span>
-                                            <span className="font-semibold text-[var(--foreground)]">
-                                                Recordar mi tarjeta para renovaciones
-                                            </span>
-                                            <span className="mt-1 block text-xs leading-relaxed text-[var(--muted-foreground)]">
-                                                Activo por defecto. Solo con tarjeta. Yape/billeteras no se guardan.
-                                            </span>
-                                        </span>
-                                    </label>
-                                    <button
-                                        type="button"
-                                        disabled={
-                                            checkoutLoading ||
-                                            skuPricesLoading ||
-                                            (vetsaasRenewTenantSlug
-                                                ? comprobantesOverageLoading
-                                                : false) ||
-                                            totalPayable === null ||
-                                            lines.length === 0
-                                        }
-                                        className="mt-4 w-full cursor-pointer rounded-xl bg-[linear-gradient(120deg,var(--state-info),var(--state-success))] px-4 py-3 text-sm font-semibold text-[color-mix(in_oklab,white_95%,var(--foreground))] transition-colors hover:brightness-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--state-info)] focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-60"
-                                        onClick={() => void startCulqiCheckout()}
-                                    >
-                                        {checkoutLoading
-                                            ? totalPayable !== null && totalPayable.amount <= 0
-                                                ? 'Activando tu plan…'
-                                                : 'Abriendo checkout de Culqi…'
-                                            : totalPayable !== null && totalPayable.amount <= 0
-                                              ? 'Activar plan gratuito'
-                                              : 'Pagar con Culqi'}
-                                    </button>
-                                    <p className="mt-2 text-center text-xs text-[var(--muted-foreground)]">
-                                        {totalPayable !== null && totalPayable.amount <= 0
-                                            ? 'Confirmaremos tu pedido sin cobro y te enviaremos el acceso por correo.'
-                                            : 'Al continuar se abrirá el modal de Culqi para completar tu pago.'}
-                                    </p>
-                                </>
-                            )}
-                            <p className="mt-2 text-center text-xs text-[var(--muted-foreground)]">
-                                Cuenta con rol <strong>cliente</strong> o <strong>superadmin</strong> (pruebas).
-                                Pedidos internos: panel de ventas.
-                            </p>
-                            <Link
-                                href="/software"
-                                className="mt-3 block w-full cursor-pointer text-center text-sm font-semibold text-[var(--primary)] underline-offset-4 hover:underline"
-                            >
-                                Añadir otro producto
-                            </Link>
                         </aside>
                     </div>
                 )}
