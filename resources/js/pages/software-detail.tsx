@@ -17,6 +17,7 @@ import VetSaaSClientsCarousel, {
 import VetSaaSLanding, {
     type VetSaaSMarketingPayload,
 } from '@/components/software/VetSaaSLanding';
+import TallerSaaSLanding from '@/components/software/tallersaas/TallerSaaSLanding';
 import GeometricBackground from '@/components/welcome/GeometricBackground';
 import ScrollReveal from '@/components/welcome/ScrollReveal';
 import ScrollToTopButton from '@/components/welcome/ScrollToTopButton';
@@ -384,17 +385,23 @@ export default function SoftwareDetail() {
         const productUrl = `${seo.siteUrl}/software/${system.slug}`;
         const orgId = `${seo.siteUrl}#organization`;
         const webpageId = `${productUrl}#webpage`;
-        const isVetsaas = ['vetsaas', 'vet-saas'].includes(system.slug.toLowerCase());
+        const slug = system.slug.toLowerCase();
+        const isVetsaas = ['vetsaas', 'vet-saas'].includes(slug);
+        const isTallersaas = ['tallersaas', 'taller-saas'].includes(slug);
 
         const base: Record<string, unknown> = {
             '@type': 'SoftwareApplication',
             '@id': `${productUrl}#product`,
             name: isVetsaas
                 ? 'VetSaaS — Software veterinario'
-                : system.name,
+                : isTallersaas
+                  ? 'TallerSaaS — Software para talleres'
+                  : system.name,
             description: isVetsaas
                 ? marketingSeo.vetsaas.description
-                : system.shortDescription,
+                : isTallersaas
+                  ? marketingSeo.tallersaas.description
+                  : system.shortDescription,
             applicationCategory: 'BusinessApplication',
             operatingSystem: 'Web',
             url: productUrl,
@@ -422,6 +429,25 @@ export default function SoftwareDetail() {
                 'PWA multi-tenant',
             ];
             base.image = `${seo.siteUrl}/images/vetsaas-hero-pets-og.jpg`;
+        }
+
+        if (isTallersaas) {
+            base.alternateName = [
+                'Software para talleres',
+                'Sistema para talleres mecánicos',
+                'Software taller Perú',
+                'Taller SaaS',
+            ];
+            base.keywords = marketingSeo.tallersaas.keywords;
+            base.featureList = [
+                'Órdenes de trabajo',
+                'Car wash',
+                'Recordatorios WhatsApp',
+                'Inventario de repuestos',
+                'Caja y SUNAT',
+                'Portal por placa',
+            ];
+            base.image = `${seo.siteUrl}/images/tallersaas/og.jpg`;
         }
 
         const first = system.pricingPlans[0];
@@ -666,6 +692,94 @@ export default function SoftwareDetail() {
                     system={system}
                     marketing={vetsaasMarketing}
                     showcaseClients={vetsaasShowcaseClients}
+                    selectedPlan={selectedPlan}
+                    selectedPlanId={selectedPlanId}
+                    onSelectPlanId={setSelectedPlanId}
+                    purchaseEnabled={purchaseEnabled}
+                    webCheckoutEnabled={webCheckoutEnabled}
+                    isFreeSubscription={isFreeSubscription}
+                    checkoutLoading={checkoutLoading}
+                    checkoutError={checkoutError}
+                    addedCount={addedCount}
+                    selectionTitle={
+                        selectedPlan
+                            ? `${selectedPlan.label} · ${inferSaleModelLabel(selectedPlan)}`
+                            : 'Elige un plan para continuar con el carrito o el checkout.'
+                    }
+                    selectionPriceLine={selectionPriceLine}
+                    selectionPriceCaption={selectionPriceCaption}
+                    consultationWhatsAppHref={consultationWhatsAppHref || undefined}
+                    onAddToCart={onAddToCart}
+                    onStartCheckout={() => {
+                        void handleStartCheckout();
+                    }}
+                />
+            </MarketingLayout>
+        );
+    }
+
+    const isTallersaasLanding = ['tallersaas', 'taller-saas'].includes(system.slug.toLowerCase());
+
+    if (isTallersaasLanding) {
+        return (
+            <MarketingLayout
+                title={marketingSeo.tallersaas.title}
+                description={marketingSeo.tallersaas.description}
+                canonicalPath={`/software/${system.slug}`}
+                ogType="product"
+                ogImage="/images/tallersaas/og.jpg"
+                preloadImage="/images/tallersaas/hero.jpg"
+                hideAppearanceToggle
+                ogImageAlt="Software para talleres TallerSaaS — órdenes, lavado y SUNAT"
+                keywords={marketingSeo.tallersaas.keywords}
+                breadcrumbs={[
+                    { name: 'Inicio', path: '/' },
+                    { name: 'Software', path: '/software' },
+                    {
+                        name: 'Software para talleres TallerSaaS',
+                        path: `/software/${system.slug}`,
+                    },
+                ]}
+                jsonLd={
+                    softwareApplicationLd
+                        ? [
+                              softwareApplicationLd,
+                              {
+                                  '@type': 'FAQPage',
+                                  '@id': `${seo.siteUrl}/software/${system.slug}#faq`,
+                                  mainEntity: [
+                                      {
+                                          '@type': 'Question',
+                                          name: '¿Qué es un software para talleres?',
+                                          acceptedAnswer: {
+                                              '@type': 'Answer',
+                                              text: 'Un software para talleres centraliza órdenes de trabajo, lavado, inventario, caja y facturación. TallerSaaS lo ofrece en la nube con subdominio propio, WhatsApp y SUNAT.',
+                                          },
+                                      },
+                                      {
+                                          '@type': 'Question',
+                                          name: '¿TallerSaaS sirve para talleres en Perú?',
+                                          acceptedAnswer: {
+                                              '@type': 'Answer',
+                                              text: 'Sí. TallerSaaS es software multi-tenant para talleres mecánicos en Perú, con boleta y factura SUNAT, car wash y activación desde Orvae.',
+                                          },
+                                      },
+                                      {
+                                          '@type': 'Question',
+                                          name: '¿Cómo activo TallerSaaS?',
+                                          acceptedAnswer: {
+                                              '@type': 'Answer',
+                                              text: 'Eliges Gratis o un plan de pago en Orvae, confirmas y entras a tu subdominio a crear tu contraseña para empezar a operar.',
+                                          },
+                                      },
+                                  ],
+                              },
+                          ]
+                        : undefined
+                }
+            >
+                <TallerSaaSLanding
+                    system={system}
                     selectedPlan={selectedPlan}
                     selectedPlanId={selectedPlanId}
                     onSelectPlanId={setSelectedPlanId}

@@ -46,6 +46,14 @@ export const marketingSeo = {
         keywords:
             'software veterinario, software veterinario Perú, historia clínica veterinaria, sistema para clínicas veterinarias, VetSaaS',
     },
+    tallersaas: {
+        title: 'Software para talleres TallerSaaS | Órdenes, lavado y SUNAT | ORVAE',
+        description:
+            'Sistema para talleres mecánicos en Perú: órdenes, car wash, WhatsApp, inventario y boleta SUNAT. Activa TallerSaaS con tu subdominio desde Orvae.',
+        h1: 'Software para talleres TallerSaaS',
+        keywords:
+            'software para talleres, sistema taller mecánico Perú, órdenes de trabajo, car wash, facturación SUNAT, TallerSaaS',
+    },
     correos: {
         title: 'Correos corporativos — ORVAE',
         description:
