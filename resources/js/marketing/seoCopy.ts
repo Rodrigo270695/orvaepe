@@ -4,9 +4,11 @@
  */
 export const marketingSeo = {
     home: {
-        title: 'ORVAE — Software empresarial en Perú | ERP, licencias y SaaS',
+        title: 'ORVAE — Desarrollo de software y licencias | VetSaaS y TallerSaaS',
         description:
-            'Sitio oficial ORVAE: software y ERP para empresas en Perú. Contabilidad, inventario, ventas, licencias y SaaS. Demo y cotización.',
+            'Desarrollo de software, venta de licencias y SaaS en Perú. VetSaaS para clínicas veterinarias y TallerSaaS para talleres mecánicos. Demo y cotización.',
+        keywords:
+            'desarrollo de software Perú, venta de licencias, software empresarial, SaaS Perú, VetSaaS, TallerSaaS, software veterinario, software para talleres',
     },
     software: {
         title: 'Software desarrollado — Catálogo ORVAE',

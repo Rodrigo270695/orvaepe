@@ -12,7 +12,7 @@ return [
 
     'default_description' => env(
         'SEO_DEFAULT_DESCRIPTION',
-        'ORVAE: software empresarial en Perú — ERP, sistemas listos para operar, licencias y servicios. Implementación ágil, soporte y facturación electrónica.',
+        'ORVAE: desarrollo de software, venta de licencias y SaaS en Perú. VetSaaS para clínicas, TallerSaaS para talleres, ERP y servicios tecnológicos.',
     ),
 
     /** Imagen Open Graph por defecto (ruta bajo public/). Generar: pnpm run seo:og-image */
@@ -93,7 +93,7 @@ return [
          */
         'knows_about' => array_values(array_filter(array_map('trim', explode(',', (string) env(
             'SEO_ORG_KNOWS_ABOUT',
-            'Software empresarial,ERP,Facturación electrónica,Licencias de software,Soporte técnico,SaaS,Software veterinario,VetSaaS',
+            'Software empresarial,ERP,Facturación electrónica,Licencias de software,Soporte técnico,SaaS,Software veterinario,VetSaaS,Software para talleres,TallerSaaS,Desarrollo de software',
         ))))),
         /**
          * Tipos Schema.org además de Organization (p. ej. SoftwareCompany). Separados por comas.

@@ -72,6 +72,8 @@ final class MarketingSoftwareNavLinks
             ['label' => 'Contratos', 'href' => '/software#contratos'],
             ['label' => 'Inventario', 'href' => '/software#inventario'],
             ['label' => 'Reportes', 'href' => '/software#reportes'],
+            ['label' => 'VetSaaS', 'href' => '/software/VETSAAS'],
+            ['label' => 'TallerSaaS', 'href' => '/software/TALLERSAAS'],
             ['label' => 'Veterinaria', 'href' => '/software#veterinaria'],
             ['label' => 'Transporte', 'href' => '/software#transporte'],
             ['label' => 'Mensajería', 'href' => '/software#mensajeria'],

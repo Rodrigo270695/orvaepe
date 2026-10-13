@@ -110,9 +110,9 @@ export default function HomeFeaturedServices() {
                         Servicios destacados
                     </p>
                     <h2 className="mt-4 font-display text-3xl font-bold tracking-tight text-foreground md:text-4xl">
-                        Dos formas de crecer{' '}
+                        También desarrollamos{' '}
                         <span className="bg-gradient-to-r from-[color-mix(in_oklab,var(--state-info)_95%,var(--foreground))] via-[color-mix(in_oklab,var(--o-amber)_90%,var(--foreground))] to-[color-mix(in_oklab,var(--state-success)_85%,var(--foreground))] bg-clip-text text-transparent">
-                            en la web
+                            a tu medida
                         </span>
                     </h2>
                     <p className="mt-3 text-base leading-relaxed text-muted-foreground md:text-lg">
