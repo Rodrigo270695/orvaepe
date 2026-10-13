@@ -5,9 +5,11 @@ import MarketingUnifiedNavbar from '@/components/marketing/MarketingUnifiedNavba
 import { marketingSeo } from '@/marketing/seoCopy';
 import AppearanceFloatingRailToggle from '@/components/welcome/AppearanceFloatingRailToggle';
 import HomeClosingCta from '@/components/welcome/HomeClosingCta';
+import HomeColorStrip from '@/components/welcome/HomeColorStrip';
 import HomeFeaturedServices from '@/components/welcome/HomeFeaturedServices';
 import HomeHero from '@/components/welcome/HomeHero';
 import HomeHowWeWork from '@/components/welcome/HomeHowWeWork';
+import HomeMotion from '@/components/welcome/HomeMotion';
 import HomeSaasShowcase from '@/components/welcome/HomeSaasShowcase';
 import MissionVision from '@/components/welcome/MissionVision';
 import OfferingsSummary from '@/components/welcome/OfferingsSummary';
@@ -93,8 +95,10 @@ export default function Welcome({
                     <div className="h-20 shrink-0" aria-hidden />
                     <AppearanceFloatingRailToggle />
 
+                    <HomeMotion>
                     <main id="main-content" className="outline-none">
                         <HomeHero />
+                        <HomeColorStrip />
                         <HomeSaasShowcase />
                         <HomeHowWeWork />
                         <HomeFeaturedServices />
@@ -112,6 +116,7 @@ export default function Welcome({
                         </ScrollReveal>
                         <HomeClosingCta />
                     </main>
+                    </HomeMotion>
 
                     <ScrollReveal direction="up">
                         <WelcomeFooter />

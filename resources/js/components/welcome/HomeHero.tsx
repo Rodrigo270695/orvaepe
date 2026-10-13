@@ -7,9 +7,9 @@ import HeroTechLogosCarousel from '@/components/marketing/HeroTechLogosCarousel'
 import GeometricBackground from '@/components/welcome/GeometricBackground';
 
 const pillars = [
-    { icon: Layers3, label: 'Desarrollo de software' },
-    { icon: KeyRound, label: 'Venta de licencias' },
-    { icon: Rocket, label: 'SaaS propio' },
+    { icon: Layers3, label: 'Desarrollo de software', color: '#2563EB' },
+    { icon: KeyRound, label: 'Venta de licencias', color: '#EA580C' },
+    { icon: Rocket, label: 'SaaS propio', color: '#0D9488' },
 ] as const;
 
 export default function HomeHero() {
@@ -30,13 +30,21 @@ export default function HomeHero() {
             />
             <GeometricBackground variant="floating-shapes" opacity={0.08} />
             <div
-                className="pointer-events-none absolute -right-24 -top-16 size-[28rem] rounded-full opacity-40 blur-[90px] motion-reduce:opacity-20"
-                style={{ background: 'radial-gradient(circle, var(--hero-glow-strong) 0%, transparent 70%)' }}
+                className="home-blob home-blob--pulse absolute -right-24 -top-16 size-[30rem] opacity-70"
+                data-parallax="10"
+                style={{ background: 'radial-gradient(circle, color-mix(in oklab, #ea580c 55%, transparent) 0%, transparent 70%)' }}
                 aria-hidden
             />
             <div
-                className="pointer-events-none absolute -left-20 bottom-10 size-[22rem] rounded-full opacity-50 blur-[80px] motion-reduce:opacity-20"
-                style={{ background: 'radial-gradient(circle, var(--hero-glow-soft) 0%, transparent 70%)' }}
+                className="home-blob home-blob--pulse absolute -left-24 top-24 size-[22rem] opacity-60"
+                data-parallax="-8"
+                style={{ background: 'radial-gradient(circle, color-mix(in oklab, #0d9488 50%, transparent) 0%, transparent 70%)', animationDelay: '1.4s' }}
+                aria-hidden
+            />
+            <div
+                className="home-blob absolute bottom-8 left-1/3 size-[18rem] opacity-40"
+                data-parallax="6"
+                style={{ background: 'radial-gradient(circle, color-mix(in oklab, #2563eb 42%, transparent) 0%, transparent 70%)' }}
                 aria-hidden
             />
 
@@ -67,12 +75,16 @@ export default function HomeHero() {
                         </p>
 
                         <ul className="mt-7 flex flex-wrap gap-2" aria-label="Lo que hacemos">
-                            {pillars.map(({ icon: Icon, label }) => (
+                            {pillars.map(({ icon: Icon, label, color }) => (
                                 <li
                                     key={label}
-                                    className="inline-flex items-center gap-1.5 rounded-md border border-[color-mix(in_oklab,var(--foreground)_12%,var(--border))] bg-[color-mix(in_oklab,var(--card)_90%,transparent)] px-2.5 py-1.5 text-xs font-medium text-foreground"
+                                    className="inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium text-foreground"
+                                    style={{
+                                        borderColor: `color-mix(in oklab, ${color} 38%, var(--border))`,
+                                        background: `color-mix(in oklab, ${color} 12%, var(--card))`,
+                                    }}
                                 >
-                                    <Icon className="size-3.5 text-[var(--o-amber)]" aria-hidden />
+                                    <Icon className="size-3.5" style={{ color }} aria-hidden />
                                     {label}
                                 </li>
                             ))}
@@ -81,7 +93,8 @@ export default function HomeHero() {
                         <div className="mt-8 flex flex-wrap gap-3">
                             <Link
                                 href="/software"
-                                className="inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground shadow-[0_6px_24px_-6px_color-mix(in_oklab,var(--primary)_45%,transparent)] transition-[transform,box-shadow,filter] duration-200 hover:-translate-y-0.5 hover:brightness-[1.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                data-magnetic
+                                className="inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground shadow-[0_6px_24px_-6px_color-mix(in_oklab,var(--primary)_45%,transparent)] transition-[box-shadow,filter] duration-200 hover:brightness-[1.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                             >
                                 Ver software
                                 <ArrowRight className="size-4" aria-hidden />

@@ -10,6 +10,7 @@ const items = [
         title: 'Software que se entrega',
         text: 'Desarrollar y entregar sistemas listos para operar, con documentación clara, trazabilidad y soporte real. Cada cliente escala por módulos, sin ataduras.',
         step: '01',
+        color: '#0D9488',
     },
     {
         icon: Eye,
@@ -17,6 +18,7 @@ const items = [
         title: 'Referencia en software empresarial',
         text: 'Ser la casa confiable para quien busca desarrollo, licencias y SaaS en Perú: VetSaaS, TallerSaaS y el resto del catálogo.',
         step: '02',
+        color: '#EA580C',
     },
 ] as const;
 
@@ -34,16 +36,26 @@ export default function MissionVision() {
                 {items.map((item) => {
                     const Icon = item.icon;
                     return (
-                        <article key={item.label} className="home-glass relative overflow-hidden rounded-3xl p-7 md:p-9">
+                        <article
+                            key={item.label}
+                            className="home-glass relative overflow-hidden rounded-3xl p-7 md:p-9"
+                            style={{
+                                borderTop: `3px solid ${item.color}`,
+                                background: `linear-gradient(180deg, color-mix(in oklab, ${item.color} 14%, var(--card)) 0%, var(--card) 40%)`,
+                            }}
+                        >
                             <div className="flex items-center justify-between">
-                                <div className="flex size-12 items-center justify-center rounded-2xl border border-border bg-background text-[var(--o-amber)]">
+                                <div
+                                    className="flex size-12 items-center justify-center rounded-2xl border bg-background"
+                                    style={{ color: item.color, borderColor: `color-mix(in oklab, ${item.color} 40%, var(--border))` }}
+                                >
                                     <Icon className="size-6" strokeWidth={1.5} aria-hidden />
                                 </div>
-                                <span className="font-mono text-2xl font-bold tabular-nums text-[color-mix(in_oklab,var(--o-amber)_50%,var(--border))]">
+                                <span className="font-mono text-2xl font-bold tabular-nums" style={{ color: item.color }}>
                                     {item.step}
                                 </span>
                             </div>
-                            <p className="mt-6 font-mono text-[10px] font-semibold uppercase tracking-[0.28em] text-[var(--o-amber)]">
+                            <p className="mt-6 font-mono text-[10px] font-semibold uppercase tracking-[0.28em]" style={{ color: item.color }}>
                                 {item.label}
                             </p>
                             <h3 className="font-display mt-2 text-xl font-bold text-foreground md:text-2xl">

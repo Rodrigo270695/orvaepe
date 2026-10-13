@@ -50,20 +50,19 @@ export default function HomeSaasShowcase() {
                 if (!section) return;
 
                 const cards = section.querySelectorAll<HTMLElement>('[data-saas-card]');
+                const images = section.querySelectorAll<HTMLElement>('[data-saas-img]');
                 gsap.timeline({
                     scrollTrigger: {
                         trigger: section,
                         start: 'top 72px',
-                        end: '+=80%',
+                        end: '+=90%',
                         scrub: 0.85,
                         pin: true,
                         anticipatePin: 1,
                     },
-                }).fromTo(
-                    cards,
-                    { y: 36, scale: 0.97 },
-                    { y: 0, scale: 1, stagger: 0.1, ease: 'none' },
-                );
+                })
+                    .fromTo(cards, { y: 40, rotate: -1.2, scale: 0.96 }, { y: 0, rotate: 0, scale: 1, stagger: 0.12, ease: 'none' })
+                    .fromTo(images, { yPercent: 8, scale: 1.08 }, { yPercent: 0, scale: 1, ease: 'none' }, '<');
             });
 
             return () => mm.revert();
@@ -76,9 +75,21 @@ export default function HomeSaasShowcase() {
             ref={root}
             id="saas"
             aria-label="SaaS desarrollados por ORVAE: VetSaaS y TallerSaaS"
-            className="home-section home-section--alt relative scroll-mt-28 px-4 py-20 sm:px-6 md:py-28"
+            className="home-section home-section--alt relative overflow-hidden scroll-mt-28 px-4 py-20 sm:px-6 md:py-28"
         >
-            <div className="mx-auto max-w-6xl">
+            <div
+                className="home-blob home-blob--pulse -left-24 top-10 size-[22rem] opacity-50"
+                data-parallax="8"
+                style={{ background: 'radial-gradient(circle, #0d9488 0%, transparent 70%)' }}
+                aria-hidden
+            />
+            <div
+                className="home-blob home-blob--pulse -right-20 bottom-0 size-[24rem] opacity-45"
+                data-parallax="-7"
+                style={{ background: 'radial-gradient(circle, #ea580c 0%, transparent 70%)', animationDelay: '1s' }}
+                aria-hidden
+            />
+            <div className="relative mx-auto max-w-6xl">
                 <LandingSectionHeader
                     className="mb-10 md:mb-14"
                     eyebrow="SaaS propios"
@@ -109,6 +120,7 @@ export default function HomeSaasShowcase() {
                                 >
                                     <div className="relative aspect-[16/9] overflow-hidden">
                                         <img
+                                            data-saas-img
                                             src={product.image}
                                             alt={product.imageAlt}
                                             className="size-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"

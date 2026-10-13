@@ -25,6 +25,7 @@ const featured = [
             'Paneles, roles y flujos de tu operación. Lo administras tú, sin depender de un tercero en cada cambio.',
         icon: LayoutTemplate,
         mailSubject: 'Cotización: desarrollo a medida',
+        color: '#2563EB',
     },
     {
         n: '02',
@@ -34,6 +35,7 @@ const featured = [
             'Presencia web clara: mensaje, contacto y secciones. Textos e imágenes se actualizan cuando tú quieras.',
         icon: Megaphone,
         mailSubject: 'Cotización: landing / página informativa',
+        color: '#EA580C',
     },
 ] as const;
 
@@ -53,12 +55,22 @@ export default function HomeFeaturedServices() {
                 {featured.map((item) => {
                     const Icon = item.icon;
                     return (
-                        <article key={item.n} className="home-glass flex flex-col rounded-3xl p-6 sm:p-8">
+                        <article
+                            key={item.n}
+                            className="home-glass flex flex-col rounded-3xl p-6 sm:p-8"
+                            style={{
+                                borderTop: `3px solid ${item.color}`,
+                                background: `linear-gradient(180deg, color-mix(in oklab, ${item.color} 12%, var(--card)) 0%, var(--card) 38%)`,
+                            }}
+                        >
                             <div className="flex items-start justify-between gap-4">
-                                <div className="flex size-12 items-center justify-center rounded-2xl border border-border bg-background text-[var(--o-amber)]">
+                                <div
+                                    className="flex size-12 items-center justify-center rounded-2xl border bg-background"
+                                    style={{ color: item.color, borderColor: `color-mix(in oklab, ${item.color} 40%, var(--border))` }}
+                                >
                                     <Icon className="size-6" strokeWidth={1.5} aria-hidden />
                                 </div>
-                                <span className="font-mono text-sm font-bold tabular-nums text-muted-foreground">
+                                <span className="font-mono text-sm font-bold tabular-nums" style={{ color: item.color }}>
                                     {item.n}
                                 </span>
                             </div>
