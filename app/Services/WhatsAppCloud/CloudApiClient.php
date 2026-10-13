@@ -14,8 +14,15 @@ use Illuminate\Support\Facades\Http;
 final class CloudApiClient
 {
     /**
+     * Códigos de Meta por límite de velocidad: se reintentan con backoff.
+     *
+     * @see https://developers.facebook.com/docs/whatsapp/cloud-api/support/error-codes
+     */
+    private const RATE_LIMIT_CODES = [4, 80007, 130429, 131048, 131056];
+
+    /**
      * @param  list<string>  $variables
-     * @return string wamid devuelto por Meta
+     * @return string wamid (messages[0].id)
      */
     public function sendTemplate(
         WaChannel $channel,
@@ -54,19 +61,23 @@ final class CloudApiClient
                 ->acceptJson()
                 ->post($url, [
                     'messaging_product' => 'whatsapp',
-                    'recipient_type' => 'individual',
                     'to' => $telefono,
                     'type' => 'template',
                     'template' => $template,
                 ]);
         } catch (ConnectionException) {
-            throw new WhatsAppCloudException('No se pudo conectar con la Cloud API.', 'network');
+            throw new WhatsAppCloudException('No se pudo conectar con la Cloud API.', 'network', 502, true);
         }
 
         if (! $response->successful()) {
+            $code = (int) $response->json('error.code', 0);
+            $details = (string) $response->json('error.error_data.details', '');
+
             throw new WhatsAppCloudException(
-                (string) $response->json('error.message', 'Cloud API HTTP '.$response->status()),
-                (string) $response->json('error.code', (string) $response->status()),
+                $details !== '' ? $details : (string) $response->json('error.message', 'Cloud API HTTP '.$response->status()),
+                $code !== 0 ? (string) $code : (string) $response->status(),
+                502,
+                $response->serverError() || $response->status() === 429 || in_array($code, self::RATE_LIMIT_CODES, true),
             );
         }
 

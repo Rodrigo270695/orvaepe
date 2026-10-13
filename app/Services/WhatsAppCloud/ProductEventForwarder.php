@@ -35,7 +35,7 @@ final class ProductEventForwarder
             $url,
             $event,
             $secret,
-            'wa:'.$producto.':'.($event['provider_msg_id'] ?? '').':'.($event['estado'] ?? ''),
+            'wa:'.$producto.':'.($event['wa_message_id'] ?? '').':'.($event['evento'] ?? '').':'.($event['estado'] ?? ''),
             timeoutSeconds: 15,
             retries: 0,
         );

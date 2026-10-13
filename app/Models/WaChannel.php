@@ -44,6 +44,7 @@ class WaChannel extends Model
         'provider',
         'phone_number_id',
         'waba_id',
+        'openwa_session_id',
         'access_token',
         'estado',
     ])]
@@ -53,6 +54,7 @@ class WaChannel extends Model
         'provider',
         'phone_number_id',
         'waba_id',
+        'openwa_session_id',
         'access_token',
         'estado',
     ];

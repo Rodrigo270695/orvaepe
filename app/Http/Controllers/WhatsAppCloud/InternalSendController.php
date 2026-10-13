@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\WhatsAppCloud;
 
 use App\Http\Controllers\Controller;
-use App\Models\WaChannel;
 use App\Services\WhatsAppCloud\MessageSender;
+use App\Services\WhatsAppCloud\Templates;
 use App\Services\WhatsAppCloud\WhatsAppCloudException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -12,22 +12,23 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
 /**
- * POST /internal/whatsapp/send — usado por VetSaaS / TallerSaaS. Nunca devuelve credenciales del canal.
+ * POST /internal/whatsapp/send — VetSaaS / TallerSaaS encolan un recordatorio.
+ * El resultado del envío (sent / failed + error de Meta) llega al producto por su endpoint de eventos.
  */
 class InternalSendController extends Controller
 {
     public function __invoke(Request $request, MessageSender $sender): JsonResponse
     {
+        $plantilla = (string) $request->input('plantilla', '');
+        $expectedVariables = Templates::variableCount($plantilla) ?? 0;
+
         $validator = Validator::make($request->all(), [
-            'producto' => ['required', 'string', Rule::in(WaChannel::productos())],
             'tenant_id' => ['required', 'string', 'max:64'],
             'telefono' => ['required', 'string', 'max:32'],
-            'plantilla' => ['required', 'string', 'max:100', 'regex:/^[a-z0-9_]+$/'],
-            'variables' => ['present', 'array', 'max:20'],
+            'plantilla' => ['required', 'string', Rule::in(Templates::names())],
+            'variables' => ['present', 'array', 'size:'.$expectedVariables],
             'variables.*' => ['required', 'string', 'max:1024'],
             'reminder_id' => ['nullable', 'string', 'max:64'],
-            'categoria' => ['nullable', 'string', 'max:40'],
-            'idioma' => ['nullable', 'string', 'max:10'],
         ]);
 
         if ($validator->fails()) {
@@ -36,20 +37,14 @@ class InternalSendController extends Controller
 
         $data = $validator->validated();
 
-        if ($data['producto'] !== $request->attributes->get('internal_producto')) {
-            return response()->json(['ok' => false, 'message' => 'La API key no corresponde a este producto.'], 403);
-        }
-
         try {
-            $message = $sender->send(
-                producto: $data['producto'],
+            $message = $sender->queue(
+                producto: (string) $request->attributes->get('internal_producto'),
                 tenantId: $data['tenant_id'],
                 telefono: $data['telefono'],
                 plantilla: $data['plantilla'],
                 variables: array_values($data['variables']),
                 reminderId: $data['reminder_id'] ?? null,
-                categoria: $data['categoria'] ?? null,
-                idioma: $data['idioma'] ?? null,
             );
         } catch (WhatsAppCloudException $e) {
             return response()->json([
@@ -62,9 +57,8 @@ class InternalSendController extends Controller
         return response()->json([
             'ok' => true,
             'id' => $message->id,
-            'provider' => WaChannel::PROVIDER_CLOUD,
-            'provider_msg_id' => $message->provider_msg_id,
             'estado' => $message->estado,
-        ]);
+            'telefono' => $message->telefono,
+        ], 202);
     }
 }

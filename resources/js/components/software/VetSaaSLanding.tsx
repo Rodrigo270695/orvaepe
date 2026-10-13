@@ -60,11 +60,11 @@ export default function VetSaaSLanding({ system, marketing, showcaseClients, ...
                 <ClinicDayScroll />
                 <ModulesSection />
 
-                {reviews.length > 0 ? (
-                    <VetSaaSReveal>
-                        <VetSaaSReviews reviews={reviews} />
-                    </VetSaaSReveal>
-                ) : null}
+            {reviews.length > 0 ? (
+                <VetSaaSReveal>
+                    <VetSaaSReviews reviews={reviews} />
+                </VetSaaSReveal>
+            ) : null}
 
                 <PricingSection
                     {...purchase}
@@ -79,8 +79,8 @@ export default function VetSaaSLanding({ system, marketing, showcaseClients, ...
 
                 {purchase.selectedPlan ? (
                     <MobilePlanBar title={purchase.selectionTitle} priceLine={purchase.selectionPriceLine} />
-                ) : null}
-            </div>
+            ) : null}
+        </div>
         </VetSaaSMotionRoot>
     );
 }

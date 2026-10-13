@@ -4,32 +4,45 @@ declare(strict_types=1);
 
 namespace App\Services\WhatsAppCloud;
 
+use App\Jobs\WhatsAppCloud\SendOutboundMessage;
 use App\Models\WaChannel;
 use App\Models\WaMessage;
-use Illuminate\Support\Facades\Log;
+use App\Models\WaOptin;
 
 /**
- * Servicio interno de envío: resuelve el canal del tenant, envía y registra en wa_messages.
+ * Servicio interno de envío: valida opt-in y canal, registra el mensaje y lo encola.
+ * El envío real lo hace SendOutboundMessage (con límite de velocidad por canal).
  */
 final class MessageSender
 {
-    public function __construct(
-        private readonly CloudApiClient $cloud,
-    ) {}
+    public const CATEGORIA = 'utility';
 
     /**
      * @param  list<string>  $variables
      */
-    public function send(
+    public function queue(
         string $producto,
         string $tenantId,
         string $telefono,
         string $plantilla,
         array $variables,
         ?string $reminderId = null,
-        ?string $categoria = null,
-        ?string $idioma = null,
     ): WaMessage {
+        $to = Phone::normalize($telefono);
+        if ($to === null) {
+            throw new WhatsAppCloudException('Teléfono inválido.', 'invalid_phone', 422);
+        }
+
+        $hasOptin = WaOptin::query()
+            ->where('producto', $producto)
+            ->where('tenant_id', $tenantId)
+            ->where('telefono', $to)
+            ->exists();
+
+        if (! $hasOptin) {
+            throw new WhatsAppCloudException('El teléfono no tiene consentimiento (opt-in) para este tenant.', 'no_optin', 422);
+        }
+
         $channel = WaChannel::query()
             ->active()
             ->where('producto', $producto)
@@ -40,19 +53,6 @@ final class MessageSender
             throw new WhatsAppCloudException('El tenant no tiene canal WhatsApp activo.', 'channel_not_found', 404);
         }
 
-        if ($channel->provider !== WaChannel::PROVIDER_CLOUD) {
-            throw new WhatsAppCloudException(
-                'El canal de este tenant usa OpenWA; este servicio solo envía por Cloud API.',
-                'provider_not_supported',
-                422,
-            );
-        }
-
-        $to = Phone::normalize($telefono);
-        if ($to === null) {
-            throw new WhatsAppCloudException('Teléfono inválido.', 'invalid_phone', 422);
-        }
-
         $message = WaMessage::query()->create([
             'wa_channel_id' => $channel->id,
             'producto' => $producto,
@@ -60,41 +60,13 @@ final class MessageSender
             'reminder_id' => $reminderId,
             'telefono' => $to,
             'direccion' => WaMessage::DIRECCION_OUT,
-            'categoria' => $categoria,
+            'categoria' => self::CATEGORIA,
             'plantilla' => $plantilla,
             'estado' => WaMessage::ESTADO_QUEUED,
+            'texto' => Templates::render($plantilla, $variables),
         ]);
 
-        try {
-            $wamid = $this->cloud->sendTemplate(
-                $channel,
-                $to,
-                $plantilla,
-                $variables,
-                $idioma ?: (string) config('whatsapp_cloud.template_language', 'es'),
-            );
-        } catch (WhatsAppCloudException $e) {
-            $message->forceFill([
-                'estado' => WaMessage::ESTADO_FAILED,
-                'error_code' => $e->errorCode,
-                'error_msg' => mb_substr($e->getMessage(), 0, 500),
-                'failed_at' => now(),
-            ])->save();
-
-            Log::warning('whatsapp_cloud.send_failed', [
-                'wa_message_id' => $message->id,
-                'producto' => $producto,
-                'tenant_id' => $tenantId,
-                'error_code' => $e->errorCode,
-            ]);
-
-            throw $e;
-        }
-
-        $message->forceFill([
-            'provider_msg_id' => $wamid,
-            'estado' => WaMessage::ESTADO_ACCEPTED,
-        ])->save();
+        SendOutboundMessage::dispatch($message->id, $channel->id, $variables);
 
         return $message;
     }

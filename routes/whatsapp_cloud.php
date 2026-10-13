@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\WhatsAppCloud\InternalOptinController;
 use App\Http\Controllers\WhatsAppCloud\InternalSendController;
 use App\Http\Controllers\WhatsAppCloud\WebhookController;
 use App\Http\Middleware\AuthenticateInternalProduct;
@@ -16,6 +17,11 @@ Route::get('/webhooks/whatsapp', [WebhookController::class, 'verify'])
 Route::post('/webhooks/whatsapp', [WebhookController::class, 'receive'])
     ->name('webhooks.whatsapp');
 
-Route::post('/internal/whatsapp/send', InternalSendController::class)
-    ->middleware([AuthenticateInternalProduct::class, 'throttle:300,1'])
-    ->name('internal.whatsapp.send');
+Route::middleware([AuthenticateInternalProduct::class, 'throttle:300,1'])
+    ->prefix('internal/whatsapp')
+    ->name('internal.whatsapp.')
+    ->group(function () {
+        Route::post('send', InternalSendController::class)->name('send');
+        Route::post('optins', [InternalOptinController::class, 'store'])->name('optins.store');
+        Route::delete('optins', [InternalOptinController::class, 'destroy'])->name('optins.destroy');
+    });
