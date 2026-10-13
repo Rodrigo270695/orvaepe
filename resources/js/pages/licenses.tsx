@@ -1,39 +1,22 @@
 import { usePage } from '@inertiajs/react';
 
-import LicenseOemSkuCard from '@/components/marketing/LicenseOemSkuCard';
-import type {LicenseSkuItem} from '@/components/marketing/LicenseOemSkuCard';
-import MarketingUnifiedNavbar from '@/components/marketing/MarketingUnifiedNavbar';
-import PageHero from '@/components/marketing/PageHero';
+import MarketingCatalogPage from '@/components/catalog/MarketingCatalogPage';
+import type { CatalogSection } from '@/components/catalog/MarketingCatalogPage';
 import SeoHead from '@/components/seo/SeoHead';
-import AppearanceFloatingRailToggle from '@/components/welcome/AppearanceFloatingRailToggle';
-import GeometricBackground from '@/components/welcome/GeometricBackground';
-import ScrollReveal from '@/components/welcome/ScrollReveal';
-import ScrollToTopButton from '@/components/welcome/ScrollToTopButton';
-import Section from '@/components/welcome/Section';
-import WelcomeFooter from '@/components/welcome/WelcomeFooter';
-import { getMarketingHeroNavCtas } from '@/marketing/marketingHeroNavCtas';
 import { marketingSeo } from '@/marketing/seoCopy';
-
-type LicenseSection = {
-    slug: string;
-    title: string;
-    tagline: string | null;
-    description: string | null;
-    items: LicenseSkuItem[];
-};
 
 type PageProps = {
     canRegister?: boolean;
-    sections?: LicenseSection[];
+    sections?: CatalogSection[];
 };
 
+const STEPS = [
+    { title: 'Elige tu licencia', text: 'Busca por marca o explora por categoría y añádela al carrito.' },
+    { title: 'Paga seguro', text: 'Tarjeta o Yape con Culqi. Emitimos boleta o factura.' },
+    { title: 'Recibe tu clave', text: 'Te enviamos la activación al confirmar el pago.' },
+] as const;
+
 export default function Licenses() {
-    const semanticAccents = [
-        'var(--state-info)',
-        'var(--state-success)',
-        'var(--state-alert)',
-        'var(--state-danger)',
-    ] as const;
     const { sections = [], canRegister = true } = usePage<PageProps>().props;
 
     return (
@@ -48,125 +31,28 @@ export default function Licenses() {
                 ]}
             />
 
-            <div className="landing-page relative min-h-screen text-foreground">
-                <div className="landing-grain absolute inset-0 z-0" aria-hidden />
-                <div className="landing-ambient-orbs" aria-hidden>
-                    <div className="landing-orb landing-orb--a" />
-                    <div className="landing-orb landing-orb--b" />
-                </div>
-                <div className="relative z-[1]">
-                    <MarketingUnifiedNavbar canRegister={canRegister} />
-                    <div className="h-20 shrink-0" aria-hidden />
-                    <AppearanceFloatingRailToggle />
-
-                    <main>
-                        <ScrollReveal direction="up">
-                            <PageHero
-                                id="inicio"
-                                eyebrow="Licencias OEM y retail"
-                                title={
-                                    <>
-                                        Modelos de compra para{' '}
-                                        <span className="bg-gradient-to-br from-foreground via-[var(--state-alert)] to-[var(--state-info)] bg-clip-text text-transparent dark:from-[var(--o-cream2)]">
-                                            crecer sin fricción
-                                        </span>
-                                    </>
-                                }
-                                description="Elige licencias de Windows, Office, antivirus, Canva y más. Añade al carrito y revisa el total en PEN; la entrega se confirma al pagar."
-                                ctas={getMarketingHeroNavCtas('licencias')}
-                            />
-                        </ScrollReveal>
-                        <div className="landing-section-flair mx-4 px-4" aria-hidden />
-
-                        {sections.length === 0 ? (
-                            <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-                                <div className="rounded-2xl border border-dashed border-[color-mix(in_oklab,var(--state-alert)_35%,var(--border))] bg-[color-mix(in_oklab,var(--state-alert)_9%,transparent)] p-10 text-center">
-                                    <p className="text-sm font-medium text-[color-mix(in_oklab,var(--state-alert)_80%,var(--foreground))]">
-                                        Catálogo OEM en configuración
-                                    </p>
-                                    <p className="mt-2 text-sm text-[var(--muted-foreground)]">
-                                        Ejecuta las migraciones y el seeder{' '}
-                                        <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
-                                            OemLicenseCatalogSeeder
-                                        </code>{' '}
-                                        para cargar listas y precios.
-                                    </p>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="relative">
-                                <div
-                                    className="pointer-events-none absolute inset-0 opacity-[0.04] [background-image:radial-gradient(color-mix(in_oklab,var(--foreground)_100%,transparent)_1px,transparent_1px)] [background-size:20px_20px]"
-                                    aria-hidden
-                                />
-                                <div className="relative z-10 space-y-4 pb-16">
-                                    {sections.map((section, index) => {
-                                        const accent =
-                                            semanticAccents[index % semanticAccents.length];
-                                        const geoVariant: 'grid-dots' | 'diagonal-lines' | 'grid-hex' =
-                                            index % 3 === 0
-                                                ? 'grid-dots'
-                                                : index % 3 === 1
-                                                  ? 'diagonal-lines'
-                                                  : 'grid-hex';
-
-                                        return (
-                                            <ScrollReveal key={section.slug} direction="up">
-                                                <>
-                                                    <Section
-                                                        id={section.slug}
-                                                        eyebrow="Lista de precios"
-                                                        title={section.title}
-                                                        description={section.tagline ?? section.description ?? ''}
-                                                        accent={accent}
-                                                    >
-                                                        <div
-                                                            className="relative mt-8 overflow-hidden rounded-[1.25rem] border p-5 sm:p-7"
-                                                            style={{
-                                                                borderColor: `color-mix(in oklab, ${accent} 30%, var(--border))`,
-                                                                background: `color-mix(in oklab, ${accent} 8%, transparent)`,
-                                                            }}
-                                                        >
-                                                            <GeometricBackground
-                                                                variant={geoVariant}
-                                                                opacity={0.05}
-                                                            />
-                                                            <div className="relative z-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                                                                {section.items.map((item) => (
-                                                                    <LicenseOemSkuCard
-                                                                        key={item.id}
-                                                                        item={item}
-                                                                        productSlug={section.slug}
-                                                                        sectionTitle={section.title}
-                                                                        accent={accent}
-                                                                        showImage
-                                                                    />
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    </Section>
-                                                    {index < sections.length - 1 ? (
-                                                        <div
-                                                            className="landing-section-flair mx-4 px-4"
-                                                            aria-hidden
-                                                        />
-                                                    ) : null}
-                                                </>
-                                            </ScrollReveal>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        )}
-                    </main>
-
-                    <ScrollReveal direction="up">
-                        <WelcomeFooter />
-                    </ScrollReveal>
-
-                    <ScrollToTopButton />
-                </div>
-            </div>
+            <MarketingCatalogPage
+                sections={sections}
+                canRegister={canRegister}
+                eyebrow="Licencias originales · Entrega digital"
+                title={
+                    <>
+                        Licencias originales{' '}
+                        <span className="bg-gradient-to-br from-foreground via-[var(--o-amber)] to-[var(--o-tech)] bg-clip-text text-transparent dark:from-[var(--o-cream2)]">
+                            para tu equipo.
+                        </span>
+                    </>
+                }
+                description="Windows, Office, antivirus, Canva y más. Añade al carrito, paga en soles con tarjeta o Yape y recibe tu clave de activación."
+                itemNoun={{ singular: 'licencia', plural: 'Licencias' }}
+                steps={STEPS}
+                searchPlaceholder="Busca Windows, Office, ESET…"
+                whatsappMessage="Hola ORVAE, vengo del catálogo de licencias y quiero una cotización."
+                cartCategoryLabel="Licencias"
+                showImage
+                closingTitle="¿No encuentras tu licencia?"
+                closingText="Trabajamos con más marcas y volúmenes de las que listamos. Escríbenos y te cotizamos al momento, también para empresas."
+            />
         </>
     );
 }

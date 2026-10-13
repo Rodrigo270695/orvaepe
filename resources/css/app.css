@@ -823,6 +823,8 @@
 .landing-page {
     background-color: var(--background);
     background-image: var(--landing-bg-mesh);
+    /* clip (no hidden): recorta blobs decorativos sin romper position: sticky */
+    overflow-x: clip;
 }
 
 /* Landing: textura sutil (tendencia “grain”) — opacidad por tema */

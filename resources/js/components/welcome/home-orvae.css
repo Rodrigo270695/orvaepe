@@ -1,3 +1,7 @@
+.home-section {
+    overflow-x: clip;
+}
+
 .home-section--alt {
     background: color-mix(in oklab, var(--landing-surface-2) 88%, transparent);
 }

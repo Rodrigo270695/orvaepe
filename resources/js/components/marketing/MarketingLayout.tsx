@@ -60,7 +60,7 @@ export default function MarketingLayout({
                     <link rel="preload" as="image" href={preloadImage} fetchPriority="high" head-key="lcp-preload" />
                 </Head>
             ) : null}
-            <div className="min-h-screen bg-background text-foreground">
+            <div className="min-h-screen overflow-x-clip bg-background text-foreground">
                 <MarketingUnifiedNavbar />
                 <div className="h-[5.5rem] shrink-0" aria-hidden />
                 {hideAppearanceToggle ? null : <AppearanceFloatingRailToggle />}

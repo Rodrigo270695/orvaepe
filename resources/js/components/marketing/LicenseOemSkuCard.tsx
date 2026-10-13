@@ -1,14 +1,12 @@
 'use client';
 
 import { Link, usePage } from '@inertiajs/react';
-import { Check, MessageCircle, ShoppingCart } from 'lucide-react';
+import { ArrowRight, Check, Clock3, KeyRound, MessageCircle, ShoppingCart, Zap } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
+import type { ComponentType, CSSProperties } from 'react';
 
-import {
-    addMarketingCatalogSkuToCart
-    
-} from '@/lib/oemCart';
-import type {MarketingCartCategoryLabel} from '@/lib/oemCart';
+import { addMarketingCatalogSkuToCart } from '@/lib/oemCart';
+import type { MarketingCartCategoryLabel } from '@/lib/oemCart';
 import { resolveOemBrandIconUrl } from '@/lib/oemLicenseIcons';
 import { cn } from '@/lib/utils';
 import { buildWhatsAppHref, WHATSAPP_E164 } from '@/lib/whatsapp';
@@ -26,13 +24,61 @@ export type LicenseSkuItem = {
     icon_key: string;
 };
 
+type DetailLine = {
+    text: string;
+    icon: ComponentType<{ className?: string; style?: CSSProperties }>;
+    color: string;
+};
+
+export function formatPen(value: number): string {
+    return `S/ ${value.toLocaleString('es-PE', {
+        minimumFractionDigits: value % 1 === 0 ? 0 : 2,
+        maximumFractionDigits: 2,
+    })}`;
+}
+
+function toSentenceCase(value: string): string {
+    const lower = value.trim().toLowerCase();
+
+    return lower.charAt(0).toUpperCase() + lower.slice(1);
+}
+
+/** Separa "(NO CADUCA) Entrega inmediata" en etiqueta de vigencia + línea de entrega. */
+function parseDetails(lines: string[]): { badges: string[]; lines: DetailLine[] } {
+    const badges: string[] = [];
+    const parsed: DetailLine[] = [];
+
+    for (const raw of lines) {
+        const match = raw.trim().match(/^\(([^)]+)\)\s*(.*)$/);
+        const text = match ? match[2].trim() : raw.trim();
+
+        if (match) {
+            badges.push(toSentenceCase(match[1]));
+        }
+
+        if (text === '') {
+            continue;
+        }
+
+        if (/entrega inmediata/i.test(text)) {
+            parsed.push({ text, icon: Zap, color: '#0f766e' });
+        } else if (/consultar stock/i.test(text)) {
+            parsed.push({ text, icon: Clock3, color: '#b45309' });
+        } else {
+            parsed.push({ text, icon: Check, color: '#2563eb' });
+        }
+    }
+
+    return { badges, lines: parsed };
+}
+
 export default function LicenseOemSkuCard({
     item,
     productSlug,
     sectionTitle,
     cartCategoryLabel = 'Licencias',
     detailHref,
-    accent = 'var(--state-info)',
+    accent = '#2563eb',
     showImage = false,
 }: {
     item: LicenseSkuItem;
@@ -45,29 +91,36 @@ export default function LicenseOemSkuCard({
     /** Enlace opcional a página de detalle (ej. `/servicios/{slug}`). */
     detailHref?: string;
     accent?: string;
-    /** Muestra imagen/ícono en el card (ej. licencias). */
+    /** Muestra imagen/ícono de marca en el card (ej. licencias). */
     showImage?: boolean;
 }) {
     const { contact } = usePage().props as { contact?: { whatsapp_e164?: string } };
     const whatsappE164 = contact?.whatsapp_e164?.replace(/\D/g, '') || WHATSAPP_E164;
 
     const [justAdded, setJustAdded] = useState(false);
+    const [addedOnce, setAddedOnce] = useState(false);
+    const [imageFailed, setImageFailed] = useState(false);
     const hasPrice = item.list_price > 0;
     const fallbackIconUrl = resolveOemBrandIconUrl(item.icon_key);
     const imageUrl = item.image_url ?? fallbackIconUrl;
 
-    const detailLines =
-        item.details && item.details.length > 0
-            ? item.details.filter((line) => line.trim() !== '')
-            : item.detail
-              ? [item.detail]
-              : [];
+    const { badges, lines } = useMemo(() => {
+        const raw =
+            item.details && item.details.length > 0
+                ? item.details.filter((line) => line.trim() !== '')
+                : item.detail
+                  ? [item.detail]
+                  : [];
+
+        return parseDetails(raw);
+    }, [item.details, item.detail]);
 
     const addToCart = useCallback(() => {
         addMarketingCatalogSkuToCart(productSlug, sectionTitle, item, {
             categoryLabel: cartCategoryLabel,
         });
         setJustAdded(true);
+        setAddedOnce(true);
         window.setTimeout(() => setJustAdded(false), 1600);
     }, [productSlug, sectionTitle, item, cartCategoryLabel]);
 
@@ -82,175 +135,142 @@ export default function LicenseOemSkuCard({
 
     return (
         <article
-            className={cn(
-                'group relative overflow-hidden rounded-2xl border border-[color-mix(in_oklab,var(--border)_70%,transparent)]',
-                'bg-[color-mix(in_oklab,var(--card)_35%,transparent)] backdrop-blur-md',
-                'p-4 shadow-[0_8px_32px_-16px_color-mix(in_oklab,var(--foreground)_12%,transparent)]',
-                'transition-[transform,box-shadow] duration-300 ease-out',
-                'hover:-translate-y-0.5',
-            )}
-            style={{
-                borderLeft: `3px solid color-mix(in oklab, ${accent} 48%, var(--border))`,
-                boxShadow: `0 8px 32px -16px color-mix(in oklab, ${accent} 24%, transparent)`,
-            }}
+            className="pf-card group relative flex h-full flex-col overflow-hidden rounded-2xl transition-[border-color,box-shadow] duration-200 hover:border-[color-mix(in_oklab,var(--foreground)_18%,var(--border))]"
+            data-catalog-card
         >
-            <div className="min-w-0">
-                {showImage && imageUrl ? (
-                    <div
-                        className="mb-3 h-52 overflow-hidden rounded-xl border border-[color-mix(in_oklab,var(--border)_65%,transparent)]"
-                        style={{
-                            background: `linear-gradient(180deg, color-mix(in oklab, ${accent} 8%, var(--background)), color-mix(in oklab, ${accent} 3%, var(--card)))`,
-                        }}
-                    >
-                        <img
-                            src={imageUrl}
-                            alt={item.name}
-                            className="h-full w-full object-cover object-center"
-                            loading="lazy"
-                        />
-                    </div>
-                ) : null}
+            <span
+                className="absolute inset-x-0 top-0 h-[3px] opacity-80"
+                style={{ background: accent }}
+                aria-hidden
+            />
 
-                {item.list_number !== null ? (
-                    <p
-                        className="mb-2 text-center font-mono text-[0.62rem] font-bold uppercase tracking-widest text-[var(--muted-foreground)]"
-                        style={{
-                            color: `color-mix(in oklab, ${accent} 72%, var(--muted-foreground))`,
-                        }}
-                    >
-                        #{String(item.list_number).padStart(2, '0')}
-                    </p>
-                ) : null}
-                <h3 className="mt-0.5 text-center text-base font-bold leading-snug text-[var(--foreground)]">
-                    {item.name}
-                </h3>
-                {detailLines.length > 0 ? (
-                    <ul className="mt-3 space-y-1.5">
-                        {detailLines.map((line) => (
+            <div className="flex flex-1 flex-col p-5">
+                <div className="flex items-start gap-3.5">
+                    {showImage ? (
+                        <span
+                            className="inline-flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[color-mix(in_oklab,var(--foreground)_8%,var(--border))]"
+                            style={{ background: `color-mix(in oklab, ${accent} 7%, var(--background))` }}
+                            aria-hidden
+                        >
+                            {imageUrl && !imageFailed ? (
+                                <img
+                                    src={imageUrl}
+                                    alt=""
+                                    className={item.image_url ? 'size-full object-cover' : 'size-7 object-contain'}
+                                    loading="lazy"
+                                    onError={() => setImageFailed(true)}
+                                />
+                            ) : (
+                                <KeyRound className="size-6" style={{ color: accent }} />
+                            )}
+                        </span>
+                    ) : null}
+
+                    <div className="min-w-0 flex-1">
+                        {item.list_number !== null ? (
+                            <p className="font-mono text-[11px] font-semibold tracking-wider text-muted-foreground">
+                                N.º {String(item.list_number).padStart(2, '0')}
+                            </p>
+                        ) : null}
+                        <h3 className="mt-0.5 text-base font-bold leading-snug text-foreground">{item.name}</h3>
+                    </div>
+                </div>
+
+                {badges.length > 0 ? (
+                    <ul className="mt-3.5 flex flex-wrap gap-1.5" aria-label="Vigencia">
+                        {badges.map((badge) => (
                             <li
-                                key={`${item.id}-${line}`}
-                                className="flex items-start gap-2 text-sm leading-relaxed text-[var(--muted-foreground)]"
+                                key={`${item.id}-${badge}`}
+                                className="rounded-full border border-[color-mix(in_oklab,#2563eb_30%,var(--border))] bg-[color-mix(in_oklab,#2563eb_8%,transparent)] px-2.5 py-0.5 text-[11px] font-semibold text-[#1d4ed8] dark:text-[#93c5fd]"
                             >
-                                <span
-                                    className="mt-0.5 inline-flex shrink-0 items-center justify-center text-xs font-bold"
-                                    style={{ color: `color-mix(in oklab, ${accent} 82%, var(--state-info))` }}
-                                    aria-hidden
-                                >
-                                    ✓
-                                </span>
-                                <span>{line}</span>
+                                {badge}
                             </li>
                         ))}
                     </ul>
                 ) : null}
 
-                {hasPrice ? (
-                    <div className="mt-4 border-t border-[color-mix(in_oklab,var(--border)_55%,transparent)] pt-3">
-                        <p
-                            className="text-center font-[family-name:var(--font-display)] text-3xl font-bold tabular-nums tracking-tight text-[var(--foreground)]"
-                            style={{
-                                color: `color-mix(in oklab, ${accent} 46%, var(--foreground))`,
-                                fontFeatureSettings: '"tnum" 1',
-                            }}
-                        >
-                            S/.{' '}
-                            {item.list_price.toLocaleString('es-PE', {
-                                minimumFractionDigits: item.list_price % 1 === 0 ? 0 : 2,
-                                maximumFractionDigits: 2,
-                            })}
-                        </p>
-                    </div>
+                {lines.length > 0 ? (
+                    <ul className="mt-3 space-y-1.5">
+                        {lines.map(({ text, icon: Icon, color }) => (
+                            <li
+                                key={`${item.id}-${text}`}
+                                className="flex items-start gap-2 text-sm leading-relaxed text-muted-foreground"
+                            >
+                                <Icon className="mt-[3px] size-3.5 shrink-0" style={{ color }} aria-hidden />
+                                <span>{text}</span>
+                            </li>
+                        ))}
+                    </ul>
                 ) : null}
 
-                <div className="mt-4 flex flex-col gap-2">
-                    {detailHref ? (
-                        <Link
-                            href={detailHref}
-                            className={cn(
-                                'inline-flex w-full items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold tracking-tight',
-                                'border-2 border-[color-mix(in_oklab,var(--foreground)_14%,var(--border))]',
-                                'bg-[color-mix(in_oklab,var(--background)_90%,var(--card))] text-[var(--foreground)]',
-                                'shadow-sm shadow-[color-mix(in_oklab,var(--foreground)_8%,transparent)]',
-                                'dark:border-[color-mix(in_oklab,var(--foreground)_26%,var(--border))]',
-                                'dark:bg-[color-mix(in_oklab,var(--card)_50%,var(--background))]',
-                                'dark:shadow-[color-mix(in_oklab,var(--foreground)_12%,transparent)]',
-                                'transition-colors hover:border-[color-mix(in_oklab,var(--primary)_42%,var(--border))] hover:bg-[color-mix(in_oklab,var(--primary)_7%,var(--background))]',
-                                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_oklab,var(--state-info)_55%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color-mix(in_oklab,var(--background)_90%,transparent)]',
-                            )}
-                        >
-                            Ver detalle
-                        </Link>
-                    ) : null}
+                <div className="mt-auto pt-5">
+                    <div className="flex items-end justify-between gap-3 border-t border-[color-mix(in_oklab,var(--foreground)_8%,var(--border))] pt-4">
+                        {hasPrice ? (
+                            <p className="flex flex-col">
+                                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                                    Precio
+                                </span>
+                                <span className="font-display text-2xl font-bold tabular-nums tracking-tight text-foreground">
+                                    {formatPen(item.list_price)}
+                                </span>
+                            </p>
+                        ) : (
+                            <p className="text-sm font-semibold text-muted-foreground">Precio a consultar</p>
+                        )}
+                        {addedOnce ? (
+                            <Link
+                                href="/carrito"
+                                className="inline-flex min-h-11 items-center gap-1 rounded-lg px-1 text-sm font-semibold text-[#c2410c] underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ea580c] dark:text-[#fb923c]"
+                            >
+                                Ver carrito
+                                <ArrowRight className="size-3.5" aria-hidden />
+                            </Link>
+                        ) : null}
+                    </div>
 
-                    {hasPrice ? (
-                        <button
-                            type="button"
-                            className={cn(
-                                'group/btn relative w-full cursor-pointer overflow-hidden rounded-xl px-4 py-3 text-[15px] font-semibold tracking-tight',
-                                'text-[var(--primary-foreground)]',
-                                'shadow-[0_6px_24px_-8px_color-mix(in_oklab,var(--state-info)_55%,transparent),inset_0_1px_0_0_color-mix(in_oklab,var(--primary-foreground)_14%,transparent)]',
-                                'transition-[transform,box-shadow,filter] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]',
-                                'hover:shadow-[0_10px_32px_-8px_color-mix(in_oklab,var(--state-info)_45%,transparent),inset_0_1px_0_0_color-mix(in_oklab,var(--primary-foreground)_18%,transparent)]',
-                                'hover:brightness-[1.05]',
-                                'active:scale-[0.99]',
-                                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_oklab,var(--state-info)_70%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color-mix(in_oklab,var(--background)_90%,transparent)]',
-                                'disabled:pointer-events-none disabled:opacity-60',
-                            )}
-                            style={{
-                                background: justAdded
-                                    ? `linear-gradient(135deg, color-mix(in oklab, ${accent} 86%, var(--foreground)), color-mix(in oklab, ${accent} 72%, black))`
-                                    : `linear-gradient(135deg, color-mix(in oklab, ${accent} 92%, var(--state-info)), color-mix(in oklab, ${accent} 74%, var(--state-success)))`,
-                            }}
-                            onClick={addToCart}
-                        >
-                            {!justAdded ? (
-                                <span
-                                    className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover/btn:opacity-100"
-                                    aria-hidden
-                                    style={{
-                                        background:
-                                            'radial-gradient(ellipse 120% 80% at 50% -20%, color-mix(in oklab, var(--primary-foreground) 12%, transparent), transparent 55%)',
-                                    }}
-                                />
-                            ) : null}
-                            <span className="relative inline-flex w-full items-center justify-center gap-2.5">
+                    <div className="mt-4 flex flex-col gap-2">
+                        {hasPrice ? (
+                            <button
+                                type="button"
+                                onClick={addToCart}
+                                className={cn('co-cta w-full', justAdded && '!bg-[#0f766e]')}
+                            >
                                 {justAdded ? (
                                     <>
-                                        <Check
-                                            className="size-[1.1rem] shrink-0 opacity-95"
-                                            strokeWidth={2.5}
-                                            aria-hidden
-                                        />
-                                        Añadido al carrito
+                                        <Check className="size-4 shrink-0" strokeWidth={2.5} aria-hidden />
+                                        Añadido
                                     </>
                                 ) : (
                                     <>
-                                        <ShoppingCart
-                                            className="size-[1.1rem] shrink-0 opacity-95"
-                                            strokeWidth={2}
-                                            aria-hidden
-                                        />
+                                        <ShoppingCart className="size-4 shrink-0" aria-hidden />
                                         Añadir al carrito
                                     </>
                                 )}
-                            </span>
-                        </button>
-                    ) : (
-                        <a
-                            href={whatsappHref}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={cn(
-                                'inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-[15px] font-semibold tracking-tight',
-                                'bg-[#25D366] text-white shadow-[0_6px_24px_-8px_rgba(37,211,102,0.45)]',
-                                'transition-[transform,filter] duration-200 hover:brightness-110 active:scale-[0.99]',
-                                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25D366] focus-visible:ring-offset-2',
-                            )}
-                        >
-                            <MessageCircle className="size-5 shrink-0" strokeWidth={2} aria-hidden />
-                            Contactar por WhatsApp
-                        </a>
-                    )}
+                            </button>
+                        ) : (
+                            <a
+                                href={whatsappHref}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[0.875rem] bg-[#0e7266] px-4 text-sm font-semibold text-white transition-colors hover:bg-[#0b5d53] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0e7266] focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                            >
+                                <MessageCircle className="size-4 shrink-0" aria-hidden />
+                                Consultar por WhatsApp
+                                <span className="sr-only">(abre en una pestaña nueva)</span>
+                            </a>
+                        )}
+
+                        {detailHref ? (
+                            <Link href={detailHref} className="co-ghost w-full">
+                                Ver detalle
+                                <ArrowRight className="size-4 shrink-0" aria-hidden />
+                            </Link>
+                        ) : null}
+                    </div>
+
+                    <p className="sr-only" aria-live="polite">
+                        {justAdded ? `${item.name} añadido al carrito` : ''}
+                    </p>
                 </div>
             </div>
         </article>
