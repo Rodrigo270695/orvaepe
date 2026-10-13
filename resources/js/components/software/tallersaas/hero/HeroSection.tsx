@@ -1,7 +1,13 @@
-import { DEMO_URL } from '../data';
+import DemoCredentials from './DemoCredentials';
 import HeroStage from './HeroStage';
 
-export default function HeroSection() {
+type Props = {
+    demoUrl: string;
+    demoUser: string;
+    demoPassword: string;
+};
+
+export default function HeroSection({ demoUrl, demoUser, demoPassword }: Props) {
     return (
         <section className="relative overflow-hidden" style={{ color: 'var(--ts-ink)', background: 'var(--ts-bg)' }}>
             <div className="ts-bay-lines pointer-events-none absolute inset-0 opacity-70" aria-hidden />
@@ -47,10 +53,12 @@ export default function HeroSection() {
                         <a href="#planes" className="ts-btn font-body">
                             Ver planes
                         </a>
-                        <a href={DEMO_URL} target="_blank" rel="noopener noreferrer" className="ts-btn-ghost font-body">
+                        <a href={demoUrl} target="_blank" rel="noopener noreferrer" className="ts-btn-ghost font-body">
                             Probar la demo
                         </a>
                     </div>
+
+                    <DemoCredentials url={demoUrl} user={demoUser} password={demoPassword} />
 
                     <dl
                         className="ts-rise mt-12 grid max-w-lg grid-cols-3 gap-4 border-t pt-6"

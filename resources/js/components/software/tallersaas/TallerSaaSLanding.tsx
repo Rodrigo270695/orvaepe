@@ -1,3 +1,4 @@
+import { DEMO } from './data';
 import HeroSection from './hero/HeroSection';
 import MobilePlanBar from './pricing/MobilePlanBar';
 import PricingSection from './pricing/PricingSection';
@@ -14,18 +15,26 @@ import './tallersaas-landing.css';
 
 export default function TallerSaaSLanding(props: TallerSaaSLandingProps) {
     const { system, ...purchase } = props;
+    const demoUrl = system.demoUrl?.trim() || DEMO.url;
+    const demoUser = system.demoUser?.trim() || DEMO.user;
+    const demoPassword = system.demoPassword?.trim() || DEMO.password;
 
     return (
         <TallerSaaSMotionRoot>
             <div className="ts-landing relative">
-                <HeroSection />
+                <HeroSection demoUrl={demoUrl} demoUser={demoUser} demoPassword={demoPassword} />
                 <ShiftScroll />
                 <DualBay />
                 <ModulesBay />
                 <RadioSection />
                 <PricingSection plans={system.pricingPlans} {...purchase} />
                 <FaqSection whatsappHref={purchase.consultationWhatsAppHref} />
-                <ClosingCta whatsappHref={purchase.consultationWhatsAppHref} />
+                <ClosingCta
+                    whatsappHref={purchase.consultationWhatsAppHref}
+                    demoUrl={demoUrl}
+                    demoUser={demoUser}
+                    demoPassword={demoPassword}
+                />
 
                 {purchase.selectedPlan ? (
                     <MobilePlanBar title={purchase.selectionTitle} priceLine={purchase.selectionPriceLine} />

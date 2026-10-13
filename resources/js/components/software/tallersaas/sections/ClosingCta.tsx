@@ -1,7 +1,17 @@
-import { DEMO_URL } from '../data';
+import { DEMO } from '../data';
 import TallerSaaSReveal from '../TallerSaaSReveal';
 
-export default function ClosingCta({ whatsappHref }: { whatsappHref?: string }) {
+export default function ClosingCta({
+    whatsappHref,
+    demoUrl = DEMO.url,
+    demoUser = DEMO.user,
+    demoPassword = DEMO.password,
+}: {
+    whatsappHref?: string;
+    demoUrl?: string;
+    demoUser?: string;
+    demoPassword?: string;
+}) {
     return (
         <section className="relative overflow-hidden py-24" style={{ background: 'var(--ts-inverse)', color: 'var(--ts-inverse-ink)' }}>
             <img src="/images/tallersaas/hero.jpg" alt="" className="absolute inset-0 size-full object-cover opacity-25" />
@@ -18,7 +28,7 @@ export default function ClosingCta({ whatsappHref }: { whatsappHref?: string }) 
                     <a href="#planes" className="ts-btn">
                         Ver planes
                     </a>
-                    <a href={DEMO_URL} target="_blank" rel="noopener noreferrer" className="ts-btn-ghost !text-white !border-white/25">
+                    <a href={demoUrl} target="_blank" rel="noopener noreferrer" className="ts-btn-ghost !text-white !border-white/25">
                         Probar la demo
                     </a>
                     {whatsappHref ? (
@@ -27,6 +37,9 @@ export default function ClosingCta({ whatsappHref }: { whatsappHref?: string }) 
                         </a>
                     ) : null}
                 </div>
+                <p className="mx-auto mt-5 max-w-lg font-mono text-xs text-[#cfc6b8]">
+                    Demo: {demoUser} · {demoPassword}
+                </p>
             </TallerSaaSReveal>
         </section>
     );

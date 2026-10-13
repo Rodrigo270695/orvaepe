@@ -139,6 +139,16 @@ export const FAQ = [
         q: '¿Cómo lo activo?',
         a: 'Eliges Gratis o un plan de pago en Orvae, confirmas y entras a tu subdominio a crear la contraseña. Hay demo pública para probar antes.',
     },
+    {
+        q: '¿Cómo pruebo la demo?',
+        a: 'Entra a demo.tallersaas.orvae.pe con el usuario y la contraseña que aparecen en esta página, junto al botón Probar la demo. Se reinicia cada noche a las 2:00.',
+    },
 ] as const;
 
-export const DEMO_URL = 'https://demo.tallersaas.orvae.pe';
+export const DEMO = {
+    url: 'https://demo.tallersaas.orvae.pe',
+    user: 'demo@tallersaas.pe',
+    password: 'demo1234',
+} as const;
+
+export const DEMO_URL = DEMO.url;
