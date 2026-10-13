@@ -31,17 +31,13 @@ export default function PortfolioClientCard({ client, accent }: Props) {
     const clickable = Boolean(href);
 
     const className = [
-        'group relative flex h-full flex-col overflow-hidden rounded-[1.5rem] border bg-card/90 text-left shadow-sm backdrop-blur-md transition-all duration-300',
+        'pf-card group relative flex h-full flex-col overflow-hidden rounded-[1.5rem] text-left transition-transform duration-300',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-        clickable
-            ? 'hover:-translate-y-1 hover:shadow-[0_28px_56px_-28px_color-mix(in_oklab,var(--foreground)_24%,transparent)]'
-            : 'cursor-default',
+        clickable ? 'cursor-pointer hover:-translate-y-1' : 'cursor-default',
     ].join(' ');
 
     const style = {
         borderColor: `color-mix(in oklab, ${accent} 32%, var(--border))`,
-        boxShadow:
-            '0 0 0 1px var(--hero-card-inset) inset, 0 18px 44px -30px color-mix(in oklab, var(--foreground) 18%, transparent)',
     } as const;
 
     const body = (
@@ -85,6 +81,11 @@ export default function PortfolioClientCard({ client, accent }: Props) {
                         {client.sector}
                     </span>
                 ) : null}
+                {clickable ? (
+                    <span className="absolute right-3 top-3 rounded-full bg-[#0d9488] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
+                        En vivo
+                    </span>
+                ) : null}
             </div>
 
             <div className="relative z-10 flex flex-1 flex-col px-5 py-5 sm:px-6 sm:py-6">
@@ -126,6 +127,7 @@ export default function PortfolioClientCard({ client, accent }: Props) {
                 rel="noopener noreferrer"
                 className={`${className} no-underline`}
                 style={style}
+                data-portfolio-card=""
                 aria-label={`Abrir la plataforma de ${client.name}`}
             >
                 {body}
@@ -134,7 +136,7 @@ export default function PortfolioClientCard({ client, accent }: Props) {
     }
 
     return (
-        <article className={className} style={style}>
+        <article className={className} style={style} data-portfolio-card="">
             {body}
         </article>
     );

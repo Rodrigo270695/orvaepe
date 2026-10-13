@@ -1,0 +1,44 @@
+.pf-filter {
+    min-height: 2.75rem;
+    cursor: pointer;
+    border-radius: 9999px;
+    border: 1px solid color-mix(in oklab, var(--foreground) 10%, var(--border));
+    background: color-mix(in oklab, var(--card) 78%, transparent);
+    padding: 0.4rem 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--foreground);
+    transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease;
+}
+
+.pf-filter:hover {
+    border-color: color-mix(in oklab, var(--o-amber) 40%, var(--border));
+    background: color-mix(in oklab, var(--o-amber) 10%, var(--card));
+}
+
+.pf-filter.is-on {
+    border-color: color-mix(in oklab, var(--o-amber) 45%, var(--border));
+    background: var(--background);
+    color: #c2410c;
+    box-shadow: 0 1px 0 color-mix(in oklab, var(--foreground) 6%, transparent);
+}
+
+.dark .pf-filter.is-on {
+    color: #fb923c;
+}
+
+.pf-filter:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--background), 0 0 0 4px color-mix(in oklab, var(--o-amber) 70%, transparent);
+}
+
+.pf-card {
+    border: 1px solid color-mix(in oklab, var(--foreground) 8%, var(--border));
+    background: color-mix(in oklab, var(--card) 90%, transparent);
+    box-shadow: 0 18px 40px -28px color-mix(in oklab, var(--foreground) 22%, transparent);
+    backdrop-filter: blur(12px);
+}
+
+.pf-line {
+    background: linear-gradient(90deg, #2563eb, #0d9488, #ea580c);
+}

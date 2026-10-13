@@ -8,6 +8,7 @@ type Props = {
     system: SoftwareSystem;
     categoryTitle: string;
     accent: string;
+    featured?: boolean;
 };
 
 function platformHref(system: SoftwareSystem): string | null {
@@ -22,6 +23,7 @@ export default function PortfolioProjectCard({
     system,
     categoryTitle,
     accent,
+    featured = false,
 }: Props) {
     const coverUrl =
         system.images?.find((u) => typeof u === 'string' && u.trim() !== '')?.trim() ??
@@ -32,15 +34,14 @@ export default function PortfolioProjectCard({
     const modules = (system.modules ?? []).slice(0, 4);
 
     const className = [
-        'group relative flex h-full flex-col overflow-hidden rounded-[1.5rem] border bg-card/80 text-left no-underline shadow-sm backdrop-blur-md transition-all duration-300',
-        'hover:-translate-y-1 hover:shadow-[0_28px_56px_-28px_color-mix(in_oklab,var(--foreground)_24%,transparent)]',
+        'pf-card group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-[1.5rem] text-left no-underline transition-transform duration-300',
+        'hover:-translate-y-1',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+        featured ? 'sm:flex-row' : '',
     ].join(' ');
 
     const style = {
-        borderColor: `color-mix(in oklab, ${accent} 28%, var(--border))`,
-        boxShadow:
-            '0 0 0 1px var(--hero-card-inset) inset, 0 14px 40px -28px color-mix(in oklab, var(--foreground) 18%, transparent)',
+        borderColor: `color-mix(in oklab, ${accent} 32%, var(--border))`,
     } as const;
 
     const body = (
@@ -53,17 +54,28 @@ export default function PortfolioProjectCard({
                 aria-hidden
             />
 
-            <div className="relative overflow-hidden bg-[color-mix(in_oklab,var(--muted)_35%,transparent)]">
+            <div
+                className={[
+                    'relative overflow-hidden bg-[color-mix(in_oklab,var(--muted)_35%,transparent)]',
+                    featured ? 'sm:w-[52%] sm:shrink-0' : '',
+                ].join(' ')}
+            >
                 {coverUrl ? (
                     <img
                         src={coverUrl}
                         alt=""
-                        className="aspect-[4/3] w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+                        className={[
+                            'w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]',
+                            featured ? 'aspect-[16/10] sm:h-full sm:aspect-auto' : 'aspect-[4/3]',
+                        ].join(' ')}
                         loading="lazy"
                     />
                 ) : (
                     <div
-                        className="flex aspect-[4/3] w-full items-center justify-center"
+                        className={[
+                            'flex w-full items-center justify-center',
+                            featured ? 'aspect-[16/10] sm:h-full sm:aspect-auto' : 'aspect-[4/3]',
+                        ].join(' ')}
                         style={{
                             background: `linear-gradient(135deg, color-mix(in oklab, ${accent} 24%, var(--muted)) 0%, color-mix(in oklab, var(--card) 88%, transparent) 100%)`,
                         }}
@@ -85,10 +97,16 @@ export default function PortfolioProjectCard({
                 >
                     {categoryTitle}
                 </span>
+                {opensPlatform ? (
+                    <span className="absolute right-3 top-3 rounded-full bg-[#0d9488] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
+                        En vivo
+                    </span>
+                ) : null}
             </div>
 
             <div className="relative z-10 flex flex-1 flex-col p-5 sm:p-6">
                 <h3 className="font-display text-lg font-bold tracking-tight text-foreground md:text-xl">
+                    {featured ? <span className="mr-2 inline-block size-2 rounded-full" style={{ background: accent }} aria-hidden /> : null}
                     {system.name}
                 </h3>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
@@ -153,6 +171,7 @@ export default function PortfolioProjectCard({
                 rel="noopener noreferrer"
                 className={className}
                 style={style}
+                data-portfolio-card=""
                 aria-label={`Abrir la plataforma ${system.name}`}
             >
                 {body}
@@ -165,6 +184,7 @@ export default function PortfolioProjectCard({
             href={href}
             className={className}
             style={style}
+            data-portfolio-card=""
             aria-label={`Ver el sistema ${system.name}`}
         >
             {body}

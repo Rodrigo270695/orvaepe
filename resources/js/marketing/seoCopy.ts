@@ -16,9 +16,11 @@ export const marketingSeo = {
             'Explora sistemas listos para usar: ERP, RR.HH., inventario y más. Modelos licencia perpetua, rental o suscripción. Precios y planes visibles.',
     },
     portafolio: {
-        title: 'Portafolio — Sistemas desarrollados por ORVAE',
+        title: 'Portafolio — VetSaaS, TallerSaaS y sistemas ORVAE',
         description:
-            'Portafolio de sistemas ORVAE: contabilidad, ventas, inventario, veterinaria y más. Casos reales y empresas que ya operan con nuestras soluciones.',
+            'Portafolio ORVAE: VetSaaS para clínicas, TallerSaaS para talleres y más sistemas en operación. Empresas reales, demos en vivo y fichas de producto.',
+        keywords:
+            'portafolio software Perú, VetSaaS, TallerSaaS, sistemas ORVAE, software veterinario, software para talleres, casos de éxito',
     },
     servicios: {
         title: 'Servicios — Integraciones, correos y operación ORVAE',
