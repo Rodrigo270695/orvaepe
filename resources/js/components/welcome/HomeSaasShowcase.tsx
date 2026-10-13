@@ -76,7 +76,7 @@ export default function HomeSaasShowcase() {
             ref={root}
             id="saas"
             aria-label="SaaS desarrollados por ORVAE: VetSaaS y TallerSaaS"
-            className="relative scroll-mt-28 px-4 py-16 sm:px-6 lg:py-20"
+            className="home-section home-section--alt relative scroll-mt-28 px-4 py-20 sm:px-6 md:py-28"
         >
             <div className="mx-auto max-w-6xl">
                 <LandingSectionHeader

@@ -1,5 +1,6 @@
 import { Link } from '@inertiajs/react';
 import { ArrowRight, KeyRound, Layers3, Rocket } from 'lucide-react';
+import type { CSSProperties } from 'react';
 
 import AppLogoIcon from '@/components/app-logo-icon';
 import HeroTechLogosCarousel from '@/components/marketing/HeroTechLogosCarousel';
@@ -105,6 +106,7 @@ export default function HomeHero() {
                             <Link
                                 href="/software/VETSAAS"
                                 className="home-hero-card home-hero-card--vet group absolute left-0 top-0 z-10 w-[78%] overflow-hidden rounded-2xl border border-white/20 shadow-[0_24px_60px_-24px_rgba(0,80,60,0.55)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                style={{ '--home-hero-tilt': '-4deg' } as CSSProperties}
                             >
                                 <img
                                     src="/images/vetsaas-hero-pets.webp"
@@ -121,6 +123,7 @@ export default function HomeHero() {
                             <Link
                                 href="/software/TALLERSAAS"
                                 className="home-hero-card home-hero-card--taller group absolute bottom-0 right-0 z-20 w-[78%] overflow-hidden rounded-2xl border border-white/15 shadow-[0_24px_60px_-24px_rgba(234,88,12,0.4)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                style={{ '--home-hero-tilt': '3deg' } as CSSProperties}
                             >
                                 <img
                                     src="/images/tallersaas/hero.jpg"
@@ -136,6 +139,19 @@ export default function HomeHero() {
                         </div>
                     </div>
                 </div>
+
+                <dl className="mt-12 grid max-w-xl grid-cols-3 gap-4 border-t border-border pt-6">
+                    {[
+                        ['2 SaaS', 'propios'],
+                        ['Licencias', 'listas'],
+                        ['A medida', 'en Perú'],
+                    ].map(([k, v]) => (
+                        <div key={k}>
+                            <dt className="font-display text-base font-bold text-foreground sm:text-lg">{k}</dt>
+                            <dd className="mt-0.5 text-xs text-muted-foreground">{v}</dd>
+                        </div>
+                    ))}
+                </dl>
 
                 <div className="mt-12 lg:mt-16">
                     <HeroTechLogosCarousel />

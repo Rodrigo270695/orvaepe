@@ -1,3 +1,21 @@
+.home-section--alt {
+    background: color-mix(in oklab, var(--landing-surface-2) 88%, transparent);
+}
+
+.home-glass {
+    border: 1px solid color-mix(in oklab, var(--foreground) 10%, var(--border));
+    background: color-mix(in oklab, var(--card) 88%, transparent);
+    box-shadow:
+        0 1px 0 color-mix(in oklab, var(--foreground) 5%, transparent),
+        0 18px 40px -24px color-mix(in oklab, var(--foreground) 16%, transparent);
+    backdrop-filter: blur(14px);
+}
+
+.dark .home-glass {
+    border-color: color-mix(in oklab, var(--border) 80%, transparent);
+    background: color-mix(in oklab, var(--card) 72%, transparent);
+}
+
 @media (prefers-reduced-motion: no-preference) {
     .home-hero-card--vet {
         animation: home-hero-float 7s ease-in-out infinite;
@@ -12,9 +30,9 @@
 @keyframes home-hero-float {
     0%,
     100% {
-        transform: translateY(0);
+        transform: translateY(0) rotate(var(--home-hero-tilt, 0deg));
     }
     50% {
-        transform: translateY(-8px);
+        transform: translateY(-8px) rotate(var(--home-hero-tilt, 0deg));
     }
 }

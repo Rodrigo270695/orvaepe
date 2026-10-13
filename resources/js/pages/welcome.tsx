@@ -4,8 +4,10 @@ import SeoHead, { type SeoDefaults } from '@/components/seo/SeoHead';
 import MarketingUnifiedNavbar from '@/components/marketing/MarketingUnifiedNavbar';
 import { marketingSeo } from '@/marketing/seoCopy';
 import AppearanceFloatingRailToggle from '@/components/welcome/AppearanceFloatingRailToggle';
+import HomeClosingCta from '@/components/welcome/HomeClosingCta';
 import HomeFeaturedServices from '@/components/welcome/HomeFeaturedServices';
 import HomeHero from '@/components/welcome/HomeHero';
+import HomeHowWeWork from '@/components/welcome/HomeHowWeWork';
 import HomeSaasShowcase from '@/components/welcome/HomeSaasShowcase';
 import MissionVision from '@/components/welcome/MissionVision';
 import OfferingsSummary from '@/components/welcome/OfferingsSummary';
@@ -94,24 +96,21 @@ export default function Welcome({
                     <main id="main-content" className="outline-none">
                         <HomeHero />
                         <HomeSaasShowcase />
+                        <HomeHowWeWork />
                         <HomeFeaturedServices />
-                        <div className="landing-section-flair mx-4 px-4" aria-hidden />
                         <ScrollReveal direction="up">
                             <OfferingsSummary />
                         </ScrollReveal>
-                        <div className="landing-section-flair mx-4 px-4" aria-hidden />
                         <ScrollReveal direction="up">
                             <MissionVision />
                         </ScrollReveal>
-                        <div className="landing-section-flair mx-4 px-4" aria-hidden />
                         <ScrollReveal direction="up">
                             <PortfolioHomeTeaser />
                         </ScrollReveal>
-                        <div className="landing-section-flair mx-4 px-4" aria-hidden />
                         <ScrollReveal direction="up">
                             <TestimonialsSection />
                         </ScrollReveal>
-                        <div className="landing-section-flair mx-4 px-4" aria-hidden />
+                        <HomeClosingCta />
                     </main>
 
                     <ScrollReveal direction="up">

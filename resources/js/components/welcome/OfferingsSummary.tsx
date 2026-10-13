@@ -136,7 +136,7 @@ export default function OfferingsSummary() {
     return (
         <section
             id="que-ofrecemos"
-            className="relative scroll-mt-28 border-t border-border bg-[color-mix(in_oklab,var(--landing-surface-2)_92%,transparent)] py-20 backdrop-blur-[2px] md:py-28 dark:bg-[color-mix(in_oklab,var(--landing-surface-2)_88%,transparent)]"
+            className="home-section relative scroll-mt-28 py-20 md:py-28"
         >
             <div
                 className="pointer-events-none absolute inset-0 opacity-40 dark:opacity-30"
@@ -153,7 +153,7 @@ export default function OfferingsSummary() {
                     className="mb-14 md:mb-20"
                     eyebrow="Resumen"
                     title="Todo lo que ofrecemos"
-                    description="Software desarrollado, licencias flexibles y servicios de implementación. Elige lo que necesitas y escala por módulos."
+                    description="Desarrollo de software, venta de licencias y SaaS. Elige lo que necesitas y escala por módulos."
                     layout="wide"
                     titleSize="hero"
                 />
@@ -171,10 +171,8 @@ export default function OfferingsSummary() {
                             <Link
                                 href="/software"
                                 className={cn(
-                                    'mt-5 flex w-full items-center justify-center gap-2 text-sm font-semibold transition-opacity duration-300',
-                                    'max-md:min-h-11 max-md:rounded-xl max-md:border-2 max-md:border-solid max-md:bg-[color-mix(in_oklab,var(--card)_92%,var(--background))] max-md:px-4 max-md:py-2.5 max-md:shadow-sm',
-                                    'md:inline-flex md:min-h-0 md:w-auto md:justify-start md:border-0 md:bg-transparent md:p-0 md:shadow-none',
-                                    'opacity-100 md:opacity-0 md:group-hover:opacity-100',
+                                    'mt-5 inline-flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition-colors sm:w-auto',
+                                    'hover:bg-[color-mix(in_oklab,var(--background)_80%,transparent)]',
                                 )}
                                 style={{
                                     color: semanticCycle[0],
@@ -210,10 +208,8 @@ export default function OfferingsSummary() {
                             <Link
                                 href="/licencias"
                                 className={cn(
-                                    'mt-5 flex w-full items-center justify-center gap-2 text-sm font-semibold transition-opacity duration-300',
-                                    'max-md:min-h-11 max-md:rounded-xl max-md:border-2 max-md:border-solid max-md:bg-[color-mix(in_oklab,var(--card)_92%,var(--background))] max-md:px-4 max-md:py-2.5 max-md:shadow-sm',
-                                    'md:inline-flex md:min-h-0 md:w-auto md:justify-start md:border-0 md:bg-transparent md:p-0 md:shadow-none',
-                                    'opacity-100 md:opacity-0 md:group-hover:opacity-100',
+                                    'mt-5 inline-flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition-colors sm:w-auto',
+                                    'hover:bg-[color-mix(in_oklab,var(--background)_80%,transparent)]',
                                 )}
                                 style={{
                                     color: semanticCycle[1],
@@ -249,10 +245,8 @@ export default function OfferingsSummary() {
                             <Link
                                 href="/servicios"
                                 className={cn(
-                                    'mt-5 flex w-full items-center justify-center gap-2 text-sm font-semibold transition-opacity duration-300',
-                                    'max-md:min-h-11 max-md:rounded-xl max-md:border-2 max-md:border-solid max-md:bg-[color-mix(in_oklab,var(--card)_92%,var(--background))] max-md:px-4 max-md:py-2.5 max-md:shadow-sm',
-                                    'md:inline-flex md:min-h-0 md:w-auto md:justify-start md:border-0 md:bg-transparent md:p-0 md:shadow-none',
-                                    'opacity-100 md:opacity-0 md:group-hover:opacity-100',
+                                    'mt-5 inline-flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition-colors sm:w-auto',
+                                    'hover:bg-[color-mix(in_oklab,var(--background)_80%,transparent)]',
                                 )}
                                 style={{
                                     color: semanticCycle[2],
