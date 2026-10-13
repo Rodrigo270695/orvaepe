@@ -5,6 +5,7 @@ import {
     clearSoftwareCart,
     type SoftwareCartItem,
 } from '@/lib/softwareCartStorage';
+import './marketing-navbar.css';
 
 type Props = {
     cartCount: number;
@@ -21,21 +22,14 @@ export default function NavCartPreview({ cartCount, cartLines, cartBump, onClear
                 aria-label="Ir al carrito de compras"
                 title="Pasa el cursor para ver el resumen del carrito"
                 className={[
-                    'relative z-[60] inline-flex items-center gap-2 rounded-md border border-transparent px-3 py-2 text-sm font-semibold text-[var(--foreground)]',
-                    'transition-colors hover:border-[color-mix(in_oklab,var(--state-info)_48%,transparent)] hover:bg-[color-mix(in_oklab,var(--state-info)_10%,transparent)]',
+                    'mnav-icon relative z-[60] gap-2 px-3 text-sm font-semibold',
                     'transform-gpu',
                     cartBump ? 'animate-pulse scale-105' : '',
                 ].join(' ')}
             >
-                <ShoppingCart className="size-4 text-[var(--state-info)]" />
+                <ShoppingCart className="size-4 text-[#0d9488]" />
                 {cartCount > 0 && (
-                    <span
-                        className="min-w-6 rounded-full px-2 py-0.5 text-center text-xs font-bold text-[var(--primary-foreground)]"
-                        style={{
-                            background:
-                                'linear-gradient(135deg, color-mix(in oklab, var(--state-success) 88%, var(--state-info)), color-mix(in oklab, var(--state-info) 72%, var(--state-success)))',
-                        }}
-                    >
+                    <span className="min-w-6 rounded-full bg-[#ea580c] px-2 py-0.5 text-center text-xs font-bold text-white">
                         {cartCount}
                     </span>
                 )}

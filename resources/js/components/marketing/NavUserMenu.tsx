@@ -1,5 +1,6 @@
 import { Link } from '@inertiajs/react';
 import { ChevronDown } from 'lucide-react';
+import './marketing-navbar.css';
 
 type Props = {
     user: { name: string };
@@ -23,7 +24,7 @@ export default function NavUserMenu({ user, open, onOpenChange, closeAll }: Prop
         <div className="relative">
             <button
                 type="button"
-                className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-transparent px-3 py-2 text-sm font-semibold text-[var(--foreground)] transition-colors hover:border-[color-mix(in_oklab,var(--state-info)_48%,transparent)] hover:bg-[color-mix(in_oklab,var(--state-info)_10%,transparent)]"
+                className="mnav-icon gap-2 px-2.5 text-sm font-semibold"
                 aria-label={`Cuenta de ${userDisplay.full}`}
                 aria-haspopup="menu"
                 aria-expanded={open}

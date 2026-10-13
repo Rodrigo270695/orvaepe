@@ -226,13 +226,13 @@ export function MarketingSearchTrigger({ className }: TriggerProps) {
             variant="ghost"
             onClick={() => ctx.setOpen(true)}
             className={cn(
-                'h-9 cursor-pointer gap-2 rounded-md border border-transparent px-2.5 text-[var(--foreground)] transition-colors hover:border-[color-mix(in_oklab,var(--state-info)_48%,transparent)] hover:bg-[color-mix(in_oklab,var(--state-info)_10%,transparent)]',
+                'h-10 min-h-10 cursor-pointer gap-2 rounded-full border border-[color-mix(in_oklab,var(--foreground)_8%,var(--border))] bg-[color-mix(in_oklab,var(--card)_80%,transparent)] px-3 text-[var(--foreground)] hover:border-[color-mix(in_oklab,var(--o-amber)_40%,var(--border))] hover:bg-[color-mix(in_oklab,var(--o-amber)_12%,transparent)]',
                 className,
             )}
         >
-            <Search className="size-4 text-[var(--state-info)]" />
-            <span className="hidden text-sm font-semibold lg:inline">Buscar</span>
-            <span className="hidden items-center gap-1 rounded-md border border-[color-mix(in_oklab,var(--foreground)_16%,var(--border))] px-1.5 py-0.5 font-mono text-[10px] lg:inline-flex">
+            <Search className="size-4 text-[#ea580c]" />
+            <span className="hidden text-sm font-semibold xl:inline">Buscar</span>
+            <span className="hidden items-center gap-1 rounded-md border border-[color-mix(in_oklab,var(--foreground)_16%,var(--border))] px-1.5 py-0.5 font-mono text-[10px] xl:inline-flex">
                 <Command className="size-3" />K
             </span>
         </Button>

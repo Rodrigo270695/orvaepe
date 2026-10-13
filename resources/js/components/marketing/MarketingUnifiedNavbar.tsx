@@ -15,6 +15,7 @@ import {
     readSoftwareCart,
     type SoftwareCartItem,
 } from '@/lib/softwareCartStorage';
+import './marketing-navbar.css';
 
 type Props = {
     canRegister?: boolean;
@@ -331,10 +332,7 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
         }
     };
 
-    const topLinkClass =
-        'relative inline-flex cursor-pointer items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold transition-all duration-200 hover:bg-[color-mix(in_oklab,var(--state-info)_26%,var(--background))] hover:text-[color-mix(in_oklab,var(--state-info)_86%,var(--foreground))] hover:shadow-[0_6px_18px_-10px_color-mix(in_oklab,var(--state-info)_55%,transparent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_oklab,var(--state-info)_60%,transparent)] focus-visible:ring-offset-1';
-    const activeUnderline =
-        'absolute left-2 right-2 -bottom-0.5 z-10 h-[3px] rounded-full bg-[linear-gradient(90deg,var(--state-info),var(--state-success),var(--state-alert))] origin-left scale-x-0 transition-transform duration-300 pointer-events-none';
+    const topLinkClass = 'mnav-link';
 
     const authActionsDesktop = auth.user ? (
         <NavUserMenu
@@ -352,18 +350,14 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
         <>
             <Link
                 href="/login"
-                className="rounded-md border border-transparent px-4 py-2 text-sm font-semibold text-[var(--foreground)] hover:border-[color-mix(in_oklab,var(--state-info)_50%,transparent)] hover:bg-[color-mix(in_oklab,var(--state-info)_10%,transparent)]"
+                className="inline-flex min-h-10 items-center whitespace-nowrap rounded-full px-3.5 text-sm font-semibold text-[var(--foreground)] transition-colors hover:bg-[color-mix(in_oklab,var(--o-amber)_12%,transparent)]"
             >
                 Iniciar sesión
             </Link>
             {finalCanRegister && (
                 <Link
                     href="/register"
-                    className="rounded-md px-4 py-2 text-sm font-semibold text-[var(--primary-foreground)] shadow-[0_8px_24px_-10px_color-mix(in_oklab,var(--state-success)_68%,transparent)] transition-[filter,transform] duration-200 hover:brightness-105 hover:-translate-y-[1px]"
-                    style={{
-                        background:
-                            'linear-gradient(135deg, color-mix(in oklab, var(--state-info) 88%, var(--state-success)), color-mix(in oklab, var(--state-success) 72%, var(--state-info)))',
-                    }}
+                    className="inline-flex min-h-10 items-center rounded-full bg-[#ea580c] px-4 text-sm font-semibold text-white shadow-[0_10px_22px_-12px_#ea580c] transition hover:bg-[#c2410c]"
                 >
                     Registrarse
                 </Link>
@@ -461,35 +455,61 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
     };
 
     const renderDesktopDropdown = (_key: Exclude<DropdownKey, null>, links: { label: string; href: string }[], isOpen: boolean, panelId?: string) => {
-        const [first, ...rest] = links;
+        const featured =
+            _key === 'software'
+                ? [
+                      { label: 'VetSaaS', href: '/software/VETSAAS', hint: 'Clínicas veterinarias' },
+                      { label: 'TallerSaaS', href: '/software/TALLERSAAS', hint: 'Talleres y car wash' },
+                  ]
+                : [];
+        const rest = links.filter((l) => !/vetsaas|tallersaas/i.test(`${l.label} ${l.href}`));
         return (
             <div
                 id={panelId}
                 className={[
-                    'absolute left-0 top-full z-20 mt-3 w-72 rounded-2xl border p-2 backdrop-blur-xl',
+                    'mnav-panel absolute left-0 top-full z-20 mt-3 w-80 overflow-hidden rounded-2xl p-2',
                     'origin-top transition-all duration-200 ease-out',
                     isOpen
                         ? 'pointer-events-auto visible translate-y-0 scale-100 opacity-100'
                         : 'pointer-events-none invisible -translate-y-2 scale-95 opacity-0',
                 ].join(' ')}
-                style={{
-                    borderColor: 'color-mix(in oklab, var(--state-info) 20%, var(--border))',
-                    background:
-                        'linear-gradient(165deg, color-mix(in oklab, var(--card) 92%, transparent), color-mix(in oklab, var(--state-info) 5%, var(--card)))',
-                    boxShadow:
-                        '0 18px 50px -20px color-mix(in oklab, var(--foreground) 30%, transparent), 0 0 0 1px color-mix(in oklab, var(--state-info) 10%, transparent) inset',
-                }}
                 role="menu"
                 aria-label="Menú desplegable"
             >
-                {first && renderLink(first, 'primary')}
+                <div className="mnav-line mb-2 h-1 rounded-full" aria-hidden />
+                {featured.length > 0 && (
+                    <div className="mb-2 grid gap-1">
+                        {featured.map((l) => {
+                            const isTaller = /taller/i.test(l.label);
+                            return (
+                                <Link
+                                    key={l.href}
+                                    href={l.href}
+                                    className="flex items-center gap-3 rounded-xl px-3 py-2 text-[var(--foreground)] transition-colors hover:bg-[color-mix(in_oklab,var(--o-amber)_10%,transparent)]"
+                                >
+                                    <span
+                                        className="size-2.5 shrink-0 rounded-full"
+                                        style={{ background: isTaller ? '#ea580c' : '#0d9488' }}
+                                        aria-hidden
+                                    />
+                                    <span className="min-w-0">
+                                        <span className="block text-sm font-semibold">{l.label}</span>
+                                        <span className="block text-[11px] text-[var(--muted-foreground)]">{l.hint}</span>
+                                    </span>
+                                </Link>
+                            );
+                        })}
+                    </div>
+                )}
                 {rest.length > 0 && (
                     <>
-                        <div
-                            className="my-1.5 border-t border-[color-mix(in_oklab,var(--o-amber)_25%,var(--border))]"
-                            aria-hidden
-                        />
-                        {rest.map((l) => renderLink(l, 'secondary'))}
+                        {featured.length > 0 && (
+                            <div
+                                className="my-1.5 border-t border-[color-mix(in_oklab,var(--o-amber)_25%,var(--border))]"
+                                aria-hidden
+                            />
+                        )}
+                        {rest.map((l, i) => renderLink(l, i === 0 ? 'primary' : 'secondary'))}
                     </>
                 )}
             </div>
@@ -507,22 +527,16 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
             <div
                 id={panelId}
                 className={[
-                    'absolute left-0 top-full z-20 mt-3 w-80 rounded-2xl border p-2 backdrop-blur-xl',
+                    'mnav-panel absolute left-0 top-full z-20 mt-3 w-80 overflow-hidden rounded-2xl p-2',
                     'origin-top transition-all duration-200 ease-out',
                     isOpen
                         ? 'pointer-events-auto visible translate-y-0 scale-100 opacity-100'
                         : 'pointer-events-none invisible -translate-y-2 scale-95 opacity-0',
                 ].join(' ')}
-                style={{
-                    borderColor: 'color-mix(in oklab, var(--state-info) 20%, var(--border))',
-                    background:
-                        'linear-gradient(165deg, color-mix(in oklab, var(--card) 92%, transparent), color-mix(in oklab, var(--state-info) 5%, var(--card)))',
-                    boxShadow:
-                        '0 18px 50px -20px color-mix(in oklab, var(--foreground) 30%, transparent), 0 0 0 1px color-mix(in oklab, var(--state-info) 10%, transparent) inset',
-                }}
                 role="menu"
                 aria-label={ariaLabel}
             >
+                <div className="mnav-line mb-2 h-1 rounded-full" aria-hidden />
                 {groups.map((group, groupIndex) => (
                     <div key={`${group.categoryLabel}-${groupIndex}`}>
                         {groupIndex > 0 && (
@@ -568,66 +582,35 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
             canRegister={finalCanRegister}
         >
         <div ref={rootRef}>
-            <header
-                className={[
-                    'fixed inset-x-0 top-0 z-40 w-full transition-[box-shadow,background-color,border-color,backdrop-filter] duration-500 ease-out',
-                    'border-b',
-                    scrolled
-                        ? 'border-[color-mix(in_oklab,var(--state-info)_18%,var(--border))] bg-background/88 shadow-[0_8px_32px_-12px_color-mix(in_oklab,var(--foreground)_18%,transparent),0_1px_0_0_color-mix(in_oklab,var(--state-info)_14%,transparent)] backdrop-blur-2xl'
-                        : 'border-[color-mix(in_oklab,var(--state-info)_14%,var(--border))] bg-background/92 shadow-[0_1px_0_0_color-mix(in_oklab,var(--state-info)_10%,transparent)] backdrop-blur-sm',
-                ].join(' ')}
-            >
+            <header className="fixed inset-x-0 top-0 z-40 w-full px-3 pt-3 md:px-4">
                 <div
-                    className={[
-                        'relative mx-auto flex w-full max-w-6xl items-center justify-between px-4 transition-[padding] duration-300 ease-out',
-                        scrolled ? 'py-2.5' : 'py-4',
-                    ].join(' ')}
+                    className={cx(
+                        'mnav-island relative mx-auto flex w-full max-w-7xl items-center justify-between gap-3 rounded-2xl px-3 py-2 transition-all duration-300',
+                        scrolled && 'is-scrolled',
+                    )}
                 >
-                    <div
-                        className="pointer-events-none absolute inset-x-0 top-0 h-px"
-                        style={{
-                            background:
-                                'linear-gradient(90deg, transparent, color-mix(in oklab, var(--state-info) 40%, transparent), color-mix(in oklab, var(--state-success) 35%, transparent), transparent)',
-                        }}
-                        aria-hidden
-                    />
+                    <div className="mnav-line pointer-events-none absolute inset-x-4 top-0 h-px rounded-full" aria-hidden />
 
                     <Link href="/" className="flex shrink-0 items-center gap-3" onClick={closeAll}>
                         <img
                             src="/logo/orvae-logo-h-transparent-light.webp"
                             alt="ORVAE"
-                            className="h-11 w-auto sm:h-12 dark:hidden"
+                            className="h-10 w-auto sm:h-11 dark:hidden"
                         />
                         <img
                             src="/logo/orvae-logo-h-transparent-dark.webp"
                             alt="ORVAE"
-                            className="hidden h-11 w-auto sm:h-12 dark:block"
+                            className="hidden h-10 w-auto sm:h-11 dark:block"
                         />
                     </Link>
 
-                    <nav className="relative hidden items-center gap-1 md:flex" aria-label="Navegación principal">
+                    <nav className="mnav-tray relative hidden items-center gap-0.5 rounded-full p-1 md:flex" aria-label="Navegación principal">
                         <Link
                             href="/"
-                            className={cx(
-                                topLinkClass,
-                                isInicioActive
-                                    ? 'text-[var(--state-info)]'
-                                    : 'text-[var(--foreground)]',
-                            )}
+                            className={cx(topLinkClass, isInicioActive && 'is-active')}
                             onClick={closeAll}
                         >
                             Inicio
-                            <span
-                                className={activeUnderline}
-                                style={{
-                                    transform:
-                                        pathname === '/'
-                                            ? activeLandingSection === 'inicio'
-                                                ? 'scaleX(1)'
-                                                : 'scaleX(0)'
-                                            : 'scaleX(0)',
-                                }}
-                            />
                         </Link>
 
                         <div
@@ -643,9 +626,7 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                                 type="button"
                                 className={cx(
                                     topLinkClass,
-                                    activeTop === 'software'
-                                        ? 'text-[var(--state-info)]'
-                                        : 'text-[var(--foreground)]',
+                                    (activeTop === 'software' || openDropdown === 'software') && 'is-active',
                                 )}
                                 onClick={() => {
                                     setOpenUserMenu(false);
@@ -656,29 +637,17 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                                 aria-controls="dropdown-software"
                             >
                                 Software
-                                <ChevronDown className={cx('size-4 text-[var(--o-amber)] transition-transform duration-200', openDropdown === 'software' ? 'rotate-180' : '')} />
-                                <span className={activeUnderline} style={{ transform: activeTop === 'software' ? 'scaleX(1)' : 'scaleX(0)' }} />
+                                <ChevronDown className={cx('size-3.5 text-[#ea580c] transition-transform duration-200', openDropdown === 'software' ? 'rotate-180' : '')} aria-hidden />
                             </button>
                             {renderDesktopDropdown('software', softwareLinks, openDropdown === 'software', 'dropdown-software')}
                         </div>
 
                         <Link
                             href="/portafolio"
-                            className={cx(
-                                topLinkClass,
-                                isPortafolioActive
-                                    ? 'text-[var(--state-info)]'
-                                    : 'text-[var(--foreground)]',
-                            )}
+                            className={cx(topLinkClass, isPortafolioActive && 'is-active')}
                             onClick={closeAll}
                         >
                             Portafolio
-                            <span
-                                className={activeUnderline}
-                                style={{
-                                    transform: isPortafolioActive ? 'scaleX(1)' : 'scaleX(0)',
-                                }}
-                            />
                         </Link>
 
                         <div
@@ -694,9 +663,7 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                                 type="button"
                                 className={cx(
                                     topLinkClass,
-                                    activeTop === 'precios'
-                                        ? 'text-[var(--state-info)]'
-                                        : 'text-[var(--foreground)]',
+                                    (activeTop === 'precios' || openDropdown === 'precios') && 'is-active',
                                 )}
                                 onClick={() => {
                                     setOpenUserMenu(false);
@@ -707,8 +674,7 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                                 aria-controls="dropdown-precios"
                             >
                                 Licencias
-                                <ChevronDown className={cx('size-4 text-[var(--o-amber)] transition-transform duration-200', openDropdown === 'precios' ? 'rotate-180' : '')} />
-                                <span className={activeUnderline} style={{ transform: activeTop === 'precios' ? 'scaleX(1)' : 'scaleX(0)' }} />
+                                <ChevronDown className={cx('size-3.5 text-[#ea580c] transition-transform duration-200', openDropdown === 'precios' ? 'rotate-180' : '')} aria-hidden />
                             </button>
                             {renderGroupedCategoryDropdown(
                                 licenseNavGroups,
@@ -732,9 +698,7 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                                 type="button"
                                 className={cx(
                                     topLinkClass,
-                                    activeTop === 'servicios'
-                                        ? 'text-[var(--state-info)]'
-                                        : 'text-[var(--foreground)]',
+                                    (activeTop === 'servicios' || openDropdown === 'servicios') && 'is-active',
                                 )}
                                 onClick={() => {
                                     setOpenUserMenu(false);
@@ -745,8 +709,7 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                                 aria-controls="dropdown-servicios"
                             >
                                 Servicios
-                                <ChevronDown className={cx('size-4 text-[var(--o-amber)] transition-transform duration-200', openDropdown === 'servicios' ? 'rotate-180' : '')} />
-                                <span className={activeUnderline} style={{ transform: activeTop === 'servicios' ? 'scaleX(1)' : 'scaleX(0)' }} />
+                                <ChevronDown className={cx('size-3.5 text-[#ea580c] transition-transform duration-200', openDropdown === 'servicios' ? 'rotate-180' : '')} aria-hidden />
                             </button>
                             {renderGroupedCategoryDropdown(
                                 serviceNavGroups,
@@ -759,25 +722,14 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
 
                         <Link
                             href="/contacto"
-                            className={cx(
-                                topLinkClass,
-                                isContactoActive
-                                    ? 'text-[var(--state-info)]'
-                                    : 'text-[var(--foreground)]',
-                            )}
+                            className={cx(topLinkClass, isContactoActive && 'is-active')}
                             onClick={closeAll}
                         >
                             Contacto
-                            <span
-                                className={activeUnderline}
-                                style={{
-                                    transform: isContactoActive ? 'scaleX(1)' : 'scaleX(0)',
-                                }}
-                            />
                         </Link>
                     </nav>
 
-                    <div className="hidden items-center gap-2 md:flex">
+                    <div className="hidden shrink-0 items-center gap-1.5 md:flex">
                         <MarketingSearchTrigger />
                         <NavCartPreview
                             cartCount={cartCount}
@@ -794,28 +746,21 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                             href="/carrito"
                             aria-label="Ir al carrito de compras"
                             className={[
-                                'relative inline-flex items-center gap-1 rounded-md border border-transparent px-2.5 py-2 text-[var(--foreground)]',
-                                'transition-colors hover:border-[color-mix(in_oklab,var(--state-info)_48%,transparent)] hover:bg-[color-mix(in_oklab,var(--state-info)_10%,transparent)]',
+                                'mnav-icon relative',
                                 'transform-gpu',
                                 cartBump ? 'animate-pulse scale-105' : '',
                             ].join(' ')}
                         >
-                            <ShoppingCart className="size-[1.35rem] text-[var(--state-info)]" />
+                            <ShoppingCart className="size-5 text-[#0d9488]" />
                             {cartCount > 0 && (
-                                <span
-                                    className="absolute -right-0.5 -top-0.5 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full px-1 text-[0.65rem] font-bold leading-none text-[var(--primary-foreground)]"
-                                    style={{
-                                        background:
-                                            'linear-gradient(135deg, color-mix(in oklab, var(--state-success) 88%, var(--state-info)), color-mix(in oklab, var(--state-info) 72%, var(--state-success)))',
-                                    }}
-                                >
+                                <span className="absolute -right-0.5 -top-0.5 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-[#ea580c] px-1 text-[0.65rem] font-bold leading-none text-white">
                                     {cartCount > 99 ? '99+' : cartCount}
                                 </span>
                             )}
                         </Link>
                         <button
                             type="button"
-                            className="relative z-10 inline-flex min-h-11 min-w-11 items-center justify-center rounded-md p-2 text-[var(--foreground)] hover:bg-[color-mix(in_oklab,var(--o-amber)_10%,transparent)] touch-manipulation"
+                            className="mnav-icon relative z-10 touch-manipulation"
                             aria-label="Abrir menú"
                             aria-expanded={openMobile}
                             onClick={() => setOpenMobile((v) => !v)}
@@ -830,8 +775,8 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                 </div>
 
                 {openMobile && (
-                    <div className="animate-in slide-in-from-top-2 fade-in-0 duration-200 border-t border-[var(--border)] bg-card md:hidden">
-                        <div className="mx-auto flex w-full max-w-6xl flex-col px-4 py-4">
+                    <div className="mnav-panel mx-auto mt-2 max-h-[min(74vh,40rem)] w-full max-w-6xl overflow-y-auto rounded-2xl md:hidden">
+                        <div className="flex flex-col px-3 py-3">
                             <div className="flex flex-col gap-1">
                                 <Link
                                     href="/"
@@ -864,6 +809,23 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                                 <div className={cx('grid transition-all duration-300 ease-in-out', openMobileSection === 'software' ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0')}>
                                     <div className="min-h-0 overflow-hidden">
                                         <div className="grid gap-1 px-1 pb-2 pt-0.5">
+                                            <Link
+                                                href="/software/VETSAAS"
+                                                className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold text-[var(--foreground)] hover:bg-[color-mix(in_oklab,var(--o-amber)_10%,transparent)]"
+                                                onClick={closeAll}
+                                            >
+                                                <span className="size-2.5 rounded-full bg-[#0d9488]" aria-hidden />
+                                                VetSaaS
+                                            </Link>
+                                            <Link
+                                                href="/software/TALLERSAAS"
+                                                className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold text-[var(--foreground)] hover:bg-[color-mix(in_oklab,var(--o-amber)_10%,transparent)]"
+                                                onClick={closeAll}
+                                            >
+                                                <span className="size-2.5 rounded-full bg-[#ea580c]" aria-hidden />
+                                                TallerSaaS
+                                            </Link>
+                                            <div className="my-1.5 border-t border-[color-mix(in_oklab,var(--o-amber)_25%,var(--border))]" aria-hidden />
                                             {softwareLinks.map((l, i) => (
                                                 <span key={l.href}>
                                                     {i === 1 && (

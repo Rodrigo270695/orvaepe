@@ -1,0 +1,90 @@
+.mnav-island {
+    border: 1px solid color-mix(in oklab, var(--o-amber) 18%, var(--border));
+    background: color-mix(in oklab, var(--background) 78%, transparent);
+    box-shadow: 0 10px 36px -22px color-mix(in oklab, var(--foreground) 28%, transparent);
+    backdrop-filter: blur(18px);
+}
+
+.mnav-island.is-scrolled {
+    border-color: color-mix(in oklab, var(--o-amber) 32%, var(--border));
+    background: color-mix(in oklab, var(--background) 88%, transparent);
+    box-shadow:
+        0 16px 44px -20px color-mix(in oklab, var(--foreground) 32%, transparent),
+        0 0 0 1px color-mix(in oklab, var(--o-amber) 10%, transparent) inset;
+}
+
+.dark .mnav-island {
+    background: color-mix(in oklab, var(--card) 72%, transparent);
+}
+
+.mnav-line {
+    background: linear-gradient(90deg, #2563eb, #0d9488, #ea580c);
+}
+
+.mnav-tray {
+    border: 1px solid color-mix(in oklab, var(--foreground) 8%, var(--border));
+    background: color-mix(in oklab, var(--muted) 42%, transparent);
+}
+
+.mnav-link {
+    position: relative;
+    display: inline-flex;
+    cursor: pointer;
+    align-items: center;
+    gap: 0.3rem;
+    white-space: nowrap;
+    border-radius: 9999px;
+    padding: 0.4rem 0.7rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--foreground);
+    transition: background-color 180ms ease, color 180ms ease, box-shadow 180ms ease;
+}
+
+.mnav-link:hover {
+    background: color-mix(in oklab, var(--o-amber) 14%, transparent);
+}
+
+.mnav-link.is-active {
+    background: var(--background);
+    color: #c2410c;
+    box-shadow: 0 1px 0 color-mix(in oklab, var(--foreground) 6%, transparent);
+}
+
+.dark .mnav-link.is-active {
+    background: color-mix(in oklab, var(--card) 88%, transparent);
+    color: #fb923c;
+}
+
+.mnav-link:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--background), 0 0 0 4px color-mix(in oklab, var(--o-amber) 70%, transparent);
+}
+
+.mnav-icon {
+    display: inline-flex;
+    min-height: 2.5rem;
+    min-width: 2.5rem;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    border: 1px solid color-mix(in oklab, var(--foreground) 8%, var(--border));
+    background: color-mix(in oklab, var(--card) 80%, transparent);
+    color: var(--foreground);
+    transition: background-color 180ms ease, border-color 180ms ease;
+}
+
+.mnav-icon:hover {
+    border-color: color-mix(in oklab, var(--o-amber) 40%, var(--border));
+    background: color-mix(in oklab, var(--o-amber) 12%, transparent);
+}
+
+.mnav-panel {
+    border: 1px solid color-mix(in oklab, var(--o-amber) 22%, var(--border));
+    background: color-mix(in oklab, var(--card) 92%, transparent);
+    box-shadow:
+        0 22px 50px -22px color-mix(in oklab, var(--foreground) 34%, transparent),
+        0 0 0 1px color-mix(in oklab, var(--o-amber) 8%, transparent) inset;
+    backdrop-filter: blur(18px);
+}
