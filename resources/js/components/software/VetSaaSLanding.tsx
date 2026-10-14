@@ -16,6 +16,7 @@ import NoveltiesSection from '@/components/software/vetsaas/sections/NoveltiesSe
 import MobilePlanBar from '@/components/software/vetsaas/pricing/MobilePlanBar';
 import PricingSection from '@/components/software/vetsaas/pricing/PricingSection';
 import StatsBand from '@/components/software/vetsaas/sections/StatsBand';
+import { DEMO } from '@/components/software/vetsaas/data';
 import type { VetSaaSMarketingPayload, VetSaaSPurchaseProps } from '@/components/software/vetsaas/types';
 import { planCodigoFromSku } from '@/components/software/vetsaas/utils';
 import type { SoftwareSystem } from '@/marketplace/softwareCatalog';
@@ -41,6 +42,9 @@ export default function VetSaaSLanding({ system, marketing, showcaseClients, ...
     const clinics = marketing.clinics_display || 100;
     const clients = showcaseClients.length > 0 ? showcaseClients : marketing.clients;
     const reviews = marketing.reviews ?? [];
+    const demoUrl = system.demoUrl?.trim() || DEMO.url;
+    const demoUser = system.demoUser?.trim() || DEMO.user;
+    const demoPassword = system.demoPassword?.trim() || DEMO.password;
 
     const plans = useMemo(() => {
         const highlightsByCodigo = new Map(marketing.plans.map((p) => [p.codigo, p.highlights]));
@@ -53,7 +57,13 @@ export default function VetSaaSLanding({ system, marketing, showcaseClients, ...
     return (
         <VetSaaSMotionRoot>
             <div className="vs-landing relative">
-                <HeroSection clinics={clinics} clients={clients} />
+                <HeroSection
+                    clinics={clinics}
+                    clients={clients}
+                    demoUrl={demoUrl}
+                    demoUser={demoUser}
+                    demoPassword={demoPassword}
+                />
                 <StatsBand clinics={clinics} />
                 <ClientsSection clinics={clinics} clients={clients} />
                 <AiAssistantSection />

@@ -90,6 +90,16 @@ export const FAQS = [
         q: '¿Cómo lo activo?',
         a: 'Eliges Free o un plan de pago en Orvae, confirmas y entras a tu subdominio a crear la contraseña.',
     },
+    {
+        q: '¿Cómo pruebo la demo?',
+        a: 'Entra a demo.vetsaas.orvae.pe con el usuario y la contraseña que aparecen en esta página, junto al botón Probar la demo. Es una clínica de prueba con datos ficticios.',
+    },
 ] as const;
 
 export const PLAN_ORDER = ['free', 'starter', 'pro', 'clinica'] as const;
+
+export const DEMO = {
+    url: 'https://demo.vetsaas.orvae.pe/login',
+    user: 'demo@vetsaas.pe',
+    password: 'demo1234',
+} as const;

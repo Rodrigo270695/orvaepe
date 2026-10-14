@@ -1,15 +1,19 @@
 import type { VetSaaSShowcaseClient } from '@/components/software/VetSaaSClientsCarousel';
 
 import ClinicsProofBadge from './ClinicsProofBadge';
+import DemoCredentials from './DemoCredentials';
 import HeroStage from './HeroStage';
 import HeroTitle from './HeroTitle';
 
 type Props = {
     clinics: number;
     clients: VetSaaSShowcaseClient[];
+    demoUrl: string;
+    demoUser: string;
+    demoPassword: string;
 };
 
-export default function HeroSection({ clinics, clients }: Props) {
+export default function HeroSection({ clinics, clients, demoUrl, demoUser, demoPassword }: Props) {
     return (
         <section className="relative overflow-hidden bg-[#E7F6EF] text-[#06241C]">
             <div
@@ -51,12 +55,16 @@ export default function HeroSection({ clinics, clients }: Props) {
                             </span>
                         </a>
                         <a
-                            href="#comparar"
+                            href={demoUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
                             className="font-body inline-flex cursor-pointer rounded-xl border border-[#006D55] bg-white px-6 py-3.5 text-sm font-semibold text-[#006D55] transition-colors hover:bg-[#F3FBF7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#006D55]"
                         >
-                            Comparar planes
+                            Probar la demo
                         </a>
                     </div>
+
+                    <DemoCredentials url={demoUrl} user={demoUser} password={demoPassword} />
 
                     <ClinicsProofBadge clinics={clinics} clients={clients} />
                 </div>
