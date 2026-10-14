@@ -1,19 +1,22 @@
 import { usePlanTiers } from '@/components/software/vetsaas/pricing/usePlanTiers';
 import type { SoftwarePricingPlan } from '@/marketplace/softwareCatalog';
 
-import { COMPARISON } from '../data';
 import TallerSaaSReveal from '../TallerSaaSReveal';
-import type { TallerSaaSPurchaseProps } from '../types';
-import { planCodigoFromSku } from '../utils';
+import type { TallerSaaSMarketing, TallerSaaSPurchaseProps } from '../types';
+import { comparisonTable, planCodigoFromSku } from '../utils';
 import BillingToggle from './BillingToggle';
 import CheckoutBay from './CheckoutBay';
 import PlanCard from './PlanCard';
 
 type Props = TallerSaaSPurchaseProps & {
     plans: SoftwarePricingPlan[];
+    marketing: TallerSaaSMarketing | null;
 };
 
-export default function PricingSection({ plans, ...checkout }: Props) {
+export default function PricingSection({ plans, marketing, ...checkout }: Props) {
+    const table = comparisonTable(marketing);
+    const remoteByCodigo = new Map((marketing?.plans ?? []).map((plan) => [plan.codigo, plan]));
+
     const { period, setPeriod, canToggle, visiblePlans, activeKey } = usePlanTiers(
         plans,
         checkout.selectedPlanId,
@@ -66,6 +69,7 @@ export default function PricingSection({ plans, ...checkout }: Props) {
                             key={key}
                             title={title}
                             plan={plan}
+                            remote={remoteByCodigo.get(planCodigoFromSku(plan)) ?? null}
                             index={index}
                             active={activeKey === key}
                             featured={planCodigoFromSku(plan) === 'pro'}
@@ -83,22 +87,24 @@ export default function PricingSection({ plans, ...checkout }: Props) {
                             >
                                 <tr>
                                     <th className="px-4 py-3 font-semibold">Límite</th>
-                                    <th className="px-4 py-3 font-semibold">Gratis</th>
-                                    <th className="px-4 py-3 font-semibold">Básico</th>
-                                    <th className="px-4 py-3 font-semibold">Pro</th>
-                                    <th className="px-4 py-3 font-semibold">Experto</th>
+                                    {table.columns.map((column) => (
+                                        <th key={column.codigo} className="px-4 py-3 font-semibold">
+                                            {column.nombre}
+                                        </th>
+                                    ))}
                                 </tr>
                             </thead>
                             <tbody>
-                                {COMPARISON.map((row) => (
-                                    <tr key={row.label} className="border-t" style={{ borderColor: 'var(--ts-line)' }}>
+                                {table.rows.map((row) => (
+                                    <tr key={row.key} className="border-t" style={{ borderColor: 'var(--ts-line)' }}>
                                         <td className="px-4 py-3" style={{ color: 'var(--ts-muted)' }}>
                                             {row.label}
                                         </td>
-                                        <td className="px-4 py-3">{row.free}</td>
-                                        <td className="px-4 py-3">{row.basico}</td>
-                                        <td className="px-4 py-3">{row.pro}</td>
-                                        <td className="px-4 py-3">{row.experto}</td>
+                                        {table.columns.map((column) => (
+                                            <td key={column.codigo} className="px-4 py-3 tabular-nums">
+                                                {row.values[column.codigo] ?? '—'}
+                                            </td>
+                                        ))}
                                     </tr>
                                 ))}
                             </tbody>

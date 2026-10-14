@@ -23,6 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
         then: function (): void {
             Route::middleware('api')->group(base_path('routes/whatsapp_cloud.php'));
+            Route::middleware('api')->group(base_path('routes/integrations.php'));
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {

@@ -88,8 +88,8 @@ return [
     /*
     | Integración ORVAE -> TallerSaaS (provisión de taller tras pago).
     | Mismo contrato que "vetsaas": endpoint /api/internal/saas/{provision,renew}
-    | firmado con HMAC-SHA256. TallerSaaS aún no expone showcase/marketing
-    | públicos, por eso esas dos claves quedan en null hasta que existan.
+    | firmado con HMAC-SHA256. marketing_url = GET /api/public/tallersaas/plans
+    | (si queda vacío se deduce de provision_url).
     */
     'tallersaas' => [
         'enabled' => env('TALLERSAAS_PROVISIONING_ENABLED', false),

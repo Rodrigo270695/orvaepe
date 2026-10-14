@@ -18,6 +18,27 @@ export type TallerSaaSPurchaseProps = {
     selectionPriceCaption?: string;
 };
 
+/** Planes y features que vienen del panel de TallerSaaS (null si no responde y no hay copia). */
+export type TallerSaaSMarketingPlan = {
+    codigo: string;
+    nombre: string;
+    descripcion: string | null;
+    badge: string | null;
+    trial_days: number;
+    highlights: string[];
+    features: Record<string, number | boolean | string | null>;
+};
+
+export type TallerSaaSMarketing = {
+    plans: TallerSaaSMarketingPlan[];
+    comparison: {
+        key: string;
+        label: string;
+        values: Record<string, string>;
+    }[];
+};
+
 export type TallerSaaSLandingProps = TallerSaaSPurchaseProps & {
     system: SoftwareSystem;
+    marketing?: TallerSaaSMarketing | null;
 };

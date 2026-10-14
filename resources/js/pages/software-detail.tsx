@@ -18,6 +18,7 @@ import VetSaaSLanding, {
     type VetSaaSMarketingPayload,
 } from '@/components/software/VetSaaSLanding';
 import TallerSaaSLanding from '@/components/software/tallersaas/TallerSaaSLanding';
+import type { TallerSaaSMarketing } from '@/components/software/tallersaas/types';
 import GeometricBackground from '@/components/welcome/GeometricBackground';
 import ScrollReveal from '@/components/welcome/ScrollReveal';
 import ScrollToTopButton from '@/components/welcome/ScrollToTopButton';
@@ -102,6 +103,7 @@ type SoftwareDetailPageProps = {
     paypalSimulateCheckout?: boolean;
     vetsaasShowcaseClients?: VetSaaSShowcaseClient[];
     vetsaasMarketing?: VetSaaSMarketingPayload | null;
+    tallersaasMarketing?: TallerSaaSMarketing | null;
 };
 
 export default function SoftwareDetail() {
@@ -121,6 +123,7 @@ export default function SoftwareDetail() {
         paypalSimulateCheckout: paypalSimulateCheckoutProp,
         vetsaasShowcaseClients = [],
         vetsaasMarketing = null,
+        tallersaasMarketing = null,
     } = page.props;
     const mercadoPagoEnabled = Boolean(mercadoPagoEnabledProp);
     const paypalSimulateCheckout = Boolean(paypalSimulateCheckoutProp);
@@ -785,6 +788,7 @@ export default function SoftwareDetail() {
             >
                 <TallerSaaSLanding
                     system={system}
+                    marketing={tallersaasMarketing}
                     selectedPlan={selectedPlan}
                     selectedPlanId={selectedPlanId}
                     onSelectPlanId={setSelectedPlanId}

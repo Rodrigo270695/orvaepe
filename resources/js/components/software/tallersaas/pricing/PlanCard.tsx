@@ -1,20 +1,24 @@
 import type { SoftwarePricingPlan } from '@/marketplace/softwareCatalog';
 
 import TallerSaaSReveal from '../TallerSaaSReveal';
+import type { TallerSaaSMarketingPlan } from '../types';
 import { planMeta } from '../utils';
 import PriceTag from './PriceTag';
 
 type Props = {
     title: string;
     plan: SoftwarePricingPlan;
+    remote: TallerSaaSMarketingPlan | null;
     index: number;
     active: boolean;
     featured: boolean;
     onChoose: () => void;
 };
 
-export default function PlanCard({ title, plan, index, active, featured, onChoose }: Props) {
+export default function PlanCard({ title, plan, remote, index, active, featured, onChoose }: Props) {
     const meta = planMeta(plan);
+    const highlights = remote?.highlights.length ? remote.highlights : meta.highlights;
+    const trialDays = remote ? remote.trial_days : meta.trial_days;
 
     return (
         <TallerSaaSReveal delay={index * 0.08} className="h-full">
@@ -49,9 +53,11 @@ export default function PlanCard({ title, plan, index, active, featured, onChoos
                     <PriceTag plan={plan} featured={featured} />
                 </div>
 
-                <p className="mt-4 text-xs" style={{ color: 'var(--ts-ember)' }}>
-                    {meta.trial_days} días de prueba
-                </p>
+                {trialDays > 0 ? (
+                    <p className="mt-4 text-xs" style={{ color: 'var(--ts-ember)' }}>
+                        {trialDays} días de prueba
+                    </p>
+                ) : null}
 
                 <button
                     type="button"
@@ -72,7 +78,7 @@ export default function PlanCard({ title, plan, index, active, featured, onChoos
                 </button>
 
                 <ul className="mt-6 space-y-2 text-sm" style={{ color: 'var(--ts-muted)' }}>
-                    {meta.highlights.map((item) => (
+                    {highlights.map((item) => (
                         <li key={item} className="flex gap-2">
                             <span aria-hidden style={{ color: 'var(--ts-ember)' }}>
                                 /

@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Marketing;
 
 use App\Http\Controllers\Controller;
 use App\Models\CatalogProduct;
+use App\Services\Checkout\TallerSaaSMarketingClient;
 use App\Services\Checkout\VetSaaSMarketingClient;
 use App\Services\Checkout\VetSaaSShowcaseClient;
-use App\Support\MarketingSoftwareCatalogPresenter;
+use App\Support\Marketing\TallerSaaSSoftware;
 use App\Support\Marketing\VetSaaSSoftware;
+use App\Support\MarketingSoftwareCatalogPresenter;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -20,6 +22,7 @@ class MarketingSoftwareDetailController extends Controller
         string $system,
         VetSaaSShowcaseClient $showcaseClient,
         VetSaaSMarketingClient $marketingClient,
+        TallerSaaSMarketingClient $tallerMarketingClient,
     ): Response {
         $saleModels = MarketingSoftwareCatalogPresenter::OWN_SOFTWARE_SALE_MODELS;
 
@@ -60,6 +63,9 @@ class MarketingSoftwareDetailController extends Controller
                 : [],
             'vetsaasMarketing' => $isVetsaas
                 ? $marketingClient->payload()
+                : null,
+            'tallersaasMarketing' => TallerSaaSSoftware::isProduct($product)
+                ? $tallerMarketingClient->payload()
                 : null,
         ]);
     }

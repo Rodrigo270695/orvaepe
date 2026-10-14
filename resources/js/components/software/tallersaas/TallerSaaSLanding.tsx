@@ -14,7 +14,7 @@ import type { TallerSaaSLandingProps } from './types';
 import './tallersaas-landing.css';
 
 export default function TallerSaaSLanding(props: TallerSaaSLandingProps) {
-    const { system, ...purchase } = props;
+    const { system, marketing = null, ...purchase } = props;
     const demoUrl = system.demoUrl?.trim() || DEMO.url;
     const demoUser = system.demoUser?.trim() || DEMO.user;
     const demoPassword = system.demoPassword?.trim() || DEMO.password;
@@ -27,7 +27,7 @@ export default function TallerSaaSLanding(props: TallerSaaSLandingProps) {
                 <DualBay />
                 <ModulesBay />
                 <RadioSection />
-                <PricingSection plans={system.pricingPlans} {...purchase} />
+                <PricingSection plans={system.pricingPlans} marketing={marketing} {...purchase} />
                 <FaqSection whatsappHref={purchase.consultationWhatsAppHref} />
                 <ClosingCta
                     whatsappHref={purchase.consultationWhatsAppHref}

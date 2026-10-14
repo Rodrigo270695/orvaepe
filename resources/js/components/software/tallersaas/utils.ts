@@ -1,6 +1,27 @@
 import type { SoftwarePricingPlan } from '@/marketplace/softwareCatalog';
 
-import { PLAN_META, PLAN_ORDER, type TallerPlanCodigo } from './data';
+import { COMPARISON, PLAN_META, PLAN_ORDER, type TallerPlanCodigo } from './data';
+import type { TallerSaaSMarketing } from './types';
+
+export type ComparisonTable = {
+    columns: { codigo: string; nombre: string }[];
+    rows: { key: string; label: string; values: Record<string, string> }[];
+};
+
+/** Tabla de límites: datos del panel de TallerSaaS si llegaron; si no, la copia fija de data.ts. */
+export function comparisonTable(marketing: TallerSaaSMarketing | null | undefined): ComparisonTable {
+    if (marketing && marketing.plans.length > 0 && marketing.comparison.length > 0) {
+        return {
+            columns: marketing.plans.map((plan) => ({ codigo: plan.codigo, nombre: plan.nombre })),
+            rows: marketing.comparison,
+        };
+    }
+
+    return {
+        columns: PLAN_ORDER.map((codigo) => ({ codigo, nombre: PLAN_META[codigo].nombre })),
+        rows: COMPARISON.map(({ label, ...values }) => ({ key: label, label, values })),
+    };
+}
 
 export function planCodigoFromSku(plan: SoftwarePricingPlan): TallerPlanCodigo {
     const cleaned = (plan.planCode ?? '')
