@@ -7,6 +7,7 @@ namespace App\Services\Checkout;
 use App\Models\Notification;
 use App\Models\User;
 use App\Services\Notifications\NotificationSender;
+use App\Support\Checkout\SaasCatalogSku;
 use App\Support\WhatsAppPhoneNormalizer;
 
 /**
@@ -117,7 +118,7 @@ final class SaasExistingAccountNotifier
 
         foreach ($adminUsers as $admin) {
             $adminTo = $this->resolveWhatsAppToFromUser($admin)
-                ?: WhatsAppPhoneNormalizer::toUltraMsgTo((string) config('openwa.admin_notification_number'));
+                ?: WhatsAppPhoneNormalizer::toUltraMsgTo((string) config('openwa_lines.admin_notification_number'));
 
             Notification::query()->create([
                 'user_id' => $admin->id,
@@ -173,7 +174,7 @@ final class SaasExistingAccountNotifier
         string $loginEmail,
     ): array {
         $isVetsaas = $productKey === 'vetsaas' || $productKey === 'sendsaas';
-        $productLabel = \App\Support\Checkout\SaasCatalogSku::productLabel($productKey);
+        $productLabel = SaasCatalogSku::productLabel($productKey);
         $subject = 'Ya tienes una cuenta '.$productLabel.' con ORVAE';
 
         $subdomainLine = $tenantSlug !== null && $tenantSlug !== ''

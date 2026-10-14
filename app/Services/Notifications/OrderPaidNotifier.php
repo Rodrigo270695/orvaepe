@@ -211,7 +211,7 @@ final class OrderPaidNotifier
             // SaaS: no pedir "carga de licencias" por WhatsApp; la provisión es automática.
             if (! $saasOnly) {
                 $adminTo = $deduper->resolveFromUser($admin)
-                    ?: WhatsAppPhoneNormalizer::toUltraMsgTo((string) config('openwa.admin_notification_number'));
+                    ?: WhatsAppPhoneNormalizer::toUltraMsgTo((string) config('openwa_lines.admin_notification_number'));
 
                 [$to, $skipWa] = $deduper->claim($adminTo);
 

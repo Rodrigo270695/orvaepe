@@ -70,7 +70,7 @@ class NotificationSender
         }
 
         if (! $to && str_ends_with($notification->type, '.admin')) {
-            $adminFromEnv = trim((string) config('openwa.admin_notification_number'));
+            $adminFromEnv = trim((string) config('openwa_lines.admin_notification_number'));
             if ($adminFromEnv !== '') {
                 $to = WhatsAppPhoneNormalizer::toUltraMsgTo($adminFromEnv);
             }

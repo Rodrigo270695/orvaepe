@@ -1,7 +1,9 @@
 <?php
 
+use App\Models\Notification;
 use App\Models\OpenWaLine;
 use App\Models\User;
+use App\Services\Notifications\NotificationSender;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
@@ -220,6 +222,86 @@ test('un invitado no puede entrar al panel', function () {
     auth()->logout();
 
     $this->get(route('panel.operacion-openwa.index'))->assertRedirect();
+});
+
+test('la primera línea creada queda marcada para notificaciones', function () {
+    fakeOpenWa([
+        'GET /api/sessions' => [],
+        'POST /api/sessions' => owaSession(),
+    ]);
+
+    $this->post(route('panel.operacion-openwa.store'), [
+        'nombre' => 'ORVAE Ventas',
+        'session_name' => 'orvae-ventas',
+    ])->assertRedirect();
+
+    expect(OpenWaLine::query()->sole()->envia_notificaciones)->toBeTrue();
+});
+
+test('marcar una línea para notificaciones desmarca las demás', function () {
+    $old = makeLine(['envia_notificaciones' => true]);
+    $new = makeLine(['nombre' => 'Cobros', 'session_name' => 'orvae-cobros', 'openwa_session_id' => 'sess-2']);
+
+    $this->put(route('panel.operacion-openwa.update', $new), [
+        'nombre' => 'Cobros',
+        'envia_notificaciones' => true,
+    ])->assertRedirect();
+
+    expect($old->fresh()->envia_notificaciones)->toBeFalse()
+        ->and($new->fresh()->envia_notificaciones)->toBeTrue();
+});
+
+test('las notificaciones de WhatsApp salen por la línea marcada', function () {
+    makeLine(['nombre' => 'Otra', 'session_name' => 'orvae-otra', 'openwa_session_id' => 'sess-otra', 'status' => 'ready']);
+    makeLine(['status' => 'ready', 'envia_notificaciones' => true]);
+    fakeOpenWa([
+        'POST /api/sessions/sess-uuid-1/messages/send-text' => ['messageId' => 'msg-1'],
+    ]);
+
+    $notification = Notification::query()->create([
+        'user_id' => auth()->id(),
+        'type' => 'order.paid.admin',
+        'channel' => 'whatsapp',
+        'subject' => 'Nueva compra',
+        'message' => 'Pedido pagado',
+        'data' => ['whatsapp_to' => '976709811'],
+        'status' => 'pending',
+    ]);
+
+    app(NotificationSender::class)->send($notification);
+
+    expect($notification->fresh())->status->toBe('sent');
+    Http::assertSent(fn (Request $r) => str_ends_with($r->url(), '/sess-uuid-1/messages/send-text')
+        && $r['chatId'] === '51976709811@c.us'
+        && $r['text'] === "Nueva compra\n\nPedido pagado");
+    Http::assertNotSent(fn (Request $r) => str_contains($r->url(), 'sess-otra'));
+});
+
+test('si la línea de notificaciones no está conectada la notificación falla con un mensaje claro', function () {
+    makeLine(['envia_notificaciones' => true]);
+    fakeOpenWa([
+        'GET /api/sessions/sess-uuid-1' => owaSession(['status' => 'disconnected']),
+    ]);
+
+    $notification = Notification::query()->create([
+        'user_id' => auth()->id(),
+        'type' => 'order.paid.admin',
+        'channel' => 'whatsapp',
+        'message' => 'Pedido pagado',
+        'data' => ['whatsapp_to' => '976709811'],
+        'status' => 'pending',
+    ]);
+
+    app(NotificationSender::class)->send($notification);
+
+    expect($notification->fresh())
+        ->status->toBe('failed')
+        ->error->toContain('no está conectada');
+    Http::assertNotSent(fn (Request $r) => str_contains($r->url(), 'send-text'));
+});
+
+test('la ruta vieja del módulo WhatsApp redirige a OpenWA', function () {
+    $this->get('/panel/operacion-whatsapp')->assertRedirect('/panel/operacion-openwa');
 });
 
 function makeLineId(): string

@@ -3,7 +3,6 @@
 use App\Models\Subscription;
 use App\Services\Access\SubscriptionEntitlementSyncService;
 use App\Services\Notifications\ExpiringAccessNotifier;
-use App\Services\OpenWa\PlatformWhatsAppSessionSync;
 use App\Services\Payments\CulqiClient;
 use App\Services\Payments\MercadoPagoClient;
 use App\Services\Payments\PayPalClient;
@@ -77,12 +76,12 @@ Artisan::command('openwa:test-send', function (OrvaeWhatsAppSender $sender): int
         $status = $sender->status();
         $this->line('Estado: '.$status['detail']);
 
-        $toRaw = (string) config('openwa.admin_notification_number', '976709811');
+        $toRaw = (string) config('openwa_lines.admin_notification_number', '976709811');
         $message = 'Prueba ORVAE por OpenWA - '.now()->format('Y-m-d H:i:s');
 
         $sender->sendText($toRaw, $message);
 
-        $via = $sender->prefersOpenWa() ? 'OpenWA' : 'UltraMsg';
+        $via = $sender->usesOpenWa() ? 'OpenWA' : 'UltraMsg';
         $this->info('Mensaje de prueba enviado vía '.$via.'.');
         $this->line('Destino: '.$toRaw);
 
@@ -90,41 +89,13 @@ Artisan::command('openwa:test-send', function (OrvaeWhatsAppSender $sender): int
     } catch (Throwable $e) {
         $this->error('Fallo al enviar: '.$e->getMessage());
 
-        if (! (bool) config('openwa.enabled')) {
-            $this->warn('Agrega OPENWA_ENABLED=true y OPENWA_API_KEY en /var/www/orvaepe/.env');
+        if (! $sender->usesOpenWa()) {
+            $this->warn('Agrega ORVAE_OPENWA_ENABLED=true y ORVAE_OPENWA_API_KEY en /var/www/orvaepe/.env');
         }
 
         return 1;
     }
-})->purpose('Envía WhatsApp de prueba (OpenWA; UltraMsg solo si OPENWA_ENABLED=false)');
-
-Artisan::command('openwa:reset-platform', function (PlatformWhatsAppSessionSync $sync): int {
-    if (! (bool) config('openwa.enabled')) {
-        $this->error('OPENWA_ENABLED=false. Actívalo en .env primero.');
-
-        return 1;
-    }
-
-    try {
-        $session = $sync->reset();
-    } catch (Throwable $e) {
-        $this->error('Fallo al reiniciar: '.$e->getMessage());
-
-        return 1;
-    }
-
-    if ($session === null) {
-        $this->error('No se pudo reiniciar. Revisa OPENWA_API_KEY / OPENWA_API_URL.');
-
-        return 1;
-    }
-
-    $this->info('Sesión reiniciada: '.$session->openwa_session_name.' ('.$session->openwa_session_id.')');
-    $this->line('Estado: '.$session->status);
-    $this->comment('Entra al panel → Vincular WhatsApp y escanea el QR.');
-
-    return 0;
-})->purpose('Reinicia la sesión OpenWA de plataforma Orvae (borra/recrea para nuevo QR)');
+})->purpose('Envía WhatsApp de prueba por la línea OpenWA de notificaciones (UltraMsg si ORVAE_OPENWA_ENABLED=false)');
 
 Artisan::command('ultramsg:test-send', function (UltraMsgClient $ultraMsg): int {
     try {

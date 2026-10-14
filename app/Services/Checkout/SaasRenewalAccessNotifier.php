@@ -8,6 +8,7 @@ use App\Models\Notification;
 use App\Models\Order;
 use App\Models\User;
 use App\Services\Notifications\NotificationSender;
+use App\Support\Checkout\SaasCatalogSku;
 use App\Support\WhatsAppPhoneNormalizer;
 
 /**
@@ -37,7 +38,7 @@ final class SaasRenewalAccessNotifier
             return;
         }
 
-        $productLabel = \App\Support\Checkout\SaasCatalogSku::productLabel($productKey);
+        $productLabel = SaasCatalogSku::productLabel($productKey);
         $subject = match ($productKey) {
             'vetsaas' => 'Tu plan VetSaaS fue renovado',
             'sendsaas' => 'Tu plan SendSaaS fue renovado',
@@ -146,7 +147,7 @@ final class SaasRenewalAccessNotifier
 
         foreach ($adminUsers as $admin) {
             $adminTo = $this->resolveWhatsAppToFromUser($admin)
-                ?: WhatsAppPhoneNormalizer::toUltraMsgTo((string) config('openwa.admin_notification_number'));
+                ?: WhatsAppPhoneNormalizer::toUltraMsgTo((string) config('openwa_lines.admin_notification_number'));
 
             Notification::query()->create([
                 'user_id' => $admin->id,

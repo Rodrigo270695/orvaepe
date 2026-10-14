@@ -139,7 +139,7 @@ final class SaasProvisionAccessNotifier
         WhatsAppRecipientDeduper $deduper,
         bool $customerWhatsAppSent,
     ): void {
-        $productLabel = \App\Support\Checkout\SaasCatalogSku::productLabel($productKey);
+        $productLabel = SaasCatalogSku::productLabel($productKey);
         $subject = "Acceso {$productLabel} provisionado – {$order->order_number}";
 
         $subdomainLine = $tenantSlug !== null && $tenantSlug !== ''
@@ -157,8 +157,8 @@ final class SaasProvisionAccessNotifier
             .$subdomainLine
             .$customerWaLine
             .'👤 Usuario login: '.$loginEmail."\n"
-            ."El enlace de bienvenida se envió al cliente (correo"
-            .($customerWhatsAppSent ? ' y WhatsApp' : '').").";
+            .'El enlace de bienvenida se envió al cliente (correo'
+            .($customerWhatsAppSent ? ' y WhatsApp' : '').').';
 
         $data = $this->buildData($order, $loginUrl, $tenantSlug, $loginEmail, null);
         unset($data['temporary_password'], $data['login_url']);
@@ -184,7 +184,7 @@ final class SaasProvisionAccessNotifier
 
             $adminTo = WhatsAppPhoneNormalizer::toUltraMsgTo((string) $admin->phone)
                 ?: WhatsAppPhoneNormalizer::toUltraMsgTo((string) ($admin->profile?->phone ?? ''))
-                ?: WhatsAppPhoneNormalizer::toUltraMsgTo((string) config('openwa.admin_notification_number'));
+                ?: WhatsAppPhoneNormalizer::toUltraMsgTo((string) config('openwa_lines.admin_notification_number'));
 
             [$to, $skipWa] = $deduper->claim($adminTo);
 
@@ -261,7 +261,7 @@ final class SaasProvisionAccessNotifier
     ): array {
         $isVetsaas = $productKey === 'vetsaas';
         $isSendsaas = $productKey === 'sendsaas';
-        $productLabel = \App\Support\Checkout\SaasCatalogSku::productLabel($productKey);
+        $productLabel = SaasCatalogSku::productLabel($productKey);
         $subject = match ($productKey) {
             'vetsaas' => 'Tu clínica VetSaaS está lista',
             'sendsaas' => 'Tu empresa SendSaaS está lista',

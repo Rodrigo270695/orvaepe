@@ -212,7 +212,7 @@ final class ExpiringAccessNotifier
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     private function dispatchToAdmins(string $type, string $subject, string $message, array $data): int
     {
@@ -224,7 +224,7 @@ final class ExpiringAccessNotifier
         $sent = 0;
         foreach ($admins as $admin) {
             $toWhatsApp = $this->resolveWhatsAppToFromUser($admin)
-                ?: WhatsAppPhoneNormalizer::toUltraMsgTo((string) config('openwa.admin_notification_number'));
+                ?: WhatsAppPhoneNormalizer::toUltraMsgTo((string) config('openwa_lines.admin_notification_number'));
 
             $whatsAppNotification = Notification::query()->create([
                 'user_id' => $admin->id,

@@ -1,7 +1,6 @@
 import { MessageCircle, Plus, Server } from 'lucide-react';
 import { useState } from 'react';
 
-import { WhatsappTestMessageDialog } from '@/components/operacion/whatsapp/WhatsappTestMessageDialog';
 import { NeuButtonRaised } from '@/components/ui/neu-button-raised';
 import { NeuCardRaised } from '@/components/ui/neu-card-raised';
 
@@ -9,6 +8,7 @@ import { OpenWaConfirmDialog } from './OpenWaConfirmDialog';
 import { OpenWaLineCard } from './OpenWaLineCard';
 import { OpenWaLineFormDialog } from './OpenWaLineFormDialog';
 import { OpenWaQrDialog } from './OpenWaQrDialog';
+import { OpenWaTestMessageDialog } from './OpenWaTestMessageDialog';
 import type { OpenWaLine, OpenWaPageProps } from './types';
 
 type Confirm = { kind: 'logout' | 'delete'; line: OpenWaLine } | null;
@@ -35,7 +35,9 @@ export default function OperacionOpenWaIndex({ configured, gatewayHost, products
                             <h1 className="text-sm font-bold">OpenWA · Líneas de WhatsApp</h1>
                             <p className="mt-1 text-[11px] text-muted-foreground">
                                 Vincula los números de ORVAE escaneando el QR desde aquí y define qué
-                                SaaS atiende cada uno.
+                                SaaS atiende cada uno. Las notificaciones de ORVAE (accesos, pagos,
+                                vencimientos y alertas admin) salen por la línea marcada como
+                                «Notificaciones».
                             </p>
                             {gatewayHost ? (
                                 <p className="mt-2 inline-flex items-center gap-1.5 text-[10px] text-muted-foreground">
@@ -102,12 +104,15 @@ export default function OperacionOpenWaIndex({ configured, gatewayHost, products
 
             <OpenWaQrDialog line={qrLine} onOpenChange={(open) => !open && setQrLine(null)} />
 
-            <WhatsappTestMessageDialog
-                open={testLine !== null}
-                onOpenChange={(open) => !open && setTestLine(null)}
-                defaultPhone={testLine?.phone ?? null}
-                testUrl={testLine?.routes.test ?? ''}
-            />
+            {testLine ? (
+                <OpenWaTestMessageDialog
+                    key={testLine.id}
+                    open
+                    onOpenChange={(open) => !open && setTestLine(null)}
+                    defaultPhone={testLine.phone}
+                    testUrl={testLine.routes.test}
+                />
+            ) : null}
 
             {confirm ? (
                 <OpenWaConfirmDialog

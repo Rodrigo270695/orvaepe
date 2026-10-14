@@ -4,26 +4,27 @@ declare(strict_types=1);
 
 namespace App\Services\WhatsApp;
 
-use App\Services\OpenWa\OpenWaClient;
-use App\Services\OpenWa\PlatformWhatsAppMessenger;
+use App\Services\OpenWaLines\OpenWaLineManager;
+use App\Services\OpenWaLines\OpenWaLinesClient;
 use App\Support\WhatsApp\WhatsAppChatId;
 use App\Support\WhatsAppPhoneNormalizer;
 use RuntimeException;
 
 /**
- * Envío unificado: OpenWA cuando está habilitado; UltraMsg solo si OPENWA_ENABLED=false.
+ * Notificaciones de ORVAE: salen por la línea OpenWA marcada para notificaciones (Panel → Ops → OpenWA);
+ * UltraMsg solo si ORVAE_OPENWA_ENABLED=false.
  */
 final class OrvaeWhatsAppSender
 {
     public function __construct(
-        private readonly OpenWaClient $openWaClient,
-        private readonly PlatformWhatsAppMessenger $openWa,
+        private readonly OpenWaLinesClient $openWa,
+        private readonly OpenWaLineManager $lines,
         private readonly UltraMsgClient $ultraMsg,
     ) {}
 
-    public function prefersOpenWa(): bool
+    public function usesOpenWa(): bool
     {
-        return $this->openWaClient->isConfigured() && $this->openWa->isReady();
+        return (bool) config('openwa_lines.enabled');
     }
 
     /**
@@ -31,64 +32,61 @@ final class OrvaeWhatsAppSender
      */
     public function status(): array
     {
-        if (! (bool) config('openwa.enabled')) {
+        if (! $this->usesOpenWa()) {
             return [
                 'provider' => 'ultramsg',
-                'detail' => 'OPENWA_ENABLED=false — usando UltraMsg (legacy).',
+                'detail' => 'ORVAE_OPENWA_ENABLED=false — usando UltraMsg (legacy).',
             ];
         }
 
-        if (! $this->openWaClient->isConfigured()) {
+        if (! $this->openWa->isConfigured()) {
             return [
                 'provider' => 'none',
-                'detail' => 'OPENWA_ENABLED=true pero falta OPENWA_API_KEY en .env.',
+                'detail' => 'ORVAE_OPENWA_ENABLED=true pero falta ORVAE_OPENWA_API_KEY en .env.',
             ];
         }
 
-        if ($this->openWa->isReady()) {
+        $line = $this->lines->notificationLine();
+        if ($line === null) {
             return [
-                'provider' => 'openwa',
-                'detail' => 'Sesión OpenWA conectada ('.config('openwa.platform_session_name').').',
+                'provider' => 'openwa_pending',
+                'detail' => 'No hay líneas OpenWA. Crea una en Panel → Ops → OpenWA y vincúlala con el QR.',
             ];
         }
 
         return [
-            'provider' => 'openwa_pending',
-            'detail' => 'OpenWA configurado pero sin sesión activa. Panel → Ops → WhatsApp → vincular QR.',
+            'provider' => $line->isReady() ? 'openwa' : 'openwa_pending',
+            'detail' => 'Línea «'.$line->nombre.'» ('.$line->session_name.'): '.$line->status.'.',
         ];
     }
 
     public function sendText(string $phone, string $message): void
     {
-        if ((bool) config('openwa.enabled')) {
-            if (! $this->openWaClient->isConfigured()) {
-                throw new RuntimeException(
-                    'OpenWA habilitado pero OPENWA_API_KEY no está definida en .env del servidor.',
-                );
+        if (! $this->usesOpenWa()) {
+            $to = WhatsAppPhoneNormalizer::toUltraMsgTo($phone);
+            if ($to === null || $to === '') {
+                throw new RuntimeException('Número de WhatsApp inválido.');
             }
 
-            if (! $this->openWa->isReady()) {
-                throw new RuntimeException(
-                    'OpenWA configurado pero la sesión no está conectada. '
-                    .'Entra a Panel → Ops → WhatsApp, pulsa «Vincular WhatsApp» y escanea el QR.',
-                );
-            }
-
-            $chatId = WhatsAppChatId::fromPhone($phone);
-            if ($chatId === null) {
-                throw new RuntimeException('Número de WhatsApp inválido para OpenWA.');
-            }
-
-            $this->openWa->sendText($chatId, $message);
+            $this->ultraMsg->sendText($to, $message);
 
             return;
         }
 
-        $to = WhatsAppPhoneNormalizer::toUltraMsgTo($phone);
-        if ($to === null || $to === '') {
-            throw new RuntimeException('Número de WhatsApp inválido.');
+        if (! $this->openWa->isConfigured()) {
+            throw new RuntimeException('ORVAE_OPENWA_ENABLED=true pero ORVAE_OPENWA_API_KEY no está definida en .env del servidor.');
         }
 
-        $this->ultraMsg->sendText($to, $message);
+        $line = $this->lines->notificationLine();
+        if ($line === null) {
+            throw new RuntimeException('No hay líneas OpenWA para notificaciones. Crea una en Panel → Ops → OpenWA y vincúlala con el QR.');
+        }
+
+        $chatId = WhatsAppChatId::fromPhone($phone);
+        if ($chatId === null) {
+            throw new RuntimeException('Número de WhatsApp inválido para OpenWA.');
+        }
+
+        $this->lines->sendText($line, $chatId, $message);
     }
 }

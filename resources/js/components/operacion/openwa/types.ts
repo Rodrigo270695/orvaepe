@@ -23,6 +23,7 @@ export type OpenWaLine = {
     phone: string | null;
     push_name: string | null;
     productos: string[];
+    envia_notificaciones: boolean;
     connected_at: string | null;
     last_synced_at: string | null;
     last_error: string | null;

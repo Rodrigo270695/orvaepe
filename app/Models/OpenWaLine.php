@@ -26,6 +26,7 @@ class OpenWaLine extends Model
         'phone',
         'push_name',
         'productos',
+        'envia_notificaciones',
         'connected_at',
         'last_synced_at',
         'last_error',
@@ -34,12 +35,14 @@ class OpenWaLine extends Model
     protected $attributes = [
         'status' => 'created',
         'productos' => '[]',
+        'envia_notificaciones' => false,
     ];
 
     protected function casts(): array
     {
         return [
             'productos' => 'array',
+            'envia_notificaciones' => 'boolean',
             'connected_at' => 'datetime',
             'last_synced_at' => 'datetime',
         ];

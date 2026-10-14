@@ -51,6 +51,11 @@ class OpenWaLinesController extends Controller
             'productos' => array_values($data['productos'] ?? []),
         ]);
 
+        $this->applyNotificationFlag(
+            $line,
+            $request->boolean('envia_notificaciones') || OpenWaLine::query()->count() === 1,
+        );
+
         if ($client->isConfigured()) {
             try {
                 $manager->sync($line);
@@ -79,6 +84,8 @@ class OpenWaLinesController extends Controller
             'nombre' => $data['nombre'],
             'productos' => array_values($data['productos'] ?? []),
         ]);
+
+        $this->applyNotificationFlag($line, $request->boolean('envia_notificaciones'));
 
         return back()->with('toast', AdminFlashToast::success('Línea actualizada'));
     }
@@ -160,7 +167,17 @@ class OpenWaLinesController extends Controller
         return [
             'productos' => ['nullable', 'array'],
             'productos.*' => ['string', Rule::in(array_keys($this->products()))],
+            'envia_notificaciones' => ['nullable', 'boolean'],
         ];
+    }
+
+    private function applyNotificationFlag(OpenWaLine $line, bool $enabled): void
+    {
+        if ($enabled) {
+            OpenWaLine::query()->whereKeyNot($line->getKey())->update(['envia_notificaciones' => false]);
+        }
+
+        $line->forceFill(['envia_notificaciones' => $enabled])->save();
     }
 
     /**
@@ -177,6 +194,7 @@ class OpenWaLinesController extends Controller
             'phone' => $line->phone,
             'push_name' => $line->push_name,
             'productos' => $line->productos ?? [],
+            'envia_notificaciones' => $line->envia_notificaciones,
             'connected_at' => $line->connected_at?->toIso8601String(),
             'last_synced_at' => $line->last_synced_at?->toIso8601String(),
             'last_error' => $line->last_error,

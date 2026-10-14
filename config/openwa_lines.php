@@ -29,4 +29,13 @@ return [
         'foodsaas' => 'FoodSaaS',
     ],
 
+    /*
+    | Número al que llegan alertas admin (nueva compra, vencimientos) si el
+    | superadmin no tiene teléfono en BD. Perú: 9 dígitos o 51 + 9 dígitos.
+    */
+    'admin_notification_number' => env(
+        'ORVAE_WHATSAPP_ADMIN_NUMBER',
+        env('ULTRAMSG_ADMIN_NUMBER', '976709811'),
+    ),
+
 ];

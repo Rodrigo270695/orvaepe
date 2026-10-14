@@ -12,7 +12,6 @@ import {
     LayoutGrid,
     LifeBuoy,
     ListChecks,
-    MessageCircle,
     MessagesSquare,
     Package,
     PlugZap,
@@ -258,11 +257,6 @@ const adminSections: NavSidebarSection[] = [
                         title: 'Webhooks',
                         href: panelPath('operacion-webhooks'),
                         icon: PlugZap,
-                    },
-                    {
-                        title: 'WhatsApp',
-                        href: panelPath('operacion-whatsapp'),
-                        icon: MessageCircle,
                     },
                     {
                         title: 'WhatsApp API',

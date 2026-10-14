@@ -9,71 +9,10 @@ use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
 /**
- * Cliente HTTP para OpenWA ({@see https://www.open-wa.org/}).
+ * Cliente HTTP del OpenWA compartido con VetSaaS; solo envía mensajes de canales de tenants.
  */
 final class OpenWaClient
 {
-    public function isConfigured(): bool
-    {
-        return (bool) config('openwa.enabled')
-            && trim((string) config('openwa.api_key', '')) !== '';
-    }
-
-    /**
-     * @return list<array<string, mixed>>
-     */
-    public function listSessions(): array
-    {
-        $response = $this->request('get', '/api/sessions');
-
-        return is_array($response) ? $response : [];
-    }
-
-    /**
-     * @return array<string, mixed>|null
-     */
-    public function findSessionByName(string $name): ?array
-    {
-        foreach ($this->listSessions() as $session) {
-            if (is_array($session) && ($session['name'] ?? null) === $name) {
-                return $session;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    public function createSession(string $name): array
-    {
-        $response = $this->request('post', '/api/sessions', [
-            'name' => $name,
-            'config' => ['autoReconnect' => true],
-        ]);
-
-        if (! is_array($response)) {
-            throw new RuntimeException('OpenWA no devolvió sesión al crear.');
-        }
-
-        return $response;
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    public function getSession(string $sessionId): array
-    {
-        $response = $this->request('get', '/api/sessions/'.$sessionId);
-
-        if (! is_array($response)) {
-            throw new RuntimeException('Sesión OpenWA no encontrada: '.$sessionId);
-        }
-
-        return $response;
-    }
-
     /**
      * @return array<string, mixed>
      */
@@ -89,94 +28,6 @@ final class OpenWaClient
         }
 
         return $response;
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    public function startSession(string $sessionId): array
-    {
-        try {
-            $response = $this->request('post', '/api/sessions/'.$sessionId.'/start');
-        } catch (RuntimeException $e) {
-            // OpenWA responde 400 si la sesión ya está corriendo; no es un fallo real.
-            if ($this->isAlreadyStartedError($e->getMessage())) {
-                return $this->getSession($sessionId);
-            }
-
-            throw $e;
-        }
-
-        if (! is_array($response)) {
-            throw new RuntimeException('OpenWA no pudo iniciar la sesión.');
-        }
-
-        return $response;
-    }
-
-    private function isAlreadyStartedError(string $message): bool
-    {
-        $normalized = strtolower($message);
-
-        return str_contains($normalized, 'already started')
-            || str_contains($normalized, 'session is already');
-    }
-
-    public function isQrNotReadyYetError(string $message): bool
-    {
-        $normalized = strtolower($message);
-
-        return str_contains($normalized, 'qr code is not ready')
-            || str_contains($normalized, 'not ready yet');
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    public function getQrCode(string $sessionId): array
-    {
-        $response = $this->request('get', '/api/sessions/'.$sessionId.'/qr');
-
-        if (! is_array($response)) {
-            throw new RuntimeException('OpenWA no devolvió código QR.');
-        }
-
-        return $response;
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    public function stopSession(string $sessionId): array
-    {
-        $response = $this->request('post', '/api/sessions/'.$sessionId.'/stop');
-
-        if (! is_array($response)) {
-            throw new RuntimeException('OpenWA no confirmó la desconexión de WhatsApp.');
-        }
-
-        return $response;
-    }
-
-    /**
-     * Elimina la sesión remota (auth/QR) para poder recrearla limpia.
-     *
-     * @return array<string, mixed>|null
-     */
-    public function deleteSession(string $sessionId): ?array
-    {
-        try {
-            $response = $this->request('delete', '/api/sessions/'.$sessionId);
-
-            return is_array($response) ? $response : null;
-        } catch (RuntimeException $e) {
-            // Algunas versiones solo permiten stop; no bloqueamos el reset.
-            if (str_contains($e->getMessage(), 'OpenWA HTTP 404')) {
-                return null;
-            }
-
-            throw $e;
-        }
     }
 
     /**

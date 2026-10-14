@@ -114,9 +114,29 @@ final class OpenWaLineManager
         $line->delete();
     }
 
+    /**
+     * Línea marcada para notificaciones; si ninguna lo está, la primera conectada.
+     */
+    public function notificationLine(): ?OpenWaLine
+    {
+        return OpenWaLine::query()
+            ->orderByDesc('envia_notificaciones')
+            ->orderByRaw('case when status = ? then 0 else 1 end', [OpenWaLine::STATUS_READY])
+            ->orderBy('created_at')
+            ->first();
+    }
+
     public function sendText(OpenWaLine $line, string $chatId, string $text): void
     {
-        abort_unless($line->isReady() && $line->openwa_session_id, 422, 'La línea no está conectada.');
+        if (! $line->isReady()) {
+            $this->sync($line);
+        }
+
+        if (! $line->isReady() || ! $line->openwa_session_id) {
+            throw new OpenWaLinesException(
+                'La línea «'.$line->nombre.'» no está conectada. Entra a Panel → Ops → OpenWA y vincúlala con el QR.',
+            );
+        }
 
         $this->client->sendText($line->openwa_session_id, $chatId, $text);
     }

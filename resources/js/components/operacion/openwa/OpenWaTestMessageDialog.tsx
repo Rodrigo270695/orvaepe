@@ -1,9 +1,8 @@
 import { router, usePage } from '@inertiajs/react';
 import { Loader2, Send } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import AdminUnderlineLabel from '@/components/admin/form/admin-underline-label';
-import { NeuButtonRaised } from '@/components/ui/neu-button-raised';
 import {
     Dialog,
     DialogContent,
@@ -12,6 +11,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { NeuButtonRaised } from '@/components/ui/neu-button-raised';
 
 type Props = {
     open: boolean;
@@ -23,23 +23,18 @@ type Props = {
 const inputClass =
     'w-full border-0 border-b border-[var(--o-border2)] bg-transparent px-0 py-2 text-sm outline-none transition-colors focus:border-[var(--o-amber)]/60';
 
-export function WhatsappTestMessageDialog({
+export function OpenWaTestMessageDialog({
     open,
     onOpenChange,
     defaultPhone,
     testUrl,
 }: Props) {
     const errors = usePage().props.errors as Record<string, string> | undefined;
-    const [destinatario, setDestinatario] = useState('');
-    const [mensaje, setMensaje] = useState('');
+    const [destinatario, setDestinatario] = useState(defaultPhone ?? '976709811');
+    const [mensaje, setMensaje] = useState(
+        () => 'Prueba ORVAE por OpenWA — ' + new Date().toLocaleString('es-PE'),
+    );
     const [processing, setProcessing] = useState(false);
-
-    useEffect(() => {
-        if (open) {
-            setDestinatario(defaultPhone ?? '976709811');
-            setMensaje('Prueba ORVAE por OpenWA — ' + new Date().toLocaleString('es-PE'));
-        }
-    }, [open, defaultPhone]);
 
     const onSubmit = (event: React.FormEvent) => {
         event.preventDefault();
@@ -64,18 +59,17 @@ export function WhatsappTestMessageDialog({
                             Enviar mensaje de prueba
                         </DialogTitle>
                         <DialogDescription className="text-[11px]">
-                            Verifica que la sesión de Orvae puede enviar mensajes por
-                            WhatsApp.
+                            Verifica que esta línea puede enviar mensajes por WhatsApp.
                         </DialogDescription>
                     </DialogHeader>
 
                     <div className="space-y-4 py-4">
                         <div className="space-y-1">
-                            <AdminUnderlineLabel htmlFor="whatsapp-test-phone">
+                            <AdminUnderlineLabel htmlFor="openwa-test-phone">
                                 Número destino
                             </AdminUnderlineLabel>
                             <input
-                                id="whatsapp-test-phone"
+                                id="openwa-test-phone"
                                 type="tel"
                                 className={inputClass}
                                 value={destinatario}
@@ -96,11 +90,11 @@ export function WhatsappTestMessageDialog({
                         </div>
 
                         <div className="space-y-1">
-                            <AdminUnderlineLabel htmlFor="whatsapp-test-message">
+                            <AdminUnderlineLabel htmlFor="openwa-test-message">
                                 Mensaje
                             </AdminUnderlineLabel>
                             <textarea
-                                id="whatsapp-test-message"
+                                id="openwa-test-message"
                                 className={`${inputClass} min-h-[88px] resize-none`}
                                 value={mensaje}
                                 onChange={(e) => setMensaje(e.target.value)}

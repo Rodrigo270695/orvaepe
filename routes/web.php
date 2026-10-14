@@ -13,7 +13,6 @@ use App\Http\Controllers\Admin\LookupDocumentController;
 use App\Http\Controllers\Admin\NotificationsController;
 use App\Http\Controllers\Admin\OemLicenseDeliveriesController;
 use App\Http\Controllers\Admin\OpenWaLinesController;
-use App\Http\Controllers\Admin\PlatformWhatsAppController;
 use App\Http\Controllers\Admin\ShowcaseClientsController;
 use App\Http\Controllers\Admin\SubscriptionsController;
 use App\Http\Controllers\Admin\SunatBoletaResumenController;
@@ -556,18 +555,7 @@ Route::middleware(['auth', 'verified', 'client.profile.complete'])->group(functi
         Route::get('panel/operacion-webhooks', [WebhookEventsController::class, 'index'])
             ->name('panel.operacion-webhooks.index');
 
-        Route::get('panel/operacion-whatsapp', [PlatformWhatsAppController::class, 'index'])
-            ->name('panel.operacion-whatsapp.index');
-        Route::post('panel/operacion-whatsapp/sync', [PlatformWhatsAppController::class, 'sync'])
-            ->name('panel.operacion-whatsapp.sync');
-        Route::get('panel/operacion-whatsapp/qr', [PlatformWhatsAppController::class, 'qr'])
-            ->name('panel.operacion-whatsapp.qr');
-        Route::post('panel/operacion-whatsapp/reset', [PlatformWhatsAppController::class, 'reset'])
-            ->name('panel.operacion-whatsapp.reset');
-        Route::post('panel/operacion-whatsapp/logout', [PlatformWhatsAppController::class, 'logout'])
-            ->name('panel.operacion-whatsapp.logout');
-        Route::post('panel/operacion-whatsapp/test', [PlatformWhatsAppController::class, 'sendTest'])
-            ->name('panel.operacion-whatsapp.test');
+        Route::redirect('panel/operacion-whatsapp', '/panel/operacion-openwa');
 
         Route::get('panel/operacion-whatsapp-cloud', [WhatsAppCloudWebhooksController::class, 'index'])
             ->name('panel.operacion-whatsapp-cloud.index');

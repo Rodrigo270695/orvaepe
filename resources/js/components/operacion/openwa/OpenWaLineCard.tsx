@@ -1,4 +1,4 @@
-import { LogOut, Pencil, QrCode, Send, Trash2 } from 'lucide-react';
+import { Bell, LogOut, Pencil, QrCode, Send, Trash2 } from 'lucide-react';
 
 import { NeuButtonRaised } from '@/components/ui/neu-button-raised';
 
@@ -27,7 +27,14 @@ export function OpenWaLineCard({ line, products, configured, onLink, onTest, onE
                     <h2 className="truncate text-sm font-bold">{line.nombre}</h2>
                     <p className="font-mono text-[10px] text-muted-foreground">{line.session_name}</p>
                 </div>
-                <OpenWaStatusBadge status={line.status} />
+                <div className="flex flex-wrap items-center gap-1.5">
+                    {line.envia_notificaciones ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-[color-mix(in_oklab,var(--o-amber)_14%,transparent)] px-2 py-0.5 text-[10px] font-semibold">
+                            <Bell className="size-3" aria-hidden /> Notificaciones
+                        </span>
+                    ) : null}
+                    <OpenWaStatusBadge status={line.status} />
+                </div>
             </div>
 
             <dl className="grid gap-2 text-[11px]">

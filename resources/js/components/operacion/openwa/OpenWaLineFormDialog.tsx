@@ -40,10 +40,16 @@ function slugify(value: string): string {
 
 export function OpenWaLineFormDialog({ open, onOpenChange, line, products, storeUrl }: Props) {
     const editing = line !== null;
-    const form = useForm<{ nombre: string; session_name: string; productos: string[] }>({
+    const form = useForm<{
+        nombre: string;
+        session_name: string;
+        productos: string[];
+        envia_notificaciones: boolean;
+    }>({
         nombre: '',
         session_name: '',
         productos: [],
+        envia_notificaciones: false,
     });
 
     useEffect(() => {
@@ -55,6 +61,7 @@ export function OpenWaLineFormDialog({ open, onOpenChange, line, products, store
             nombre: line?.nombre ?? '',
             session_name: line?.session_name ?? '',
             productos: line?.productos ?? [],
+            envia_notificaciones: line?.envia_notificaciones ?? false,
         });
         form.clearErrors();
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -161,6 +168,21 @@ export function OpenWaLineFormDialog({ open, onOpenChange, line, products, store
                                 <p className="text-[11px] text-destructive">{form.errors.productos}</p>
                             ) : null}
                         </fieldset>
+
+                        <label className="flex cursor-pointer items-start gap-2.5 text-sm">
+                            <Checkbox
+                                className="mt-0.5"
+                                checked={form.data.envia_notificaciones}
+                                onCheckedChange={(v) => form.setData('envia_notificaciones', v === true)}
+                            />
+                            <span>
+                                Envía las notificaciones de ORVAE
+                                <span className="block text-[10px] text-muted-foreground">
+                                    Accesos, pagos, vencimientos y alertas admin. Solo una línea puede
+                                    tenerlo; al marcarla aquí se desmarca en las demás.
+                                </span>
+                            </span>
+                        </label>
                     </div>
 
                     <DialogFooter className="gap-2">
