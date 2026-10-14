@@ -642,6 +642,7 @@ export default function SoftwareDetail() {
     if (isVetsaasLanding && vetsaasMarketing) {
         return (
             <MarketingLayout
+                heroBehindNav
                 title={marketingSeo.vetsaas.title}
                 description={marketingSeo.vetsaas.description}
                 canonicalPath={`/software/${system.slug}`}
@@ -732,6 +733,7 @@ export default function SoftwareDetail() {
     if (isTallersaasLanding) {
         return (
             <MarketingLayout
+                heroBehindNav
                 title={marketingSeo.tallersaas.title}
                 description={marketingSeo.tallersaas.description}
                 canonicalPath={`/software/${system.slug}`}

@@ -21,6 +21,8 @@ type Props = {
     /** Imagen LCP de la página: se precarga con prioridad alta. */
     preloadImage?: string;
     hideAppearanceToggle?: boolean;
+    /** El hero de la página arranca detrás del navbar flotante (debe reservar ~5.5rem arriba). */
+    heroBehindNav?: boolean;
     children: ReactNode;
 };
 
@@ -38,6 +40,7 @@ export default function MarketingLayout({
     keywords,
     preloadImage,
     hideAppearanceToggle = false,
+    heroBehindNav = false,
     children,
 }: Props) {
     return (
@@ -62,7 +65,7 @@ export default function MarketingLayout({
             ) : null}
             <div className="min-h-screen overflow-x-clip bg-background text-foreground">
                 <MarketingUnifiedNavbar />
-                <div className="h-[5.5rem] shrink-0" aria-hidden />
+                {heroBehindNav ? null : <div className="h-[5.5rem] shrink-0" aria-hidden />}
                 {hideAppearanceToggle ? null : <AppearanceFloatingRailToggle />}
                 <main>{children}</main>
                 <WelcomeFooter />

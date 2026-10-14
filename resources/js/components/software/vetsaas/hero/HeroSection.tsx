@@ -20,7 +20,7 @@ export default function HeroSection({ clinics, clients }: Props) {
                 }}
                 aria-hidden
             />
-            <div className="relative mx-auto grid max-w-7xl items-center gap-14 px-5 pb-20 pt-12 sm:px-8 lg:min-h-[calc(100dvh-4.5rem)] lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:py-16">
+            <div className="relative mx-auto grid max-w-7xl items-center gap-14 px-5 pb-20 pt-[8.5rem] sm:px-8 lg:min-h-dvh lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:pb-16 lg:pt-[9.5rem]">
                 <div>
                     <p className="vs-fade-up inline-flex items-center gap-2 rounded-full border border-[#99D2BC] bg-white/80 px-3.5 py-1.5 text-xs font-semibold text-[#015743] shadow-sm">
                         <span className="relative flex size-2">

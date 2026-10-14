@@ -22,7 +22,7 @@ export default function HeroSection({ demoUrl, demoUser, demoPassword }: Props) 
                 aria-hidden
             />
 
-            <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-5 pb-20 pt-12 sm:px-8 lg:min-h-[calc(100dvh-4.5rem)] lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:py-16">
+            <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-5 pb-20 pt-[8.5rem] sm:px-8 lg:min-h-dvh lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:pb-16 lg:pt-[9.5rem]">
                 <div>
                     <p
                         className="ts-plate inline-flex items-center gap-2 rounded-sm border px-3 py-1 font-display text-xs font-extrabold tracking-[0.22em]"
