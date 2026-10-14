@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\LicenseKeysController;
 use App\Http\Controllers\Admin\LookupDocumentController;
 use App\Http\Controllers\Admin\NotificationsController;
 use App\Http\Controllers\Admin\OemLicenseDeliveriesController;
+use App\Http\Controllers\Admin\OpenWaLinesController;
 use App\Http\Controllers\Admin\PlatformWhatsAppController;
 use App\Http\Controllers\Admin\ShowcaseClientsController;
 use App\Http\Controllers\Admin\SubscriptionsController;
@@ -570,6 +571,21 @@ Route::middleware(['auth', 'verified', 'client.profile.complete'])->group(functi
 
         Route::get('panel/operacion-whatsapp-cloud', [WhatsAppCloudWebhooksController::class, 'index'])
             ->name('panel.operacion-whatsapp-cloud.index');
+
+        Route::get('panel/operacion-openwa', [OpenWaLinesController::class, 'index'])
+            ->name('panel.operacion-openwa.index');
+        Route::post('panel/operacion-openwa', [OpenWaLinesController::class, 'store'])
+            ->name('panel.operacion-openwa.store');
+        Route::put('panel/operacion-openwa/{line}', [OpenWaLinesController::class, 'update'])
+            ->name('panel.operacion-openwa.update');
+        Route::delete('panel/operacion-openwa/{line}', [OpenWaLinesController::class, 'destroy'])
+            ->name('panel.operacion-openwa.destroy');
+        Route::get('panel/operacion-openwa/{line}/connection', [OpenWaLinesController::class, 'connection'])
+            ->name('panel.operacion-openwa.connection');
+        Route::post('panel/operacion-openwa/{line}/logout', [OpenWaLinesController::class, 'logout'])
+            ->name('panel.operacion-openwa.logout');
+        Route::post('panel/operacion-openwa/{line}/test', [OpenWaLinesController::class, 'sendTest'])
+            ->name('panel.operacion-openwa.test');
 
         Route::get('panel/operacion-auditoria', [AuditLogsController::class, 'index'])
             ->name('panel.operacion-auditoria.index');

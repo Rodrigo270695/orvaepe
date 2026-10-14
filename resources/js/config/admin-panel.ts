@@ -46,6 +46,7 @@ export const panelSectionLabels: Record<string, string> = {
     'operacion-webhooks': 'Webhooks de pasarelas',
     'operacion-whatsapp': 'WhatsApp / OpenWA',
     'operacion-whatsapp-cloud': 'WhatsApp Cloud API',
+    'operacion-openwa': 'OpenWA · Líneas',
     'operacion-auditoria': 'Auditoría',
     // Informes
     'informes-resumen': 'Resumen comercial',

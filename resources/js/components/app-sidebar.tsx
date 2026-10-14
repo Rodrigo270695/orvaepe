@@ -21,6 +21,7 @@ import {
     RefreshCcw,
     ShieldCheck,
     ShoppingCart,
+    Smartphone,
     Sparkles,
     Tags,
     Ticket,
@@ -267,6 +268,11 @@ const adminSections: NavSidebarSection[] = [
                         title: 'WhatsApp API',
                         href: panelPath('operacion-whatsapp-cloud'),
                         icon: MessagesSquare,
+                    },
+                    {
+                        title: 'OpenWA',
+                        href: panelPath('operacion-openwa'),
+                        icon: Smartphone,
                     },
                     {
                         title: 'Auditoría',
