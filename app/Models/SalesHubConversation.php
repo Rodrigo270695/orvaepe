@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * Chat de un prospecto con una línea de ventas de ORVAE (Centro de Ventas).
@@ -65,6 +66,14 @@ class SalesHubConversation extends Model
     public function messages(): HasMany
     {
         return $this->hasMany(SalesHubMessage::class);
+    }
+
+    /**
+     * @return HasOne<SalesHubMessage, $this>
+     */
+    public function latestMessage(): HasOne
+    {
+        return $this->hasOne(SalesHubMessage::class)->latestOfMany('id');
     }
 
     public function pause(string $tipo, string $motivo): void

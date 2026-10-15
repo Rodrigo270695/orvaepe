@@ -118,6 +118,10 @@ PROMPT;
             $lines[] = "\n## REGISTRO Y PAGO\n".$k['registro_url'];
         }
 
+        if (filled($k['instrucciones'] ?? null)) {
+            $lines[] = "\n## INDICACIONES DEL EQUIPO DE VENTAS (síguelas)\n".$k['instrucciones'];
+        }
+
         return trim(implode("\n", $lines));
     }
 

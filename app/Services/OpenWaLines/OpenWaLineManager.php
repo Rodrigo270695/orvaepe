@@ -84,6 +84,34 @@ final class OpenWaLineManager
     }
 
     /**
+     * Arranca el motor de una línea ya vinculada si OpenWA lo tiene apagado (p. ej. tras reiniciar el contenedor).
+     *
+     * @return 'ok'|'iniciada'|'sin_vincular'
+     */
+    public function keepAlive(OpenWaLine $line): string
+    {
+        $remote = $this->sync($line);
+
+        if (($remote['engineLoaded'] ?? false) === true) {
+            return 'ok';
+        }
+
+        if ($line->connected_at === null) {
+            return 'sin_vincular';
+        }
+
+        try {
+            $this->apply($line, $this->client->startSession((string) $line->openwa_session_id));
+        } catch (OpenWaLinesException $e) {
+            if (! $e->isBadRequest()) {
+                throw $e;
+            }
+        }
+
+        return 'iniciada';
+    }
+
+    /**
      * Desvincula el número en WhatsApp; si la sesión no está en marcha solo la detiene.
      */
     public function disconnect(OpenWaLine $line): void

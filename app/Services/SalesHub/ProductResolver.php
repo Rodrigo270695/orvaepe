@@ -13,11 +13,11 @@ use Illuminate\Support\Str;
 final class ProductResolver
 {
     public function __construct(
-        private readonly SaasKnowledgeClient $knowledge,
+        private readonly SalesKnowledge $knowledge,
     ) {}
 
     /**
-     * SaaS asignados a la línea que publican conocimiento.
+     * SaaS asignados a la línea que tienen conocimiento (editado en ORVAE o publicado por el SaaS).
      *
      * @return array<string, array<string, mixed>>
      */

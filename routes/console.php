@@ -5,6 +5,7 @@ use App\Models\SalesHubConversation;
 use App\Models\Subscription;
 use App\Services\Access\SubscriptionEntitlementSyncService;
 use App\Services\Notifications\ExpiringAccessNotifier;
+use App\Services\OpenWaLines\OpenWaLineManager;
 use App\Services\OpenWaLines\SaasDirectory;
 use App\Services\Payments\CulqiClient;
 use App\Services\Payments\MercadoPagoClient;
@@ -16,6 +17,7 @@ use App\Services\WhatsApp\UltraMsgClient;
 use App\Support\WhatsAppPhoneNormalizer;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 Artisan::command('inspire', function () {
@@ -214,6 +216,23 @@ Artisan::command('saleshub:bot {linea : Nombre, session_name o id de la línea} 
 
     return 0;
 })->purpose('Enciende o apaga el bot de ventas IA en una línea OpenWA');
+
+Artisan::command('openwa-lines:keepalive', function (OpenWaLineManager $lines): int {
+    foreach (OpenWaLine::query()->orderBy('nombre')->get() as $line) {
+        try {
+            $estado = $lines->keepAlive($line);
+        } catch (Throwable $e) {
+            $estado = 'error: '.$e->getMessage();
+        }
+
+        if ($estado !== 'ok') {
+            Log::warning('openwa_lines.keepalive', ['line' => $line->nombre, 'estado' => $estado]);
+        }
+        $this->line("{$line->nombre}: {$estado}");
+    }
+
+    return 0;
+})->purpose('Vuelve a arrancar las líneas OpenWA vinculadas que quedaron apagadas');
 
 Artisan::command('saleshub:webhooks', function (WebhookRegistrar $webhooks): int {
     $rows = [];

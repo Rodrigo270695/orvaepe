@@ -269,6 +269,11 @@ const adminSections: NavSidebarSection[] = [
                         icon: Smartphone,
                     },
                     {
+                        title: 'Centro de Ventas',
+                        href: panelPath('centro-ventas'),
+                        icon: Sparkles,
+                    },
+                    {
                         title: 'Auditoría',
                         href: panelPath('operacion-auditoria'),
                         icon: ShieldCheck,

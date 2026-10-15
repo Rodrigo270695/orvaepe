@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\LookupDocumentController;
 use App\Http\Controllers\Admin\NotificationsController;
 use App\Http\Controllers\Admin\OemLicenseDeliveriesController;
 use App\Http\Controllers\Admin\OpenWaLinesController;
+use App\Http\Controllers\Admin\SalesHubController;
 use App\Http\Controllers\Admin\ShowcaseClientsController;
 use App\Http\Controllers\Admin\SubscriptionsController;
 use App\Http\Controllers\Admin\SunatBoletaResumenController;
@@ -576,6 +577,25 @@ Route::middleware(['auth', 'verified', 'client.profile.complete'])->group(functi
             ->name('panel.operacion-openwa.logout');
         Route::post('panel/operacion-openwa/{line}/test', [OpenWaLinesController::class, 'sendTest'])
             ->name('panel.operacion-openwa.test');
+
+        Route::get('panel/centro-ventas', [SalesHubController::class, 'index'])
+            ->name('panel.centro-ventas.index');
+        Route::put('panel/centro-ventas/conocimiento/{producto}', [SalesHubController::class, 'updateProduct'])
+            ->name('panel.centro-ventas.producto');
+        Route::post('panel/centro-ventas/conocimiento/{producto}/importar', [SalesHubController::class, 'import'])
+            ->name('panel.centro-ventas.importar');
+        Route::post('panel/centro-ventas/conocimiento/{producto}/bloques', [SalesHubController::class, 'storeSection'])
+            ->name('panel.centro-ventas.bloques.store');
+        Route::put('panel/centro-ventas/bloques/{section}', [SalesHubController::class, 'updateSection'])
+            ->name('panel.centro-ventas.bloques.update');
+        Route::delete('panel/centro-ventas/bloques/{section}', [SalesHubController::class, 'destroySection'])
+            ->name('panel.centro-ventas.bloques.destroy');
+        Route::get('panel/centro-ventas/conversaciones/{conversation}', [SalesHubController::class, 'conversation'])
+            ->name('panel.centro-ventas.conversacion');
+        Route::post('panel/centro-ventas/conversaciones/{conversation}/pausar', [SalesHubController::class, 'pause'])
+            ->name('panel.centro-ventas.pausar');
+        Route::post('panel/centro-ventas/conversaciones/{conversation}/reanudar', [SalesHubController::class, 'resume'])
+            ->name('panel.centro-ventas.reanudar');
 
         Route::get('panel/operacion-auditoria', [AuditLogsController::class, 'index'])
             ->name('panel.operacion-auditoria.index');
