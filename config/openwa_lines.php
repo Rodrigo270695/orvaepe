@@ -21,15 +21,6 @@ return [
     'timeout_seconds' => (int) env('ORVAE_OPENWA_TIMEOUT_SECONDS', 30),
 
     /*
-    | SaaS que una línea puede atender (clave => nombre visible).
-    */
-    'products' => [
-        'vetsaas' => 'VetSaaS',
-        'tallersaas' => 'TallerSaaS',
-        'foodsaas' => 'FoodSaaS',
-    ],
-
-    /*
     | Número al que llegan alertas admin (nueva compra, vencimientos) si el
     | superadmin no tiene teléfono en BD. Perú: 9 dígitos o 51 + 9 dígitos.
     */

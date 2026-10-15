@@ -1,6 +1,8 @@
 export type OpenWaProduct = {
     key: string;
     label: string;
+    /** false = asignado a alguna línea pero su integración ya no está activa */
+    connected: boolean;
 };
 
 export type OpenWaLineStatus =
@@ -29,6 +31,7 @@ export type OpenWaLine = {
     last_error: string | null;
     routes: {
         update: string;
+        productos: string;
         destroy: string;
         connection: string;
         logout: string;

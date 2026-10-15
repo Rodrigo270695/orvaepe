@@ -7,6 +7,7 @@ import { NeuCardRaised } from '@/components/ui/neu-card-raised';
 import { OpenWaConfirmDialog } from './OpenWaConfirmDialog';
 import { OpenWaLineCard } from './OpenWaLineCard';
 import { OpenWaLineFormDialog } from './OpenWaLineFormDialog';
+import { OpenWaLinkBoard } from './OpenWaLinkBoard';
 import { OpenWaQrDialog } from './OpenWaQrDialog';
 import { OpenWaTestMessageDialog } from './OpenWaTestMessageDialog';
 import type { OpenWaLine, OpenWaPageProps } from './types';
@@ -69,8 +70,8 @@ export default function OperacionOpenWaIndex({ configured, gatewayHost, products
                 <NeuCardRaised className="rounded-xl p-8 text-center">
                     <p className="text-sm font-bold">Aún no hay líneas</p>
                     <p className="mx-auto mt-1 max-w-sm text-[11px] text-muted-foreground">
-                        Crea la primera (por ejemplo «ORVAE Ventas»), marca los SaaS que atiende y
-                        vincúlala con el QR.
+                        Crea la primera (por ejemplo «ORVAE Ventas»), vincúlala con el QR y luego
+                        conéctala con los SaaS que atiende.
                     </p>
                     <NeuButtonRaised type="button" onClick={() => openForm(null)} className="mt-4">
                         <Plus className="size-4" aria-hidden /> Crear línea
@@ -94,11 +95,12 @@ export default function OperacionOpenWaIndex({ configured, gatewayHost, products
                 </div>
             )}
 
+            <OpenWaLinkBoard lines={lines} products={products} />
+
             <OpenWaLineFormDialog
                 open={formOpen}
                 onOpenChange={setFormOpen}
                 line={editing}
-                products={products}
                 storeUrl={storeUrl}
             />
 

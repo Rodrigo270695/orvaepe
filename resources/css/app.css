@@ -703,6 +703,39 @@
     animation-play-state: paused;
 }
 
+/* OpenWA: tablero de vínculos línea ↔ SaaS */
+@keyframes openwa-link-draw {
+    from {
+        stroke-dashoffset: 1;
+    }
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+@keyframes openwa-link-flow {
+    to {
+        stroke-dashoffset: -24;
+    }
+}
+
+.openwa-link-draw {
+    stroke-dasharray: 1;
+    animation: openwa-link-draw 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.openwa-link-flow {
+    stroke-dasharray: 6 6;
+    animation: openwa-link-flow 0.6s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .openwa-link-draw,
+    .openwa-link-flow {
+        animation: none;
+    }
+}
+
 @layer base {
     * {
         @apply border-border;

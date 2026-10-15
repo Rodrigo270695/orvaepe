@@ -7,6 +7,7 @@ use App\Models\OpenWaLine;
 use App\Services\OpenWaLines\OpenWaLineManager;
 use App\Services\OpenWaLines\OpenWaLinesClient;
 use App\Services\OpenWaLines\OpenWaLinesException;
+use App\Services\OpenWaLines\SaasDirectory;
 use App\Support\AdminFlashToast;
 use App\Support\WhatsApp\WhatsAppChatId;
 use Illuminate\Http\JsonResponse;
@@ -18,20 +19,16 @@ use Inertia\Response;
 
 class OpenWaLinesController extends Controller
 {
-    public function index(OpenWaLinesClient $client): Response
+    public function index(OpenWaLinesClient $client, SaasDirectory $saas): Response
     {
+        $lines = OpenWaLine::query()->orderBy('created_at')->get();
+
         return Inertia::render('admin/operacion-openwa/index', [
             'configured' => $client->isConfigured(),
             'gatewayHost' => parse_url((string) config('openwa_lines.api_url'), PHP_URL_HOST),
             'storeUrl' => route('panel.operacion-openwa.store'),
-            'products' => collect($this->products())
-                ->map(fn (string $label, string $key) => ['key' => $key, 'label' => $label])
-                ->values(),
-            'lines' => OpenWaLine::query()
-                ->orderBy('created_at')
-                ->get()
-                ->map(fn (OpenWaLine $line) => $this->present($line))
-                ->values(),
+            'products' => $saas->options($lines->pluck('productos')->flatten()),
+            'lines' => $lines->map(fn (OpenWaLine $line) => $this->present($line))->values(),
         ]);
     }
 
@@ -40,7 +37,7 @@ class OpenWaLinesController extends Controller
         $data = $request->validate([
             'nombre' => ['required', 'string', 'max:80'],
             'session_name' => ['required', 'string', 'min:3', 'max:50', 'regex:/^[a-z0-9-]+$/', Rule::unique('openwa_lines', 'session_name')],
-            ...$this->productRules(),
+            'envia_notificaciones' => ['nullable', 'boolean'],
         ], [
             'session_name.regex' => 'Usa solo minúsculas, números y guiones (ej. orvae-ventas).',
         ]);
@@ -48,7 +45,6 @@ class OpenWaLinesController extends Controller
         $line = OpenWaLine::query()->create([
             'nombre' => $data['nombre'],
             'session_name' => $data['session_name'],
-            'productos' => array_values($data['productos'] ?? []),
         ]);
 
         $this->applyNotificationFlag(
@@ -77,17 +73,30 @@ class OpenWaLinesController extends Controller
     {
         $data = $request->validate([
             'nombre' => ['required', 'string', 'max:80'],
-            ...$this->productRules(),
+            'envia_notificaciones' => ['nullable', 'boolean'],
         ]);
 
-        $line->update([
-            'nombre' => $data['nombre'],
-            'productos' => array_values($data['productos'] ?? []),
-        ]);
+        $line->update(['nombre' => $data['nombre']]);
 
         $this->applyNotificationFlag($line, $request->boolean('envia_notificaciones'));
 
         return back()->with('toast', AdminFlashToast::success('Línea actualizada'));
+    }
+
+    public function updateProducts(Request $request, OpenWaLine $line, SaasDirectory $saas): RedirectResponse
+    {
+        $allowed = array_unique([...array_keys($saas->connected()), ...($line->productos ?? [])]);
+
+        $data = $request->validate([
+            'productos' => ['present', 'array'],
+            'productos.*' => ['string', 'distinct', Rule::in($allowed)],
+        ], [
+            'productos.*.in' => 'Ese SaaS no está conectado a ORVAE.',
+        ]);
+
+        $line->update(['productos' => array_values($data['productos'])]);
+
+        return back();
     }
 
     public function destroy(OpenWaLine $line, OpenWaLineManager $manager): RedirectResponse
@@ -151,26 +160,6 @@ class OpenWaLinesController extends Controller
         return back()->with('toast', AdminFlashToast::success('Mensaje enviado', 'La línea envió la prueba correctamente.'));
     }
 
-    /**
-     * @return array<string, string>
-     */
-    private function products(): array
-    {
-        return (array) config('openwa_lines.products', []);
-    }
-
-    /**
-     * @return array<string, list<mixed>>
-     */
-    private function productRules(): array
-    {
-        return [
-            'productos' => ['nullable', 'array'],
-            'productos.*' => ['string', Rule::in(array_keys($this->products()))],
-            'envia_notificaciones' => ['nullable', 'boolean'],
-        ];
-    }
-
     private function applyNotificationFlag(OpenWaLine $line, bool $enabled): void
     {
         if ($enabled) {
@@ -200,6 +189,7 @@ class OpenWaLinesController extends Controller
             'last_error' => $line->last_error,
             'routes' => [
                 'update' => route('panel.operacion-openwa.update', $line),
+                'productos' => route('panel.operacion-openwa.productos', $line),
                 'destroy' => route('panel.operacion-openwa.destroy', $line),
                 'connection' => route('panel.operacion-openwa.connection', $line),
                 'logout' => route('panel.operacion-openwa.logout', $line),

@@ -14,14 +14,13 @@ import {
 } from '@/components/ui/dialog';
 import { NeuButtonRaised } from '@/components/ui/neu-button-raised';
 
-import type { OpenWaLine, OpenWaProduct } from './types';
+import type { OpenWaLine } from './types';
 
 type Props = {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     /** null = crear línea nueva */
     line: OpenWaLine | null;
-    products: OpenWaProduct[];
     storeUrl: string;
 };
 
@@ -38,17 +37,15 @@ function slugify(value: string): string {
         .slice(0, 50);
 }
 
-export function OpenWaLineFormDialog({ open, onOpenChange, line, products, storeUrl }: Props) {
+export function OpenWaLineFormDialog({ open, onOpenChange, line, storeUrl }: Props) {
     const editing = line !== null;
     const form = useForm<{
         nombre: string;
         session_name: string;
-        productos: string[];
         envia_notificaciones: boolean;
     }>({
         nombre: '',
         session_name: '',
-        productos: [],
         envia_notificaciones: false,
     });
 
@@ -60,19 +57,11 @@ export function OpenWaLineFormDialog({ open, onOpenChange, line, products, store
         form.setData({
             nombre: line?.nombre ?? '',
             session_name: line?.session_name ?? '',
-            productos: line?.productos ?? [],
             envia_notificaciones: line?.envia_notificaciones ?? false,
         });
         form.clearErrors();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [open, line]);
-
-    const toggleProduct = (key: string, checked: boolean) => {
-        form.setData(
-            'productos',
-            checked ? [...form.data.productos, key] : form.data.productos.filter((p) => p !== key),
-        );
-    };
 
     const onSubmit = (event: React.FormEvent) => {
         event.preventDefault();
@@ -94,8 +83,8 @@ export function OpenWaLineFormDialog({ open, onOpenChange, line, products, store
                             {editing ? 'Editar línea' : 'Nueva línea de WhatsApp'}
                         </DialogTitle>
                         <DialogDescription className="text-[11px]">
-                            Cada línea es un número de WhatsApp. Marca qué SaaS atiende: la IA usará
-                            esa información para responder.
+                            Cada línea es un número de WhatsApp. Los SaaS que atiende se conectan en el
+                            tablero de vínculos, debajo de las líneas.
                         </DialogDescription>
                     </DialogHeader>
 
@@ -147,27 +136,6 @@ export function OpenWaLineFormDialog({ open, onOpenChange, line, products, store
                                 </p>
                             )}
                         </div>
-
-                        <fieldset className="space-y-2">
-                            <legend className="text-[11px] font-semibold text-muted-foreground">
-                                SaaS que atiende
-                            </legend>
-                            {products.map((product) => (
-                                <label
-                                    key={product.key}
-                                    className="flex cursor-pointer items-center gap-2.5 text-sm"
-                                >
-                                    <Checkbox
-                                        checked={form.data.productos.includes(product.key)}
-                                        onCheckedChange={(v) => toggleProduct(product.key, v === true)}
-                                    />
-                                    {product.label}
-                                </label>
-                            ))}
-                            {form.errors.productos ? (
-                                <p className="text-[11px] text-destructive">{form.errors.productos}</p>
-                            ) : null}
-                        </fieldset>
 
                         <label className="flex cursor-pointer items-start gap-2.5 text-sm">
                             <Checkbox

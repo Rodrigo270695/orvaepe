@@ -62,6 +62,7 @@ return [
     | Integración SaaS ORVAE -> Aula Virtual (provisión de tenant/plan tras pago).
     */
     'aulavirtual' => [
+        'label' => 'Aula Virtual',
         'enabled' => env('AULAVIRTUAL_PROVISIONING_ENABLED', false),
         'provision_url' => env('AULAVIRTUAL_PROVISION_URL'),
         'renew_url' => env('AULAVIRTUAL_RENEW_URL'),
@@ -74,6 +75,7 @@ return [
     | Integración ORVAE -> VetSaaS (provisión de clínica tras pago).
     */
     'vetsaas' => [
+        'label' => 'VetSaaS',
         'enabled' => env('VETSAAS_PROVISIONING_ENABLED', false),
         'provision_url' => env('VETSAAS_PROVISION_URL'),
         'lookup_url' => env('VETSAAS_LOOKUP_URL'),
@@ -92,6 +94,7 @@ return [
     | (si queda vacío se deduce de provision_url).
     */
     'tallersaas' => [
+        'label' => 'TallerSaaS',
         'enabled' => env('TALLERSAAS_PROVISIONING_ENABLED', false),
         'provision_url' => env('TALLERSAAS_PROVISION_URL'),
         'renew_url' => env('TALLERSAAS_RENEW_URL'),
@@ -108,6 +111,7 @@ return [
     | Contrato: POST /api/internal/saas/{provision,renew} firmado HMAC-SHA256.
     */
     'sendsaas' => [
+        'label' => 'SendSaaS',
         'enabled' => env('SENDSAAS_PROVISIONING_ENABLED', false),
         'provision_url' => env('SENDSAAS_PROVISION_URL'),
         'lookup_url' => env('SENDSAAS_LOOKUP_URL'),

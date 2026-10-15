@@ -17,6 +17,10 @@ beforeEach(function () {
         'openwa_lines.enabled' => true,
         'openwa_lines.api_url' => 'https://wa.test',
         'openwa_lines.api_key' => 'owa_test_key',
+        'services.vetsaas' => ['label' => 'VetSaaS', 'enabled' => true, 'provision_url' => 'https://vet.test/provision'],
+        'services.tallersaas' => ['label' => 'TallerSaaS', 'enabled' => true, 'provision_url' => 'https://taller.test/provision'],
+        'services.aulavirtual' => ['label' => 'Aula Virtual', 'enabled' => true, 'provision_url' => 'https://aula.test/provision'],
+        'services.sendsaas' => ['label' => 'SendSaaS', 'enabled' => false, 'provision_url' => null],
     ]);
 
     $this->seed(RoleSeeder::class);
@@ -88,6 +92,52 @@ test('el panel muestra las líneas y los SaaS disponibles', function () {
             ->where('lines.0.productos', ['vetsaas', 'tallersaas']));
 });
 
+test('los SaaS salen de las integraciones conectadas y los asignados sin conexión quedan marcados', function () {
+    makeLine(['productos' => ['vetsaas', 'foodsaas']]);
+
+    $this->get(route('panel.operacion-openwa.index'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('products', [
+                ['key' => 'aulavirtual', 'label' => 'Aula Virtual', 'connected' => true],
+                ['key' => 'vetsaas', 'label' => 'VetSaaS', 'connected' => true],
+                ['key' => 'tallersaas', 'label' => 'TallerSaaS', 'connected' => true],
+                ['key' => 'foodsaas', 'label' => 'Foodsaas', 'connected' => false],
+            ]));
+});
+
+test('vincular SaaS conectados guarda la lista de la línea', function () {
+    $line = makeLine(['productos' => []]);
+
+    $this->put(route('panel.operacion-openwa.productos', $line), [
+        'productos' => ['vetsaas', 'aulavirtual'],
+    ])->assertRedirect()->assertSessionHasNoErrors();
+
+    expect($line->fresh()->productos)->toBe(['vetsaas', 'aulavirtual']);
+});
+
+test('no se puede vincular un SaaS sin conexión', function () {
+    $line = makeLine(['productos' => []]);
+
+    $this->put(route('panel.operacion-openwa.productos', $line), [
+        'productos' => ['sendsaas'],
+    ])->assertSessionHasErrors('productos.0');
+
+    expect($line->fresh()->productos)->toBe([]);
+});
+
+test('un SaaS sin conexión ya asignado se puede conservar o quitar', function () {
+    $line = makeLine(['productos' => ['foodsaas']]);
+
+    $this->put(route('panel.operacion-openwa.productos', $line), [
+        'productos' => ['foodsaas', 'vetsaas'],
+    ])->assertSessionHasNoErrors();
+    expect($line->fresh()->productos)->toBe(['foodsaas', 'vetsaas']);
+
+    $this->put(route('panel.operacion-openwa.productos', $line), ['productos' => []])
+        ->assertSessionHasNoErrors();
+    expect($line->fresh()->productos)->toBe([]);
+});
+
 test('crear una línea registra la sesión en OpenWA', function () {
     fakeOpenWa([
         'GET /api/sessions' => [],
@@ -97,13 +147,12 @@ test('crear una línea registra la sesión en OpenWA', function () {
     $this->post(route('panel.operacion-openwa.store'), [
         'nombre' => 'ORVAE Ventas',
         'session_name' => 'orvae-ventas',
-        'productos' => ['tallersaas'],
     ])->assertRedirect();
 
     $line = OpenWaLine::query()->sole();
     expect($line->openwa_session_id)->toBe('sess-uuid-1')
         ->and($line->status)->toBe('created')
-        ->and($line->productos)->toBe(['tallersaas']);
+        ->and($line->productos)->toBe([]);
 
     Http::assertSent(fn (Request $r) => $r->method() === 'POST'
         && str_ends_with($r->url(), '/api/sessions')
@@ -111,12 +160,11 @@ test('crear una línea registra la sesión en OpenWA', function () {
         && $r->header('X-API-Key') === ['owa_test_key']);
 });
 
-test('valida el identificador y los SaaS', function () {
+test('valida el identificador', function () {
     $this->post(route('panel.operacion-openwa.store'), [
         'nombre' => 'Ventas',
         'session_name' => 'Ventas ORVAE',
-        'productos' => ['netflix'],
-    ])->assertSessionHasErrors(['session_name', 'productos.0']);
+    ])->assertSessionHasErrors(['session_name']);
 
     expect(OpenWaLine::query()->count())->toBe(0);
 });

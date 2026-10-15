@@ -566,6 +566,8 @@ Route::middleware(['auth', 'verified', 'client.profile.complete'])->group(functi
             ->name('panel.operacion-openwa.store');
         Route::put('panel/operacion-openwa/{line}', [OpenWaLinesController::class, 'update'])
             ->name('panel.operacion-openwa.update');
+        Route::put('panel/operacion-openwa/{line}/productos', [OpenWaLinesController::class, 'updateProducts'])
+            ->name('panel.operacion-openwa.productos');
         Route::delete('panel/operacion-openwa/{line}', [OpenWaLinesController::class, 'destroy'])
             ->name('panel.operacion-openwa.destroy');
         Route::get('panel/operacion-openwa/{line}/connection', [OpenWaLinesController::class, 'connection'])

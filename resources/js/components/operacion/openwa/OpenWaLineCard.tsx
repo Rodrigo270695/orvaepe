@@ -3,6 +3,7 @@ import { Bell, LogOut, Pencil, QrCode, Send, Trash2 } from 'lucide-react';
 import { NeuButtonRaised } from '@/components/ui/neu-button-raised';
 
 import { OpenWaStatusBadge } from './OpenWaStatusBadge';
+import { saasColor } from './saasColors';
 import type { OpenWaLine, OpenWaProduct } from './types';
 
 type Props = {
@@ -17,7 +18,11 @@ type Props = {
 };
 
 export function OpenWaLineCard({ line, products, configured, onLink, onTest, onEdit, onLogout, onDelete }: Props) {
-    const productLabels = line.productos.map((key) => products.find((p) => p.key === key)?.label ?? key);
+    const assigned = line.productos.map((key) => {
+        const product = products.find((p) => p.key === key);
+
+        return { key, label: product?.label ?? key, connected: product?.connected === true };
+    });
     const showError = line.last_error && !line.is_ready;
 
     return (
@@ -50,13 +55,23 @@ export function OpenWaLineCard({ line, products, configured, onLink, onTest, onE
                 <div className="flex gap-2">
                     <dt className="w-20 shrink-0 text-muted-foreground">Atiende</dt>
                     <dd className="flex flex-wrap gap-1.5">
-                        {productLabels.length > 0 ? (
-                            productLabels.map((label) => (
+                        {assigned.length > 0 ? (
+                            assigned.map((product) => (
                                 <span
-                                    key={label}
-                                    className="rounded-full bg-[color-mix(in_oklab,var(--o-amber)_14%,transparent)] px-2 py-0.5 text-[10px] font-semibold"
+                                    key={product.key}
+                                    title={product.connected ? undefined : 'Sin conexión con ORVAE'}
+                                    className={
+                                        product.connected
+                                            ? 'inline-flex items-center gap-1 rounded-full bg-[color-mix(in_oklab,var(--o-amber)_14%,transparent)] px-2 py-0.5 text-[10px] font-semibold'
+                                            : 'inline-flex items-center gap-1 rounded-full border border-dashed px-2 py-0.5 text-[10px] font-semibold text-muted-foreground line-through'
+                                    }
                                 >
-                                    {label}
+                                    <span
+                                        className="size-1.5 rounded-full"
+                                        style={{ background: product.connected ? saasColor(product.key) : 'currentColor' }}
+                                        aria-hidden
+                                    />
+                                    {product.label}
                                 </span>
                             ))
                         ) : (
