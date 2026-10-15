@@ -4,6 +4,7 @@ use App\Services\SalesHub\SaasKnowledgeClient;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Testing\TestResponse;
 
 beforeEach(function () {
     Cache::flush();
@@ -110,7 +111,7 @@ test('es dinámico: un SaaS nuevo en services aparece; uno apagado no se consult
     Http::assertNotSent(fn (Request $r) => str_contains($r->url(), 'aulavirtual'));
 });
 
-function signedKnowledgeRefresh(string $producto, string $secret, ?string $signature = null): Illuminate\Testing\TestResponse
+function signedKnowledgeRefresh(string $producto, string $secret, ?string $signature = null): TestResponse
 {
     $body = (string) json_encode(['evento' => 'knowledge.updated']);
     $timestamp = (string) time();

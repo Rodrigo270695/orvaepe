@@ -3,9 +3,9 @@
 use App\Models\Subscription;
 use App\Services\Access\SubscriptionEntitlementSyncService;
 use App\Services\Notifications\ExpiringAccessNotifier;
+use App\Services\OpenWaLines\SaasDirectory;
 use App\Services\Payments\CulqiClient;
 use App\Services\Payments\MercadoPagoClient;
-use App\Services\OpenWaLines\SaasDirectory;
 use App\Services\Payments\PayPalClient;
 use App\Services\SalesHub\SaasKnowledgeClient;
 use App\Services\WhatsApp\OrvaeWhatsAppSender;
