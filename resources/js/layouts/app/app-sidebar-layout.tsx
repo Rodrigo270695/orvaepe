@@ -12,10 +12,19 @@ export default function AppSidebarLayout({
     return (
         <AppShell variant="sidebar">
             <AppSidebar />
-            <AppContent variant="sidebar" className="overflow-x-hidden">
+            <AppContent
+                variant="sidebar"
+                className="h-svh min-h-0 overflow-hidden md:peer-data-[variant=inset]:h-[calc(100svh-(--spacing(4)))]"
+            >
                 <AdminFlashToast />
                 <AppSidebarHeader breadcrumbs={breadcrumbs} />
-                {children}
+                {/* scroll-region: Inertia guarda y restaura el scroll de este contenedor */}
+                <div
+                    scroll-region=""
+                    className="flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto"
+                >
+                    {children}
+                </div>
             </AppContent>
         </AppShell>
     );

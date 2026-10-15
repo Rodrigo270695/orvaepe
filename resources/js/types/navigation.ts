@@ -18,6 +18,8 @@ export type NavSubItem = {
     title: string;
     href: NonNullable<InertiaLinkProps['href']>;
     icon?: LucideIcon | null;
+    /** Otras rutas que pertenecen a esta vista y deben dejar el item activo */
+    activePaths?: string[];
 };
 
 /** Grupo colapsable (ej. Catálogo, Ventas). `id` único para acordeón y URL activa */

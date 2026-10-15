@@ -273,6 +273,7 @@ const adminSections: NavSidebarSection[] = [
                         title: 'OpenWA',
                         href: panelPath('operacion-openwa'),
                         icon: Smartphone,
+                        activePaths: [panelPath('centro-ventas')],
                     },
                     {
                         title: 'Auditoría',

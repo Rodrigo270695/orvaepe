@@ -19,7 +19,17 @@ import {
 } from '@/components/ui/sidebar';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { cn } from '@/lib/utils';
-import type { NavCollapsibleGroup, NavItem } from '@/types';
+import type { NavCollapsibleGroup, NavItem, NavSubItem } from '@/types';
+
+function isSubItemActive(
+    item: NavSubItem,
+    isMatch: (href: NavItem['href']) => boolean,
+): boolean {
+    return (
+        isMatch(item.href) ||
+        (item.activePaths ?? []).some((path) => isMatch(path))
+    );
+}
 
 function findGroupIdForActiveUrl(
     sections: NavSidebarSection[],
@@ -27,7 +37,7 @@ function findGroupIdForActiveUrl(
 ): string | null {
     for (const section of sections) {
         for (const group of section.groups) {
-            if (group.items.some((item) => isMatch(item.href))) {
+            if (group.items.some((item) => isSubItemActive(item, isMatch))) {
                 return group.id;
             }
         }
@@ -58,7 +68,7 @@ function CollapsibleNavGroup({
             <SidebarMenuItem>
                 <CollapsibleTrigger asChild>
                     <SidebarMenuButton
-                        className="cursor-pointer font-mono text-[10px] font-semibold uppercase tracking-[0.2em]"
+                        className="cursor-pointer font-mono text-[10px] font-semibold tracking-[0.2em] uppercase"
                         tooltip={{ children: group.title }}
                     >
                         <group.icon />
@@ -77,8 +87,11 @@ function CollapsibleNavGroup({
                             <SidebarMenuSubItem key={item.title}>
                                 <SidebarMenuSubButton
                                     asChild
-                                    isActive={isCurrentOrParentUrl(item.href)}
-                                    className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em]"
+                                    isActive={isSubItemActive(
+                                        item,
+                                        isCurrentOrParentUrl,
+                                    )}
+                                    className="font-mono text-[10px] font-semibold tracking-[0.2em] uppercase"
                                 >
                                     <Link href={item.href} prefetch>
                                         {item.icon && <item.icon />}
@@ -138,7 +151,7 @@ export function NavMainCollapsible({ sections }: NavMainCollapsibleProps) {
         <>
             {sections.map((section) => (
                 <SidebarGroup key={section.label} className="px-2 py-0">
-                    <SidebarGroupLabel className="font-mono text-[10px] font-normal uppercase tracking-[0.2em] text-foreground/65">
+                    <SidebarGroupLabel className="font-mono text-[10px] font-normal tracking-[0.2em] text-foreground/65 uppercase">
                         {section.label}
                     </SidebarGroupLabel>
                     <SidebarMenu>
@@ -148,7 +161,7 @@ export function NavMainCollapsible({ sections }: NavMainCollapsibleProps) {
                                     asChild
                                     isActive={isCurrentUrl(item.href)}
                                     tooltip={{ children: item.title }}
-                                    className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em]"
+                                    className="font-mono text-[10px] font-semibold tracking-[0.2em] uppercase"
                                 >
                                     <Link href={item.href} prefetch>
                                         {item.icon && <item.icon />}
