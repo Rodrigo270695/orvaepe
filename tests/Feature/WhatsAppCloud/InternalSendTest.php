@@ -34,6 +34,7 @@ beforeEach(function () {
         'tenant_id' => 'clinica-demo',
         'provider' => 'cloud',
         'phone_number_id' => '111222333',
+        'waba_id' => config('whatsapp_cloud.default_channel.waba_id'),
         'access_token' => 'EAAG-secret-token',
     ]);
 
@@ -110,6 +111,22 @@ test('solo acepta plantillas aprobadas', function () {
     $this->postJson('/internal/whatsapp/send', sendBody(['plantilla' => 'no_existe']), ['X-Internal-Key' => VET_KEY])
         ->assertStatus(422)
         ->assertJson(['error_code' => 'template_not_found']);
+});
+
+test('un canal Cloud de otra WABA no usa la plantilla global de ORVAE', function () {
+    $this->channel->forceFill(['waba_id' => 'WABA_CLINICA'])->save();
+
+    $this->postJson('/internal/whatsapp/send', sendBody(), ['X-Internal-Key' => VET_KEY])
+        ->assertStatus(422)
+        ->assertJson(['error_code' => 'template_not_found']);
+});
+
+test('un canal pendiente (plantillas sin aprobar) responde channel_not_found', function () {
+    $this->channel->forceFill(['estado' => 'pendiente'])->save();
+
+    $this->postJson('/internal/whatsapp/send', sendBody(), ['X-Internal-Key' => VET_KEY])
+        ->assertStatus(404)
+        ->assertJson(['error_code' => 'channel_not_found']);
 });
 
 test('con lista de IPs internas rechaza otras IPs', function () {

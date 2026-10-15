@@ -195,10 +195,43 @@ final class WebhookProcessor
                     'estado' => $estado,
                     'motivo' => $event->errorMsg !== null ? mb_substr($event->errorMsg, 0, 1000) : null,
                 ])->save();
+
+                if ($estado === WaTemplate::ESTADO_APROBADA && $template->tenant_id !== null) {
+                    $this->activatePendingChannel($template);
+                }
             }
 
             return null;
         });
+    }
+
+    /**
+     * Canal conectado por Embedded Signup: pasa a activo con su primera plantilla aprobada
+     * y avisa al producto para que deje de usar OpenWA con ese tenant.
+     */
+    private function activatePendingChannel(WaTemplate $template): void
+    {
+        $channel = WaChannel::query()
+            ->where('producto', $template->producto)
+            ->where('tenant_id', $template->tenant_id)
+            ->where('waba_id', $template->waba_id)
+            ->where('estado', WaChannel::ESTADO_PENDIENTE)
+            ->first();
+
+        if (! $channel instanceof WaChannel) {
+            return;
+        }
+
+        $channel->forceFill(['estado' => WaChannel::ESTADO_ACTIVO])->save();
+
+        ForwardEventToProduct::dispatch($channel->producto, [
+            'evento' => 'channel.activated',
+            'producto' => $channel->producto,
+            'tenant_id' => $channel->tenant_id,
+            'provider' => $channel->provider,
+            'display_phone_number' => $channel->display_phone_number,
+            'ocurrido_at' => now()->toIso8601String(),
+        ])->afterCommit();
     }
 
     /**

@@ -54,7 +54,7 @@ final class MessageSender
             throw new WhatsAppCloudException('El tenant no tiene canal WhatsApp activo.', 'channel_not_found', 404);
         }
 
-        $template = WaTemplate::usableBy($producto, $tenantId, $plantilla);
+        $template = WaTemplate::usableBy($channel, $plantilla);
         if (! $template instanceof WaTemplate) {
             throw new WhatsAppCloudException('La plantilla no existe o no está aprobada para este tenant.', 'template_not_found', 422);
         }

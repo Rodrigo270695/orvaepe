@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\WhatsAppCloud\InternalChannelController;
 use App\Http\Controllers\WhatsAppCloud\InternalOptinController;
 use App\Http\Controllers\WhatsAppCloud\InternalSendController;
 use App\Http\Controllers\WhatsAppCloud\WebhookController;
@@ -24,4 +25,6 @@ Route::middleware([AuthenticateInternalProduct::class, 'throttle:300,1'])
         Route::post('send', InternalSendController::class)->name('send');
         Route::post('optins', [InternalOptinController::class, 'store'])->name('optins.store');
         Route::delete('optins', [InternalOptinController::class, 'destroy'])->name('optins.destroy');
+        Route::get('channel', [InternalChannelController::class, 'show'])->name('channel.show');
+        Route::post('channel/embedded-signup', [InternalChannelController::class, 'embeddedSignup'])->name('channel.embedded-signup');
     });

@@ -69,11 +69,15 @@ return [
     ],
 
     /*
-    | Embedded Signup (fase siguiente): al conectar el número de una clínica, ORVAE
-    | crea sus plantillas en su WABA (TemplateProvisioner). Apagado hasta activarlo.
+    | Embedded Signup: cada clínica conecta su propio número desde el producto.
+    | ORVAE canjea el code (con app_secret), registra el número, guarda el canal y
+    | crea las plantillas en su WABA. app_id y config_id los usa el botón del producto
+    | (los recibe de GET /internal/whatsapp/channel). Apagado hasta que Meta apruebe.
     */
     'embedded_signup' => [
         'enabled' => (bool) env('WHATSAPP_EMBEDDED_SIGNUP_ENABLED', false),
+        'app_id' => env('WHATSAPP_APP_ID'),
+        'config_id' => env('WHATSAPP_EMBEDDED_SIGNUP_CONFIG_ID'),
     ],
 
     /*

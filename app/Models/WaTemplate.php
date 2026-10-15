@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 
@@ -83,19 +84,37 @@ class WaTemplate extends Model
     }
 
     /**
-     * Plantilla aprobada que puede usar el tenant: la propia antes que la global.
+     * Plantilla aprobada que puede usar el canal: la propia del tenant antes que la global.
+     * En canales Cloud la plantilla debe existir en la WABA del canal (Meta envía por nombre).
      */
-    public static function usableBy(string $producto, string $tenantId, string $nombre): ?self
+    public static function usableBy(WaChannel $channel, string $nombre): ?self
     {
         return self::query()
             ->where('nombre', $nombre)
             ->where('estado', self::ESTADO_APROBADA)
             ->where(fn (Builder $q) => $q
-                ->where(fn (Builder $own) => $own->where('producto', $producto)->where('tenant_id', $tenantId))
+                ->where(fn (Builder $own) => $own->where('producto', $channel->producto)->where('tenant_id', $channel->tenant_id))
                 ->orWhere(fn (Builder $global) => $global->whereNull('tenant_id')
-                    ->where(fn (Builder $p) => $p->whereNull('producto')->orWhere('producto', $producto))))
+                    ->where(fn (Builder $p) => $p->whereNull('producto')->orWhere('producto', $channel->producto))))
+            ->when($channel->provider === WaChannel::PROVIDER_CLOUD, fn (Builder $q) => $q
+                ->where(fn (Builder $waba) => $waba->whereNull('waba_id')->orWhere('waba_id', $channel->waba_id)))
             ->orderByRaw('case when tenant_id is null then 1 else 0 end')
             ->first();
+    }
+
+    /**
+     * Plantillas propias del tenant en la WABA de su canal (cualquier estado), para mostrar su avance.
+     *
+     * @return Collection<int, WaTemplate>
+     */
+    public static function ownTemplatesFor(WaChannel $channel): Collection
+    {
+        return self::query()
+            ->where('producto', $channel->producto)
+            ->where('tenant_id', $channel->tenant_id)
+            ->when($channel->waba_id !== null, fn (Builder $q) => $q->where('waba_id', $channel->waba_id))
+            ->orderBy('nombre')
+            ->get();
     }
 
     /**

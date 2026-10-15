@@ -24,6 +24,9 @@ class WaChannel extends Model
 
     public const ESTADO_PAUSADO = 'pausado';
 
+    /** Conectado por Embedded Signup; se activa cuando Meta aprueba su primera plantilla. */
+    public const ESTADO_PENDIENTE = 'pendiente';
+
     /**
      * @return list<string>
      */
@@ -44,8 +47,11 @@ class WaChannel extends Model
         'provider',
         'phone_number_id',
         'waba_id',
+        'display_phone_number',
+        'verified_name',
         'openwa_session_id',
         'access_token',
+        'registration_pin',
         'estado',
     ])]
     protected $fillable = [
@@ -54,19 +60,24 @@ class WaChannel extends Model
         'provider',
         'phone_number_id',
         'waba_id',
+        'display_phone_number',
+        'verified_name',
         'openwa_session_id',
         'access_token',
+        'registration_pin',
         'estado',
     ];
 
     protected $hidden = [
         'access_token',
+        'registration_pin',
     ];
 
     protected function casts(): array
     {
         return [
             'access_token' => 'encrypted',
+            'registration_pin' => 'encrypted',
         ];
     }
 
