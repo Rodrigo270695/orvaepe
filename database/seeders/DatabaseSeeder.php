@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
 
         $this->call(CouponSeeder::class);
         $this->call(SoftwareReleaseSeeder::class);
+        $this->call(WhatsAppCloudSeeder::class);
 
         $user = User::factory()->create([
             'username' => 'superadmin',

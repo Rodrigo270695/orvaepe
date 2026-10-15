@@ -7,17 +7,21 @@ namespace App\Services\WhatsAppCloud;
 use App\Jobs\WhatsAppCloud\ForwardEventToProduct;
 use App\Models\WaChannel;
 use App\Models\WaMessage;
+use App\Models\WaTemplate;
 use App\Models\WebhookEvent;
+use App\Services\WhatsAppCloud\Providers\ProviderEvent;
+use App\Services\WhatsAppCloud\Providers\WhatsAppProviders;
 use Carbon\CarbonInterface;
 use Closure;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
 /**
- * Procesa el payload de la Cloud API: estados de mensajes enviados y mensajes entrantes.
- * Cada evento se registra en webhook_events (gateway whatsapp_cloud) por "wamid:estado",
+ * Procesa el webhook de la Cloud API: estados de mensajes, mensajes entrantes y estado de plantillas.
+ * Cada evento se registra en webhook_events (gateway whatsapp_cloud) por "id:estado",
  * así los reenvíos de Meta se ignoran.
  */
 final class WebhookProcessor
@@ -27,58 +31,63 @@ final class WebhookProcessor
     /** Ventana para asociar una respuesta sin "context" al último recordatorio enviado a ese teléfono. */
     private const REMINDER_LOOKBACK_DAYS = 7;
 
+    /** @var array<string, WaChannel|null> */
+    private array $channels = [];
+
+    public function __construct(
+        private readonly WhatsAppProviders $providers,
+    ) {}
+
     /**
      * @param  array<string, mixed>  $payload
      */
     public function process(array $payload): void
     {
-        foreach ((array) data_get($payload, 'entry', []) as $entry) {
-            foreach ((array) data_get($entry, 'changes', []) as $change) {
-                if (data_get($change, 'field') !== 'messages') {
-                    continue;
-                }
+        $this->channels = [];
 
-                $value = (array) data_get($change, 'value', []);
-                $phoneNumberId = (string) data_get($value, 'metadata.phone_number_id', '');
+        foreach ($this->providers->cloud()->parseWebhook($payload) as $event) {
+            if ($event->type === ProviderEvent::TEMPLATE_STATUS) {
+                $this->handleTemplateStatus($event);
 
-                $channel = $phoneNumberId !== ''
-                    ? WaChannel::query()->where('phone_number_id', $phoneNumberId)->first()
-                    : null;
-
-                if (! $channel instanceof WaChannel) {
-                    Log::warning('whatsapp_cloud.webhook_unknown_channel', ['phone_number_id' => $phoneNumberId]);
-
-                    continue;
-                }
-
-                foreach ((array) ($value['statuses'] ?? []) as $status) {
-                    if (is_array($status)) {
-                        $this->handleStatus($channel, $status);
-                    }
-                }
-
-                foreach ((array) ($value['messages'] ?? []) as $message) {
-                    if (is_array($message)) {
-                        $this->handleInbound($channel, $message);
-                    }
-                }
+                continue;
             }
+
+            $channel = $this->channel((string) $event->phoneNumberId);
+            if (! $channel instanceof WaChannel) {
+                continue;
+            }
+
+            match ($event->type) {
+                ProviderEvent::STATUS => $this->handleStatus($channel, $event),
+                ProviderEvent::MESSAGE => $this->handleInbound($channel, $event),
+                default => null,
+            };
         }
     }
 
-    /**
-     * @param  array<string, mixed>  $status
-     */
-    private function handleStatus(WaChannel $channel, array $status): void
+    private function channel(string $phoneNumberId): ?WaChannel
     {
-        $wamid = (string) ($status['id'] ?? '');
-        $estado = strtolower((string) ($status['status'] ?? ''));
+        if (! array_key_exists($phoneNumberId, $this->channels)) {
+            $this->channels[$phoneNumberId] = WaChannel::query()->where('phone_number_id', $phoneNumberId)->first();
 
-        if ($wamid === '' || ! in_array($estado, WaMessage::PROVIDER_STATUSES, true)) {
+            if ($this->channels[$phoneNumberId] === null) {
+                Log::warning('whatsapp_cloud.webhook_unknown_channel', ['phone_number_id' => $phoneNumberId]);
+            }
+        }
+
+        return $this->channels[$phoneNumberId];
+    }
+
+    private function handleStatus(WaChannel $channel, ProviderEvent $event): void
+    {
+        $wamid = $event->id;
+        $estado = (string) $event->status;
+
+        if (! in_array($estado, WaMessage::PROVIDER_STATUSES, true)) {
             return;
         }
 
-        $this->once("{$wamid}:{$estado}", 'status.'.$estado, $status, function () use ($channel, $status, $wamid, $estado): ?array {
+        $this->once("{$wamid}:{$estado}", 'status.'.$estado, ['id' => $wamid, 'status' => $estado], function () use ($channel, $event, $wamid, $estado): ?array {
             $message = WaMessage::query()
                 ->where('provider_msg_id', $wamid)
                 ->where('producto', $channel->producto)
@@ -95,12 +104,9 @@ final class WebhookProcessor
                 return null;
             }
 
-            $error = (array) data_get($status, 'errors.0', []);
-            $errorCode = isset($error['code']) ? (string) $error['code'] : null;
-            $errorMsg = (string) (data_get($error, 'error_data.details') ?: ($error['message'] ?? $error['title'] ?? ''));
-            $at = $this->timestamp($status['timestamp'] ?? null);
+            $at = $this->timestamp($event->timestamp);
 
-            $message->applyProviderStatus($estado, $at, $errorCode, $errorMsg !== '' ? $errorMsg : null);
+            $message->applyProviderStatus($estado, $at, $event->errorCode, $event->errorMsg);
 
             return [
                 'evento' => 'message.status',
@@ -119,29 +125,18 @@ final class WebhookProcessor
         });
     }
 
-    /**
-     * @param  array<string, mixed>  $message
-     */
-    private function handleInbound(WaChannel $channel, array $message): void
+    private function handleInbound(WaChannel $channel, ProviderEvent $event): void
     {
-        $wamid = (string) ($message['id'] ?? '');
-        if ($wamid === '') {
-            return;
-        }
+        $wamid = $event->id;
+        $type = (string) $event->messageType;
 
-        $type = (string) ($message['type'] ?? 'unknown');
-
-        $this->once("{$wamid}:in", 'message.'.$type, ['id' => $wamid, 'type' => $type], function () use ($channel, $message, $wamid): ?array {
-            $telefono = Phone::normalize((string) ($message['from'] ?? '')) ?? (string) ($message['from'] ?? '');
-            $texto = $this->extractText($message);
+        $this->once("{$wamid}:in", 'message.'.$type, ['id' => $wamid, 'type' => $type], function () use ($channel, $event, $wamid): ?array {
+            $telefono = Phone::normalize((string) $event->from) ?? (string) $event->from;
+            $texto = $event->text;
             $accion = ReminderReply::fromText($texto);
-            $at = $this->timestamp($message['timestamp'] ?? null);
+            $at = $this->timestamp($event->timestamp);
 
-            $reminderId = $this->resolveReminderId(
-                $channel,
-                $telefono,
-                (string) data_get($message, 'context.id', ''),
-            );
+            $reminderId = $this->resolveReminderId($channel, $telefono, (string) $event->contextId);
 
             $inbound = WaMessage::query()->create([
                 'wa_channel_id' => $channel->id,
@@ -170,6 +165,60 @@ final class WebhookProcessor
                 'ocurrido_at' => $at->toIso8601String(),
             ];
         });
+    }
+
+    private function handleTemplateStatus(ProviderEvent $event): void
+    {
+        $metaStatus = (string) $event->status;
+        $estado = WaTemplate::estadoFromMeta($metaStatus);
+
+        if ($estado === null) {
+            return;
+        }
+
+        $this->once("tpl:{$event->id}:{$metaStatus}", 'template.'.strtolower($metaStatus), ['id' => $event->id, 'event' => $metaStatus], function () use ($event, $estado): ?array {
+            $templates = $this->templatesFor($event);
+
+            if ($templates->isEmpty()) {
+                Log::info('whatsapp_cloud.webhook_template_unknown', [
+                    'meta_template_id' => $event->id,
+                    'waba_id' => $event->wabaId,
+                ]);
+
+                return null;
+            }
+
+            foreach ($templates as $template) {
+                $template->forceFill([
+                    'meta_template_id' => $event->id,
+                    'waba_id' => $template->waba_id ?? $event->wabaId,
+                    'estado' => $estado,
+                    'motivo' => $event->errorMsg !== null ? mb_substr($event->errorMsg, 0, 1000) : null,
+                ])->save();
+            }
+
+            return null;
+        });
+    }
+
+    /**
+     * Por id de Meta; si aún no lo tenemos, por WABA + nombre + idioma.
+     *
+     * @return Collection<int, WaTemplate>
+     */
+    private function templatesFor(ProviderEvent $event): Collection
+    {
+        $byId = WaTemplate::query()->where('meta_template_id', $event->id)->get();
+
+        if ($byId->isNotEmpty() || $event->templateName === null) {
+            return $byId;
+        }
+
+        return WaTemplate::query()
+            ->where('waba_id', $event->wabaId)
+            ->where('nombre', $event->templateName)
+            ->when($event->templateLanguage, fn ($q, $idioma) => $q->where('idioma', $idioma))
+            ->get();
     }
 
     /**
@@ -227,21 +276,8 @@ final class WebhookProcessor
         return $latest !== null ? (string) $latest : null;
     }
 
-    /**
-     * @param  array<string, mixed>  $message
-     */
-    private function extractText(array $message): ?string
+    private function timestamp(?int $value): CarbonInterface
     {
-        $text = data_get($message, 'text.body')
-            ?? data_get($message, 'button.text')
-            ?? data_get($message, 'interactive.button_reply.title')
-            ?? data_get($message, 'interactive.list_reply.title');
-
-        return is_string($text) && $text !== '' ? $text : null;
-    }
-
-    private function timestamp(mixed $value): CarbonInterface
-    {
-        return is_numeric($value) ? Date::createFromTimestamp((int) $value) : now();
+        return $value !== null ? Date::createFromTimestamp($value) : now();
     }
 }

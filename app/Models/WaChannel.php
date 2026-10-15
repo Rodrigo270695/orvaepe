@@ -22,7 +22,7 @@ class WaChannel extends Model
 
     public const ESTADO_ACTIVO = 'activo';
 
-    public const ESTADO_INACTIVO = 'inactivo';
+    public const ESTADO_PAUSADO = 'pausado';
 
     /**
      * @return list<string>

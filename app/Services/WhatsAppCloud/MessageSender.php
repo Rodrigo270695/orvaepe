@@ -8,9 +8,10 @@ use App\Jobs\WhatsAppCloud\SendOutboundMessage;
 use App\Models\WaChannel;
 use App\Models\WaMessage;
 use App\Models\WaOptin;
+use App\Models\WaTemplate;
 
 /**
- * Servicio interno de envío: valida opt-in y canal, registra el mensaje y lo encola.
+ * Servicio interno de envío: valida opt-in, canal y plantilla, registra el mensaje y lo encola.
  * El envío real lo hace SendOutboundMessage (con límite de velocidad por canal).
  */
 final class MessageSender
@@ -53,6 +54,19 @@ final class MessageSender
             throw new WhatsAppCloudException('El tenant no tiene canal WhatsApp activo.', 'channel_not_found', 404);
         }
 
+        $template = WaTemplate::usableBy($producto, $tenantId, $plantilla);
+        if (! $template instanceof WaTemplate) {
+            throw new WhatsAppCloudException('La plantilla no existe o no está aprobada para este tenant.', 'template_not_found', 422);
+        }
+
+        if (count($variables) !== $template->num_variables) {
+            throw new WhatsAppCloudException(
+                "La plantilla {$plantilla} requiere {$template->num_variables} variables.",
+                'invalid_variables',
+                422,
+            );
+        }
+
         $message = WaMessage::query()->create([
             'wa_channel_id' => $channel->id,
             'producto' => $producto,
@@ -61,9 +75,10 @@ final class MessageSender
             'telefono' => $to,
             'direccion' => WaMessage::DIRECCION_OUT,
             'categoria' => self::CATEGORIA,
-            'plantilla' => $plantilla,
+            'plantilla' => $template->nombre,
+            'idioma' => $template->idioma,
             'estado' => WaMessage::ESTADO_QUEUED,
-            'texto' => Templates::render($plantilla, $variables),
+            'texto' => $template->render($variables),
         ]);
 
         SendOutboundMessage::dispatch($message->id, $channel->id, $variables);

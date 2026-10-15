@@ -48,15 +48,47 @@ return [
     ],
 
     /*
-    | Plantillas permitidas. "variables": cantidad exacta que debe enviar el producto.
-    | "texto": versión armada para canales OpenWA (en Cloud API el texto vive en la
-    | plantilla aprobada en Meta). {{n}} se reemplaza por la variable n.
+    | Solo red interna: IPs (separadas por coma) que pueden llamar /internal/whatsapp/*.
+    | Vacío = sin restricción por IP (solo X-Internal-Key).
+    */
+    'internal_allowed_ips' => array_values(array_filter(array_map(
+        'trim',
+        explode(',', (string) env('WHATSAPP_INTERNAL_ALLOWED_IPS', '')),
+    ))),
+
+    /*
+    | Canal inicial de ORVAE (número de prueba de Meta). Lo crea WhatsAppCloudSeeder;
+    | el token solo se lee del .env y se guarda cifrado en wa_channels.
+    */
+    'default_channel' => [
+        'producto' => env('WHATSAPP_DEFAULT_PRODUCTO', 'vetsaas'),
+        'tenant_id' => env('WHATSAPP_DEFAULT_TENANT_ID'),
+        'phone_number_id' => env('WHATSAPP_DEFAULT_PHONE_NUMBER_ID', '1091510804035130'),
+        'waba_id' => env('WHATSAPP_DEFAULT_WABA_ID', '1891985734771702'),
+        'access_token' => env('WHATSAPP_ACCESS_TOKEN_DEFAULT'),
+    ],
+
+    /*
+    | Embedded Signup (fase siguiente): al conectar el número de una clínica, ORVAE
+    | crea sus plantillas en su WABA (TemplateProvisioner). Apagado hasta activarlo.
+    */
+    'embedded_signup' => [
+        'enabled' => (bool) env('WHATSAPP_EMBEDDED_SIGNUP_ENABLED', false),
+    ],
+
+    /*
+    | Definición de las plantillas. WhatsAppCloudSeeder las registra en wa_templates
+    | (globales, ya aprobadas en la WABA de ORVAE) y TemplateProvisioner las crea en
+    | la WABA de cada clínica. "cuerpo" usa {{n}}; "ejemplos" los pide Meta al crearla.
     */
     'templates' => [
         'recordatorio_vacuna' => [
+            'tipo' => 'vacuna',
+            'categoria' => 'utility',
             // 1 dueño, 2 mascota, 3 tipo de atención, 4 fecha, 5 hora, 6 clínica
             'variables' => 6,
-            'texto' => 'Hola {{1}}, te recordamos que {{2}} tiene {{3}} el {{4}} a las {{5}} en {{6}}. Responde CONFIRMO o REPROGRAMAR.',
+            'cuerpo' => 'Hola {{1}}, te recordamos que {{2}} tiene {{3}} el {{4}} a las {{5}} en {{6}}. Responde CONFIRMO o REPROGRAMAR.',
+            'ejemplos' => ['Ana', 'Rocky', 'vacuna antirrábica', '15/10/2026', '4:00 pm', 'Clínica Demo'],
         ],
     ],
 

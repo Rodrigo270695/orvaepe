@@ -4,6 +4,7 @@ use App\Jobs\WhatsAppCloud\ForwardEventToProduct;
 use App\Jobs\WhatsAppCloud\ProcessWebhookPayload;
 use App\Models\WaChannel;
 use App\Models\WaMessage;
+use App\Models\WaTemplate;
 use App\Services\WhatsAppCloud\WebhookProcessor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -138,6 +139,49 @@ test('ignora eventos repetidos por id + estado', function () {
     app(WebhookProcessor::class)->process($payload);
 
     Queue::assertPushed(ForwardEventToProduct::class, 1);
+});
+
+test('message_template_status_update actualiza wa_templates.estado (idempotente)', function () {
+    Queue::fake();
+    $template = WaTemplate::query()->create([
+        'waba_id' => 'WABA_ID',
+        'nombre' => 'recordatorio_vacuna',
+        'idioma' => 'es_PE',
+        'tipo' => 'vacuna',
+        'estado' => 'pendiente',
+        'num_variables' => 6,
+    ]);
+    $update = fn (string $event, string $reason = 'NONE') => [
+        'object' => 'whatsapp_business_account',
+        'entry' => [[
+            'id' => 'WABA_ID',
+            'changes' => [[
+                'field' => 'message_template_status_update',
+                'value' => [
+                    'event' => $event,
+                    'message_template_id' => 777,
+                    'message_template_name' => 'recordatorio_vacuna',
+                    'message_template_language' => 'es_PE',
+                    'reason' => $reason,
+                ],
+            ]],
+        ]],
+    ];
+
+    app(WebhookProcessor::class)->process($update('APPROVED'));
+    expect($template->refresh())
+        ->estado->toBe('aprobada')
+        ->meta_template_id->toBe('777')
+        ->motivo->toBeNull();
+
+    app(WebhookProcessor::class)->process($update('REJECTED', 'INVALID_FORMAT'));
+    expect($template->refresh())->estado->toBe('rechazada')->motivo->toBe('INVALID_FORMAT');
+
+    $template->forceFill(['estado' => 'aprobada'])->save();
+    app(WebhookProcessor::class)->process($update('REJECTED', 'INVALID_FORMAT'));
+    expect($template->refresh()->estado)->toBe('aprobada');
+
+    Queue::assertNothingPushed();
 });
 
 test('ignora y registra eventos de un phone_number_id desconocido', function () {

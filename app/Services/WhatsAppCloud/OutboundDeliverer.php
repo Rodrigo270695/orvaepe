@@ -7,6 +7,7 @@ namespace App\Services\WhatsAppCloud;
 use App\Jobs\WhatsAppCloud\ForwardEventToProduct;
 use App\Models\WaChannel;
 use App\Models\WaMessage;
+use App\Services\WhatsAppCloud\Providers\WhatsAppProviders;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -16,8 +17,7 @@ use Illuminate\Support\Facades\Log;
 final class OutboundDeliverer
 {
     public function __construct(
-        private readonly CloudApiClient $cloud,
-        private readonly OpenWaTextSender $openWa,
+        private readonly WhatsAppProviders $providers,
     ) {}
 
     /**
@@ -39,17 +39,7 @@ final class OutboundDeliverer
         }
 
         try {
-            $providerMsgId = match ($channel->provider) {
-                WaChannel::PROVIDER_CLOUD => $this->cloud->sendTemplate(
-                    $channel,
-                    $message->telefono,
-                    (string) $message->plantilla,
-                    $variables,
-                    (string) config('whatsapp_cloud.template_language', 'es_PE'),
-                ),
-                WaChannel::PROVIDER_OPENWA => $this->openWa->send($channel, $message->telefono, (string) $message->texto),
-                default => throw new WhatsAppCloudException('Proveedor no soportado: '.$channel->provider, 'provider_not_supported'),
-            };
+            $providerMsgId = $this->providers->for($channel)->sendTemplate($channel, $message, $variables);
         } catch (WhatsAppCloudException $e) {
             if (! $e->temporary) {
                 $this->markFailed($message, $e->errorCode, $e->getMessage());

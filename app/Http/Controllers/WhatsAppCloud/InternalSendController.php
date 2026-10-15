@@ -4,12 +4,10 @@ namespace App\Http\Controllers\WhatsAppCloud;
 
 use App\Http\Controllers\Controller;
 use App\Services\WhatsAppCloud\MessageSender;
-use App\Services\WhatsAppCloud\Templates;
 use App\Services\WhatsAppCloud\WhatsAppCloudException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
 
 /**
  * POST /internal/whatsapp/send — VetSaaS / TallerSaaS encolan un recordatorio.
@@ -19,14 +17,11 @@ class InternalSendController extends Controller
 {
     public function __invoke(Request $request, MessageSender $sender): JsonResponse
     {
-        $plantilla = (string) $request->input('plantilla', '');
-        $expectedVariables = Templates::variableCount($plantilla) ?? 0;
-
         $validator = Validator::make($request->all(), [
             'tenant_id' => ['required', 'string', 'max:64'],
             'telefono' => ['required', 'string', 'max:32'],
-            'plantilla' => ['required', 'string', Rule::in(Templates::names())],
-            'variables' => ['present', 'array', 'size:'.$expectedVariables],
+            'plantilla' => ['required', 'string', 'max:128'],
+            'variables' => ['present', 'array', 'max:20'],
             'variables.*' => ['required', 'string', 'max:1024'],
             'reminder_id' => ['nullable', 'string', 'max:64'],
         ]);

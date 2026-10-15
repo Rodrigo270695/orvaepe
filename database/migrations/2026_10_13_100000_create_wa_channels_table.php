@@ -32,7 +32,7 @@ return new class extends Migration
             /** Cifrado con APP_KEY (cast "encrypted"). */
             $table->text('access_token')->nullable();
 
-            /** activo | inactivo */
+            /** activo | pausado */
             $table->string('estado', 16)->default('activo');
 
             $table->timestamps();

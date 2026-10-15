@@ -5,8 +5,12 @@ use App\Jobs\WhatsAppCloud\SendOutboundMessage;
 use App\Models\WaChannel;
 use App\Models\WaMessage;
 use App\Models\WaOptin;
+use App\Models\WaTemplate;
 use App\Services\WhatsAppCloud\OutboundDeliverer;
+use App\Services\WhatsAppCloud\Providers\CloudApiProvider;
+use App\Services\WhatsAppCloud\Providers\WhatsAppProvider;
 use App\Services\WhatsAppCloud\WhatsAppCloudException;
+use Database\Seeders\WhatsAppCloudSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -20,7 +24,10 @@ beforeEach(function () {
     config([
         'whatsapp_cloud.products.vetsaas.internal_api_key' => VET_KEY,
         'whatsapp_cloud.products.tallersaas.internal_api_key' => 'taller-key-0123456789abcdef012345',
+        'whatsapp_cloud.default_channel.tenant_id' => null,
     ]);
+
+    $this->seed(WhatsAppCloudSeeder::class);
 
     $this->channel = WaChannel::query()->create([
         'producto' => 'vetsaas',
@@ -89,7 +96,61 @@ test('el producto se deduce de la clave: TallerSaaS no ve el opt-in de VetSaaS',
 
 test('valida la cantidad de variables de la plantilla', function () {
     $this->postJson('/internal/whatsapp/send', sendBody(['variables' => ['Ana', 'Rocky']]), ['X-Internal-Key' => VET_KEY])
-        ->assertStatus(422);
+        ->assertStatus(422)
+        ->assertJson(['error_code' => 'invalid_variables']);
+});
+
+test('solo acepta plantillas aprobadas', function () {
+    WaTemplate::query()->update(['estado' => 'pausada']);
+
+    $this->postJson('/internal/whatsapp/send', sendBody(), ['X-Internal-Key' => VET_KEY])
+        ->assertStatus(422)
+        ->assertJson(['error_code' => 'template_not_found']);
+
+    $this->postJson('/internal/whatsapp/send', sendBody(['plantilla' => 'no_existe']), ['X-Internal-Key' => VET_KEY])
+        ->assertStatus(422)
+        ->assertJson(['error_code' => 'template_not_found']);
+});
+
+test('con lista de IPs internas rechaza otras IPs', function () {
+    config(['whatsapp_cloud.internal_allowed_ips' => ['10.0.0.0/8']]);
+    $this->postJson('/internal/whatsapp/send', sendBody(), ['X-Internal-Key' => VET_KEY])->assertForbidden();
+
+    config(['whatsapp_cloud.internal_allowed_ips' => ['127.0.0.1']]);
+    Queue::fake();
+    $this->postJson('/internal/whatsapp/send', sendBody(), ['X-Internal-Key' => VET_KEY])->assertStatus(202);
+});
+
+test('envía por el proveedor del canal (proveedor simulado)', function () {
+    Queue::fake([ForwardEventToProduct::class]);
+    $fake = new class implements WhatsAppProvider
+    {
+        /** @var list<array{string, list<string>}> */
+        public array $sent = [];
+
+        public function sendTemplate(WaChannel $channel, WaMessage $message, array $variables): ?string
+        {
+            $this->sent[] = [$message->plantilla, $variables];
+
+            return 'wamid.FAKE1';
+        }
+
+        public function parseWebhook(array $payload): array
+        {
+            return [];
+        }
+    };
+    app()->instance(CloudApiProvider::class, $fake);
+    $message = queuedMessage();
+
+    app(OutboundDeliverer::class)->deliver($message->id, sendBody()['variables']);
+
+    expect($fake->sent)->toHaveCount(1)
+        ->and($fake->sent[0][0])->toBe('recordatorio_vacuna')
+        ->and($fake->sent[0][1][1])->toBe('Rocky');
+    expect($message->refresh())
+        ->estado->toBe('sent')
+        ->provider_msg_id->toBe('wamid.FAKE1');
 });
 
 test('encola el envío con el teléfono normalizado', function () {
