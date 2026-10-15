@@ -22,6 +22,7 @@ type Props = {
     onOpenChange: (open: boolean) => void;
     /** null = bloque nuevo */
     section: SalesHubSection | null;
+    defaultTipo?: SalesHubSectionTipo;
     storeUrl: string;
 };
 
@@ -29,6 +30,7 @@ export function SalesHubSectionDialog({
     open,
     onOpenChange,
     section,
+    defaultTipo = 'faq',
     storeUrl,
 }: Props) {
     const form = useForm<{
@@ -49,19 +51,20 @@ export function SalesHubSectionDialog({
         }
 
         form.setData({
-            tipo: section?.tipo ?? 'faq',
+            tipo: section?.tipo ?? defaultTipo,
             titulo: section?.titulo ?? '',
             contenido: section?.contenido ?? '',
             activo: section?.activo ?? true,
         });
         form.clearErrors();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [open, section]);
+    }, [open, section, defaultTipo]);
 
     const onSubmit = (event: React.FormEvent) => {
         event.preventDefault();
         const options = {
             preserveScroll: true,
+            preserveState: true,
             onSuccess: () => onOpenChange(false),
         };
 

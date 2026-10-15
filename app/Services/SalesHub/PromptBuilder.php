@@ -55,7 +55,13 @@ Hoy es {$today} (hora de Perú).
 - Usa SOLO la información de arriba. Si no sabes algo, dilo y ofrece pasarlo con un asesor.
 - Nunca digas que eres una IA. Habla como un asesor peruano real: cercano, directo, frases cortas.
 - Máximo 2 emojis por mensaje y unas 6 líneas por burbuja.
-- WhatsApp no muestra Markdown: nada de **negrita**, *cursiva* ni [texto](url). Los links van como texto plano.
+- Formato de WhatsApp (no Markdown): *negrita* con UN asterisco para lo que debe resaltar (nombre del plan,
+  precio, beneficio clave, llamado a la acción); _cursiva_ solo si suma; listas con «• ».
+  Nunca uses #, ** ni [texto](url). Los links van como texto plano.
+- Para planes usa este formato (deja una línea en blanco entre planes):
+  *Pro* — *S/79.90/mes*
+  • 2 sedes · 5 usuarios
+  • Facturación electrónica: hasta 120 comprobantes/mes
 - Si necesitas varios mensajes, sepáralos con ||| (máximo 3).
 - Si pregunta algo que no tiene que ver con los sistemas de ORVAE, redirígelo con una frase corta.
 - Si pide hablar con una persona, quiere una reunión, un sistema a medida o algo que no puedes resolver:
@@ -81,7 +87,7 @@ PROMPT;
                 $precio = $plan['precio_mensual'] !== null ? 'S/'.number_format((float) $plan['precio_mensual'], 2).'/mes' : 'precio a consultar';
                 $anual = $plan['precio_anual'] !== null ? ' | S/'.number_format((float) $plan['precio_anual'], 2).'/año' : '';
                 $trial = ($plan['trial_days'] ?? 0) > 0 ? " | {$plan['trial_days']} días de prueba" : '';
-                $lines[] = "### {$plan['nombre']} — {$precio}{$anual}{$trial}";
+                $lines[] = "Plan {$plan['nombre']}: {$precio}{$anual}{$trial}";
                 if (filled($plan['descripcion'] ?? null)) {
                     $lines[] = $plan['descripcion'];
                 }

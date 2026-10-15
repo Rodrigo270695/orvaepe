@@ -32,10 +32,8 @@ import {
 } from 'lucide-react';
 
 import AppLogo from '@/components/app-logo';
-import {
-    NavMainCollapsible,
-    type NavSidebarSection,
-} from '@/components/nav-main-collapsible';
+import { NavMainCollapsible } from '@/components/nav-main-collapsible';
+import type { NavSidebarSection } from '@/components/nav-main-collapsible';
 import { NavUser } from '@/components/nav-user';
 import {
     Sidebar,
@@ -99,7 +97,11 @@ const adminSections: NavSidebarSection[] = [
                         href: panelPath('catalogo-productos'),
                         icon: Package,
                     },
-                    { title: 'SKUs', href: panelPath('catalogo-skus'), icon: Barcode },
+                    {
+                        title: 'SKUs',
+                        href: panelPath('catalogo-skus'),
+                        icon: Barcode,
+                    },
                     {
                         title: 'Cupones',
                         href: panelPath('catalogo-cupones'),
@@ -247,7 +249,11 @@ const adminSections: NavSidebarSection[] = [
                 title: 'Soporte',
                 icon: LifeBuoy,
                 items: [
-                    { title: 'Tickets', href: panelPath('operacion-tickets'), icon: Ticket },
+                    {
+                        title: 'Tickets',
+                        href: panelPath('operacion-tickets'),
+                        icon: Ticket,
+                    },
                     {
                         title: 'Notificaciones',
                         href: panelPath('acceso-notificaciones'),
@@ -267,11 +273,6 @@ const adminSections: NavSidebarSection[] = [
                         title: 'OpenWA',
                         href: panelPath('operacion-openwa'),
                         icon: Smartphone,
-                    },
-                    {
-                        title: 'Centro de Ventas',
-                        href: panelPath('centro-ventas'),
-                        icon: Sparkles,
                     },
                     {
                         title: 'Auditoría',

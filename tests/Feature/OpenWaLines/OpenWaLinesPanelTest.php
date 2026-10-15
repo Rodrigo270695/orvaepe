@@ -98,10 +98,10 @@ test('los SaaS salen de las integraciones conectadas y los asignados sin conexiÃ
     $this->get(route('panel.operacion-openwa.index'))
         ->assertInertia(fn (Assert $page) => $page
             ->where('products', [
-                ['key' => 'aulavirtual', 'label' => 'Aula Virtual', 'connected' => true],
-                ['key' => 'vetsaas', 'label' => 'VetSaaS', 'connected' => true],
-                ['key' => 'tallersaas', 'label' => 'TallerSaaS', 'connected' => true],
-                ['key' => 'foodsaas', 'label' => 'Foodsaas', 'connected' => false],
+                ['key' => 'aulavirtual', 'label' => 'Aula Virtual', 'connected' => true, 'hub_url' => route('panel.centro-ventas.show', 'aulavirtual')],
+                ['key' => 'vetsaas', 'label' => 'VetSaaS', 'connected' => true, 'hub_url' => route('panel.centro-ventas.show', 'vetsaas')],
+                ['key' => 'tallersaas', 'label' => 'TallerSaaS', 'connected' => true, 'hub_url' => route('panel.centro-ventas.show', 'tallersaas')],
+                ['key' => 'foodsaas', 'label' => 'Foodsaas', 'connected' => false, 'hub_url' => null],
             ]));
 });
 

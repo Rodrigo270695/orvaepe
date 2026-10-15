@@ -124,7 +124,7 @@ test('un cliente que pregunta por su taller recibe respuesta de TallerSaaS en bu
         ->and($conversation->bot_engaged_at)->not->toBeNull();
 
     expect(sentTexts())->toBe([
-        ['chatId' => '51987654321@c.us', 'text' => 'Buena, Juan 👋 Mira el módulo de órdenes: https://demo.tallersaas.test'],
+        ['chatId' => '51987654321@c.us', 'text' => 'Buena, Juan 👋 Mira el *módulo* de órdenes: https://demo.tallersaas.test'],
         ['chatId' => '51987654321@c.us', 'text' => '¿Cuántos autos atiendes al día?'],
     ]);
 

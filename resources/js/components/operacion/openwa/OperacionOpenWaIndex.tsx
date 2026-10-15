@@ -1,10 +1,8 @@
-import { Link } from '@inertiajs/react';
-import { MessageCircle, Plus, Server, Sparkles } from 'lucide-react';
+import { MessageCircle, Plus, Server } from 'lucide-react';
 import { useState } from 'react';
 
 import { NeuButtonRaised } from '@/components/ui/neu-button-raised';
 import { NeuCardRaised } from '@/components/ui/neu-card-raised';
-import { panelPath } from '@/config/admin-panel';
 
 import { OpenWaConfirmDialog } from './OpenWaConfirmDialog';
 import { OpenWaLineCard } from './OpenWaLineCard';
@@ -65,24 +63,13 @@ export default function OperacionOpenWaIndex({
                             ) : null}
                         </div>
                     </div>
-                    <div className="flex gap-2 self-start">
-                        <Link
-                            href={panelPath('centro-ventas')}
-                            className="neumorph inline-flex items-center gap-2 rounded-xl px-4 py-2 text-[12px] font-semibold"
-                        >
-                            <Sparkles
-                                className="size-4 text-[#D28C3C]"
-                                aria-hidden
-                            />{' '}
-                            Centro de Ventas
-                        </Link>
-                        <NeuButtonRaised
-                            type="button"
-                            onClick={() => openForm(null)}
-                        >
-                            <Plus className="size-4" aria-hidden /> Nueva línea
-                        </NeuButtonRaised>
-                    </div>
+                    <NeuButtonRaised
+                        type="button"
+                        onClick={() => openForm(null)}
+                        className="self-start"
+                    >
+                        <Plus className="size-4" aria-hidden /> Nueva línea
+                    </NeuButtonRaised>
                 </div>
             </NeuCardRaised>
 

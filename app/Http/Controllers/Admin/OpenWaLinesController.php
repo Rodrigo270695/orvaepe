@@ -27,7 +27,12 @@ class OpenWaLinesController extends Controller
             'configured' => $client->isConfigured(),
             'gatewayHost' => parse_url((string) config('openwa_lines.api_url'), PHP_URL_HOST),
             'storeUrl' => route('panel.operacion-openwa.store'),
-            'products' => $saas->options($lines->pluck('productos')->flatten()),
+            'products' => collect($saas->options($lines->pluck('productos')->flatten()))
+                ->map(fn (array $product): array => [
+                    ...$product,
+                    'hub_url' => $product['connected'] ? route('panel.centro-ventas.show', $product['key']) : null,
+                ])
+                ->values(),
             'lines' => $lines->map(fn (OpenWaLine $line) => $this->present($line))->values(),
         ]);
     }

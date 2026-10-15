@@ -104,12 +104,28 @@ final class ReplyGenerator
     {
         $text = preg_replace('/<<<[^>]*>>>/', '', $raw) ?? $raw;
         $text = preg_replace('/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/', '$2', $text) ?? $text;
-        $text = preg_replace('/\*\*(.+?)\*\*/s', '$1', $text) ?? $text;
-        $text = preg_replace('/__(.+?)__/s', '$1', $text) ?? $text;
+        $text = self::toWhatsAppFormat($text);
 
         $parts = array_values(array_filter(array_map('trim', preg_split('/\s*\|\|\|\s*/u', $text) ?: [])));
 
         return array_slice($parts, 0, 3);
+    }
+
+    /**
+     * Markdown → formato nativo de WhatsApp: *negrita*, _cursiva_ y viñetas «•».
+     */
+    public static function toWhatsAppFormat(string $text): string
+    {
+        $text = preg_replace_callback(
+            '/^[ \t]*#{1,6}[ \t]*(.+?)[ \t]*#*[ \t]*$/m',
+            fn (array $m): string => '*'.trim(str_replace('*', '', $m[1])).'*',
+            $text,
+        ) ?? $text;
+        $text = preg_replace('/\*\*(.+?)\*\*/s', '*$1*', $text) ?? $text;
+        $text = preg_replace('/__(.+?)__/s', '_$1_', $text) ?? $text;
+        $text = preg_replace('/^([ \t]*)[-*+][ \t]+/m', '$1• ', $text) ?? $text;
+
+        return preg_replace('/\n{3,}/', "\n\n", $text) ?? $text;
     }
 
     /**

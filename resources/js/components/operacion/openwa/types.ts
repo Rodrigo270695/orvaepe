@@ -3,6 +3,8 @@ export type OpenWaProduct = {
     label: string;
     /** false = asignado a alguna línea pero su integración ya no está activa */
     connected: boolean;
+    /** Página del SaaS en el Centro de Ventas (null si no está conectado) */
+    hub_url: string | null;
 };
 
 export type OpenWaLineStatus =

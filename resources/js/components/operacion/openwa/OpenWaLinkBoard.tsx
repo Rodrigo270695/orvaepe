@@ -1,7 +1,11 @@
 import { router, usePage } from '@inertiajs/react';
-import { Cable } from 'lucide-react';
+import { Cable, ChevronRight } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { KeyboardEvent, PointerEvent as ReactPointerEvent } from 'react';
+import type {
+    CSSProperties,
+    KeyboardEvent,
+    PointerEvent as ReactPointerEvent,
+} from 'react';
 
 import { NeuCardRaised } from '@/components/ui/neu-card-raised';
 import { cn } from '@/lib/utils';
@@ -10,7 +14,10 @@ import { saasColor } from './saasColors';
 import type { OpenWaLine, OpenWaProduct } from './types';
 
 type Point = { x: number; y: number };
-type Anchors = { lines: Record<string, Point>; products: Record<string, Point> };
+type Anchors = {
+    lines: Record<string, Point>;
+    products: Record<string, Point>;
+};
 type Drag = { lineId: string; pointer: Point; overKey: string | null };
 type Pending = { lineId: string; key: string; action: 'add' | 'remove' };
 
@@ -29,16 +36,23 @@ function curvePath(a: Point, b: Point): string {
 }
 
 function productKeyAt(clientX: number, clientY: number): string | null {
-    const node = document.elementFromPoint(clientX, clientY)?.closest<HTMLElement>('[data-product-key]');
+    const node = document
+        .elementFromPoint(clientX, clientY)
+        ?.closest<HTMLElement>('[data-product-key]');
 
-    return node?.dataset.connected === 'true' ? (node.dataset.productKey ?? null) : null;
+    return node?.dataset.connected === 'true'
+        ? (node.dataset.productKey ?? null)
+        : null;
 }
 
 export function OpenWaLinkBoard({ lines, products }: Props) {
     const errors = usePage().props.errors as Record<string, string> | undefined;
     const boardRef = useRef<HTMLDivElement>(null);
     const dragStartRef = useRef<Point | null>(null);
-    const [anchors, setAnchors] = useState<Anchors>({ lines: {}, products: {} });
+    const [anchors, setAnchors] = useState<Anchors>({
+        lines: {},
+        products: {},
+    });
     const [drag, setDrag] = useState<Drag | null>(null);
     const [selected, setSelected] = useState<string | null>(null);
     const [pending, setPending] = useState<Pending | null>(null);
@@ -61,22 +75,27 @@ export function OpenWaLinkBoard({ lines, products }: Props) {
         const read = (attribute: string) => {
             const points: Record<string, Point> = {};
 
-            board.querySelectorAll<HTMLElement>(`[${attribute}]`).forEach((element) => {
-                const id = element.getAttribute(attribute);
-                const rect = element.getBoundingClientRect();
+            board
+                .querySelectorAll<HTMLElement>(`[${attribute}]`)
+                .forEach((element) => {
+                    const id = element.getAttribute(attribute);
+                    const rect = element.getBoundingClientRect();
 
-                if (id) {
-                    points[id] = {
-                        x: rect.left + rect.width / 2 - box.left,
-                        y: rect.top + rect.height / 2 - box.top,
-                    };
-                }
-            });
+                    if (id) {
+                        points[id] = {
+                            x: rect.left + rect.width / 2 - box.left,
+                            y: rect.top + rect.height / 2 - box.top,
+                        };
+                    }
+                });
 
             return points;
         };
 
-        setAnchors({ lines: read('data-line-port'), products: read('data-product-port') });
+        setAnchors({
+            lines: read('data-line-port'),
+            products: read('data-product-port'),
+        });
     }, []);
 
     useEffect(() => {
@@ -88,24 +107,29 @@ export function OpenWaLinkBoard({ lines, products }: Props) {
 
         const observer = new ResizeObserver(() => measure());
         observer.observe(board);
-        board.querySelectorAll('[data-node]').forEach((node) => observer.observe(node));
+        board
+            .querySelectorAll('[data-node]')
+            .forEach((node) => observer.observe(node));
 
         return () => observer.disconnect();
     }, [lines, products, measure]);
 
-    const save = useCallback((line: OpenWaLine, productos: string[], next: Pending) => {
-        setPending(next);
-        router.put(
-            line.routes.productos,
-            { productos },
-            {
-                preserveScroll: true,
-                preserveState: true,
-                only: ['lines', 'products'],
-                onFinish: () => setPending(null),
-            },
-        );
-    }, []);
+    const save = useCallback(
+        (line: OpenWaLine, productos: string[], next: Pending) => {
+            setPending(next);
+            router.put(
+                line.routes.productos,
+                { productos },
+                {
+                    preserveScroll: true,
+                    preserveState: true,
+                    only: ['lines', 'products'],
+                    onFinish: () => setPending(null),
+                },
+            );
+        },
+        [],
+    );
 
     const toggleLink = useCallback(
         (lineId: string, key: string, mode: 'toggle' | 'add' = 'toggle') => {
@@ -118,14 +142,22 @@ export function OpenWaLinkBoard({ lines, products }: Props) {
 
             if (line.productos.includes(key)) {
                 if (mode === 'toggle') {
-                    save(line, line.productos.filter((item) => item !== key), { lineId, key, action: 'remove' });
+                    save(
+                        line,
+                        line.productos.filter((item) => item !== key),
+                        { lineId, key, action: 'remove' },
+                    );
                 }
 
                 return;
             }
 
             if (product.connected) {
-                save(line, [...line.productos, key], { lineId, key, action: 'add' });
+                save(line, [...line.productos, key], {
+                    lineId,
+                    key,
+                    action: 'add',
+                });
             }
         },
         [lines, products, pending, save],
@@ -141,13 +173,16 @@ export function OpenWaLinkBoard({ lines, products }: Props) {
         const onMove = (event: PointerEvent) => {
             const pointer = toBoard(event.clientX, event.clientY);
             const overKey = productKeyAt(event.clientX, event.clientY);
-            setDrag((current) => (current ? { ...current, pointer, overKey } : current));
+            setDrag((current) =>
+                current ? { ...current, pointer, overKey } : current,
+            );
         };
 
         const onUp = (event: PointerEvent) => {
             const start = dragStartRef.current;
             const moved = start
-                ? Math.hypot(event.clientX - start.x, event.clientY - start.y) > TAP_TOLERANCE_PX
+                ? Math.hypot(event.clientX - start.x, event.clientY - start.y) >
+                  TAP_TOLERANCE_PX
                 : true;
             const key = productKeyAt(event.clientX, event.clientY);
 
@@ -155,7 +190,9 @@ export function OpenWaLinkBoard({ lines, products }: Props) {
             setDrag(null);
 
             if (!moved) {
-                setSelected((current) => (current === dragLineId ? null : dragLineId));
+                setSelected((current) =>
+                    current === dragLineId ? null : dragLineId,
+                );
             } else if (key) {
                 toggleLink(dragLineId, key, 'add');
             }
@@ -177,7 +214,10 @@ export function OpenWaLinkBoard({ lines, products }: Props) {
         };
     }, [dragLineId, toBoard, toggleLink]);
 
-    const onPortPointerDown = (event: ReactPointerEvent<HTMLButtonElement>, lineId: string) => {
+    const onPortPointerDown = (
+        event: ReactPointerEvent<HTMLButtonElement>,
+        lineId: string,
+    ) => {
         if (event.button !== 0 || pending) {
             return;
         }
@@ -185,13 +225,19 @@ export function OpenWaLinkBoard({ lines, products }: Props) {
         event.preventDefault();
         dragStartRef.current = { x: event.clientX, y: event.clientY };
         setHovered(null);
-        setDrag({ lineId, pointer: toBoard(event.clientX, event.clientY), overKey: null });
+        setDrag({
+            lineId,
+            pointer: toBoard(event.clientX, event.clientY),
+            overKey: null,
+        });
     };
 
-    const onProductClick = (key: string) => {
+    const onProductClick = (product: OpenWaProduct, linked: boolean) => {
         if (selected) {
-            toggleLink(selected, key);
+            toggleLink(selected, product.key);
             setSelected(null);
+        } else if (linked && product.hub_url) {
+            router.visit(product.hub_url);
         }
     };
 
@@ -205,11 +251,15 @@ export function OpenWaLinkBoard({ lines, products }: Props) {
         return null;
     }
 
-    const productByKey = Object.fromEntries(products.map((product) => [product.key, product]));
+    const productByKey = Object.fromEntries(
+        products.map((product) => [product.key, product]),
+    );
     const selectedLine = lines.find((line) => line.id === selected) ?? null;
     const error =
         errors?.productos ??
-        Object.entries(errors ?? {}).find(([field]) => field.startsWith('productos.'))?.[1];
+        Object.entries(errors ?? {}).find(([field]) =>
+            field.startsWith('productos.'),
+        )?.[1];
 
     const links = lines.flatMap((line) => {
         const keys = new Set(line.productos);
@@ -224,33 +274,54 @@ export function OpenWaLinkBoard({ lines, products }: Props) {
             key,
             label: productByKey[key]?.label ?? key,
             orphan: productByKey[key]?.connected !== true,
-            adding: pending?.action === 'add' && pending.lineId === line.id && pending.key === key,
-            removing: pending?.action === 'remove' && pending.lineId === line.id && pending.key === key,
+            adding:
+                pending?.action === 'add' &&
+                pending.lineId === line.id &&
+                pending.key === key,
+            removing:
+                pending?.action === 'remove' &&
+                pending.lineId === line.id &&
+                pending.key === key,
         }));
     });
 
     const dragFrom = drag ? anchors.lines[drag.lineId] : undefined;
-    const dragTo = drag ? ((drag.overKey && anchors.products[drag.overKey]) || drag.pointer) : undefined;
+    const dragTo = drag
+        ? (drag.overKey && anchors.products[drag.overKey]) || drag.pointer
+        : undefined;
 
     return (
         <NeuCardRaised className="rounded-xl p-4 md:p-5">
             <div className="flex items-start gap-3">
-                <Cable className="mt-0.5 size-4 shrink-0 text-[#D28C3C]" aria-hidden />
+                <Cable
+                    className="mt-0.5 size-4 shrink-0 text-[#D28C3C]"
+                    aria-hidden
+                />
                 <div>
-                    <h2 className="text-sm font-bold">Qué SaaS atiende cada línea</h2>
-                    <p className="mt-1 text-[11px] text-muted-foreground" aria-live="polite">
+                    <h2 className="text-sm font-bold">
+                        Qué SaaS atiende cada línea
+                    </h2>
+                    <p
+                        className="mt-1 text-[11px] text-muted-foreground"
+                        aria-live="polite"
+                    >
                         {selectedLine
                             ? `Ahora elige el SaaS para «${selectedLine.nombre}» (Esc para cancelar).`
-                            : 'Arrastra desde el punto de una línea hasta un SaaS. Toca una curva para quitar el vínculo.'}
+                            : 'Arrastra desde el punto de una línea hasta un SaaS para que el bot lo venda. Toca una curva para quitar el vínculo y toca un SaaS vinculado para abrir su centro de ventas.'}
                     </p>
                 </div>
             </div>
 
             {products.length === 0 ? (
                 <p className="mt-4 rounded-lg border border-dashed p-4 text-[11px] text-muted-foreground">
-                    No hay SaaS conectados. Activa la provisión de cada sistema en el .env (por ejemplo{' '}
-                    <span className="font-mono">VETSAAS_PROVISIONING_ENABLED=true</span> con su{' '}
-                    <span className="font-mono">VETSAAS_PROVISION_URL</span>) y aparecerán aquí.
+                    No hay SaaS conectados. Activa la provisión de cada sistema
+                    en el .env (por ejemplo{' '}
+                    <span className="font-mono">
+                        VETSAAS_PROVISIONING_ENABLED=true
+                    </span>{' '}
+                    con su{' '}
+                    <span className="font-mono">VETSAAS_PROVISION_URL</span>) y
+                    aparecerán aquí.
                 </p>
             ) : (
                 <div
@@ -261,7 +332,10 @@ export function OpenWaLinkBoard({ lines, products }: Props) {
                         drag && 'cursor-grabbing',
                     )}
                 >
-                    <svg className="pointer-events-none absolute inset-0 z-0 size-full overflow-visible" aria-hidden>
+                    <svg
+                        className="pointer-events-none absolute inset-0 z-0 size-full overflow-visible"
+                        aria-hidden
+                    >
                         {links.map((link) => {
                             const from = anchors.lines[link.line.id];
                             const to = anchors.products[link.key];
@@ -272,7 +346,9 @@ export function OpenWaLinkBoard({ lines, products }: Props) {
 
                             const d = curvePath(from, to);
                             const isHovered = hovered === link.id && !pending;
-                            const color = link.orphan ? 'var(--muted-foreground)' : saasColor(link.key);
+                            const color = link.orphan
+                                ? 'var(--muted-foreground)'
+                                : saasColor(link.key);
 
                             return (
                                 <g key={link.id}>
@@ -280,11 +356,21 @@ export function OpenWaLinkBoard({ lines, products }: Props) {
                                         <path
                                             d={d}
                                             fill="none"
-                                            stroke={isHovered ? 'var(--destructive)' : color}
+                                            stroke={
+                                                isHovered
+                                                    ? 'var(--destructive)'
+                                                    : color
+                                            }
                                             strokeWidth={2.25}
                                             strokeLinecap="round"
-                                            strokeDasharray={link.orphan ? '4 5' : undefined}
-                                            className={link.adding ? 'openwa-link-flow' : undefined}
+                                            strokeDasharray={
+                                                link.orphan ? '4 5' : undefined
+                                            }
+                                            className={
+                                                link.adding
+                                                    ? 'openwa-link-flow'
+                                                    : undefined
+                                            }
                                             opacity={link.orphan ? 0.6 : 0.9}
                                         />
                                     ) : (
@@ -292,7 +378,11 @@ export function OpenWaLinkBoard({ lines, products }: Props) {
                                             d={d}
                                             pathLength={1}
                                             fill="none"
-                                            stroke={isHovered ? 'var(--destructive)' : color}
+                                            stroke={
+                                                isHovered
+                                                    ? 'var(--destructive)'
+                                                    : color
+                                            }
                                             strokeWidth={isHovered ? 3 : 2.25}
                                             strokeLinecap="round"
                                             className="openwa-link-draw transition-[stroke,stroke-width,opacity] duration-200"
@@ -305,16 +395,36 @@ export function OpenWaLinkBoard({ lines, products }: Props) {
                                         stroke="transparent"
                                         strokeWidth={16}
                                         className="cursor-pointer"
-                                        style={{ pointerEvents: pending || drag ? 'none' : 'stroke' }}
-                                        onPointerEnter={() => setHovered(link.id)}
-                                        onPointerLeave={() => setHovered((current) => (current === link.id ? null : current))}
-                                        onClick={() => toggleLink(link.line.id, link.key)}
+                                        style={{
+                                            pointerEvents:
+                                                pending || drag
+                                                    ? 'none'
+                                                    : 'stroke',
+                                        }}
+                                        onPointerEnter={() =>
+                                            setHovered(link.id)
+                                        }
+                                        onPointerLeave={() =>
+                                            setHovered((current) =>
+                                                current === link.id
+                                                    ? null
+                                                    : current,
+                                            )
+                                        }
+                                        onClick={() =>
+                                            toggleLink(link.line.id, link.key)
+                                        }
                                     >
                                         <title>{`Quitar vínculo: ${link.line.nombre} → ${link.label}`}</title>
                                     </path>
                                     {isHovered ? (
-                                        <g transform={`translate(${(from.x + to.x) / 2} ${(from.y + to.y) / 2})`}>
-                                            <circle r={10} fill="var(--destructive)" />
+                                        <g
+                                            transform={`translate(${(from.x + to.x) / 2} ${(from.y + to.y) / 2})`}
+                                        >
+                                            <circle
+                                                r={10}
+                                                fill="var(--destructive)"
+                                            />
                                             <path
                                                 d="M -3.5 -3.5 L 3.5 3.5 M 3.5 -3.5 L -3.5 3.5"
                                                 stroke="white"
@@ -332,7 +442,11 @@ export function OpenWaLinkBoard({ lines, products }: Props) {
                                 <path
                                     d={curvePath(dragFrom, dragTo)}
                                     fill="none"
-                                    stroke={drag?.overKey ? saasColor(drag.overKey) : AMBER}
+                                    stroke={
+                                        drag?.overKey
+                                            ? saasColor(drag.overKey)
+                                            : AMBER
+                                    }
                                     strokeWidth={2.5}
                                     strokeLinecap="round"
                                     className="openwa-link-flow"
@@ -341,7 +455,11 @@ export function OpenWaLinkBoard({ lines, products }: Props) {
                                     cx={dragTo.x}
                                     cy={dragTo.y}
                                     r={5}
-                                    fill={drag?.overKey ? saasColor(drag.overKey) : AMBER}
+                                    fill={
+                                        drag?.overKey
+                                            ? saasColor(drag.overKey)
+                                            : AMBER
+                                    }
                                 />
                             </g>
                         ) : null}
@@ -362,16 +480,22 @@ export function OpenWaLinkBoard({ lines, products }: Props) {
                                             'shadow-[0_0_0_3px_color-mix(in_oklab,#D28C3C_28%,transparent)]',
                                     )}
                                 >
-                                    <p className="truncate text-xs font-bold">{line.nombre}</p>
+                                    <p className="truncate text-xs font-bold">
+                                        {line.nombre}
+                                    </p>
                                     <p className="mt-0.5 flex items-center gap-1.5 text-[10px] text-muted-foreground">
                                         <span
                                             className={cn(
                                                 'size-1.5 shrink-0 rounded-full',
-                                                line.is_ready ? 'bg-emerald-500' : 'bg-muted-foreground/50',
+                                                line.is_ready
+                                                    ? 'bg-emerald-500'
+                                                    : 'bg-muted-foreground/50',
                                             )}
                                             aria-hidden
                                         />
-                                        <span className="truncate font-mono">{line.phone ?? line.session_name}</span>
+                                        <span className="truncate font-mono">
+                                            {line.phone ?? line.session_name}
+                                        </span>
                                     </p>
                                     <button
                                         type="button"
@@ -379,10 +503,14 @@ export function OpenWaLinkBoard({ lines, products }: Props) {
                                         aria-label={`Vincular ${line.nombre} con un SaaS`}
                                         aria-pressed={isSelected}
                                         disabled={pending !== null}
-                                        onPointerDown={(event) => onPortPointerDown(event, line.id)}
+                                        onPointerDown={(event) =>
+                                            onPortPointerDown(event, line.id)
+                                        }
                                         onClick={(event) => {
                                             if (event.detail === 0) {
-                                                setSelected(isSelected ? null : line.id);
+                                                setSelected(
+                                                    isSelected ? null : line.id,
+                                                );
                                             }
                                         }}
                                         className="absolute top-1/2 -right-[10px] grid size-5 -translate-y-1/2 cursor-grab touch-none place-items-center rounded-full border-2 border-[#D28C3C] bg-background shadow-sm transition-transform hover:scale-125 focus-visible:ring-2 focus-visible:ring-[#D28C3C]/50 focus-visible:outline-none active:cursor-grabbing disabled:cursor-wait"
@@ -390,7 +518,9 @@ export function OpenWaLinkBoard({ lines, products }: Props) {
                                         <span
                                             className={cn(
                                                 'size-2 rounded-full transition-colors',
-                                                line.productos.length > 0 || isSelected || isDragging
+                                                line.productos.length > 0 ||
+                                                    isSelected ||
+                                                    isDragging
                                                     ? 'bg-[#D28C3C]'
                                                     : 'bg-transparent',
                                             )}
@@ -403,10 +533,19 @@ export function OpenWaLinkBoard({ lines, products }: Props) {
 
                     <div className="relative z-10 flex flex-col justify-center gap-3">
                         {products.map((product) => {
-                            const color = product.connected ? saasColor(product.key) : 'var(--muted-foreground)';
+                            const color = product.connected
+                                ? saasColor(product.key)
+                                : 'var(--muted-foreground)';
                             const isOver = drag?.overKey === product.key;
-                            const isTarget = selected !== null && product.connected;
-                            const count = lines.filter((line) => line.productos.includes(product.key)).length;
+                            const isTarget =
+                                selected !== null && product.connected;
+                            const count = lines.filter((line) =>
+                                line.productos.includes(product.key),
+                            ).length;
+                            const opensHub =
+                                selected === null &&
+                                count > 0 &&
+                                product.hub_url !== null;
 
                             return (
                                 <button
@@ -414,14 +553,31 @@ export function OpenWaLinkBoard({ lines, products }: Props) {
                                     type="button"
                                     data-node
                                     data-product-key={product.key}
-                                    data-connected={product.connected ? 'true' : 'false'}
-                                    aria-disabled={selected === null}
-                                    onClick={() => onProductClick(product.key)}
+                                    data-connected={
+                                        product.connected ? 'true' : 'false'
+                                    }
+                                    aria-disabled={
+                                        selected === null && !opensHub
+                                    }
+                                    aria-label={
+                                        opensHub
+                                            ? `Abrir el centro de ventas de ${product.label}`
+                                            : undefined
+                                    }
+                                    onClick={() =>
+                                        onProductClick(product, count > 0)
+                                    }
                                     className={cn(
-                                        'relative w-full rounded-xl border border-border/70 bg-background/70 py-2.5 pr-3 pl-5 text-left transition-[transform,box-shadow,border-color] duration-200',
-                                        !product.connected && 'border-dashed opacity-60',
-                                        selected === null && 'cursor-default',
-                                        isTarget && 'hover:-translate-x-0.5',
+                                        'group relative w-full rounded-xl border border-border/70 bg-background/70 py-2.5 pr-3 pl-5 text-left transition-[transform,box-shadow,border-color] duration-200',
+                                        !product.connected &&
+                                            'border-dashed opacity-60',
+                                        selected === null &&
+                                            !opensHub &&
+                                            'cursor-default',
+                                        (isTarget || opensHub) &&
+                                            'hover:-translate-x-0.5',
+                                        opensHub &&
+                                            'hover:border-[color:var(--hub-color)] hover:shadow-sm',
                                         isOver && 'scale-[1.03]',
                                     )}
                                     style={
@@ -432,7 +588,9 @@ export function OpenWaLinkBoard({ lines, products }: Props) {
                                                       ? `0 0 0 3px color-mix(in oklab, ${color} 25%, transparent)`
                                                       : undefined,
                                               }
-                                            : undefined
+                                            : ({
+                                                  '--hub-color': color,
+                                              } as CSSProperties)
                                     }
                                 >
                                     <span
@@ -443,18 +601,35 @@ export function OpenWaLinkBoard({ lines, products }: Props) {
                                     >
                                         <span
                                             className="size-2 rounded-full"
-                                            style={{ background: count > 0 || isOver ? color : 'transparent' }}
+                                            style={{
+                                                background:
+                                                    count > 0 || isOver
+                                                        ? color
+                                                        : 'transparent',
+                                            }}
                                         />
                                     </span>
                                     <span className="flex items-center gap-1.5">
-                                        <span className="size-2 shrink-0 rounded-full" style={{ background: color }} aria-hidden />
-                                        <span className="truncate text-xs font-bold">{product.label}</span>
+                                        <span
+                                            className="size-2 shrink-0 rounded-full"
+                                            style={{ background: color }}
+                                            aria-hidden
+                                        />
+                                        <span className="truncate text-xs font-bold">
+                                            {product.label}
+                                        </span>
+                                        {opensHub ? (
+                                            <ChevronRight
+                                                className="ml-auto size-3.5 text-muted-foreground transition-transform group-hover:translate-x-0.5"
+                                                aria-hidden
+                                            />
+                                        ) : null}
                                     </span>
                                     <span className="mt-0.5 block text-[10px] text-muted-foreground">
                                         {product.connected
                                             ? count === 0
-                                                ? 'Sin línea asignada'
-                                                : `${count} ${count === 1 ? 'línea' : 'líneas'}`
+                                                ? 'Sin línea · vincúlalo para venderlo'
+                                                : `${count} ${count === 1 ? 'línea' : 'líneas'} · ver ventas, chats y conocimiento`
                                             : 'Sin conexión · solo puedes quitarlo'}
                                     </span>
                                 </button>
@@ -464,7 +639,9 @@ export function OpenWaLinkBoard({ lines, products }: Props) {
                 </div>
             )}
 
-            {error ? <p className="mt-3 text-[11px] text-destructive">{error}</p> : null}
+            {error ? (
+                <p className="mt-3 text-[11px] text-destructive">{error}</p>
+            ) : null}
         </NeuCardRaised>
     );
 }

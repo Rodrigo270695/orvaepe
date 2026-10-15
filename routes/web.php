@@ -580,6 +580,9 @@ Route::middleware(['auth', 'verified', 'client.profile.complete'])->group(functi
 
         Route::get('panel/centro-ventas', [SalesHubController::class, 'index'])
             ->name('panel.centro-ventas.index');
+        Route::get('panel/centro-ventas/{producto}', [SalesHubController::class, 'show'])
+            ->where('producto', '[a-z0-9_-]+')
+            ->name('panel.centro-ventas.show');
         Route::put('panel/centro-ventas/conocimiento/{producto}', [SalesHubController::class, 'updateProduct'])
             ->name('panel.centro-ventas.producto');
         Route::post('panel/centro-ventas/conocimiento/{producto}/importar', [SalesHubController::class, 'import'])

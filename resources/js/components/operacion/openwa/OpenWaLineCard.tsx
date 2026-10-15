@@ -1,3 +1,4 @@
+import { Link } from '@inertiajs/react';
 import { Bell, LogOut, Pencil, QrCode, Send, Trash2 } from 'lucide-react';
 
 import { NeuButtonRaised } from '@/components/ui/neu-button-raised';
@@ -17,11 +18,25 @@ type Props = {
     onDelete: () => void;
 };
 
-export function OpenWaLineCard({ line, products, configured, onLink, onTest, onEdit, onLogout, onDelete }: Props) {
+export function OpenWaLineCard({
+    line,
+    products,
+    configured,
+    onLink,
+    onTest,
+    onEdit,
+    onLogout,
+    onDelete,
+}: Props) {
     const assigned = line.productos.map((key) => {
         const product = products.find((p) => p.key === key);
 
-        return { key, label: product?.label ?? key, connected: product?.connected === true };
+        return {
+            key,
+            label: product?.label ?? key,
+            connected: product?.connected === true,
+            hubUrl: product?.hub_url ?? null,
+        };
     });
     const showError = line.last_error && !line.is_ready;
 
@@ -29,13 +44,18 @@ export function OpenWaLineCard({ line, products, configured, onLink, onTest, onE
         <div className="neumorph-inset flex flex-col gap-4 rounded-xl border border-border/60 p-4 md:p-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
-                    <h2 className="truncate text-sm font-bold">{line.nombre}</h2>
-                    <p className="font-mono text-[10px] text-muted-foreground">{line.session_name}</p>
+                    <h2 className="truncate text-sm font-bold">
+                        {line.nombre}
+                    </h2>
+                    <p className="font-mono text-[10px] text-muted-foreground">
+                        {line.session_name}
+                    </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-1.5">
                     {line.envia_notificaciones ? (
                         <span className="inline-flex items-center gap-1 rounded-full bg-[color-mix(in_oklab,var(--o-amber)_14%,transparent)] px-2 py-0.5 text-[10px] font-semibold">
-                            <Bell className="size-3" aria-hidden /> Notificaciones
+                            <Bell className="size-3" aria-hidden />{' '}
+                            Notificaciones
                         </span>
                     ) : null}
                     <OpenWaStatusBadge status={line.status} />
@@ -44,44 +64,73 @@ export function OpenWaLineCard({ line, products, configured, onLink, onTest, onE
 
             <dl className="grid gap-2 text-[11px]">
                 <div className="flex gap-2">
-                    <dt className="w-20 shrink-0 text-muted-foreground">Número</dt>
+                    <dt className="w-20 shrink-0 text-muted-foreground">
+                        Número
+                    </dt>
                     <dd className="font-mono font-medium">
-                        {line.phone ?? <span className="text-muted-foreground">—</span>}
+                        {line.phone ?? (
+                            <span className="text-muted-foreground">—</span>
+                        )}
                         {line.push_name ? (
-                            <span className="ml-2 font-sans text-muted-foreground">({line.push_name})</span>
+                            <span className="ml-2 font-sans text-muted-foreground">
+                                ({line.push_name})
+                            </span>
                         ) : null}
                     </dd>
                 </div>
                 <div className="flex gap-2">
-                    <dt className="w-20 shrink-0 text-muted-foreground">Atiende</dt>
+                    <dt className="w-20 shrink-0 text-muted-foreground">
+                        Atiende
+                    </dt>
                     <dd className="flex flex-wrap gap-1.5">
                         {assigned.length > 0 ? (
-                            assigned.map((product) => (
-                                <span
-                                    key={product.key}
-                                    title={product.connected ? undefined : 'Sin conexión con ORVAE'}
-                                    className={
-                                        product.connected
-                                            ? 'inline-flex items-center gap-1 rounded-full bg-[color-mix(in_oklab,var(--o-amber)_14%,transparent)] px-2 py-0.5 text-[10px] font-semibold'
-                                            : 'inline-flex items-center gap-1 rounded-full border border-dashed px-2 py-0.5 text-[10px] font-semibold text-muted-foreground line-through'
-                                    }
-                                >
+                            assigned.map((product) =>
+                                product.connected && product.hubUrl ? (
+                                    <Link
+                                        key={product.key}
+                                        href={product.hubUrl}
+                                        title={`Abrir el centro de ventas de ${product.label}`}
+                                        className="inline-flex items-center gap-1 rounded-full bg-[color-mix(in_oklab,var(--o-amber)_14%,transparent)] px-2 py-0.5 text-[10px] font-semibold transition-colors hover:bg-[color-mix(in_oklab,var(--o-amber)_26%,transparent)]"
+                                    >
+                                        <span
+                                            className="size-1.5 rounded-full"
+                                            style={{
+                                                background: saasColor(
+                                                    product.key,
+                                                ),
+                                            }}
+                                            aria-hidden
+                                        />
+                                        {product.label}
+                                    </Link>
+                                ) : (
                                     <span
-                                        className="size-1.5 rounded-full"
-                                        style={{ background: product.connected ? saasColor(product.key) : 'currentColor' }}
-                                        aria-hidden
-                                    />
-                                    {product.label}
-                                </span>
-                            ))
+                                        key={product.key}
+                                        title="Sin conexión con ORVAE"
+                                        className="inline-flex items-center gap-1 rounded-full border border-dashed px-2 py-0.5 text-[10px] font-semibold text-muted-foreground line-through"
+                                    >
+                                        <span
+                                            className="size-1.5 rounded-full bg-current"
+                                            aria-hidden
+                                        />
+                                        {product.label}
+                                    </span>
+                                ),
+                            )
                         ) : (
-                            <span className="text-muted-foreground">Ningún SaaS asignado</span>
+                            <span className="text-muted-foreground">
+                                Ningún SaaS asignado
+                            </span>
                         )}
                     </dd>
                 </div>
             </dl>
 
-            {showError ? <p className="text-[11px] text-destructive">{line.last_error}</p> : null}
+            {showError ? (
+                <p className="text-[11px] text-destructive">
+                    {line.last_error}
+                </p>
+            ) : null}
 
             <div className="mt-auto flex flex-wrap items-center gap-2">
                 {line.is_ready ? (
@@ -89,13 +138,23 @@ export function OpenWaLineCard({ line, products, configured, onLink, onTest, onE
                         <NeuButtonRaised type="button" onClick={onTest}>
                             <Send className="size-4" aria-hidden /> Probar envío
                         </NeuButtonRaised>
-                        <NeuButtonRaised type="button" onClick={onLogout} className="text-destructive">
-                            <LogOut className="size-4" aria-hidden /> Desvincular
+                        <NeuButtonRaised
+                            type="button"
+                            onClick={onLogout}
+                            className="text-destructive"
+                        >
+                            <LogOut className="size-4" aria-hidden />{' '}
+                            Desvincular
                         </NeuButtonRaised>
                     </>
                 ) : (
-                    <NeuButtonRaised type="button" onClick={onLink} disabled={!configured}>
-                        <QrCode className="size-4" aria-hidden /> Vincular con QR
+                    <NeuButtonRaised
+                        type="button"
+                        onClick={onLink}
+                        disabled={!configured}
+                    >
+                        <QrCode className="size-4" aria-hidden /> Vincular con
+                        QR
                     </NeuButtonRaised>
                 )}
                 <div className="ml-auto flex gap-1">

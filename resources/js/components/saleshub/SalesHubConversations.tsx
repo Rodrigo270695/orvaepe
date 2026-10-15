@@ -1,8 +1,15 @@
 import { router } from '@inertiajs/react';
-import { Bot, Loader2, Pause, Play, Search, User } from 'lucide-react';
+import {
+    Bot,
+    Loader2,
+    MessagesSquare,
+    Pause,
+    Play,
+    Search,
+    User,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-import { saasColor } from '@/components/operacion/openwa/saasColors';
 import { NeuButtonRaised } from '@/components/ui/neu-button-raised';
 import { NeuCardRaised } from '@/components/ui/neu-card-raised';
 import {
@@ -19,39 +26,34 @@ import type {
     SalesHubConversation,
     SalesHubConversationsPayload,
     SalesHubMessage,
-    SalesHubProductItem,
 } from './types';
 
 type Props = {
-    products: SalesHubProductItem[];
+    productLabel: string;
     conversations: SalesHubConversationsPayload;
-    indexUrl: string;
+    showUrl: string;
 };
 
 const ESTADOS = [
     { key: 'todos', label: 'Todas' },
-    { key: 'activos', label: 'Bot activo' },
-    { key: 'pausados', label: 'Pausadas' },
-    { key: 'sin_producto', label: 'Sin SaaS detectado' },
+    { key: 'activos', label: 'Atiende el bot' },
+    { key: 'pausados', label: 'Respondes tú' },
 ];
 
 export function SalesHubConversations({
-    products,
+    productLabel,
     conversations,
-    indexUrl,
+    showUrl,
 }: Props) {
-    const { data, meta, stats, filters } = conversations;
+    const { data, meta, filters } = conversations;
     const [search, setSearch] = useState(filters.search);
     const [openId, setOpenId] = useState<string | null>(null);
-    const labelOf = (key: string | null) =>
-        products.find((p) => p.key === key)?.label ?? key ?? 'Sin SaaS';
 
-    const visit = (changes: Record<string, string | number | null>) => {
+    const visit = (changes: Record<string, string | number>) => {
         router.get(
-            indexUrl,
+            showUrl,
             {
                 tab: 'conversaciones',
-                filtro: filters.producto ?? '',
                 estado: filters.estado,
                 search,
                 ...changes,
@@ -63,177 +65,89 @@ export function SalesHubConversations({
     const open = data.find((c) => c.id === openId) ?? null;
 
     return (
-        <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-                {[
-                    ['Conversaciones', stats.total],
-                    ['Bot activo', stats.activos],
-                    ['Pausadas', stats.pausados],
-                    ['Nuevas hoy', stats.hoy],
-                ].map(([label, value]) => (
-                    <NeuCardRaised key={label} className="rounded-xl p-3">
-                        <p className="text-[10px] text-muted-foreground">
-                            {label}
-                        </p>
-                        <p className="text-lg font-bold tabular-nums">
-                            {value}
-                        </p>
-                    </NeuCardRaised>
-                ))}
+        <NeuCardRaised className="rounded-2xl p-4 md:p-5">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div
+                    className="flex flex-wrap gap-1.5"
+                    role="tablist"
+                    aria-label="Estado"
+                >
+                    {ESTADOS.map((estado) => (
+                        <button
+                            key={estado.key}
+                            type="button"
+                            role="tab"
+                            aria-selected={filters.estado === estado.key}
+                            onClick={() =>
+                                visit({ estado: estado.key, page: 1 })
+                            }
+                            className={cn(
+                                'rounded-lg px-3 py-1.5 text-[11px] font-semibold transition-colors',
+                                filters.estado === estado.key
+                                    ? 'bg-[#D28C3C]/15 text-[#D28C3C]'
+                                    : 'text-muted-foreground hover:bg-muted',
+                            )}
+                        >
+                            {estado.label}
+                        </button>
+                    ))}
+                </div>
+                <form
+                    className="relative"
+                    onSubmit={(e) => {
+                        e.preventDefault();
+                        visit({ page: 1 });
+                    }}
+                >
+                    <Search
+                        className="absolute top-2.5 left-0 size-3.5 text-muted-foreground"
+                        aria-hidden
+                    />
+                    <input
+                        className={cn(
+                            fieldClass,
+                            'w-full pl-5 text-xs md:w-56',
+                        )}
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        placeholder="Buscar por nombre o teléfono"
+                        aria-label="Buscar conversación"
+                    />
+                </form>
             </div>
 
-            <NeuCardRaised className="rounded-xl p-4 md:p-5">
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-                    <div className="flex flex-wrap gap-1.5">
-                        {[
-                            { key: '', label: 'Todos' },
-                            ...products.map((p) => ({
-                                key: p.key,
-                                label: p.label,
-                            })),
-                        ].map((item) => {
-                            const active =
-                                (filters.producto ?? '') === item.key;
-
-                            return (
-                                <button
-                                    key={item.key || 'todos'}
-                                    type="button"
-                                    onClick={() =>
-                                        visit({ filtro: item.key, page: 1 })
-                                    }
-                                    className={cn(
-                                        'inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-semibold',
-                                        active
-                                            ? 'bg-[#D28C3C]/15 text-[#D28C3C]'
-                                            : 'text-muted-foreground hover:bg-muted',
-                                    )}
-                                >
-                                    {item.key ? (
-                                        <span
-                                            className="size-2 rounded-full"
-                                            style={{
-                                                background: saasColor(item.key),
-                                            }}
-                                            aria-hidden
-                                        />
-                                    ) : null}
-                                    {item.label}
-                                </button>
-                            );
-                        })}
-                    </div>
-                    <div className="flex gap-3">
-                        <select
-                            className={cn(fieldClass, 'w-40 text-xs')}
-                            value={filters.estado}
-                            onChange={(e) =>
-                                visit({ estado: e.target.value, page: 1 })
-                            }
-                            aria-label="Estado"
-                        >
-                            {ESTADOS.map((estado) => (
-                                <option key={estado.key} value={estado.key}>
-                                    {estado.label}
-                                </option>
-                            ))}
-                        </select>
-                        <form
-                            className="relative"
-                            onSubmit={(e) => {
-                                e.preventDefault();
-                                visit({ page: 1 });
-                            }}
-                        >
-                            <Search
-                                className="absolute top-2.5 left-0 size-3.5 text-muted-foreground"
-                                aria-hidden
-                            />
-                            <input
-                                className={cn(fieldClass, 'w-48 pl-5 text-xs')}
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                placeholder="Nombre o teléfono"
-                                aria-label="Buscar"
-                            />
-                        </form>
-                    </div>
-                </div>
-
-                {data.length === 0 ? (
-                    <p className="mt-6 rounded-lg border border-dashed p-6 text-center text-[11px] text-muted-foreground">
-                        Aún no hay conversaciones con estos filtros. Aparecen en
-                        cuanto alguien le escribe a una línea con el bot
-                        encendido.
+            {data.length === 0 ? (
+                <div className="mt-6 flex flex-col items-center gap-2 rounded-xl border border-dashed p-8 text-center">
+                    <MessagesSquare
+                        className="size-6 text-muted-foreground"
+                        aria-hidden
+                    />
+                    <p className="text-xs font-semibold">
+                        Sin conversaciones aquí
                     </p>
-                ) : (
-                    <ul className="mt-4 divide-y divide-border/60">
-                        {data.map((c) => (
-                            <li key={c.id}>
-                                <button
-                                    type="button"
-                                    onClick={() => setOpenId(c.id)}
-                                    className="flex w-full items-start gap-3 rounded-lg px-2 py-3 text-left hover:bg-muted/50"
-                                >
-                                    <span
-                                        className="mt-1 size-2 shrink-0 rounded-full"
-                                        style={{
-                                            background: c.producto
-                                                ? saasColor(c.producto)
-                                                : 'var(--muted-foreground)',
-                                        }}
-                                        aria-hidden
-                                    />
-                                    <span className="min-w-0 flex-1">
-                                        <span className="flex items-center gap-2">
-                                            <span className="truncate text-xs font-bold">
-                                                {c.nombre ??
-                                                    c.phone ??
-                                                    'Sin nombre'}
-                                            </span>
-                                            {c.no_leidos > 0 ? (
-                                                <span className="rounded-full bg-[#D28C3C] px-1.5 text-[10px] font-bold text-white">
-                                                    {c.no_leidos}
-                                                </span>
-                                            ) : null}
-                                        </span>
-                                        <span className="mt-0.5 block truncate text-[11px] text-muted-foreground">
-                                            {c.ultimo_mensaje
-                                                ? `${c.ultimo_mensaje.autor === 'cliente' ? '' : c.ultimo_mensaje.autor === 'bot' ? 'Bot: ' : 'Tú: '}${c.ultimo_mensaje.body}`
-                                                : '—'}
-                                        </span>
-                                    </span>
-                                    <span className="shrink-0 text-right">
-                                        <span className="block text-[10px] text-muted-foreground">
-                                            {formatDateTime(
-                                                c.last_inbound_at ??
-                                                    c.created_at,
-                                            )}
-                                        </span>
-                                        <span className="mt-0.5 block text-[10px]">
-                                            {labelOf(c.producto)} ·{' '}
-                                            <span
-                                                className={
-                                                    c.bot_activo
-                                                        ? 'text-emerald-600'
-                                                        : 'text-amber-600'
-                                                }
-                                            >
-                                                {c.bot_activo
-                                                    ? 'bot'
-                                                    : (c.pausa_motivo ??
-                                                      'pausado')}
-                                            </span>
-                                        </span>
-                                    </span>
-                                </button>
-                            </li>
-                        ))}
-                    </ul>
-                )}
+                    <p className="max-w-sm text-[11px] text-muted-foreground">
+                        Aparecen en cuanto alguien pregunta por {productLabel}{' '}
+                        en una línea con el bot encendido.
+                    </p>
+                </div>
+            ) : (
+                <ul className="mt-4 divide-y divide-border/60">
+                    {data.map((c) => (
+                        <ConversationRow
+                            key={c.id}
+                            conversation={c}
+                            onOpen={() => setOpenId(c.id)}
+                        />
+                    ))}
+                </ul>
+            )}
 
-                {meta.last_page > 1 ? (
-                    <div className="mt-4 flex items-center justify-end gap-2 text-[11px]">
+            {meta.last_page > 1 ? (
+                <div className="mt-4 flex items-center justify-between gap-2 text-[11px]">
+                    <span className="text-muted-foreground">
+                        {meta.total} conversaciones
+                    </span>
+                    <div className="flex items-center gap-2">
                         <NeuButtonRaised
                             type="button"
                             disabled={meta.page <= 1}
@@ -241,7 +155,7 @@ export function SalesHubConversations({
                         >
                             Anterior
                         </NeuButtonRaised>
-                        <span className="text-muted-foreground">
+                        <span className="text-muted-foreground tabular-nums">
                             {meta.page} / {meta.last_page}
                         </span>
                         <NeuButtonRaised
@@ -252,19 +166,86 @@ export function SalesHubConversations({
                             Siguiente
                         </NeuButtonRaised>
                     </div>
-                ) : null}
-            </NeuCardRaised>
+                </div>
+            ) : null}
 
             <ConversationSheet
                 conversation={open}
-                productLabel={labelOf(open?.producto ?? null)}
+                productLabel={productLabel}
                 onClose={() => setOpenId(null)}
             />
-        </div>
+        </NeuCardRaised>
     );
 }
 
-function ConversationSheet({
+export function ConversationRow({
+    conversation: c,
+    onOpen,
+}: {
+    conversation: SalesHubConversation;
+    onOpen: () => void;
+}) {
+    const author =
+        c.ultimo_mensaje?.autor === 'bot'
+            ? 'Bot: '
+            : c.ultimo_mensaje?.autor === 'humano'
+              ? 'Tú: '
+              : '';
+
+    return (
+        <li>
+            <button
+                type="button"
+                onClick={onOpen}
+                className="flex w-full items-center gap-3 rounded-lg px-2 py-3 text-left transition-colors hover:bg-muted/50"
+            >
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
+                    {(c.nombre ?? c.phone ?? '?').charAt(0).toUpperCase()}
+                </span>
+                <span className="min-w-0 flex-1">
+                    <span className="flex items-center gap-2">
+                        <span className="truncate text-xs font-bold">
+                            {c.nombre ??
+                                (c.phone ? `+${c.phone}` : 'Sin nombre')}
+                        </span>
+                        {c.no_leidos > 0 ? (
+                            <span className="rounded-full bg-[#D28C3C] px-1.5 text-[10px] font-bold text-white">
+                                {c.no_leidos}
+                            </span>
+                        ) : null}
+                    </span>
+                    <span className="mt-0.5 block truncate text-[11px] text-muted-foreground">
+                        {c.ultimo_mensaje
+                            ? `${author}${c.ultimo_mensaje.body}`
+                            : '—'}
+                    </span>
+                </span>
+                <span className="shrink-0 text-right">
+                    <span className="block text-[10px] text-muted-foreground tabular-nums">
+                        {formatDateTime(c.last_inbound_at ?? c.created_at)}
+                    </span>
+                    <span
+                        className={cn(
+                            'mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold',
+                            c.bot_activo
+                                ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
+                                : 'bg-amber-500/10 text-amber-700 dark:text-amber-400',
+                        )}
+                    >
+                        {c.bot_activo ? (
+                            <Bot className="size-3" aria-hidden />
+                        ) : (
+                            <User className="size-3" aria-hidden />
+                        )}
+                        {c.bot_activo ? 'Bot' : 'Tú'}
+                    </span>
+                </span>
+            </button>
+        </li>
+    );
+}
+
+export function ConversationSheet({
     conversation,
     productLabel,
     onClose,
@@ -349,8 +330,9 @@ function ConversationSheet({
                         <SheetHeader className="border-b p-4">
                             <SheetTitle className="text-sm">
                                 {conversation.nombre ??
-                                    conversation.phone ??
-                                    'Conversación'}
+                                    (conversation.phone
+                                        ? `+${conversation.phone}`
+                                        : 'Conversación')}
                             </SheetTitle>
                             <SheetDescription className="text-[11px]">
                                 {conversation.phone
@@ -361,7 +343,7 @@ function ConversationSheet({
                                     ? ` · ${conversation.linea}`
                                     : ''}
                             </SheetDescription>
-                            <div className="mt-2 flex items-center gap-2">
+                            <div className="mt-2 flex flex-wrap items-center gap-2">
                                 <NeuButtonRaised
                                     type="button"
                                     onClick={toggleBot}
@@ -386,7 +368,7 @@ function ConversationSheet({
                                     )}
                                     {conversation.bot_activo
                                         ? 'Pausar bot (respondo yo)'
-                                        : 'Reactivar bot'}
+                                        : 'Devolverle el chat al bot'}
                                 </NeuButtonRaised>
                                 {!conversation.bot_activo &&
                                 conversation.pausa_motivo ? (
@@ -451,7 +433,7 @@ function ConversationSheet({
                                             </span>
                                         ) : null}
                                         {m.tipo === 'audio' ? '🎤 ' : ''}
-                                        {m.body}
+                                        <WhatsAppText text={m.body} />
                                         <span className="mt-1 block text-right text-[9px] text-muted-foreground">
                                             {formatDateTime(m.at)}
                                         </span>
@@ -463,5 +445,34 @@ function ConversationSheet({
                 ) : null}
             </SheetContent>
         </Sheet>
+    );
+}
+
+/** Muestra *negrita* y _cursiva_ como en WhatsApp. */
+function WhatsAppText({ text }: { text: string }) {
+    const parts = text.split(/(\*[^*\n]+\*|_[^_\n]+_)/g);
+
+    return (
+        <>
+            {parts.map((part, index) => {
+                if (
+                    part.length > 2 &&
+                    part.startsWith('*') &&
+                    part.endsWith('*')
+                ) {
+                    return <strong key={index}>{part.slice(1, -1)}</strong>;
+                }
+
+                if (
+                    part.length > 2 &&
+                    part.startsWith('_') &&
+                    part.endsWith('_')
+                ) {
+                    return <em key={index}>{part.slice(1, -1)}</em>;
+                }
+
+                return part;
+            })}
+        </>
     );
 }

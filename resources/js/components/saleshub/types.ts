@@ -1,4 +1,4 @@
-export type SalesHubTab = 'conocimiento' | 'conversaciones';
+export type SalesHubTab = 'resumen' | 'conversaciones' | 'conocimiento';
 
 export type SalesHubSectionTipo =
     | 'modulo'
@@ -7,12 +7,20 @@ export type SalesHubSectionTipo =
     | 'novedad'
     | 'general';
 
-export type SalesHubProductItem = {
+export type SalesHubLine = {
+    id: string;
+    nombre: string;
+    phone: string | null;
+    is_ready: boolean;
+    bot_activo: boolean;
+};
+
+export type SalesHubProduct = {
     key: string;
     label: string;
-    /** true = ya tiene conocimiento propio en ORVAE */
-    editado: boolean;
-    secciones: number;
+    /** SALESHUB_BOT_ENABLED */
+    bot_global: boolean;
+    lines: SalesHubLine[];
 };
 
 export type SalesHubPlan = {
@@ -52,9 +60,11 @@ export type SalesHubKnowledge = {
     saas_ok: boolean;
     saas_obtenido_at: string | null;
     planes: SalesHubPlan[];
-    saas_secciones: number;
+    saas_tipos: Partial<Record<SalesHubSectionTipo, number>>;
+    /** Lo editado en ORVAE (vacío = se usa lo del SaaS) */
     form: SalesHubKnowledgeForm;
-    placeholders: Partial<Record<keyof SalesHubKnowledgeForm, string | null>>;
+    /** Lo que publica el SaaS */
+    saas: SalesHubKnowledgeForm;
     sections: SalesHubSection[];
     routes: { update: string; importar: string; bloques: string };
 };
@@ -90,13 +100,13 @@ export type SalesHubConversationsPayload = {
     data: SalesHubConversation[];
     meta: { total: number; page: number; last_page: number };
     stats: { total: number; activos: number; pausados: number; hoy: number };
-    filters: { producto: string | null; estado: string; search: string };
+    filters: { estado: string; search: string };
 };
 
 export type SalesHubPageProps = {
     tab: SalesHubTab;
-    products: SalesHubProductItem[];
-    knowledge: SalesHubKnowledge | null;
+    product: SalesHubProduct;
+    knowledge: SalesHubKnowledge;
     conversations: SalesHubConversationsPayload;
-    routes: { index: string };
+    routes: { show: string; openwa: string };
 };

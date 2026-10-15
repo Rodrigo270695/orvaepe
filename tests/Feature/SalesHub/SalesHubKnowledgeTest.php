@@ -127,13 +127,18 @@ test('el panel guarda conocimiento y bloques del SaaS', function () {
     $this->seed(RoleSeeder::class);
     $this->actingAs(User::factory()->superadmin()->create());
 
-    $this->get('/panel/centro-ventas?producto=vetsaas')
+    $this->get('/panel/centro-ventas')->assertRedirect(route('panel.operacion-openwa.index'));
+    $this->get('/panel/centro-ventas/no-existe')->assertNotFound();
+
+    $this->get('/panel/centro-ventas/vetsaas?tab=conocimiento')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('admin/centro-ventas/index')
+            ->component('admin/centro-ventas/show')
+            ->where('tab', 'conocimiento')
+            ->where('product.key', 'vetsaas')
             ->where('knowledge.producto', 'vetsaas')
             ->where('knowledge.planes.0.nombre', 'Pro')
-            ->has('products', 3));
+            ->has('conversations.stats'));
 
     $this->put('/panel/centro-ventas/conocimiento/vetsaas', [
         'resumen' => 'Nuevo resumen',

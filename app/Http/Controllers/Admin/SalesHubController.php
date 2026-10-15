@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\OpenWaLine;
 use App\Models\SalesHubConversation;
 use App\Models\SalesHubProduct;
 use App\Models\SalesHubSection;
@@ -25,34 +26,48 @@ use Inertia\Response;
  */
 class SalesHubController extends Controller
 {
-    public function index(
+    public const TABS = ['resumen', 'conversaciones', 'conocimiento'];
+
+    public function index(): RedirectResponse
+    {
+        return redirect()->route('panel.operacion-openwa.index');
+    }
+
+    public function show(
         Request $request,
+        string $producto,
         SaasDirectory $saas,
         SaasKnowledgeClient $remote,
         ConversationDirectory $conversations,
     ): Response {
-        $products = $saas->connected();
-        $tab = $request->query('tab') === 'conversaciones' ? 'conversaciones' : 'conocimiento';
-        $producto = (string) $request->query('producto', '');
-        $producto = array_key_exists($producto, $products) ? $producto : (string) array_key_first($products);
+        $this->ensureProduct($producto, $saas);
 
-        $filtro = (string) $request->query('filtro', '');
-        $filtro = array_key_exists($filtro, $products) ? $filtro : null;
+        $tab = (string) $request->query('tab', 'resumen');
+        $tab = in_array($tab, self::TABS, true) ? $tab : 'resumen';
         $estado = (string) $request->query('estado', 'todos');
-        $estado = in_array($estado, ConversationDirectory::ESTADOS, true) ? $estado : 'todos';
+        $estado = in_array($estado, ['todos', 'activos', 'pausados'], true) ? $estado : 'todos';
         $search = (string) $request->query('search', '');
 
-        $page = $conversations->paginate($filtro, $search, $estado);
+        $page = $conversations->paginate($producto, $search, $estado, 15);
+        $lines = OpenWaLine::query()->orderBy('created_at')->get()
+            ->filter(fn (OpenWaLine $line): bool => in_array($producto, $line->productos ?? [], true))
+            ->values();
 
-        return Inertia::render('admin/centro-ventas/index', [
+        return Inertia::render('admin/centro-ventas/show', [
             'tab' => $tab,
-            'products' => collect($products)->map(fn (string $label, string $key): array => [
-                'key' => $key,
-                'label' => $label,
-                'editado' => SalesHubProduct::query()->where('producto', $key)->exists(),
-                'secciones' => SalesHubSection::query()->where('producto', $key)->count(),
-            ])->values(),
-            'knowledge' => $producto !== '' ? $this->knowledge($producto, $remote) : null,
+            'product' => [
+                'key' => $producto,
+                'label' => $saas->connected()[$producto],
+                'bot_global' => (bool) config('saleshub.enabled'),
+                'lines' => $lines->map(fn (OpenWaLine $line): array => [
+                    'id' => $line->id,
+                    'nombre' => $line->nombre,
+                    'phone' => $line->phone,
+                    'is_ready' => $line->isReady(),
+                    'bot_activo' => $line->bot_activo,
+                ]),
+            ],
+            'knowledge' => $this->knowledge($producto, $remote),
             'conversations' => [
                 'data' => collect($page->items())->map(fn (SalesHubConversation $c): array => [
                     ...$conversations->present($c),
@@ -63,11 +78,12 @@ class SalesHubController extends Controller
                     ],
                 ])->values(),
                 'meta' => ['total' => $page->total(), 'page' => $page->currentPage(), 'last_page' => $page->lastPage()],
-                'stats' => $conversations->stats($filtro),
-                'filters' => ['producto' => $filtro, 'estado' => $estado, 'search' => $search],
+                'stats' => $conversations->stats($producto),
+                'filters' => ['estado' => $estado, 'search' => $search],
             ],
             'routes' => [
-                'index' => route('panel.centro-ventas.index'),
+                'show' => route('panel.centro-ventas.show', $producto),
+                'openwa' => route('panel.operacion-openwa.index'),
             ],
         ]);
     }
@@ -184,7 +200,7 @@ class SalesHubController extends Controller
             'saas_ok' => $saas !== null,
             'saas_obtenido_at' => $saas['obtenido_at'] ?? null,
             'planes' => $saas['planes'] ?? [],
-            'saas_secciones' => count($saas['secciones'] ?? []),
+            'saas_tipos' => collect($saas['secciones'] ?? [])->countBy('tipo')->all(),
             'form' => [
                 'nombre' => $local->nombre ?? '',
                 'resumen' => $local->resumen ?? '',
@@ -196,13 +212,16 @@ class SalesHubController extends Controller
                 'registro_url' => $local->registro_url ?? '',
                 'instrucciones' => $local->instrucciones ?? '',
             ],
-            'placeholders' => [
-                'nombre' => $saas['nombre'] ?? null,
-                'resumen' => $saas['resumen'] ?? null,
-                'publico' => $saas['publico'] ?? null,
+            'saas' => [
+                'nombre' => $saas['nombre'] ?? '',
+                'resumen' => $saas['resumen'] ?? '',
+                'publico' => $saas['publico'] ?? '',
                 'palabras_clave' => implode(', ', $saas['palabras_clave'] ?? []),
-                'demo_url' => $saas['demo']['url'] ?? null,
-                'registro_url' => $saas['registro_url'] ?? null,
+                'demo_url' => $saas['demo']['url'] ?? '',
+                'demo_usuario' => $saas['demo']['usuario'] ?? '',
+                'demo_password' => $saas['demo']['password'] ?? '',
+                'registro_url' => $saas['registro_url'] ?? '',
+                'instrucciones' => '',
             ],
             'sections' => SalesHubSection::query()
                 ->where('producto', $producto)
