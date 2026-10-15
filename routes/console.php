@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\OpenWaLine;
+use App\Models\SalesHubConversation;
 use App\Models\Subscription;
 use App\Services\Access\SubscriptionEntitlementSyncService;
 use App\Services\Notifications\ExpiringAccessNotifier;
@@ -8,11 +10,13 @@ use App\Services\Payments\CulqiClient;
 use App\Services\Payments\MercadoPagoClient;
 use App\Services\Payments\PayPalClient;
 use App\Services\SalesHub\SaasKnowledgeClient;
+use App\Services\SalesHub\WebhookRegistrar;
 use App\Services\WhatsApp\OrvaeWhatsAppSender;
 use App\Services\WhatsApp\UltraMsgClient;
 use App\Support\WhatsAppPhoneNormalizer;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Str;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
@@ -176,3 +180,75 @@ Artisan::command('saas:knowledge {producto?} {--refresh : Ignora la caché y vue
 
     return 0;
 })->purpose('Muestra el conocimiento de ventas que publica cada SaaS conectado');
+
+Artisan::command('saleshub:bot {linea : Nombre, session_name o id de la línea} {estado : on|off}', function (WebhookRegistrar $webhooks): int {
+    $ref = (string) $this->argument('linea');
+    $line = OpenWaLine::query()
+        ->where(fn ($q) => $q->where('session_name', $ref)->orWhere('nombre', $ref)->when(Str::isUuid($ref), fn ($q) => $q->orWhere('id', $ref)))
+        ->first();
+
+    if ($line === null) {
+        $this->error("No existe la línea «{$ref}».");
+
+        return 1;
+    }
+
+    $on = strtolower((string) $this->argument('estado')) === 'on';
+
+    if ($on) {
+        try {
+            $this->line('Webhook '.$webhooks->ensure($line).': '.$webhooks->url($line));
+        } catch (Throwable $e) {
+            $this->error('No se pudo registrar el webhook: '.$e->getMessage());
+
+            return 1;
+        }
+    }
+
+    $line->forceFill(['bot_activo' => $on])->save();
+    $this->info('Bot '.($on ? 'ENCENDIDO' : 'APAGADO')." en «{$line->nombre}».");
+
+    if ($on && ! config('saleshub.enabled')) {
+        $this->warn('SALESHUB_BOT_ENABLED=false: el bot no responderá hasta activarlo en el .env.');
+    }
+
+    return 0;
+})->purpose('Enciende o apaga el bot de ventas IA en una línea OpenWA');
+
+Artisan::command('saleshub:webhooks', function (WebhookRegistrar $webhooks): int {
+    $rows = [];
+
+    foreach (OpenWaLine::query()->orderBy('nombre')->get() as $line) {
+        try {
+            $estado = $webhooks->ensure($line);
+        } catch (Throwable $e) {
+            $estado = 'error: '.$e->getMessage();
+        }
+        $rows[] = [$line->nombre, $line->bot_activo ? 'sí' : 'no', $estado];
+    }
+
+    $this->table(['Línea', 'Bot', 'Webhook'], $rows);
+
+    return 0;
+})->purpose('Registra en OpenWA el webhook de mensajes de cada línea de ORVAE');
+
+Artisan::command('saleshub:pause {telefono} {--resume : Reanuda el bot en vez de pausarlo}', function (): int {
+    $digits = preg_replace('/\D/', '', (string) $this->argument('telefono')) ?? '';
+    $conversations = SalesHubConversation::query()->where('phone', 'like', '%'.$digits)->get();
+
+    if ($digits === '' || $conversations->isEmpty()) {
+        $this->error('No hay conversaciones con ese teléfono.');
+
+        return 1;
+    }
+
+    foreach ($conversations as $conversation) {
+        $this->option('resume')
+            ? $conversation->resume()
+            : $conversation->pause(SalesHubConversation::PAUSA_MANUAL, 'pausa manual');
+    }
+
+    $this->info(($this->option('resume') ? 'Reanudadas' : 'Pausadas').": {$conversations->count()} conversación(es).");
+
+    return 0;
+})->purpose('Pausa (o reanuda con --resume) el bot de ventas para un teléfono');

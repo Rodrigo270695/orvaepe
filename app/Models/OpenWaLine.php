@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Número de WhatsApp de ORVAE vinculado al OpenWA propio (config/openwa_lines.php).
@@ -27,6 +28,8 @@ class OpenWaLine extends Model
         'push_name',
         'productos',
         'envia_notificaciones',
+        'bot_activo',
+        'webhook_id',
         'connected_at',
         'last_synced_at',
         'last_error',
@@ -36,6 +39,7 @@ class OpenWaLine extends Model
         'status' => 'created',
         'productos' => '[]',
         'envia_notificaciones' => false,
+        'bot_activo' => false,
     ];
 
     protected function casts(): array
@@ -43,9 +47,18 @@ class OpenWaLine extends Model
         return [
             'productos' => 'array',
             'envia_notificaciones' => 'boolean',
+            'bot_activo' => 'boolean',
             'connected_at' => 'datetime',
             'last_synced_at' => 'datetime',
         ];
+    }
+
+    /**
+     * @return HasMany<SalesHubConversation, $this>
+     */
+    public function conversations(): HasMany
+    {
+        return $this->hasMany(SalesHubConversation::class, 'openwa_line_id');
     }
 
     public function isReady(): bool

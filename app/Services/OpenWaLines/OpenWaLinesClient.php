@@ -113,6 +113,83 @@ final class OpenWaLinesClient
     }
 
     /**
+     * OpenWA descarga el audio desde la URL pública y lo envía como nota de voz.
+     *
+     * @return array<string, mixed>
+     */
+    public function sendAudioUrl(string $sessionId, string $chatId, string $url): array
+    {
+        return $this->expectArray($this->request('post', '/api/sessions/'.$sessionId.'/messages/send-audio', [
+            'chatId' => $chatId,
+            'url' => $url,
+        ]));
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function getContact(string $sessionId, string $contactId): ?array
+    {
+        try {
+            $response = $this->request('get', '/api/sessions/'.$sessionId.'/contacts/'.rawurlencode($contactId));
+        } catch (OpenWaLinesException $e) {
+            if ($e->isNotFound()) {
+                return null;
+            }
+
+            throw $e;
+        }
+
+        return is_array($response) ? $response : null;
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    public function listWebhooks(string $sessionId): array
+    {
+        $response = $this->request('get', '/api/sessions/'.$sessionId.'/webhooks');
+
+        if (is_array($response) && is_array($response['data'] ?? null)) {
+            $response = $response['data'];
+        }
+
+        return is_array($response) ? array_values(array_filter($response, 'is_array')) : [];
+    }
+
+    /**
+     * @param  list<string>  $events
+     * @return array<string, mixed>
+     */
+    public function registerWebhook(string $sessionId, string $url, string $secret, array $events): array
+    {
+        return $this->expectArray($this->request('post', '/api/sessions/'.$sessionId.'/webhooks', [
+            'url' => $url,
+            'events' => $events,
+            'secret' => $secret,
+        ]));
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     * @return array<string, mixed>
+     */
+    public function updateWebhook(string $sessionId, string $webhookId, array $payload): array
+    {
+        $path = '/api/sessions/'.$sessionId.'/webhooks/'.$webhookId;
+
+        try {
+            return $this->expectArray($this->request('put', $path, $payload));
+        } catch (OpenWaLinesException $e) {
+            if ($e->status !== 405) {
+                throw $e;
+            }
+
+            return $this->expectArray($this->request('patch', $path, $payload));
+        }
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private function expectArray(mixed $response): array
@@ -145,6 +222,8 @@ final class OpenWaLinesClient
             $response = match ($method) {
                 'get' => $pending->get($url, $query),
                 'post' => $pending->post($url, $body ?? (object) []),
+                'put' => $pending->put($url, $body ?? (object) []),
+                'patch' => $pending->patch($url, $body ?? (object) []),
                 'delete' => $pending->delete($url),
                 default => throw new OpenWaLinesException('Método HTTP no soportado: '.$method),
             };

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Integrations\OpenWaLineWebhookController;
 use App\Http\Controllers\Integrations\SaasKnowledgeRefreshController;
 use App\Http\Controllers\Integrations\TallerSaaSMarketingRefreshController;
 use App\Http\Middleware\VerifyProductSignature;
@@ -16,3 +17,8 @@ Route::post('/api/internal/tallersaas/marketing/refresh', TallerSaaSMarketingRef
 Route::post('/api/internal/saas/{producto}/knowledge/refresh', SaasKnowledgeRefreshController::class)
     ->middleware([VerifyProductSignature::class.':route', 'throttle:30,1'])
     ->name('integrations.saas.knowledge.refresh');
+
+Route::post('/api/webhooks/openwa-lines/{line}', OpenWaLineWebhookController::class)
+    ->whereUuid('line')
+    ->middleware('throttle:600,1')
+    ->name('integrations.openwa-lines.webhook');

@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace App\Services\OpenWaLines;
 
 use App\Models\OpenWaLine;
+use App\Services\SalesHub\OutgoingEcho;
 use Illuminate\Support\Carbon;
 
 final class OpenWaLineManager
 {
     public function __construct(
         private readonly OpenWaLinesClient $client,
+        private readonly OutgoingEcho $echo,
     ) {}
 
     /**
@@ -138,7 +140,18 @@ final class OpenWaLineManager
             );
         }
 
+        $this->echo->remember($line->id, $chatId, $text);
         $this->client->sendText($line->openwa_session_id, $chatId, $text);
+    }
+
+    public function sendVoice(OpenWaLine $line, string $chatId, string $publicUrl): void
+    {
+        if (! $line->isReady() || ! $line->openwa_session_id) {
+            throw new OpenWaLinesException('La línea «'.$line->nombre.'» no está conectada.');
+        }
+
+        $this->echo->remember($line->id, $chatId, '');
+        $this->client->sendAudioUrl($line->openwa_session_id, $chatId, $publicUrl);
     }
 
     /**
