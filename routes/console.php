@@ -5,7 +5,9 @@ use App\Services\Access\SubscriptionEntitlementSyncService;
 use App\Services\Notifications\ExpiringAccessNotifier;
 use App\Services\Payments\CulqiClient;
 use App\Services\Payments\MercadoPagoClient;
+use App\Services\OpenWaLines\SaasDirectory;
 use App\Services\Payments\PayPalClient;
+use App\Services\SalesHub\SaasKnowledgeClient;
 use App\Services\WhatsApp\OrvaeWhatsAppSender;
 use App\Services\WhatsApp\UltraMsgClient;
 use App\Support\WhatsAppPhoneNormalizer;
@@ -143,3 +145,34 @@ Artisan::command('alerts:expiring-access', function (ExpiringAccessNotifier $not
 
     return 0;
 })->purpose('Notifica accesos/suscripciones por vencer (7 días)');
+
+Artisan::command('saas:knowledge {producto?} {--refresh : Ignora la caché y vuelve a consultar al SaaS}', function (SaasKnowledgeClient $client, SaasDirectory $saas): int {
+    $productos = $this->argument('producto') ? [(string) $this->argument('producto')] : array_keys($saas->connected());
+
+    if ($productos === []) {
+        $this->warn('No hay SaaS conectados (services.*.enabled + provision_url).');
+
+        return 1;
+    }
+
+    $rows = [];
+    foreach ($productos as $producto) {
+        if ($this->option('refresh')) {
+            $client->forget($producto);
+        }
+
+        $knowledge = $client->get($producto);
+        $rows[] = [
+            $producto,
+            $client->url($producto) ?? '—',
+            $knowledge === null ? 'sin datos' : 'ok',
+            $knowledge === null ? 0 : count($knowledge['planes']),
+            $knowledge === null ? 0 : count($knowledge['secciones']),
+            $knowledge['obtenido_at'] ?? '—',
+        ];
+    }
+
+    $this->table(['SaaS', 'URL', 'Estado', 'Planes', 'Secciones', 'Obtenido'], $rows);
+
+    return 0;
+})->purpose('Muestra el conocimiento de ventas que publica cada SaaS conectado');

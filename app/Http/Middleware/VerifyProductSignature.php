@@ -12,6 +12,7 @@ use Symfony\Component\HttpFoundation\Response;
  * Llamadas de un producto (VetSaaS, TallerSaaS…) hacia Orvae firmadas con el mismo HMAC
  * que Orvae usa al provisionar: sha256 sobre "{timestamp}.{raw_body}" con services.{producto}.hmac_secret.
  * Uso: ->middleware(VerifyProductSignature::class.':tallersaas')
+ * Con ':route' el producto sale del parámetro {producto} de la ruta (solo SaaS de config/services.php).
  */
 class VerifyProductSignature
 {
@@ -19,6 +20,14 @@ class VerifyProductSignature
 
     public function handle(Request $request, Closure $next, string $producto): Response
     {
+        if ($producto === 'route') {
+            $producto = (string) $request->route('producto');
+
+            if (preg_match('/^[a-z0-9_-]{2,40}$/', $producto) !== 1 || ! array_key_exists('provision_url', (array) config("services.{$producto}", []))) {
+                return response()->json(['error' => 'unauthorized'], 401);
+            }
+        }
+
         $secret = (string) config("services.{$producto}.hmac_secret", '');
         $timestamp = (string) $request->header('X-Orvae-Timestamp', '');
         $signature = (string) $request->header('X-Orvae-Signature', '');

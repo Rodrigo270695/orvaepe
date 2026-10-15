@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Integrations;
 
 use App\Http\Controllers\Controller;
 use App\Services\Checkout\TallerSaaSMarketingClient;
+use App\Services\SalesHub\SaasKnowledgeClient;
 use Illuminate\Http\JsonResponse;
 
 /**
@@ -13,9 +14,10 @@ use Illuminate\Http\JsonResponse;
  */
 class TallerSaaSMarketingRefreshController extends Controller
 {
-    public function __invoke(TallerSaaSMarketingClient $client): JsonResponse
+    public function __invoke(TallerSaaSMarketingClient $client, SaasKnowledgeClient $knowledge): JsonResponse
     {
         $client->forgetCache();
+        $knowledge->forget('tallersaas');
 
         return response()->json(['ok' => true]);
     }
