@@ -264,6 +264,7 @@ final class SaasProvisionAccessNotifier
         $productLabel = SaasCatalogSku::productLabel($productKey);
         $subject = match ($productKey) {
             'vetsaas' => 'Tu clínica VetSaaS está lista',
+            'tallersaas' => 'Tu taller TallerSaaS está listo',
             'sendsaas' => 'Tu empresa SendSaaS está lista',
             default => 'Tu acceso a Aula Virtual está listo',
         };
@@ -272,7 +273,7 @@ final class SaasProvisionAccessNotifier
             ? '🌐 Subdominio: '.$tenantSlug."\n"
             : '';
 
-        $isBootstrap = ($isVetsaas || $isSendsaas) && str_contains($loginUrl, '/auth/bienvenida/');
+        $isBootstrap = ($isVetsaas || $productKey === 'tallersaas' || $isSendsaas) && str_contains($loginUrl, '/auth/bienvenida/');
 
         $credentialsBlock = '';
         if ($isBootstrap) {

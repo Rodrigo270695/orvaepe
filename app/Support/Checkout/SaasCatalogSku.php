@@ -9,7 +9,7 @@ use App\Models\Subscription;
 use Illuminate\Support\Collection;
 
 /**
- * Identifica SKUs de suscripción SaaS (VetSaaS / SendSaaS / Aula Virtual) y reglas de checkout $0.
+ * Identifica SKUs de suscripción SaaS (VetSaaS / TallerSaaS / SendSaaS / Aula Virtual) y reglas de checkout $0.
  */
 final class SaasCatalogSku
 {
@@ -57,6 +57,31 @@ final class SaasCatalogSku
             && str_contains($haystack, 'aula');
     }
 
+    public static function isTallersaas(CatalogSku $sku): bool
+    {
+        $metadata = is_array($sku->metadata) ? $sku->metadata : [];
+        $product = strtolower(trim((string) ($metadata['saas_product'] ?? '')));
+
+        if (in_array($product, ['tallersaas', 'taller-saas', 'taller'], true)) {
+            return true;
+        }
+
+        $haystack = strtolower(implode(' ', array_filter([
+            (string) ($sku->code ?? ''),
+            (string) ($sku->name ?? ''),
+            (string) ($sku->product?->name ?? ''),
+        ])));
+
+        if (str_contains($haystack, 'tallersaas') || str_contains($haystack, 'taller-saas') || str_contains($haystack, 'taller saas')) {
+            return true;
+        }
+
+        $saleModel = strtolower(trim((string) $sku->sale_model));
+
+        return $saleModel === 'saas_subscription'
+            && str_contains($haystack, 'taller');
+    }
+
     public static function isSendsaas(CatalogSku $sku): bool
     {
         $metadata = is_array($sku->metadata) ? $sku->metadata : [];
@@ -85,13 +110,17 @@ final class SaasCatalogSku
 
     public static function isSaasSubscription(CatalogSku $sku): bool
     {
-        return self::isVetsaas($sku) || self::isAulaVirtual($sku) || self::isSendsaas($sku);
+        return self::isVetsaas($sku) || self::isTallersaas($sku) || self::isAulaVirtual($sku) || self::isSendsaas($sku);
     }
 
     public static function productKey(CatalogSku $sku): ?string
     {
         if (self::isSendsaas($sku)) {
             return 'sendsaas';
+        }
+
+        if (self::isTallersaas($sku)) {
+            return 'tallersaas';
         }
 
         if (self::isVetsaas($sku)) {
@@ -109,6 +138,7 @@ final class SaasCatalogSku
     {
         return match ($productKey) {
             'vetsaas' => 'VetSaaS',
+            'tallersaas' => 'TallerSaaS',
             'sendsaas' => 'SendSaaS',
             'aulavirtual' => 'Aula Virtual',
             default => 'SaaS',
@@ -168,6 +198,14 @@ final class SaasCatalogSku
             return 'clinica';
         }
 
+        if (str_contains($normalized, 'basico') || str_contains($normalized, 'básico')) {
+            return 'basico';
+        }
+
+        if (str_contains($normalized, 'experto')) {
+            return 'experto';
+        }
+
         return $normalized;
     }
 
@@ -194,6 +232,11 @@ final class SaasCatalogSku
     public static function isPaidSendsaasPlan(CatalogSku $sku): bool
     {
         return self::isSendsaas($sku) && ! self::isFreePlan($sku);
+    }
+
+    public static function isPaidTallersaasPlan(CatalogSku $sku): bool
+    {
+        return self::isTallersaas($sku) && ! self::isFreePlan($sku);
     }
 
     public static function isFreeSaasSubscription(Subscription $subscription): bool
@@ -228,6 +271,7 @@ final class SaasCatalogSku
 
         return [
             $metadata['vetsaas_plan_slug'] ?? null,
+            $metadata['tallersaas_plan_slug'] ?? null,
             $metadata['sendsaas_plan_slug'] ?? null,
             $metadata['saas_plan_slug'] ?? null,
             $metadata['plan_slug'] ?? null,

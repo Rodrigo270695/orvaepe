@@ -82,7 +82,7 @@ final class OrderCheckoutFinalizer
      */
     private function afterPaid(Order $order, User $user, ?array $gatewayVault = null): void
     {
-        session()->forget(['saas_marketing_renewal', 'vetsaas_renew_tenant_slug']);
+        session()->forget(['saas_marketing_renewal', 'vetsaas_renew_tenant_slug', 'tallersaas_renew_tenant_slug']);
 
         $order->refresh();
         $order->coupon?->increment('used_count');

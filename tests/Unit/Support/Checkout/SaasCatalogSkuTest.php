@@ -37,6 +37,21 @@ test('detects vetsaas sku by code without metadata', function (): void {
     expect(SaasCatalogSku::isVetsaas($sku))->toBeTrue();
 });
 
+test('detects tallersaas sku by metadata and normalizes plan slugs', function (): void {
+    $sku = new CatalogSku([
+        'metadata' => ['saas_product' => 'tallersaas', 'tallersaas_plan_slug' => 'basico'],
+        'sale_model' => 'saas_subscription',
+        'code' => 'tallersaas-basico-mensual',
+        'name' => 'TallerSaaS — Plan Básico',
+    ]);
+
+    expect(SaasCatalogSku::isTallersaas($sku))->toBeTrue()
+        ->and(SaasCatalogSku::isVetsaas($sku))->toBeFalse()
+        ->and(SaasCatalogSku::isSaasSubscription($sku))->toBeTrue()
+        ->and(SaasCatalogSku::productKey($sku))->toBe('tallersaas')
+        ->and(SaasCatalogSku::normalizePlanSlug($sku, 'tallersaas-basico-mensual'))->toBe('basico');
+});
+
 test('detects sendsaas sku by metadata and normalizes omnidesk plans', function (): void {
     $sku = new CatalogSku([
         'metadata' => ['saas_product' => 'sendsaas', 'saas_plan_slug' => 'profesional'],

@@ -7,7 +7,6 @@ namespace App\Services\Checkout;
 use App\Models\Order;
 use App\Models\Subscription;
 use App\Models\User;
-use App\Support\Checkout\SaasCatalogSku;
 use App\Support\Checkout\SaasSubscriptionLookup;
 use App\Support\Http\OrvaeSignedHttpClient;
 use Illuminate\Support\Facades\Log;
@@ -79,6 +78,24 @@ final class SaasTenantAccessResolver
         }
 
         return $this->accessFromOrders($user, 'sendsaas');
+    }
+
+    /**
+     * @return array{login_url: string, tenant_slug: ?string, login_email: string, product_key: string}|null
+     */
+    public function resolveTallersaas(User $user): ?array
+    {
+        $subscription = SaasSubscriptionLookup::findTallersaasProvisioned((string) $user->id)
+            ?? SaasSubscriptionLookup::findActiveSaasSubscription((string) $user->id, 'tallersaas');
+
+        if ($subscription instanceof Subscription) {
+            $access = $this->accessFromSubscription($user, $subscription, 'tallersaas');
+            if ($access !== null) {
+                return $access;
+            }
+        }
+
+        return $this->accessFromOrders($user, 'tallersaas');
     }
 
     /**
@@ -218,6 +235,28 @@ final class SaasTenantAccessResolver
             ];
         }
 
+        if ($productKey === 'tallersaas') {
+            $loginUrl = $metadata['tallersaas_login_url'] ?? null;
+            $tenantSlug = SaasSubscriptionLookup::tallersaasTenantSlugFrom($subscription);
+
+            if ((! is_string($loginUrl) || trim($loginUrl) === '') && is_string($tenantSlug) && $tenantSlug !== '') {
+                $scheme = (string) config('services.tallersaas.tenant_scheme', 'https');
+                $domain = (string) config('services.tallersaas.tenant_domain', 'tallersaas.orvae.pe');
+                $loginUrl = sprintf('%s://%s.%s/login', $scheme, $tenantSlug, $domain);
+            }
+
+            if (! is_string($loginUrl) || trim($loginUrl) === '') {
+                return null;
+            }
+
+            return [
+                'login_url' => trim($loginUrl),
+                'tenant_slug' => is_string($tenantSlug) ? $tenantSlug : null,
+                'login_email' => (string) $user->email,
+                'product_key' => 'tallersaas',
+            ];
+        }
+
         $loginUrl = $metadata['aula_virtual_academy_url'] ?? null;
         $tenantSlug = SaasSubscriptionLookup::aulaTenantSlugFrom($subscription);
 
@@ -302,6 +341,33 @@ final class SaasTenantAccessResolver
                 }
             }
 
+            if ($productKey === 'tallersaas') {
+                $loginUrl = $snapshot['tallersaas_login_url'] ?? null;
+                $tenantSlug = $snapshot['tallersaas_tenant_slug'] ?? null;
+                $loginEmail = $snapshot['tallersaas_login_email'] ?? $user->email;
+
+                if (is_string($loginUrl) && trim($loginUrl) !== '') {
+                    return [
+                        'login_url' => trim($loginUrl),
+                        'tenant_slug' => is_string($tenantSlug) ? $tenantSlug : null,
+                        'login_email' => (string) $loginEmail,
+                        'product_key' => 'tallersaas',
+                    ];
+                }
+
+                if (is_string($tenantSlug) && trim($tenantSlug) !== '') {
+                    $scheme = (string) config('services.tallersaas.tenant_scheme', 'https');
+                    $domain = (string) config('services.tallersaas.tenant_domain', 'tallersaas.orvae.pe');
+
+                    return [
+                        'login_url' => sprintf('%s://%s.%s/login', $scheme, trim($tenantSlug), $domain),
+                        'tenant_slug' => trim($tenantSlug),
+                        'login_email' => (string) $loginEmail,
+                        'product_key' => 'tallersaas',
+                    ];
+                }
+            }
+
             if ($productKey === 'aulavirtual') {
                 $loginUrl = $snapshot['aula_virtual_academy_url'] ?? null;
                 $tenantSlug = $snapshot['aula_virtual_tenant_slug'] ?? null;
@@ -327,6 +393,10 @@ final class SaasTenantAccessResolver
         }
 
         if ($productKey === 'sendsaas' && $this->resolveSendsaas($user) !== null) {
+            return true;
+        }
+
+        if ($productKey === 'tallersaas' && $this->resolveTallersaas($user) !== null) {
             return true;
         }
 

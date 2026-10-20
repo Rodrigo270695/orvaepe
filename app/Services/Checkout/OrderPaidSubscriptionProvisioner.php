@@ -4,12 +4,14 @@ namespace App\Services\Checkout;
 
 use App\Models\CatalogSku;
 use App\Models\Order;
+use App\Models\OrderLine;
 use App\Models\Subscription;
 use App\Models\SubscriptionItem;
 use App\Services\Access\SubscriptionEntitlementSyncService;
 use App\Support\Checkout\SaasCatalogSku;
 use App\Support\Checkout\SaasSubscriptionLookup;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -22,6 +24,7 @@ final class OrderPaidSubscriptionProvisioner
         private readonly SubscriptionEntitlementSyncService $entitlementSync,
         private readonly AulaVirtualPlanProvisioner $aulaVirtualProvisioner,
         private readonly VetSaaSPlanProvisioner $vetsaasProvisioner,
+        private readonly TallerSaaSPlanProvisioner $tallersaasProvisioner,
         private readonly SendSaaSPlanProvisioner $sendsaasProvisioner,
     ) {}
 
@@ -81,7 +84,7 @@ final class OrderPaidSubscriptionProvisioner
     }
 
     /**
-     * @param  \Illuminate\Support\Collection<int, \App\Models\OrderLine>  $recurringLines
+     * @param  Collection<int, OrderLine>  $recurringLines
      */
     private function dispatchSaasProvisioning(Order $order, $recurringLines, ?\DateTimeInterface $periodEnd): void
     {
@@ -118,6 +121,18 @@ final class OrderPaidSubscriptionProvisioner
                     }
                 }
 
+                if (SaasCatalogSku::isTallersaas($sku)) {
+                    try {
+                        $this->tallersaasProvisioner->provision($freshOrder, $sku, $periodEnd);
+                    } catch (\Throwable $e) {
+                        Log::warning('tallersaas.provision_exception', [
+                            'order_id' => $order->id,
+                            'sku_code' => $sku->code,
+                            'exception' => $e->getMessage(),
+                        ]);
+                    }
+                }
+
                 if (SaasCatalogSku::isSendsaas($sku)) {
                     try {
                         $this->sendsaasProvisioner->provision($freshOrder, $sku, $periodEnd);
@@ -140,7 +155,7 @@ final class OrderPaidSubscriptionProvisioner
     }
 
     /**
-     * @param  \Illuminate\Support\Collection<int, \App\Models\OrderLine>  $recurringLines
+     * @param  Collection<int, OrderLine>  $recurringLines
      */
     private function resolveSubscription(Order $order, $recurringLines): Subscription
     {
@@ -155,6 +170,14 @@ final class OrderPaidSubscriptionProvisioner
             if (SaasCatalogSku::isVetsaas($sku)) {
                 $renewable = SaasSubscriptionLookup::findVetsaasRenewable((string) $order->user_id, $sku)
                     ?? $this->findVetsaasRenewableByOrderTenantSlug($order, $sku);
+                if ($renewable instanceof Subscription) {
+                    return $this->extendSubscription($renewable, $order, $sku);
+                }
+            }
+
+            if (SaasCatalogSku::isTallersaas($sku)) {
+                $renewable = SaasSubscriptionLookup::findTallersaasRenewable((string) $order->user_id, $sku)
+                    ?? $this->findTallersaasRenewableByOrderTenantSlug($order, $sku);
                 if ($renewable instanceof Subscription) {
                     return $this->extendSubscription($renewable, $order, $sku);
                 }
@@ -329,5 +352,17 @@ final class OrderPaidSubscriptionProvisioner
         }
 
         return SaasSubscriptionLookup::findSendsaasByTenantSlug(trim($slug), $sku);
+    }
+
+    private function findTallersaasRenewableByOrderTenantSlug(Order $order, CatalogSku $sku): ?Subscription
+    {
+        $snapshot = is_array($order->billing_snapshot) ? $order->billing_snapshot : [];
+        $slug = $snapshot['tallersaas_renew_tenant_slug'] ?? session('tallersaas_renew_tenant_slug');
+
+        if (! is_string($slug) || trim($slug) === '') {
+            return null;
+        }
+
+        return SaasSubscriptionLookup::findTallersaasByTenantSlug(trim($slug), $sku);
     }
 }

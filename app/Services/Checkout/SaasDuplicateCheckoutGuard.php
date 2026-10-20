@@ -44,6 +44,7 @@ final class SaasDuplicateCheckoutGuard
 
             $access = match ($productKey) {
                 'vetsaas' => $this->accessResolver->resolveVetsaas($user),
+                'tallersaas' => $this->accessResolver->resolveTallersaas($user),
                 'sendsaas' => $this->accessResolver->resolveSendsaas($user),
                 default => $this->accessResolver->resolveAulaVirtual($user),
             };

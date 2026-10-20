@@ -17,7 +17,7 @@ final class SaasCheckoutRedirect
         $order->refresh();
         $snapshot = is_array($order->billing_snapshot) ? $order->billing_snapshot : [];
 
-        foreach (['vetsaas_bootstrap_url', 'vetsaas_login_url', 'aulavirtual_login_url'] as $key) {
+        foreach (['vetsaas_bootstrap_url', 'vetsaas_login_url', 'tallersaas_bootstrap_url', 'tallersaas_login_url', 'aulavirtual_login_url'] as $key) {
             $url = $snapshot[$key] ?? null;
             if (is_string($url) && trim($url) !== '') {
                 return trim($url);

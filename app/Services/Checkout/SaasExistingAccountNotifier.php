@@ -173,7 +173,7 @@ final class SaasExistingAccountNotifier
         ?string $tenantSlug,
         string $loginEmail,
     ): array {
-        $isVetsaas = $productKey === 'vetsaas' || $productKey === 'sendsaas';
+        $isVetsaas = $productKey === 'vetsaas' || $productKey === 'tallersaas' || $productKey === 'sendsaas';
         $productLabel = SaasCatalogSku::productLabel($productKey);
         $subject = 'Ya tienes una cuenta '.$productLabel.' con ORVAE';
 
