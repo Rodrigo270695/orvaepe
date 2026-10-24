@@ -2,12 +2,14 @@ import { Form, Head } from '@inertiajs/react';
 import { IdCard, Phone } from 'lucide-react';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
+import {
+    AuthOrvaeCardHeader,
+    AuthOrvaeSecureFooter,
+    authInputUnderlineClassName,
+} from '@/components/auth/auth-orvae-parts';
 import InputError from '@/components/input-error';
 import AuthOrvaeLoginLayout from '@/layouts/auth/auth-orvae-login-layout';
 import { inertiaFormProps } from '@/lib/inertia-form-props';
-
-const inputUnderlineClassName =
-    'w-full border-0 border-b border-[var(--o-border2)] bg-transparent py-3 pl-9 pr-3 font-[family-name:var(--font-body)] text-sm text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:border-[var(--auth-focus-border)] focus:outline-none transition-colors duration-150';
 
 type Props = {
     user: {
@@ -54,18 +56,12 @@ export default function GoogleComplete({ user }: Props) {
             <Head title="Completar perfil" />
 
             <div className="flex flex-col gap-6">
-                <div>
-                    <h1 className="font-[family-name:var(--font-display)] text-xl font-bold text-[var(--foreground)]">
-                        Un paso más
-                    </h1>
-                    <p className="mt-1 font-[family-name:var(--font-body)] text-sm text-[var(--muted-foreground)]">
-                        Hola {user.name}, confirma tus datos de cliente para Perú.
-                        El celular es obligatorio para avisos de tu cuenta y de VetSaaS.
-                    </p>
-                    <p className="mt-2 font-mono text-xs text-[var(--muted-foreground)]">
-                        {user.email}
-                    </p>
-                </div>
+                <AuthOrvaeCardHeader
+                    icon={IdCard}
+                    title="Un paso más"
+                    subtitle={`Hola ${user.name}, confirma tus datos para Perú. Celular obligatorio para avisos de cuenta.`}
+                />
+                <p className="font-mono text-xs text-[var(--muted-foreground)]">{user.email}</p>
 
                 <Form
                     {...inertiaFormProps({
@@ -95,7 +91,7 @@ export default function GoogleComplete({ user }: Props) {
                                         maxLength={documentNumberMax}
                                         onInput={handleDigitsOnlyDocument}
                                         placeholder="DNI 8 dígitos o RUC 11"
-                                        className={inputUnderlineClassName}
+                                        className={authInputUnderlineClassName}
                                     />
                                 </div>
                                 <span className="font-mono text-[10px] text-[var(--muted-foreground)]">
@@ -122,7 +118,7 @@ export default function GoogleComplete({ user }: Props) {
                                         maxLength={9}
                                         onInput={handleDigitsOnlyPhone}
                                         placeholder="9XXXXXXXX"
-                                        className={inputUnderlineClassName}
+                                        className={authInputUnderlineClassName}
                                     />
                                 </div>
                                 <span className="font-mono text-[10px] text-[var(--muted-foreground)]">
@@ -160,6 +156,8 @@ export default function GoogleComplete({ user }: Props) {
                             >
                                 {processing ? 'Guardando...' : 'Continuar al portal'}
                             </button>
+
+                            <AuthOrvaeSecureFooter />
                         </>
                     )}
                 </Form>

@@ -1,5 +1,11 @@
 // Components
 import { Form, Head } from '@inertiajs/react';
+import {
+    AuthOrvaeCardHeader,
+    AuthOrvaeSecureFooter,
+    AuthOrvaeStatusBanner,
+    authInputUnderlineClassName,
+} from '@/components/auth/auth-orvae-parts';
 import { LoaderCircle, Mail } from 'lucide-react';
 import InputError from '@/components/input-error';
 import TextLink from '@/components/text-link';
@@ -11,9 +17,6 @@ import { email } from '@/routes/password';
 import { inertiaFormProps } from '@/lib/inertia-form-props';
 
 export default function ForgotPassword({ status }: { status?: string }) {
-    const inputUnderlineClassName =
-        'w-full border-0 border-b border-[var(--o-border2)] bg-transparent rounded-none shadow-none py-3 pl-9 pr-3 font-[family-name:var(--font-body)] text-sm text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:border-[var(--auth-focus-border)] focus-visible:outline-none focus-visible:ring-0 focus-visible:border-[var(--auth-focus-border)] transition-colors duration-150';
-
     return (
         <AuthOrvaeLoginLayout
             title="Olvidé mi contraseña"
@@ -22,41 +25,13 @@ export default function ForgotPassword({ status }: { status?: string }) {
             <Head title="Olvidé mi contraseña" />
 
             <div className="flex flex-col gap-8">
-                <div className="flex flex-col gap-3">
-                    <div
-                        className="flex h-12 w-12 items-center justify-center rounded-xl border"
-                        style={{
-                            borderColor:
-                                'color-mix(in oklab, var(--state-info) 70%, var(--border))',
-                            background:
-                                'linear-gradient(135deg, color-mix(in oklab, var(--state-info) 46%, var(--auth-header-icon-bg)), color-mix(in oklab, var(--state-success) 34%, var(--auth-header-icon-bg)))',
-                            boxShadow:
-                                '0 0 24px -4px color-mix(in oklab, var(--state-info) 65%, transparent)',
-                        }}
-                    >
-                        <Mail
-                            className="size-6"
-                            style={{
-                                color: 'var(--state-info)',
-                                filter: 'drop-shadow(0 0 6px color-mix(in oklab, var(--state-info) 60%, transparent))',
-                            }}
-                        />
-                    </div>
-                    <div>
-                        <h1 className="font-[family-name:var(--font-display)] text-xl font-bold text-[var(--foreground)]">
-                            Recuperar acceso
-                        </h1>
-                        <p className="mt-0.5 font-[family-name:var(--font-body)] text-sm text-[var(--muted-foreground)]">
-                            Te enviaremos un enlace para restablecer tu contraseña
-                        </p>
-                    </div>
-                </div>
+                <AuthOrvaeCardHeader
+                    icon={Mail}
+                    title="Recuperar acceso"
+                    subtitle="Te enviaremos un enlace para restablecer tu contraseña"
+                />
 
-                {status && (
-                    <div className="rounded-sm border border-[color-mix(in_oklab,var(--state-success)_35%,transparent)] bg-[color-mix(in_oklab,var(--state-success)_12%,transparent)] px-4 py-3 font-[family-name:var(--font-mono)] text-xs tracking-wide text-[var(--state-success)]">
-                        {status}
-                    </div>
-                )}
+                {status ? <AuthOrvaeStatusBanner>{status}</AuthOrvaeStatusBanner> : null}
 
                 <Form {...inertiaFormProps(email())}>
                     {({ processing, errors }) => (
@@ -79,7 +54,7 @@ export default function ForgotPassword({ status }: { status?: string }) {
                                         name="email"
                                         autoComplete="off"
                                         autoFocus
-                                        className={inputUnderlineClassName}
+                                        className={authInputUnderlineClassName}
                                         placeholder="correo@ejemplo.com"
                                     />
                                 </div>
@@ -113,6 +88,8 @@ export default function ForgotPassword({ status }: { status?: string }) {
                         iniciar sesión
                     </TextLink>
                 </div>
+
+                <AuthOrvaeSecureFooter />
             </div>
         </AuthOrvaeLoginLayout>
     );

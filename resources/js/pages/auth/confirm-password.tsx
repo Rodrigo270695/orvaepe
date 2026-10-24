@@ -1,7 +1,11 @@
 import { Form, Head } from '@inertiajs/react';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
-import { Button } from '@/components/ui/button';
+import {
+    AuthOrvaeCardHeader,
+    AuthOrvaeSecureFooter,
+    authPasswordUnderlineClassName,
+} from '@/components/auth/auth-orvae-parts';
 import { Spinner } from '@/components/ui/spinner';
 import { Label } from '@/components/ui/label';
 import { Lock } from 'lucide-react';
@@ -10,9 +14,6 @@ import { store } from '@/routes/password/confirm';
 import { inertiaFormProps } from '@/lib/inertia-form-props';
 
 export default function ConfirmPassword() {
-    const passwordUnderlineClassName =
-        'w-full border-0 border-b border-[var(--o-border2)] bg-transparent rounded-none shadow-none py-3 pl-9 pr-10 font-[family-name:var(--font-body)] text-sm text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:border-[var(--o-amber)]/60 transition-colors duration-150';
-
     return (
         <AuthOrvaeLoginLayout
             title="Confirma tu contraseña"
@@ -22,7 +23,13 @@ export default function ConfirmPassword() {
 
             <Form {...inertiaFormProps(store())} resetOnSuccess={['password']}>
                 {({ processing, errors }) => (
-                    <div className="flex flex-col gap-6">
+                    <div className="flex flex-col gap-8">
+                        <AuthOrvaeCardHeader
+                            icon={Lock}
+                            accent="alert"
+                            title="Confirma tu contraseña"
+                            subtitle="Por seguridad, vuelve a ingresar tu clave para continuar."
+                        />
                         <div className="flex flex-col gap-2">
                             <Label
                                 htmlFor="password"
@@ -37,26 +44,23 @@ export default function ConfirmPassword() {
                                     name="password"
                                     placeholder="Contraseña"
                                     autoComplete="current-password"
-                                    className={passwordUnderlineClassName}
+                                    className={authPasswordUnderlineClassName}
                                     autoFocus
                                 />
                             </div>
                             <InputError message={errors.password} className="mt-2" />
                         </div>
 
-                        <Button
+                        <button
                             type="submit"
-                            className="w-full cursor-pointer rounded-xl py-3 font-[family-name:var(--font-display)] text-sm font-semibold text-[var(--o-void)] transition-opacity duration-150 hover:opacity-95 disabled:cursor-default disabled:opacity-60"
+                            className="auth-cta w-full cursor-pointer rounded-xl py-3 font-[family-name:var(--font-display)] text-sm font-semibold transition-[filter,opacity] duration-150 disabled:cursor-default"
                             disabled={processing}
                             data-test="confirm-password-button"
-                            style={{
-                                background:
-                                    'linear-gradient(135deg, var(--o-amber) 0%, var(--o-amber2) 100%)',
-                            }}
                         >
-                            {processing && <Spinner />}
+                            {processing && <Spinner className="text-[var(--auth-cta-fg)]" />}
                             Confirmar contraseña
-                        </Button>
+                        </button>
+                        <AuthOrvaeSecureFooter />
                     </div>
                 )}
             </Form>

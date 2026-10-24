@@ -1,7 +1,7 @@
 import { Form, Head } from '@inertiajs/react';
 import { REGEXP_ONLY_DIGITS } from 'input-otp';
-import { KeyRound, ShieldCheck } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { AuthOrvaeSecureFooter } from '@/components/auth/auth-orvae-parts';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -131,12 +131,7 @@ export default function TwoFactorChallenge() {
                             </div>
                         </div>
 
-                        <div className="mt-4 flex items-center justify-center gap-2 border-t border-[var(--o-border2)] pt-5 font-[family-name:var(--font-mono)] text-[10px] text-[var(--muted-foreground)]">
-                            <KeyRound className="size-3.5 text-[var(--state-info)]" />
-                            <span>Doble verificación activa</span>
-                            <span className="opacity-50">·</span>
-                            <ShieldCheck className="size-3.5 text-[var(--state-success)]" />
-                        </div>
+                        <AuthOrvaeSecureFooter />
                     </div>
                 )}
             </Form>

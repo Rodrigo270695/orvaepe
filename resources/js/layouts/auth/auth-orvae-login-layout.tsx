@@ -1,7 +1,10 @@
 import { Link } from '@inertiajs/react';
 
 import AppearanceDarkLightToggle from '@/components/appearance-dark-light-toggle';
+import GeometricBackground from '@/components/welcome/GeometricBackground';
 import type { AuthLayoutProps } from '@/types';
+
+import '@/components/welcome/home-orvae.css';
 
 const authHighlights = [
     { label: 'Enterprise', accent: 'var(--state-info)' },
@@ -16,58 +19,57 @@ export default function AuthOrvaeLoginLayout({
     maxWidthClass,
 }: AuthLayoutProps) {
     return (
-        <div
-            className="relative min-h-dvh w-full overflow-hidden"
-            style={{
-                background: `
-                    linear-gradient(
-                        165deg,
-                        color-mix(in oklab, var(--background) 94%, var(--state-info) 1%) 0%,
-                        color-mix(in oklab, var(--background) 88%, var(--state-info) 4%) 26%,
-                        color-mix(in oklab, var(--background) 82%, var(--state-success) 6%) 50%,
-                        color-mix(in oklab, var(--background) 88%, var(--state-alert) 4%) 74%,
-                        var(--background) 100%
-                    ),
-                    radial-gradient(
-                        ellipse 95% 75% at 0% 20%,
-                        color-mix(in oklab, var(--state-info) 22%, transparent) 0%,
-                        transparent 56%
-                    ),
-                    radial-gradient(
-                        ellipse 85% 95% at 100% 80%,
-                        color-mix(in oklab, var(--state-success) 18%, transparent) 0%,
-                        transparent 55%
-                    )
-                `,
-            }}
-        >
+        <div className="landing-page relative min-h-dvh w-full overflow-x-clip text-foreground">
             <div className="landing-grain absolute inset-0 z-0" aria-hidden />
-            <div className="pointer-events-none absolute inset-0 z-0" aria-hidden>
-                <div className="absolute -left-24 top-20 h-72 w-72 rounded-full blur-3xl [background:radial-gradient(circle,color-mix(in_oklab,var(--state-info)_26%,transparent)_0%,transparent_68%)]" />
-                <div className="absolute -right-28 bottom-24 h-80 w-80 rounded-full blur-3xl [background:radial-gradient(circle,color-mix(in_oklab,var(--state-success)_22%,transparent)_0%,transparent_70%)]" />
+            <div className="landing-ambient-orbs" aria-hidden>
+                <div className="landing-orb landing-orb--a" />
+                <div className="landing-orb landing-orb--b" />
             </div>
 
-            <div className="relative z-10 grid min-h-dvh lg:grid-cols-2">
-                {/* Left: branding / narrativa visual */}
-                <div className="relative hidden overflow-hidden p-10 lg:flex">
-                    <div className="flex w-full flex-col justify-between">
-                        <Link
-                            href="/"
-                            className="inline-flex shrink-0 items-center gap-3 font-display font-semibold text-(--o-amber)"
-                        >
-                            <img
-                                src="/logo/orvae-logo-h-transparent-light.webp"
-                                alt="ORVAE"
-                                className="h-9 w-auto dark:hidden"
-                            />
-                            <img
-                                src="/logo/orvae-logo-h-transparent-dark.webp"
-                                alt="ORVAE"
-                                className="hidden h-9 w-auto dark:block"
-                            />
-                        </Link>
+            <header className="relative z-30 flex items-center justify-between px-5 py-4 sm:px-8 lg:absolute lg:inset-x-0 lg:top-0 lg:px-10">
+                <Link
+                    href="/"
+                    className="inline-flex shrink-0 items-center gap-3 font-display font-semibold text-(--o-amber)"
+                >
+                    <img
+                        src="/logo/orvae-logo-h-transparent-light.webp"
+                        alt="ORVAE"
+                        className="h-9 w-auto dark:hidden"
+                    />
+                    <img
+                        src="/logo/orvae-logo-h-transparent-dark.webp"
+                        alt="ORVAE"
+                        className="hidden h-9 w-auto dark:block"
+                    />
+                </Link>
+                <AppearanceDarkLightToggle />
+            </header>
 
-                        <div className="space-y-6 rounded-3xl border border-[color-mix(in_oklab,var(--border)_65%,transparent)] bg-[color-mix(in_oklab,var(--card)_55%,transparent)] p-7 shadow-[0_24px_64px_-32px_color-mix(in_oklab,var(--foreground)_24%,transparent)] backdrop-blur-xl">
+            <div className="relative z-10 grid min-h-dvh lg:grid-cols-2 lg:pt-[4.5rem]">
+                <div className="relative hidden overflow-hidden p-8 lg:flex lg:p-10 xl:p-12">
+                    <GeometricBackground variant="floating-shapes" opacity={0.06} />
+                    <div
+                        className="home-blob home-blob--pulse absolute -left-20 top-24 size-[22rem] opacity-50"
+                        style={{
+                            background:
+                                'radial-gradient(circle, color-mix(in oklab, #0d9488 48%, transparent) 0%, transparent 70%)',
+                        }}
+                        aria-hidden
+                    />
+                    <div
+                        className="home-blob home-blob--pulse absolute -right-16 bottom-20 size-[26rem] opacity-45"
+                        style={{
+                            background:
+                                'radial-gradient(circle, color-mix(in oklab, #2563eb 40%, transparent) 0%, transparent 70%)',
+                            animationDelay: '1.2s',
+                        }}
+                        aria-hidden
+                    />
+
+                    <div className="relative flex w-full flex-col justify-between">
+                        <div className="landing-section-flair mt-2 max-w-md" aria-hidden />
+
+                        <div className="home-glass space-y-6 rounded-3xl p-7 lg:my-auto">
                             <div className="flex items-center">
                                 <img
                                     src="/logo/orvae-logo-h-transparent-light.webp"
@@ -92,7 +94,7 @@ export default function AuthOrvaeLoginLayout({
                             </div>
                         </div>
 
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-2 pb-2">
                             {authHighlights.map((item) => (
                                 <span
                                     key={item.label}
@@ -111,28 +113,7 @@ export default function AuthOrvaeLoginLayout({
                     </div>
                 </div>
 
-                {/* Right: contenido */}
-                <div className="relative flex w-full flex-col items-center justify-center p-6 sm:p-10">
-                    <Link
-                        href="/"
-                        className="mb-8 flex shrink-0 items-center justify-center gap-2 lg:hidden"
-                    >
-                        <img
-                            src="/logo/orvae-logo-h-transparent-light.webp"
-                            alt="ORVAE"
-                            className="h-11 w-auto min-[400px]:h-12 dark:hidden"
-                        />
-                        <img
-                            src="/logo/orvae-logo-h-transparent-dark.webp"
-                            alt="ORVAE"
-                            className="hidden h-11 w-auto min-[400px]:h-12 dark:block"
-                        />
-                    </Link>
-
-                    <div className="pointer-events-auto absolute right-4 top-4 z-20">
-                        <AppearanceDarkLightToggle />
-                    </div>
-
+                <div className="relative flex w-full flex-col items-center justify-center px-5 pb-10 pt-[4.75rem] sm:px-8 sm:pb-12 lg:px-10 lg:pb-10 lg:pt-8">
                     <div
                         className={`relative mx-auto w-full ${maxWidthClass ?? 'max-w-[420px]'} overflow-hidden rounded-2xl border p-8 shadow-xl backdrop-blur-2xl`}
                         style={{
@@ -163,7 +144,23 @@ export default function AuthOrvaeLoginLayout({
                         <div className="relative">{children}</div>
                     </div>
 
-                    <p className="mt-4 text-center font-mono text-[10px] uppercase tracking-[0.25em] text-[color-mix(in_oklab,var(--state-info)_50%,var(--muted-foreground))] lg:hidden">
+                    <div className="mt-5 flex flex-wrap justify-center gap-2 lg:hidden">
+                        {authHighlights.map((item) => (
+                            <span
+                                key={item.label}
+                                className="rounded-full border px-3 py-1 font-mono text-[9px] uppercase tracking-widest"
+                                style={{
+                                    borderColor: `color-mix(in oklab, ${item.accent} 58%, var(--foreground))`,
+                                    color: `color-mix(in oklab, ${item.accent} 45%, var(--foreground))`,
+                                    background: `linear-gradient(135deg, color-mix(in oklab, ${item.accent} 18%, transparent), color-mix(in oklab, ${item.accent} 8%, transparent))`,
+                                }}
+                            >
+                                {item.label}
+                            </span>
+                        ))}
+                    </div>
+
+                    <p className="mt-3 text-center font-mono text-[10px] uppercase tracking-[0.25em] text-[color-mix(in_oklab,var(--state-info)_50%,var(--muted-foreground))]">
                         {title ?? 'ORVAE ACCESS'}
                     </p>
                 </div>

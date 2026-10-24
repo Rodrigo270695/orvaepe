@@ -1,4 +1,4 @@
-import AuthLayoutTemplate from '@/layouts/auth/auth-simple-layout';
+import AuthOrvaeLoginLayout from '@/layouts/auth/auth-orvae-login-layout';
 
 export default function AuthLayout({
     children,
@@ -9,10 +9,11 @@ export default function AuthLayout({
     children: React.ReactNode;
     title: string;
     description: string;
+    maxWidthClass?: string;
 }) {
     return (
-        <AuthLayoutTemplate title={title} description={description} {...props}>
+        <AuthOrvaeLoginLayout title={title} description={description} {...props}>
             {children}
-        </AuthLayoutTemplate>
+        </AuthOrvaeLoginLayout>
     );
 }

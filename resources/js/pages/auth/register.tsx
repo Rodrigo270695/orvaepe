@@ -11,6 +11,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { AdminToast, type AdminToastType } from '@/components/ui/admin-toast';
+import {
+    AuthOrvaeCardHeader,
+    AuthOrvaeGoogleDivider,
+    AuthOrvaeSecureFooter,
+    authInputUnderlineClassName,
+    authPasswordUnderlineClassName,
+} from '@/components/auth/auth-orvae-parts';
 import GoogleSignInButton from '@/components/auth/google-sign-in-button';
 import AuthOrvaeLoginLayout from '@/layouts/auth/auth-orvae-login-layout';
 import { getCsrfToken } from '@/lib/csrf';
@@ -116,9 +123,6 @@ export default function Register({ googleOAuthEnabled = false }: Props) {
     const passwordChecks = useMemo(() => evaluatePassword(password), [password]);
     const score = passwordScore(passwordChecks);
     const tone = scoreTone(score);
-
-    const inputUnderlineClassName =
-        'w-full border-0 border-b border-[var(--o-border2)] bg-transparent rounded-none shadow-none py-2.5 pl-9 pr-3 font-[family-name:var(--font-body)] text-sm text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:border-[var(--auth-focus-border)] focus-visible:outline-none focus-visible:ring-0 focus-visible:border-[var(--auth-focus-border)] transition-colors duration-150';
 
     const lookupDocument = async (doc: string, { silent = false }: { silent?: boolean } = {}) => {
         const digits = doc.replace(/\D/g, '');
@@ -260,30 +264,16 @@ export default function Register({ googleOAuthEnabled = false }: Props) {
                 </div>
             ) : null}
             <div className="flex flex-col gap-6">
-                <div className="flex flex-col gap-2">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--auth-header-icon-bg)]">
-                        <UserPlus className="size-6 text-[var(--auth-cta-from)]" />
-                    </div>
-                    <div>
-                        <h1 className="font-[family-name:var(--font-display)] text-xl font-bold text-[var(--foreground)]">
-                            Crea tu cuenta
-                        </h1>
-                        <p className="mt-0.5 font-[family-name:var(--font-body)] text-sm text-[var(--muted-foreground)]">
-                            Completa tus datos para comenzar
-                        </p>
-                    </div>
-                </div>
+                <AuthOrvaeCardHeader
+                    icon={UserPlus}
+                    title="Crea tu cuenta"
+                    subtitle="Completa tus datos para comenzar"
+                />
 
                 {googleOAuthEnabled && (
                     <div className="flex flex-col gap-4">
                         <GoogleSignInButton label="Registrarse con Google" />
-                        <div className="flex items-center gap-3">
-                            <span className="h-px flex-1 bg-[var(--o-border2)]" />
-                            <span className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-widest text-[var(--muted-foreground)]">
-                                o con correo
-                            </span>
-                            <span className="h-px flex-1 bg-[var(--o-border2)]" />
-                        </div>
+                        <AuthOrvaeGoogleDivider label="o con correo" />
                     </div>
                 )}
 
@@ -313,7 +303,7 @@ export default function Register({ googleOAuthEnabled = false }: Props) {
                                                 type="text"
                                                 inputMode="numeric"
                                                 pattern="[0-9]*"
-                                                className={`${inputUnderlineClassName} pr-11 tracking-wide tabular-nums`}
+                                                className={`${authInputUnderlineClassName} pr-11 tracking-wide tabular-nums`}
                                                 required
                                                 tabIndex={1}
                                                 name="document_number"
@@ -350,10 +340,11 @@ export default function Register({ googleOAuthEnabled = false }: Props) {
                                                 void lookupDocument(documentNumber);
                                             }}
                                             className={cn(
-                                                'size-10 shrink-0 rounded-lg border-0 shadow-sm',
-                                                'bg-gradient-to-br from-teal-500 to-emerald-600 text-white',
-                                                'hover:from-teal-600 hover:to-emerald-700',
-                                                'disabled:from-muted disabled:to-muted disabled:text-muted-foreground disabled:opacity-60',
+                                                'size-10 shrink-0 rounded-lg border shadow-sm',
+                                                'border-[color-mix(in_oklab,var(--state-info)_45%,var(--border))]',
+                                                'bg-[color-mix(in_oklab,var(--state-info)_18%,var(--card))] text-[var(--state-info)]',
+                                                'hover:bg-[color-mix(in_oklab,var(--state-info)_28%,var(--card))]',
+                                                'disabled:opacity-50 disabled:text-[var(--muted-foreground)]',
                                             )}
                                             aria-label="Consultar DNI o RUC"
                                             title="Consultar DNI (RENIEC) o RUC (SUNAT)"
@@ -383,7 +374,7 @@ export default function Register({ googleOAuthEnabled = false }: Props) {
                                             type="text"
                                             inputMode="numeric"
                                             pattern="9[0-9]{8}"
-                                            className={`${inputUnderlineClassName} pr-10 tabular-nums`}
+                                                className={`${authInputUnderlineClassName} pr-10 tabular-nums`}
                                             required
                                             tabIndex={3}
                                             name="phone"
@@ -412,7 +403,7 @@ export default function Register({ googleOAuthEnabled = false }: Props) {
                                     <Input
                                         id="email"
                                         type="email"
-                                        className={inputUnderlineClassName}
+                                        className={authInputUnderlineClassName}
                                         required
                                         tabIndex={4}
                                         autoComplete="email"
@@ -437,7 +428,7 @@ export default function Register({ googleOAuthEnabled = false }: Props) {
                                         <Input
                                             id="name"
                                             type="text"
-                                            className={inputUnderlineClassName}
+                                            className={authInputUnderlineClassName}
                                             required
                                             tabIndex={5}
                                             autoComplete="given-name"
@@ -463,7 +454,7 @@ export default function Register({ googleOAuthEnabled = false }: Props) {
                                         <Input
                                             id="lastname"
                                             type="text"
-                                            className={inputUnderlineClassName}
+                                            className={authInputUnderlineClassName}
                                             required
                                             tabIndex={6}
                                             autoComplete="family-name"
@@ -539,7 +530,7 @@ export default function Register({ googleOAuthEnabled = false }: Props) {
                                             autoComplete="new-password"
                                             name="password"
                                             placeholder="Contraseña"
-                                            className={`${inputUnderlineClassName} pr-10`}
+                                            className={`${authPasswordUnderlineClassName} pr-10`}
                                             value={password}
                                             onChange={(e) => setPassword(e.target.value)}
                                             onFocus={() => setPasswordFocused(true)}
@@ -568,7 +559,7 @@ export default function Register({ googleOAuthEnabled = false }: Props) {
                                             autoComplete="new-password"
                                             name="password_confirmation"
                                             placeholder="Confirmar contraseña"
-                                            className={`${inputUnderlineClassName} pr-10`}
+                                            className={`${authPasswordUnderlineClassName} pr-10`}
                                         />
                                     </div>
                                     <InputError message={errors.password_confirmation} />
@@ -620,6 +611,8 @@ export default function Register({ googleOAuthEnabled = false }: Props) {
                                     Inicia sesión
                                 </TextLink>
                             </div>
+
+                            <AuthOrvaeSecureFooter />
                         </div>
                     )}
                 </Form>

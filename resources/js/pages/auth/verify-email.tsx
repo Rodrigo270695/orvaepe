@@ -1,45 +1,73 @@
-// Components
 import { Form, Head } from '@inertiajs/react';
+import { Mail } from 'lucide-react';
+
+import {
+    AuthOrvaeCardHeader,
+    AuthOrvaeSecureFooter,
+    AuthOrvaeStatusBanner,
+} from '@/components/auth/auth-orvae-parts';
 import TextLink from '@/components/text-link';
-import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
-import AuthLayout from '@/layouts/auth-layout';
+import AuthOrvaeLoginLayout from '@/layouts/auth/auth-orvae-login-layout';
 import { logout } from '@/routes';
 import { send } from '@/routes/verification';
 import { inertiaFormProps } from '@/lib/inertia-form-props';
 
 export default function VerifyEmail({ status }: { status?: string }) {
     return (
-        <AuthLayout
+        <AuthOrvaeLoginLayout
             title="Verifica tu correo"
-            description="Verifica tu dirección de correo haciendo clic en el enlace que te hemos enviado."
+            description="Confirma tu dirección de correo para activar tu cuenta y acceder al portal."
         >
             <Head title="Verificación de correo" />
 
-            {status === 'verification-link-sent' && (
-                <div className="mb-4 text-center text-sm font-medium text-green-600">
-                    Se ha enviado un nuevo enlace de verificación al correo que
-                    proporcionaste durante el registro.
-                </div>
-            )}
+            <div className="flex flex-col gap-8">
+                <AuthOrvaeCardHeader
+                    icon={Mail}
+                    title="Verifica tu correo"
+                    subtitle="Haz clic en el enlace que te enviamos o solicita uno nuevo."
+                />
 
-            <Form {...inertiaFormProps(send())} className="space-y-6 text-center">
-                {({ processing }) => (
-                    <>
-                        <Button disabled={processing} variant="secondary">
-                            {processing && <Spinner />}
-                            Reenviar correo de verificación
-                        </Button>
+                {status === 'verification-link-sent' ? (
+                    <AuthOrvaeStatusBanner>
+                        Se envió un nuevo enlace de verificación al correo que registraste.
+                    </AuthOrvaeStatusBanner>
+                ) : null}
 
-                        <TextLink
-                            href={logout()}
-                            className="mx-auto block text-sm"
-                        >
-                            Cerrar sesión
-                        </TextLink>
-                    </>
-                )}
-            </Form>
-        </AuthLayout>
+                <p className="font-[family-name:var(--font-body)] text-sm leading-relaxed text-[var(--muted-foreground)]">
+                    Si no lo ves, revisa spam o promociones. El enlace caduca por seguridad.
+                </p>
+
+                <Form {...inertiaFormProps(send())} className="flex flex-col gap-4">
+                    {({ processing }) => (
+                        <>
+                            <button
+                                type="submit"
+                                disabled={processing}
+                                className="auth-cta w-full cursor-pointer rounded-xl py-3 font-[family-name:var(--font-display)] text-sm font-semibold transition-[filter,opacity] duration-150 disabled:cursor-default"
+                            >
+                                {processing ? (
+                                    <span className="inline-flex items-center justify-center gap-2">
+                                        <Spinner className="text-[var(--auth-cta-fg)]" />
+                                        Enviando...
+                                    </span>
+                                ) : (
+                                    'Reenviar correo de verificación'
+                                )}
+                            </button>
+
+                            <TextLink
+                                href={logout()}
+                                className="text-center font-[family-name:var(--font-body)] text-sm font-medium text-[var(--auth-link)] hover:text-[var(--auth-link-hover)]"
+                            >
+                                Cerrar sesión
+                            </TextLink>
+                        </>
+                    )}
+                </Form>
+
+                <AuthOrvaeSecureFooter />
+            </div>
+        </AuthOrvaeLoginLayout>
     );
 }

@@ -1,4 +1,10 @@
 import { Form, Head } from '@inertiajs/react';
+import {
+    AuthOrvaeCardHeader,
+    AuthOrvaeSecureFooter,
+    authInputUnderlineClassName,
+    authPasswordUnderlineClassName,
+} from '@/components/auth/auth-orvae-parts';
 import { Mail, Lock } from 'lucide-react';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
@@ -17,12 +23,6 @@ type Props = {
 };
 
 export default function ResetPassword({ token, email }: Props) {
-    const inputUnderlineClassName =
-        'w-full border-0 border-b border-[var(--o-border2)] bg-transparent rounded-none shadow-none py-3 pl-9 pr-3 font-[family-name:var(--font-body)] text-sm text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:border-[var(--auth-focus-border)] transition-colors duration-150';
-
-    const passwordUnderlineClassName =
-        'w-full border-0 border-b border-[var(--o-border2)] bg-transparent rounded-none shadow-none py-3 pl-9 pr-10 font-[family-name:var(--font-body)] text-sm text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:border-[var(--auth-focus-border)] transition-colors duration-150';
-
     return (
         <AuthOrvaeLoginLayout
             title="Restablecer contraseña"
@@ -32,35 +32,12 @@ export default function ResetPassword({ token, email }: Props) {
             <Head title="Restablecer contraseña" />
 
             <div className="flex flex-col gap-8">
-                <div className="flex flex-col gap-3">
-                    <div
-                        className="flex h-12 w-12 items-center justify-center rounded-xl border"
-                        style={{
-                            borderColor:
-                                'color-mix(in oklab, var(--state-info) 70%, var(--border))',
-                            background:
-                                'linear-gradient(135deg, color-mix(in oklab, var(--state-info) 46%, var(--auth-header-icon-bg)), color-mix(in oklab, var(--state-success) 34%, var(--auth-header-icon-bg)))',
-                            boxShadow:
-                                '0 0 24px -4px color-mix(in oklab, var(--state-info) 65%, transparent)',
-                        }}
-                    >
-                        <Mail
-                            className="size-6"
-                            style={{
-                                color: 'var(--state-info)',
-                                filter: 'drop-shadow(0 0 6px color-mix(in oklab, var(--state-info) 60%, transparent))',
-                            }}
-                        />
-                    </div>
-                    <div>
-                        <h1 className="font-[family-name:var(--font-display)] text-xl font-bold text-[var(--foreground)]">
-                            Restablecer contraseña
-                        </h1>
-                        <p className="mt-0.5 font-[family-name:var(--font-body)] text-sm text-[var(--muted-foreground)]">
-                            Ingresa tu nueva contraseña
-                        </p>
-                    </div>
-                </div>
+                <AuthOrvaeCardHeader
+                    icon={Lock}
+                    accent="success"
+                    title="Restablecer contraseña"
+                    subtitle="Ingresa tu nueva contraseña"
+                />
 
                 <Form
                     {...inertiaFormProps(update())}
@@ -91,7 +68,7 @@ export default function ResetPassword({ token, email }: Props) {
                                         name="email"
                                         autoComplete="email"
                                         value={email}
-                                        className={inputUnderlineClassName}
+                                        className={authInputUnderlineClassName}
                                         readOnly
                                     />
                                 </div>
@@ -117,7 +94,7 @@ export default function ResetPassword({ token, email }: Props) {
                                         id="password"
                                         name="password"
                                         autoComplete="new-password"
-                                        className={`${passwordUnderlineClassName} pr-10`}
+                                        className={`${authPasswordUnderlineClassName} pr-10`}
                                         autoFocus
                                         placeholder="Contraseña"
                                     />
@@ -144,7 +121,7 @@ export default function ResetPassword({ token, email }: Props) {
                                         id="password_confirmation"
                                         name="password_confirmation"
                                         autoComplete="new-password"
-                                        className={`${passwordUnderlineClassName} pr-10`}
+                                        className={`${authPasswordUnderlineClassName} pr-10`}
                                         placeholder="Confirmar contraseña"
                                     />
                                 </div>
@@ -177,6 +154,8 @@ export default function ResetPassword({ token, email }: Props) {
                                     Inicia sesión
                                 </TextLink>
                             </div>
+
+                            <AuthOrvaeSecureFooter />
                         </div>
                     )}
                 </Form>

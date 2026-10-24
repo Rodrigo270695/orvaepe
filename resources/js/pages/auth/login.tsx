@@ -1,5 +1,11 @@
 import { Form, Head, usePage } from '@inertiajs/react';
-import { Eye, EyeOff, Lock, ShieldCheck, User } from 'lucide-react';
+import {
+    AuthOrvaeGoogleDivider,
+    AuthOrvaeSecureFooter,
+    authInputUnderlineClassName,
+    authPasswordUnderlineClassName,
+} from '@/components/auth/auth-orvae-parts';
+import { Eye, EyeOff, Lock, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import InputError from '@/components/input-error';
 import TextLink from '@/components/text-link';
@@ -8,9 +14,6 @@ import AuthOrvaeLoginLayout from '@/layouts/auth/auth-orvae-login-layout';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
 import { inertiaFormProps } from '@/lib/inertia-form-props';
-
-const inputUnderlineClassName =
-    'w-full border-0 border-b border-[var(--o-border2)] bg-transparent py-3 pl-9 pr-3 font-[family-name:var(--font-body)] text-sm text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:border-[var(--auth-focus-border)] focus:outline-none transition-colors duration-150';
 
 /** Errores de validación pueden llegar en props de página (redirect) o en el estado del Form (422). */
 function fieldError(
@@ -95,13 +98,7 @@ export default function Login({
                             {googleOAuthEnabled && (
                                 <>
                                     <GoogleSignInButton />
-                                    <div className="flex items-center gap-3">
-                                        <span className="h-px flex-1 bg-[var(--o-border2)]" />
-                                        <span className="font-[family-name:var(--font-mono)] text-[10px] uppercase tracking-widest text-[var(--muted-foreground)]">
-                                            o
-                                        </span>
-                                        <span className="h-px flex-1 bg-[var(--o-border2)]" />
-                                    </div>
+                                    <AuthOrvaeGoogleDivider />
                                 </>
                             )}
 
@@ -124,7 +121,7 @@ export default function Login({
                                             tabIndex={1}
                                             autoComplete="username"
                                             placeholder="usuario o DNI/RUC"
-                                            className={inputUnderlineClassName}
+                                            className={authInputUnderlineClassName}
                                         />
                                     </div>
                                     <InputError
@@ -164,7 +161,7 @@ export default function Login({
                                             tabIndex={2}
                                             autoComplete="current-password"
                                             placeholder="••••••••••••"
-                                            className={`${inputUnderlineClassName} pr-10`}
+                                            className={`${authPasswordUnderlineClassName} pr-10`}
                                         />
                                         <button
                                             type="button"
@@ -238,23 +235,7 @@ export default function Login({
                                 </p>
                             )}
 
-                            {/* Footer card: conexión segura */}
-                            <div className="mt-8 flex items-center justify-center gap-2 border-t border-[var(--o-border2)] pt-6 font-[family-name:var(--font-mono)] text-[10px] text-[var(--muted-foreground)]">
-                                <ShieldCheck
-                                    className="size-3.5"
-                                    style={{
-                                        color: 'var(--state-info)',
-                                        filter: 'drop-shadow(0 0 4px color-mix(in oklab, var(--state-info) 62%, transparent))',
-                                    }}
-                                />
-                                <span className="text-[color-mix(in_oklab,var(--state-info)_68%,var(--muted-foreground))]">
-                                    Conexión segura
-                                </span>
-                                <span className="opacity-50">·</span>
-                                <span className="text-[color-mix(in_oklab,var(--state-success)_52%,var(--muted-foreground))]">
-                                    ORVAE
-                                </span>
-                            </div>
+                            <AuthOrvaeSecureFooter />
                             {/* Overlay de carga tipo glass cuando se procesa el login */}
                             {processing && (
                                 <div className="absolute inset-0 flex items-center justify-center rounded-2xl border border-[color-mix(in_oklab,var(--state-info)_24%,var(--border))] bg-[color-mix(in_oklab,var(--card)_56%,transparent)] backdrop-blur-xl">
