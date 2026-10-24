@@ -15,18 +15,10 @@ type Props = {
 
 export default function HeroSection({ clinics, clients, demoUrl, demoUser, demoPassword }: Props) {
     return (
-        <section className="relative overflow-hidden bg-[#E7F6EF] text-[#06241C]">
-            <div
-                className="pointer-events-none absolute inset-0"
-                style={{
-                    backgroundImage:
-                        'radial-gradient(60rem 40rem at 0% 0%, rgba(255,255,255,0.85), transparent 60%), radial-gradient(40rem 30rem at 100% 100%, rgba(51,160,123,0.22), transparent 60%)',
-                }}
-                aria-hidden
-            />
+        <section className="vs-hero-section">
             <div className="relative mx-auto grid max-w-7xl items-center gap-14 px-5 pb-20 pt-[8.5rem] sm:px-8 lg:min-h-dvh lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:pb-16 lg:pt-[9.5rem]">
                 <div>
-                    <p className="vs-fade-up inline-flex items-center gap-2 rounded-full border border-[#99D2BC] bg-white/80 px-3.5 py-1.5 text-xs font-semibold text-[#015743] shadow-sm">
+                    <p className="vs-fade-up vs-chip">
                         <span className="relative flex size-2">
                             <span className="absolute inline-flex size-full animate-ping rounded-full bg-[#3CB88A] opacity-70 motion-reduce:animate-none" />
                             <span className="relative inline-flex size-2 rounded-full bg-[#008762]" />
@@ -37,7 +29,7 @@ export default function HeroSection({ clinics, clients, demoUrl, demoUser, demoP
                     <HeroTitle />
 
                     <p
-                        className="vs-fade-up font-body mt-6 max-w-xl text-lg leading-relaxed text-[#1F6B52]"
+                        className="vs-fade-up font-body mt-6 max-w-xl text-lg leading-relaxed vs-text-muted"
                         style={{ animationDelay: '0.4s' }}
                     >
                         Historia clínica, agenda, grooming, hotel, caja y SUNAT en el subdominio de tu
@@ -45,10 +37,7 @@ export default function HeroSection({ clinics, clients, demoUrl, demoUser, demoP
                     </p>
 
                     <div className="vs-fade-up mt-8 flex flex-wrap items-center gap-3" style={{ animationDelay: '0.5s' }}>
-                        <a
-                            href="#planes"
-                            className="font-body group inline-flex cursor-pointer items-center gap-2 rounded-xl border border-[#015743] bg-[#006D55] px-6 py-3.5 text-sm font-semibold text-white shadow-[0_14px_30px_-14px_rgba(0,109,85,0.9)] transition-all hover:-translate-y-0.5 hover:bg-[#015743] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#006D55] focus-visible:ring-offset-2 active:translate-y-px"
-                        >
+                        <a href="#planes" className="font-body vs-btn-primary group">
                             Empieza gratis
                             <span aria-hidden className="transition-transform group-hover:translate-x-1">
                                 →
@@ -58,7 +47,7 @@ export default function HeroSection({ clinics, clients, demoUrl, demoUser, demoP
                             href={demoUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="font-body inline-flex cursor-pointer rounded-xl border border-[#006D55] bg-white px-6 py-3.5 text-sm font-semibold text-[#006D55] transition-colors hover:bg-[#F3FBF7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#006D55]"
+                            className="font-body vs-btn-secondary"
                         >
                             Probar la demo
                         </a>

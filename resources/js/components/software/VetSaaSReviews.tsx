@@ -49,7 +49,7 @@ function ClinicMark({ review }: { review: VetSaaSPublicReview }) {
             <img
                 src={logo}
                 alt={review.clinic_name}
-                className="size-12 shrink-0 rounded-2xl border border-[var(--vs-border)] bg-white object-contain p-1"
+                className="size-12 shrink-0 rounded-2xl border border-[var(--vs-border)] bg-[var(--vs-surface)] object-contain p-1"
                 loading="lazy"
                 decoding="async"
                 onError={() => setFailed(true)}
@@ -71,20 +71,20 @@ function ReviewCard({ review, duplicate = false }: { review: VetSaaSPublicReview
     return (
         <blockquote
             aria-hidden={duplicate || undefined}
-            className="flex w-[20rem] shrink-0 flex-col rounded-2xl border border-[#99D2BC] bg-white p-5 shadow-[0_12px_30px_-18px_rgba(0,109,85,0.55)] sm:w-[24rem]">
+            className="vs-card flex w-[20rem] shrink-0 flex-col p-5 sm:w-[24rem]">
             <div className="flex items-start gap-3">
                 <ClinicMark review={review} />
                 <div className="min-w-0">
                     <Stars rating={review.rating} />
-                    <p className="mt-2 font-display text-sm font-semibold leading-snug text-[#06241C]">
+                    <p className="mt-2 font-display text-sm font-semibold leading-snug vs-text-ink">
                         {review.author_name}
                     </p>
-                    <p className="mt-0.5 text-xs leading-snug text-[#1F6B52]">
+                    <p className="mt-0.5 text-xs leading-snug vs-text-muted">
                         {review.role_line}
                     </p>
                 </div>
             </div>
-            <p className="mt-4 text-[15px] leading-relaxed text-[#06241C]">
+            <p className="mt-4 text-[15px] leading-relaxed vs-text-ink">
                 &ldquo;{review.comment}&rdquo;
             </p>
         </blockquote>
@@ -109,12 +109,12 @@ export default function VetSaaSReviews({ reviews }: { reviews: VetSaaSPublicRevi
     const loop = reduce ? reviews : [...reviews, ...reviews];
 
     return (
-        <section className="bg-[#F3FBF7] py-16" id="reseñas">
+        <section className="vs-bg-soft py-16" id="reseñas">
             <div className="mx-auto max-w-6xl px-5 sm:px-8">
-                <h2 className="font-display text-3xl font-semibold tracking-tight text-[#006D55] sm:text-4xl">
+                <h2 className="font-display text-3xl font-semibold tracking-tight vs-text-accent-strong sm:text-4xl">
                     Lo que dicen quienes operan con nosotros
                 </h2>
-                <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[#1F6B52]">
+                <p className="mt-2 max-w-2xl text-sm leading-relaxed vs-text-muted">
                     Recepcionistas, veterinarios y administración de cada veterinaria.
                 </p>
             </div>
@@ -130,8 +130,8 @@ export default function VetSaaSReviews({ reviews }: { reviews: VetSaaSPublicRevi
                 </div>
             ) : (
                 <div className="carousel-wrapper relative mt-8 overflow-hidden">
-                    <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-16 bg-gradient-to-r from-[#F3FBF7] to-transparent md:w-28" />
-                    <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-16 bg-gradient-to-l from-[#F3FBF7] to-transparent md:w-28" />
+                    <div className="vs-fade-edge-l pointer-events-none absolute left-0 top-0 z-10 h-full w-16 md:w-28" />
+                    <div className="vs-fade-edge-r pointer-events-none absolute right-0 top-0 z-10 h-full w-16 md:w-28" />
                     <div className="carousel-track flex w-max animate-marquee-reverse gap-4 px-6 py-2 [--duration:48s]">
                         {loop.map((review, idx) => (
                             <ReviewCard

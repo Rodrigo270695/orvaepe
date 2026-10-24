@@ -1,6 +1,6 @@
 const LINES = [
-    { words: ['La', 'clínica', 'en', 'orden.'], className: 'text-[#06241C]' },
-    { words: ['La', 'IA', 'en', 'el', 'WhatsApp.'], className: 'text-[#008762]' },
+    { words: ['La', 'clínica', 'en', 'orden.'], className: 'vs-title-line-1' },
+    { words: ['La', 'IA', 'en', 'el', 'WhatsApp.'], className: 'vs-title-line-2' },
 ] as const;
 
 const BASE_DELAY = 0.05;

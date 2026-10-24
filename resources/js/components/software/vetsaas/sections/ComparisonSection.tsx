@@ -16,12 +16,12 @@ const FEATURED_CODIGO = 'pro';
 
 function CellValue({ value }: { value: string | undefined }) {
     if (!value || value === '—' || value === '0') {
-        return <span className="text-[#99B5AA]">{value || '—'}</span>;
+        return <span className="vs-empty-cell">{value || '—'}</span>;
     }
     if (/ilimitad/i.test(value)) {
-        return <span className="font-semibold text-[#006D55]">{value}</span>;
+        return <span className="font-semibold vs-text-accent-strong">{value}</span>;
     }
-    return <span className="font-medium text-[#06241C]">{value}</span>;
+    return <span className="font-medium vs-text-ink">{value}</span>;
 }
 
 export default function ComparisonSection({ plans, comparison }: Props) {
@@ -31,34 +31,36 @@ export default function ComparisonSection({ plans, comparison }: Props) {
         [plans],
     );
 
-    const columnClass = (codigo: string) => (codigo === FEATURED_CODIGO ? 'bg-[#E7F6EF]' : '');
+    const columnClass = (codigo: string) => (codigo === FEATURED_CODIGO ? 'vs-comparison-col-featured' : '');
 
     return (
-        <section id="comparar" className="scroll-mt-24 bg-[#F3FBF7] py-20 text-[#06241C] sm:py-24">
+        <section id="comparar" className="vs-bg-soft scroll-mt-24 py-20 sm:py-24">
             <div className="mx-auto max-w-6xl px-5 sm:px-8">
                 <VetSaaSReveal>
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                         <div>
-                            <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-5xl">Límites por plan</h2>
-                            <p className="mt-3 max-w-xl text-base text-[#1F6B52]">
+                            <h2 className="font-display text-3xl font-semibold tracking-tight vs-text-ink sm:text-5xl">Límites por plan</h2>
+                            <p className="mt-3 max-w-xl text-base vs-text-muted">
                                 Lo único que cambia entre planes son las cantidades. IA y WhatsApp están en todos.
                             </p>
                         </div>
-                        <a
-                            href="#planes"
-                            className="inline-flex w-fit cursor-pointer rounded-xl border border-[#006D55] bg-white px-5 py-3 text-sm font-semibold text-[#006D55] transition-colors hover:bg-[#E7F6EF]"
-                        >
+                        <a href="#planes" className="vs-btn-secondary inline-flex w-fit px-5 py-3">
                             Volver a precios
                         </a>
                     </div>
                 </VetSaaSReveal>
 
                 <VetSaaSReveal delay={0.1}>
-                    <div className="mt-10 overflow-x-auto rounded-3xl border border-[#99D2BC] bg-white shadow-[0_30px_60px_-40px_rgba(0,109,85,0.6)]">
+                    <div className="vs-comparison-wrap mt-10">
                         <table className="w-full min-w-[720px] border-collapse text-left text-sm">
                             <thead>
-                                <tr className="border-b border-[#99D2BC]">
-                                    <th className="sticky left-0 z-10 bg-white px-5 py-5 font-medium text-[#3E5C52]">Cantidad</th>
+                                <tr className="border-b vs-border">
+                                    <th
+                                        className="sticky left-0 z-10 px-5 py-5 font-medium"
+                                        style={{ background: 'var(--vs-table-head)', color: 'var(--vs-table-muted)' }}
+                                    >
+                                        Cantidad
+                                    </th>
                                     {columns.map((codigo) => {
                                         const meta = plans.find((plan) => plan.codigo === codigo);
                                         const badge = visiblePlanBadge(meta?.badge);
@@ -69,7 +71,7 @@ export default function ComparisonSection({ plans, comparison }: Props) {
                                                         {badge}
                                                     </span>
                                                 ) : null}
-                                                <span className="font-display block text-base font-semibold text-[#06241C]">
+                                                <span className="font-display block text-base font-semibold vs-text-ink">
                                                     {meta?.nombre ?? codigo}
                                                 </span>
                                             </th>
@@ -85,15 +87,18 @@ export default function ComparisonSection({ plans, comparison }: Props) {
                                         whileInView={{ opacity: 1, x: 0 }}
                                         viewport={{ once: true, amount: 0.6 }}
                                         transition={{ duration: 0.45, delay: index * 0.05, ease: [0.22, 1, 0.36, 1] }}
-                                        className="group border-b border-[#E3F0EA] last:border-0"
+                                        className="group border-b border-[var(--vs-border-soft)] last:border-0"
                                     >
-                                        <td className="sticky left-0 z-10 bg-white px-5 py-4 text-[#3E5C52] transition-colors group-hover:bg-[#F3FBF7]">
+                                        <td
+                                            className="sticky left-0 z-10 px-5 py-4 transition-colors group-hover:bg-[var(--vs-soft-bg)]"
+                                            style={{ background: 'var(--vs-table-head)', color: 'var(--vs-table-muted)' }}
+                                        >
                                             {row.label}
                                         </td>
                                         {columns.map((codigo) => (
                                             <td
                                                 key={codigo}
-                                                className={`px-5 py-4 tabular-nums transition-colors group-hover:bg-[#F3FBF7] ${columnClass(codigo)}`}
+                                                className={`px-5 py-4 tabular-nums transition-colors group-hover:bg-[var(--vs-soft-bg)] ${columnClass(codigo)}`}
                                             >
                                                 <CellValue value={row[codigo]} />
                                             </td>

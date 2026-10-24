@@ -13,9 +13,9 @@ function Timeline() {
 
     return (
         <ol ref={ref} className="relative space-y-10 pl-10">
-            <span className="absolute bottom-2 left-[0.6875rem] top-2 w-px bg-[#99D2BC]/60" aria-hidden />
+            <span className="absolute bottom-2 left-[0.6875rem] top-2 w-px bg-[var(--vs-border)] opacity-60" aria-hidden />
             <motion.span
-                className="absolute bottom-2 left-[0.6875rem] top-2 w-px origin-top bg-[#006D55]"
+                className="absolute bottom-2 left-[0.6875rem] top-2 w-px origin-top bg-[var(--vs-accent-strong)]"
                 style={{ scaleY: reduce ? 1 : scaleY }}
                 aria-hidden
             />
@@ -28,14 +28,12 @@ function Timeline() {
                     viewport={{ once: true, amount: 0.7 }}
                     transition={{ duration: 0.6, delay: index * 0.05, ease: [0.22, 1, 0.36, 1] }}
                 >
-                    <span className="absolute -left-10 top-1 grid size-6 place-items-center rounded-full border-2 border-[#006D55] bg-white" aria-hidden>
-                        <span className="size-2 rounded-full bg-[#006D55]" />
+                    <span className="vs-timeline-dot absolute -left-10 top-1 grid size-6 place-items-center rounded-full" aria-hidden>
+                        <span className="size-2 rounded-full bg-[var(--vs-accent-strong)]" />
                     </span>
-                    <span className="inline-block rounded-full border border-[#99D2BC] bg-[#E7F6EF] px-2.5 py-0.5 text-xs font-semibold text-[#015743]">
-                        {item.tag}
-                    </span>
-                    <h3 className="font-display mt-2 text-xl font-semibold text-[#06241C] sm:text-2xl">{item.title}</h3>
-                    <p className="mt-1 text-sm leading-relaxed text-[#1F6B52] sm:text-base">{item.body}</p>
+                    <span className="vs-timeline-tag">{item.tag}</span>
+                    <h3 className="font-display mt-2 text-xl font-semibold vs-text-ink sm:text-2xl">{item.title}</h3>
+                    <p className="mt-1 text-sm leading-relaxed vs-text-muted sm:text-base">{item.body}</p>
                 </motion.li>
             ))}
         </ol>
@@ -77,14 +75,14 @@ function AlmaPetCard() {
 
 export default function NoveltiesSection() {
     return (
-        <section className="bg-white py-20 sm:py-24">
+        <section className="vs-bg-surface py-20 sm:py-24">
             <div className="mx-auto grid max-w-6xl gap-14 px-5 sm:px-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
                 <div>
                     <VetSaaSReveal>
-                        <h2 className="font-display text-3xl font-semibold tracking-tight text-[#06241C] sm:text-5xl">
+                        <h2 className="font-display text-3xl font-semibold tracking-tight vs-text-ink sm:text-5xl">
                             Lo que está llegando
                         </h2>
-                        <p className="mt-3 max-w-md text-base text-[#1F6B52]">
+                        <p className="mt-3 max-w-md text-base vs-text-muted">
                             VetSaaS se actualiza solo. Las mejoras llegan a tu subdominio sin instalar nada.
                         </p>
                     </VetSaaSReveal>

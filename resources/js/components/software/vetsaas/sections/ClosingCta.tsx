@@ -17,7 +17,7 @@ export default function ClosingCta({ clinics, whatsappHref }: Props) {
     const glowX = useTransform(scrollYProgress, [0, 1], ['-20%', '40%']);
 
     return (
-        <section ref={ref} className="overflow-hidden bg-[#F3FBF7] px-5 py-20 sm:px-8 sm:py-24">
+        <section ref={ref} className="vs-bg-soft overflow-hidden px-5 py-20 sm:px-8 sm:py-24">
             <motion.div
                 style={reduce ? undefined : { scale }}
                 className="relative mx-auto max-w-6xl overflow-hidden rounded-[2.25rem] border border-[#015743] bg-[#006D55] px-7 py-14 text-white shadow-[0_40px_90px_-40px_rgba(0,109,85,0.9)] sm:px-14 sm:py-16"

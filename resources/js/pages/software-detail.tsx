@@ -649,7 +649,6 @@ export default function SoftwareDetail() {
                 ogType="product"
                 ogImage="/images/vetsaas-hero-pets-og.jpg"
                 preloadImage="/images/vetsaas-hero-pets.webp"
-                hideAppearanceToggle
                 ogImageAlt="Software veterinario VetSaaS — clínicas en Perú"
                 keywords={marketingSeo.vetsaas.keywords}
                 breadcrumbs={[

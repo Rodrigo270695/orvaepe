@@ -26,7 +26,7 @@ export default function ClientLogo({ name, src, className, eager = false }: Prop
             <span
                 role="img"
                 aria-label={name}
-                className={`${className} font-display flex items-center justify-center font-semibold text-[#006D55]`}
+                className={`${className} font-display flex items-center justify-center font-semibold vs-text-accent-strong`}
             >
                 {initialsOf(name)}
             </span>
