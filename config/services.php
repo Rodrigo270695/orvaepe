@@ -123,4 +123,22 @@ return [
         'tenant_scheme' => env('SENDSAAS_TENANT_SCHEME', 'https'),
     ],
 
+    /*
+    | Integración ORVAE -> FoodSaaS (provisión de restaurante tras pago).
+    | Contrato: POST /api/internal/saas/{provision,renew} firmado HMAC-SHA256.
+    */
+    'foodsaas' => [
+        'label' => 'FoodSaaS',
+        'enabled' => env('FOODSAAS_PROVISIONING_ENABLED', false),
+        'provision_url' => env('FOODSAAS_PROVISION_URL'),
+        'lookup_url' => env('FOODSAAS_LOOKUP_URL'),
+        'renew_url' => env('FOODSAAS_RENEW_URL'),
+        'showcase_url' => env('FOODSAAS_SHOWCASE_URL'),
+        'marketing_url' => env('FOODSAAS_MARKETING_URL'),
+        'knowledge_url' => env('FOODSAAS_KNOWLEDGE_URL'),
+        'hmac_secret' => env('FOODSAAS_PROVISION_HMAC_SECRET', env('ORVAE_PROVISION_HMAC_SECRET')),
+        'tenant_domain' => env('FOODSAAS_TENANT_DOMAIN', 'foodsaas.orvae.pe'),
+        'tenant_scheme' => env('FOODSAAS_TENANT_SCHEME', 'https'),
+    ],
+
 ];

@@ -159,6 +159,60 @@ final class SaasSubscriptionLookup
         return self::findProvisionedByMetadataKey((string) $userId, 'tallersaas_tenant_slug');
     }
 
+    public static function findFoodsaasRenewable(string|int $userId, CatalogSku $sku): ?Subscription
+    {
+        $exact = self::findRenewable((string) $userId, $sku, 'foodsaas_tenant_slug');
+        if ($exact instanceof Subscription) {
+            return $exact;
+        }
+
+        if (! SaasCatalogSku::isPaidFoodsaasPlan($sku)) {
+            return null;
+        }
+
+        return self::findFoodsaasProvisioned((string) $userId);
+    }
+
+    public static function findFoodsaasByTenantSlug(string $tenantSlug, CatalogSku $sku): ?Subscription
+    {
+        $tenantSlug = trim($tenantSlug);
+        if ($tenantSlug === '') {
+            return null;
+        }
+
+        $exact = Subscription::query()
+            ->whereIn('status', self::renewableStatuses())
+            ->whereHas('items', static function ($q) use ($sku): void {
+                $q->where('catalog_sku_id', $sku->id);
+            })
+            ->orderByDesc('current_period_end')
+            ->get()
+            ->first(static function (Subscription $sub) use ($tenantSlug): bool {
+                return self::foodsaasTenantSlugFrom($sub) === $tenantSlug;
+            });
+
+        if ($exact instanceof Subscription) {
+            return $exact;
+        }
+
+        if (! SaasCatalogSku::isPaidFoodsaasPlan($sku)) {
+            return null;
+        }
+
+        return Subscription::query()
+            ->whereIn('status', self::renewableStatuses())
+            ->orderByDesc('current_period_end')
+            ->get()
+            ->first(static function (Subscription $sub) use ($tenantSlug): bool {
+                return self::foodsaasTenantSlugFrom($sub) === $tenantSlug;
+            });
+    }
+
+    public static function findFoodsaasProvisioned(string|int $userId): ?Subscription
+    {
+        return self::findProvisionedByMetadataKey((string) $userId, 'foodsaas_tenant_slug');
+    }
+
     private static function findRenewable(string $userId, CatalogSku $sku, string $metadataKey): ?Subscription
     {
         return Subscription::query()
@@ -212,8 +266,20 @@ final class SaasSubscriptionLookup
         return is_string($slug) && $slug !== '' ? $slug : null;
     }
 
+    public static function foodsaasTenantSlugFrom(Subscription $subscription): ?string
+    {
+        $metadata = is_array($subscription->metadata) ? $subscription->metadata : [];
+        $slug = $metadata['foodsaas_tenant_slug'] ?? null;
+
+        return is_string($slug) && $slug !== '' ? $slug : null;
+    }
+
     public static function isRenewableSaas(Subscription $subscription, CatalogSku $sku): bool
     {
+        if (SaasCatalogSku::isFoodsaas($sku)) {
+            return self::foodsaasTenantSlugFrom($subscription) !== null;
+        }
+
         if (SaasCatalogSku::isVetsaas($sku)) {
             return self::tenantSlugFrom($subscription) !== null;
         }
@@ -280,6 +346,12 @@ final class SaasSubscriptionLookup
             return is_string($renewSlug) && trim($renewSlug) !== '';
         }
 
+        if (SaasCatalogSku::isFoodsaas($sku)) {
+            $renewSlug = session('foodsaas_renew_tenant_slug');
+
+            return is_string($renewSlug) && trim($renewSlug) !== '';
+        }
+
         return false;
     }
 
@@ -327,6 +399,7 @@ final class SaasSubscriptionLookup
             ->get()
             ->filter(function (CatalogSku $sku) use ($productKey): bool {
                 return match ($productKey) {
+                    'foodsaas' => SaasCatalogSku::isFoodsaas($sku),
                     'vetsaas' => SaasCatalogSku::isVetsaas($sku),
                     'tallersaas' => SaasCatalogSku::isTallersaas($sku),
                     'sendsaas' => SaasCatalogSku::isSendsaas($sku),

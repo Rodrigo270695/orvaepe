@@ -101,6 +101,106 @@ final class SaasTenantAccessResolver
     /**
      * @return array{login_url: string, tenant_slug: ?string, login_email: string, product_key: string}|null
      */
+    public function resolveFoodsaas(User $user): ?array
+    {
+        $email = strtolower(trim((string) $user->email));
+        if ($email === '') {
+            return null;
+        }
+
+        $fromApi = $this->lookupFoodsaasByEmail($email);
+        if ($fromApi !== null) {
+            return $fromApi;
+        }
+
+        $subscription = SaasSubscriptionLookup::findFoodsaasProvisioned((string) $user->id)
+            ?? SaasSubscriptionLookup::findActiveSaasSubscription((string) $user->id, 'foodsaas');
+
+        if ($subscription instanceof Subscription) {
+            $access = $this->accessFromSubscription($user, $subscription, 'foodsaas');
+            if ($access !== null) {
+                return $access;
+            }
+        }
+
+        return $this->accessFromOrders($user, 'foodsaas');
+    }
+
+    /**
+     * @return array{login_url: string, tenant_slug: ?string, login_email: string, product_key: string}|null
+     */
+    private function lookupFoodsaasByEmail(string $email): ?array
+    {
+        if (! (bool) config('services.foodsaas.enabled', false)) {
+            return null;
+        }
+
+        $secret = (string) config('services.foodsaas.hmac_secret');
+        $url = $this->foodsaasLookupUrl();
+
+        if ($url === '' || $secret === '') {
+            return null;
+        }
+
+        try {
+            $response = OrvaeSignedHttpClient::get(
+                $url.'?email='.rawurlencode($email),
+                $secret,
+                'lookup:'.$email,
+                timeoutSeconds: 10,
+            );
+        } catch (\Throwable $e) {
+            Log::warning('foodsaas.lookup_exception', ['email' => $email, 'message' => $e->getMessage()]);
+
+            return null;
+        }
+
+        if (! $response->successful()) {
+            return null;
+        }
+
+        $json = $response->json();
+        if (! is_array($json)) {
+            return null;
+        }
+
+        $loginUrl = $json['login_url'] ?? null;
+        $tenantSlug = $json['tenant_slug'] ?? null;
+
+        if (! is_string($loginUrl) || trim($loginUrl) === '') {
+            return null;
+        }
+
+        return [
+            'login_url' => trim($loginUrl),
+            'tenant_slug' => is_string($tenantSlug) ? $tenantSlug : null,
+            'login_email' => (string) ($json['login_email'] ?? $email),
+            'product_key' => 'foodsaas',
+        ];
+    }
+
+    private function foodsaasLookupUrl(): string
+    {
+        $explicit = trim((string) config('services.foodsaas.lookup_url', ''));
+        if ($explicit !== '') {
+            return $explicit;
+        }
+
+        $provision = trim((string) config('services.foodsaas.provision_url', ''));
+        if ($provision === '') {
+            return '';
+        }
+
+        if (str_ends_with($provision, '/provision')) {
+            return substr($provision, 0, -strlen('/provision')).'/lookup';
+        }
+
+        return rtrim($provision, '/').'/lookup';
+    }
+
+    /**
+     * @return array{login_url: string, tenant_slug: ?string, login_email: string, product_key: string}|null
+     */
     private function lookupVetsaasByEmail(string $email): ?array
     {
         if (! (bool) config('services.vetsaas.enabled', false)) {
@@ -257,6 +357,28 @@ final class SaasTenantAccessResolver
             ];
         }
 
+        if ($productKey === 'foodsaas') {
+            $loginUrl = $metadata['foodsaas_login_url'] ?? null;
+            $tenantSlug = SaasSubscriptionLookup::foodsaasTenantSlugFrom($subscription);
+
+            if ((! is_string($loginUrl) || trim($loginUrl) === '') && is_string($tenantSlug) && $tenantSlug !== '') {
+                $scheme = (string) config('services.foodsaas.tenant_scheme', 'https');
+                $domain = (string) config('services.foodsaas.tenant_domain', 'foodsaas.orvae.pe');
+                $loginUrl = sprintf('%s://%s.%s/login', $scheme, $tenantSlug, $domain);
+            }
+
+            if (! is_string($loginUrl) || trim($loginUrl) === '') {
+                return null;
+            }
+
+            return [
+                'login_url' => trim($loginUrl),
+                'tenant_slug' => is_string($tenantSlug) ? $tenantSlug : null,
+                'login_email' => (string) $user->email,
+                'product_key' => 'foodsaas',
+            ];
+        }
+
         $loginUrl = $metadata['aula_virtual_academy_url'] ?? null;
         $tenantSlug = SaasSubscriptionLookup::aulaTenantSlugFrom($subscription);
 
@@ -368,6 +490,33 @@ final class SaasTenantAccessResolver
                 }
             }
 
+            if ($productKey === 'foodsaas') {
+                $loginUrl = $snapshot['foodsaas_login_url'] ?? null;
+                $tenantSlug = $snapshot['foodsaas_tenant_slug'] ?? null;
+                $loginEmail = $snapshot['foodsaas_login_email'] ?? $user->email;
+
+                if (is_string($loginUrl) && trim($loginUrl) !== '') {
+                    return [
+                        'login_url' => trim($loginUrl),
+                        'tenant_slug' => is_string($tenantSlug) ? $tenantSlug : null,
+                        'login_email' => (string) $loginEmail,
+                        'product_key' => 'foodsaas',
+                    ];
+                }
+
+                if (is_string($tenantSlug) && trim($tenantSlug) !== '') {
+                    $scheme = (string) config('services.foodsaas.tenant_scheme', 'https');
+                    $domain = (string) config('services.foodsaas.tenant_domain', 'foodsaas.orvae.pe');
+
+                    return [
+                        'login_url' => sprintf('%s://%s.%s/login', $scheme, trim($tenantSlug), $domain),
+                        'tenant_slug' => trim($tenantSlug),
+                        'login_email' => (string) $loginEmail,
+                        'product_key' => 'foodsaas',
+                    ];
+                }
+            }
+
             if ($productKey === 'aulavirtual') {
                 $loginUrl = $snapshot['aula_virtual_academy_url'] ?? null;
                 $tenantSlug = $snapshot['aula_virtual_tenant_slug'] ?? null;
@@ -397,6 +546,10 @@ final class SaasTenantAccessResolver
         }
 
         if ($productKey === 'tallersaas' && $this->resolveTallersaas($user) !== null) {
+            return true;
+        }
+
+        if ($productKey === 'foodsaas' && $this->resolveFoodsaas($user) !== null) {
             return true;
         }
 

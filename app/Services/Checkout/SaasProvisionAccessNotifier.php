@@ -266,6 +266,7 @@ final class SaasProvisionAccessNotifier
             'vetsaas' => 'Tu clínica VetSaaS está lista',
             'tallersaas' => 'Tu taller TallerSaaS está listo',
             'sendsaas' => 'Tu empresa SendSaaS está lista',
+            'foodsaas' => 'Tu restaurante FoodSaaS está listo',
             default => 'Tu acceso a Aula Virtual está listo',
         };
 
@@ -273,7 +274,7 @@ final class SaasProvisionAccessNotifier
             ? '🌐 Subdominio: '.$tenantSlug."\n"
             : '';
 
-        $isBootstrap = ($isVetsaas || $productKey === 'tallersaas' || $isSendsaas) && str_contains($loginUrl, '/auth/bienvenida/');
+        $isBootstrap = ($isVetsaas || $productKey === 'tallersaas' || $isSendsaas || $productKey === 'foodsaas') && str_contains($loginUrl, '/auth/bienvenida/');
 
         $credentialsBlock = '';
         if ($isBootstrap) {

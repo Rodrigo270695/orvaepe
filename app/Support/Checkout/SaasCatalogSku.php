@@ -108,13 +108,42 @@ final class SaasCatalogSku
             && (str_contains($haystack, 'omni') || str_contains($haystack, 'whatsapp saas'));
     }
 
+    public static function isFoodsaas(CatalogSku $sku): bool
+    {
+        $metadata = is_array($sku->metadata) ? $sku->metadata : [];
+        $product = strtolower(trim((string) ($metadata['saas_product'] ?? '')));
+
+        if (in_array($product, ['foodsaas', 'food-saas', 'restaurante'], true)) {
+            return true;
+        }
+
+        $haystack = strtolower(implode(' ', array_filter([
+            (string) ($sku->code ?? ''),
+            (string) ($sku->name ?? ''),
+            (string) ($sku->product?->name ?? ''),
+        ])));
+
+        if (str_contains($haystack, 'foodsaas') || str_contains($haystack, 'food-saas')) {
+            return true;
+        }
+
+        $saleModel = strtolower(trim((string) $sku->sale_model));
+
+        return $saleModel === 'saas_subscription'
+            && (str_contains($haystack, 'restaurant') || str_contains($haystack, 'restaurante'));
+    }
+
     public static function isSaasSubscription(CatalogSku $sku): bool
     {
-        return self::isVetsaas($sku) || self::isTallersaas($sku) || self::isAulaVirtual($sku) || self::isSendsaas($sku);
+        return self::isVetsaas($sku) || self::isTallersaas($sku) || self::isAulaVirtual($sku) || self::isSendsaas($sku) || self::isFoodsaas($sku);
     }
 
     public static function productKey(CatalogSku $sku): ?string
     {
+        if (self::isFoodsaas($sku)) {
+            return 'foodsaas';
+        }
+
         if (self::isSendsaas($sku)) {
             return 'sendsaas';
         }
@@ -137,6 +166,7 @@ final class SaasCatalogSku
     public static function productLabel(string $productKey): string
     {
         return match ($productKey) {
+            'foodsaas' => 'FoodSaaS',
             'vetsaas' => 'VetSaaS',
             'tallersaas' => 'TallerSaaS',
             'sendsaas' => 'SendSaaS',
@@ -172,6 +202,10 @@ final class SaasCatalogSku
 
         if (str_contains($normalized, 'free') || str_contains($normalized, 'gratis')) {
             return 'free';
+        }
+
+        if (str_contains($normalized, 'restaurante')) {
+            return 'restaurante';
         }
 
         if (str_contains($normalized, 'starter')) {
@@ -239,6 +273,11 @@ final class SaasCatalogSku
         return self::isTallersaas($sku) && ! self::isFreePlan($sku);
     }
 
+    public static function isPaidFoodsaasPlan(CatalogSku $sku): bool
+    {
+        return self::isFoodsaas($sku) && ! self::isFreePlan($sku);
+    }
+
     public static function isFreeSaasSubscription(Subscription $subscription): bool
     {
         if (! $subscription->relationLoaded('items')) {
@@ -270,6 +309,7 @@ final class SaasCatalogSku
         $metadata = is_array($sku->metadata) ? $sku->metadata : [];
 
         return [
+            $metadata['foodsaas_plan_slug'] ?? null,
             $metadata['vetsaas_plan_slug'] ?? null,
             $metadata['tallersaas_plan_slug'] ?? null,
             $metadata['sendsaas_plan_slug'] ?? null,

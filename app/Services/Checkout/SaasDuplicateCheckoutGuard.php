@@ -46,6 +46,7 @@ final class SaasDuplicateCheckoutGuard
                 'vetsaas' => $this->accessResolver->resolveVetsaas($user),
                 'tallersaas' => $this->accessResolver->resolveTallersaas($user),
                 'sendsaas' => $this->accessResolver->resolveSendsaas($user),
+                'foodsaas' => $this->accessResolver->resolveFoodsaas($user),
                 default => $this->accessResolver->resolveAulaVirtual($user),
             };
 

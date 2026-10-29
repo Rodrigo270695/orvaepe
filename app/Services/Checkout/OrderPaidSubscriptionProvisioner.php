@@ -26,6 +26,7 @@ final class OrderPaidSubscriptionProvisioner
         private readonly VetSaaSPlanProvisioner $vetsaasProvisioner,
         private readonly TallerSaaSPlanProvisioner $tallersaasProvisioner,
         private readonly SendSaaSPlanProvisioner $sendsaasProvisioner,
+        private readonly FoodSaaSPlanProvisioner $foodsaasProvisioner,
     ) {}
 
     /**
@@ -138,6 +139,18 @@ final class OrderPaidSubscriptionProvisioner
                         $this->sendsaasProvisioner->provision($freshOrder, $sku, $periodEnd);
                     } catch (\Throwable $e) {
                         Log::warning('sendsaas.provision_exception', [
+                            'order_id' => $order->id,
+                            'sku_code' => $sku->code,
+                            'exception' => $e->getMessage(),
+                        ]);
+                    }
+                }
+
+                if (SaasCatalogSku::isFoodsaas($sku)) {
+                    try {
+                        $this->foodsaasProvisioner->provision($freshOrder, $sku, $periodEnd);
+                    } catch (\Throwable $e) {
+                        Log::warning('foodsaas.provision_exception', [
                             'order_id' => $order->id,
                             'sku_code' => $sku->code,
                             'exception' => $e->getMessage(),

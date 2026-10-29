@@ -42,12 +42,14 @@ final class SaasRenewalAccessNotifier
         $subject = match ($productKey) {
             'vetsaas' => 'Tu plan VetSaaS fue renovado',
             'tallersaas' => 'Tu plan TallerSaaS fue renovado',
+            'foodsaas' => 'Tu plan FoodSaaS fue renovado',
             'sendsaas' => 'Tu plan SendSaaS fue renovado',
             default => 'Tu plan de Aula Virtual fue renovado',
         };
         $entity = match ($productKey) {
             'vetsaas' => 'clínica',
             'tallersaas' => 'taller',
+            'foodsaas' => 'restaurante',
             'sendsaas' => 'empresa',
             default => 'cuenta',
         };
