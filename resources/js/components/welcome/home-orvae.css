@@ -51,6 +51,11 @@
         animation-delay: 0.4s;
     }
 
+    .home-hero-card--food {
+        animation: home-hero-float 6.5s ease-in-out infinite;
+        animation-delay: 0.8s;
+    }
+
     .home-blob--pulse {
         animation: home-blob-pulse 10s ease-in-out infinite;
     }

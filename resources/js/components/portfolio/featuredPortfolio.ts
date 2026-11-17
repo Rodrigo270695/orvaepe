@@ -30,10 +30,19 @@ const FALLBACK: FeaturedSaasCard[] = [
         image: '/images/tallersaas/hero.jpg',
         accent: '#ea580c',
     },
+    {
+        slug: 'FOODSAAS',
+        name: 'FoodSaaS',
+        hint: 'Restaurantes',
+        description: 'Salón, cocina, caja y SUNAT en el subdominio de tu local.',
+        href: '/software/FOODSAAS',
+        image: '/images/foodsaas/cover.svg',
+        accent: '#660033',
+    },
 ];
 
 export function isFeaturedPortfolioSystem(system: Pick<SoftwareSystem, 'slug' | 'name'>): boolean {
-    return /vetsaas|tallersaas/i.test(`${system.slug} ${system.name}`);
+    return /vetsaas|tallersaas|foodsaas/i.test(`${system.slug} ${system.name}`);
 }
 
 export function featuredSaasFromCatalog(

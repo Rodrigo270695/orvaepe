@@ -4,11 +4,11 @@
  */
 export const marketingSeo = {
     home: {
-        title: 'ORVAE — Desarrollo de software y licencias | VetSaaS y TallerSaaS',
+        title: 'ORVAE — Desarrollo de software y licencias | VetSaaS, TallerSaaS y FoodSaaS',
         description:
-            'Desarrollo de software, venta de licencias y SaaS en Perú. VetSaaS para clínicas veterinarias y TallerSaaS para talleres mecánicos. Demo y cotización.',
+            'Desarrollo de software, venta de licencias y SaaS en Perú. VetSaaS, TallerSaaS y FoodSaaS para clínicas, talleres y restaurantes. Demo y cotización.',
         keywords:
-            'desarrollo de software Perú, venta de licencias, software empresarial, SaaS Perú, VetSaaS, TallerSaaS, software veterinario, software para talleres',
+            'desarrollo de software Perú, venta de licencias, software empresarial, SaaS Perú, VetSaaS, TallerSaaS, FoodSaaS, software veterinario, software para talleres, software para restaurantes',
     },
     software: {
         title: 'Software desarrollado — Catálogo ORVAE',
@@ -16,11 +16,11 @@ export const marketingSeo = {
             'Explora sistemas listos para usar: ERP, RR.HH., inventario y más. Modelos licencia perpetua, rental o suscripción. Precios y planes visibles.',
     },
     portafolio: {
-        title: 'Portafolio — VetSaaS, TallerSaaS y sistemas ORVAE',
+        title: 'Portafolio — VetSaaS, TallerSaaS, FoodSaaS y sistemas ORVAE',
         description:
-            'Portafolio ORVAE: VetSaaS para clínicas, TallerSaaS para talleres y más sistemas en operación. Empresas reales, demos en vivo y fichas de producto.',
+            'Portafolio ORVAE: VetSaaS para clínicas, TallerSaaS para talleres, FoodSaaS para restaurantes y más sistemas en operación.',
         keywords:
-            'portafolio software Perú, VetSaaS, TallerSaaS, sistemas ORVAE, software veterinario, software para talleres, casos de éxito',
+            'portafolio software Perú, VetSaaS, TallerSaaS, FoodSaaS, sistemas ORVAE, software veterinario, software para talleres, software para restaurantes',
     },
     servicios: {
         title: 'Servicios — Integraciones, correos y operación ORVAE',
@@ -57,6 +57,14 @@ export const marketingSeo = {
         h1: 'Software para talleres TallerSaaS',
         keywords:
             'software para talleres, sistema taller mecánico Perú, órdenes de trabajo, car wash, facturación SUNAT, TallerSaaS',
+    },
+    foodsaas: {
+        title: 'Software para restaurantes FoodSaaS | Salón, cocina y SUNAT | ORVAE',
+        description:
+            'Sistema para restaurantes en Perú: salón, cocina, caja, carta y boleta SUNAT. Activa FoodSaaS con tu subdominio desde Orvae.',
+        h1: 'Software para restaurantes FoodSaaS',
+        keywords:
+            'software para restaurantes, POS restaurante Perú, sistema para restaurantes, cocina, facturación SUNAT, FoodSaaS',
     },
     correos: {
         title: 'Correos corporativos — ORVAE',

@@ -69,9 +69,9 @@ export default function HomeHero() {
                         <p className="mt-6 max-w-xl text-[17px] leading-relaxed text-muted-foreground">
                             ORVAE construye sistemas, entrega licencias y opera SaaS propios:{' '}
                             <strong className="font-semibold text-foreground">VetSaaS</strong> para
-                            clínicas veterinarias y{' '}
-                            <strong className="font-semibold text-foreground">TallerSaaS</strong> para
-                            talleres y car wash. También software a medida.
+                            clínicas, <strong className="font-semibold text-foreground">TallerSaaS</strong> para
+                            talleres y <strong className="font-semibold text-foreground">FoodSaaS</strong> para
+                            restaurantes. También software a medida.
                         </p>
 
                         <ul className="mt-7 flex flex-wrap gap-2" aria-label="Lo que hacemos">
@@ -149,13 +149,26 @@ export default function HomeHero() {
                                     TallerSaaS · talleres
                                 </span>
                             </Link>
+                            <Link
+                                href="/software/FOODSAAS"
+                                className="home-hero-card home-hero-card--food absolute bottom-6 left-8 z-30 w-[46%] rounded-2xl border border-[#c4a574]/50 bg-[#f6efe6] px-4 py-3 shadow-[0_18px_40px_-20px_rgba(102,0,51,0.55)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                style={{ '--home-hero-tilt': '-2deg' } as CSSProperties}
+                            >
+                                <span className="block font-mono text-[10px] uppercase tracking-[0.18em] text-[#660033]">
+                                    Comanda
+                                </span>
+                                <span className="mt-1 block font-display text-lg font-bold leading-none text-[#3a001c]">
+                                    FoodSaaS
+                                </span>
+                                <span className="mt-1 block text-[11px] text-[#6b4a3a]">Salón · cocina · caja</span>
+                            </Link>
                         </div>
                     </div>
                 </div>
 
                 <dl className="mt-12 grid max-w-xl grid-cols-3 gap-4 border-t border-border pt-6">
                     {[
-                        ['2 SaaS', 'propios'],
+                        ['3 SaaS', 'propios'],
                         ['Licencias', 'listas'],
                         ['A medida', 'en Perú'],
                     ].map(([k, v]) => (

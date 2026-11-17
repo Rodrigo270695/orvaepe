@@ -40,7 +40,7 @@ export default function SoftwareCatalogClosingCta() {
                     </h2>
                     <p className="mx-auto mt-4 max-w-lg text-sm leading-relaxed text-white/80 sm:text-base">
                         Si tu operación no encaja en un sistema del catálogo, desarrollamos el tuyo con el mismo
-                        equipo que mantiene VetSaaS y TallerSaaS.
+                        equipo que mantiene VetSaaS, TallerSaaS y FoodSaaS.
                     </p>
                 </div>
 

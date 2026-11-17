@@ -50,11 +50,13 @@ export default function PortfolioSystemsShowcase({ catalogSections }: Props) {
                 system,
                 categorySlug: section.slug,
                 categoryTitle: section.title,
-                accent: /taller/i.test(`${system.slug} ${system.name}`)
-                    ? '#ea580c'
-                    : /vet/i.test(`${system.slug} ${system.name}`)
-                      ? '#0d9488'
-                      : (categoryAccents.get(section.slug) ?? semanticCycle[0]),
+                accent: /food/i.test(`${system.slug} ${system.name}`)
+                    ? '#660033'
+                    : /taller/i.test(`${system.slug} ${system.name}`)
+                      ? '#ea580c'
+                      : /vet/i.test(`${system.slug} ${system.name}`)
+                        ? '#0d9488'
+                        : (categoryAccents.get(section.slug) ?? semanticCycle[0]),
             })),
         );
     }, [catalogSections, categoryAccents]);
@@ -118,7 +120,7 @@ export default function PortfolioSystemsShowcase({ catalogSections }: Props) {
                 className="mb-8 md:mb-10"
                 eyebrow="Sistemas desarrollados"
                 title="Portafolio de productos ORVAE"
-                description="Filtra por rubro. VetSaaS y TallerSaaS van primero; el resto del catálogo sigue abajo."
+                description="Filtra por rubro. VetSaaS, TallerSaaS y FoodSaaS van primero; el resto del catálogo sigue abajo."
                 layout="wide"
                 titleSize="hero"
                 titleClassName="font-display text-2xl font-bold tracking-tight md:text-4xl"

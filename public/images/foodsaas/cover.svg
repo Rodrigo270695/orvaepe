@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="750" viewBox="0 0 1200 750" role="img" aria-label="FoodSaaS, carta de servicio para restaurantes">
+  <rect width="1200" height="750" fill="#3A001C"/>
+  <rect x="72" y="64" width="1056" height="622" rx="28" fill="#F6EFE6"/>
+  <rect x="108" y="108" width="8" height="534" fill="#660033"/>
+  <text x="148" y="168" fill="#660033" font-family="Georgia, serif" font-size="28" letter-spacing="6">CARTA DE SERVICIO</text>
+  <text x="148" y="248" fill="#2A1218" font-family="Georgia, serif" font-size="84">FoodSaaS</text>
+  <text x="152" y="300" fill="#6B4A3A" font-family="Georgia, serif" font-size="28">Salón, cocina, caja y SUNAT</text>
+  <line x1="148" y1="348" x2="980" y2="348" stroke="#C4A574" stroke-width="2"/>
+  <text x="148" y="410" fill="#2A1218" font-family="Georgia, serif" font-size="32">01  Salón</text>
+  <text x="148" y="468" fill="#2A1218" font-family="Georgia, serif" font-size="32">02  Cocina</text>
+  <text x="148" y="526" fill="#2A1218" font-family="Georgia, serif" font-size="32">03  Caja</text>
+  <text x="148" y="584" fill="#660033" font-family="Georgia, serif" font-size="32">04  SUNAT</text>
+</svg>

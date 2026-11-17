@@ -1,0 +1,93 @@
+.fs-landing {
+    --fs-ink: #2a1218;
+    --fs-wine: #660033;
+    --fs-wine-deep: #3a001c;
+    --fs-paper: #f6efe6;
+    --fs-paper-2: #fffaf4;
+    --fs-rule: #c4a574;
+    --fs-muted: #6b4a3a;
+    background: var(--fs-paper);
+    color: var(--fs-ink);
+    font-family: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+}
+
+.fs-landing :where(a, button) {
+    cursor: pointer;
+}
+
+.fs-kicker {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--fs-wine);
+}
+
+.fs-display {
+    font-family: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 0.96;
+}
+
+.fs-btn,
+.fs-btn-ghost {
+    display: inline-flex;
+    min-height: 3rem;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 999px;
+    padding: 0.75rem 1.25rem;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    font-size: 0.875rem;
+    font-weight: 650;
+    text-decoration: none;
+    transition: transform 160ms ease, background-color 160ms ease;
+}
+
+.fs-btn {
+    background: var(--fs-wine);
+    color: #fffaf4;
+}
+
+.fs-btn:hover {
+    transform: translateY(-1px);
+    background: var(--fs-wine-deep);
+}
+
+.fs-btn-ghost {
+    border: 1px solid color-mix(in srgb, var(--fs-wine) 35%, var(--fs-rule));
+    background: transparent;
+    color: var(--fs-wine-deep);
+}
+
+.fs-btn:focus-visible,
+.fs-btn-ghost:focus-visible,
+.fs-plan:focus-visible {
+    outline: 2px solid var(--fs-wine);
+    outline-offset: 3px;
+}
+
+.fs-ticket {
+    background:
+        radial-gradient(circle at left, transparent 12px, var(--fs-paper-2) 13px) left / 18px 100% repeat-y,
+        var(--fs-paper-2);
+    box-shadow: 0 24px 50px -28px rgba(58, 0, 28, 0.45);
+}
+
+.fs-rule {
+    height: 1px;
+    background: repeating-linear-gradient(
+        90deg,
+        var(--fs-rule) 0 10px,
+        transparent 10px 16px
+    );
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .fs-btn:hover {
+        transform: none;
+    }
+}

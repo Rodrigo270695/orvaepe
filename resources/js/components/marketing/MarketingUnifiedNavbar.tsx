@@ -461,11 +461,12 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
         const featured =
             _key === 'software'
                 ? [
-                      { label: 'VetSaaS', href: '/software/VETSAAS', hint: 'Clínicas veterinarias' },
-                      { label: 'TallerSaaS', href: '/software/TALLERSAAS', hint: 'Talleres y car wash' },
+                      { label: 'VetSaaS', href: '/software/VETSAAS', hint: 'Clínicas veterinarias', dot: '#0d9488' },
+                      { label: 'TallerSaaS', href: '/software/TALLERSAAS', hint: 'Talleres y car wash', dot: '#ea580c' },
+                      { label: 'FoodSaaS', href: '/software/FOODSAAS', hint: 'Restaurantes', dot: '#660033' },
                   ]
                 : [];
-        const rest = links.filter((l) => !/vetsaas|tallersaas/i.test(`${l.label} ${l.href}`));
+        const rest = links.filter((l) => !/vetsaas|tallersaas|foodsaas/i.test(`${l.label} ${l.href}`));
         return (
             <div
                 id={panelId}
@@ -483,7 +484,6 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                 {featured.length > 0 && (
                     <div className="mb-2 grid gap-1">
                         {featured.map((l) => {
-                            const isTaller = /taller/i.test(l.label);
                             return (
                                 <Link
                                     key={l.href}
@@ -492,7 +492,7 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                                 >
                                     <span
                                         className="size-2.5 shrink-0 rounded-full"
-                                        style={{ background: isTaller ? '#ea580c' : '#0d9488' }}
+                                        style={{ background: l.dot }}
                                         aria-hidden
                                     />
                                     <span className="min-w-0">
@@ -827,6 +827,14 @@ export default function MarketingUnifiedNavbar({ canRegister }: Props) {
                                             >
                                                 <span className="size-2.5 rounded-full bg-[#ea580c]" aria-hidden />
                                                 TallerSaaS
+                                            </Link>
+                                            <Link
+                                                href="/software/FOODSAAS"
+                                                className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold text-[var(--foreground)] hover:bg-[color-mix(in_oklab,var(--o-amber)_10%,transparent)]"
+                                                onClick={closeAll}
+                                            >
+                                                <span className="size-2.5 rounded-full bg-[#660033]" aria-hidden />
+                                                FoodSaaS
                                             </Link>
                                             <div className="my-1.5 border-t border-[color-mix(in_oklab,var(--o-amber)_25%,var(--border))]" aria-hidden />
                                             {softwareLinks.map((l, i) => (

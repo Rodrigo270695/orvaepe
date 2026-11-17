@@ -2,7 +2,7 @@ import { useGSAP } from '@gsap/react';
 import { Link } from '@inertiajs/react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { ArrowRight, PawPrint, Wrench } from 'lucide-react';
+import { ArrowRight, PawPrint, UtensilsCrossed, Wrench } from 'lucide-react';
 import { useRef } from 'react';
 
 import LandingSectionHeader from '@/components/welcome/LandingSectionHeader';
@@ -74,7 +74,7 @@ export default function HomeSaasShowcase() {
         <section
             ref={root}
             id="saas"
-            aria-label="SaaS desarrollados por ORVAE: VetSaaS y TallerSaaS"
+            aria-label="SaaS desarrollados por ORVAE: VetSaaS, TallerSaaS y FoodSaaS"
             className="home-section home-section--alt relative overflow-hidden scroll-mt-28 px-4 py-20 sm:px-6 md:py-28"
         >
             <div
@@ -93,11 +93,50 @@ export default function HomeSaasShowcase() {
                 <LandingSectionHeader
                     className="mb-10 md:mb-14"
                     eyebrow="SaaS propios"
-                    title="Dos verticales. La misma casa."
-                    description="ORVAE no solo vende licencias de terceros. Desarrollamos e operamos VetSaaS y TallerSaaS: cada cliente entra por su subdominio."
+                    title="Tres verticales. La misma casa."
+                    description="ORVAE no solo vende licencias de terceros. Desarrollamos e operamos VetSaaS, TallerSaaS y FoodSaaS: cada cliente entra por su subdominio."
                     layout="wide"
                     titleSize="hero"
                 />
+
+                <Link
+                    href="/software/FOODSAAS"
+                    data-saas-card
+                    className="group mb-5 grid cursor-pointer overflow-hidden rounded-[1.6rem] border border-[#c4a574]/50 bg-[#f6efe6] shadow-[0_24px_70px_-32px_rgba(102,0,51,0.45)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#660033] lg:grid-cols-[1.1fr_0.9fr]"
+                >
+                    <span className="flex flex-col justify-between bg-[#3a001c] p-6 text-[#f6efe6] sm:p-8">
+                        <span>
+                            <span className="inline-flex items-center gap-2 font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-[#c4a574]">
+                                <UtensilsCrossed className="size-3.5" aria-hidden />
+                                Restaurantes
+                            </span>
+                            <span className="mt-4 block font-display text-3xl font-bold sm:text-4xl">FoodSaaS</span>
+                            <span className="mt-3 block max-w-md font-sans text-sm leading-relaxed text-[#f6efe6]/85 sm:text-base">
+                                Salón, cocina, caja y SUNAT en el subdominio de tu local. La comanda no cambia de sistema.
+                            </span>
+                        </span>
+                        <span className="mt-6 inline-flex w-fit items-center gap-2 rounded-full bg-[#f6efe6] px-4 py-2.5 text-sm font-semibold text-[#660033]">
+                            Ver FoodSaaS
+                            <ArrowRight className="size-4" aria-hidden />
+                        </span>
+                    </span>
+                    <span className="grid content-center gap-3 p-6 sm:p-8" aria-hidden>
+                        {[
+                            ['01', 'Salón', 'Mesas y cuentas'],
+                            ['02', 'Cocina', 'Comanda en vivo'],
+                            ['03', 'Caja', 'Turno y medios'],
+                            ['04', 'SUNAT', 'Boleta al cobrar'],
+                        ].map(([index, name, note]) => (
+                            <span key={index} className="flex items-baseline justify-between gap-4 border-b border-[#c4a574]/60 pb-2 font-serif text-[#3a001c]">
+                                <span>
+                                    <span className="mr-3 font-mono text-[10px] tracking-widest text-[#c4a574]">{index}</span>
+                                    {name}
+                                </span>
+                                <span className="font-sans text-xs text-[#6b4a3a]">{note}</span>
+                            </span>
+                        ))}
+                    </span>
+                </Link>
 
                 <div className="grid gap-5 lg:grid-cols-2">
                     {products.map((product) => {

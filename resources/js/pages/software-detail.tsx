@@ -17,6 +17,7 @@ import VetSaaSClientsCarousel, {
 import VetSaaSLanding, {
     type VetSaaSMarketingPayload,
 } from '@/components/software/VetSaaSLanding';
+import FoodSaaSLanding from '@/components/software/foodsaas/FoodSaaSLanding';
 import TallerSaaSLanding from '@/components/software/tallersaas/TallerSaaSLanding';
 import type { TallerSaaSMarketing } from '@/components/software/tallersaas/types';
 import GeometricBackground from '@/components/welcome/GeometricBackground';
@@ -151,7 +152,7 @@ export default function SoftwareDetail() {
     const system = useMemo((): SoftwareSystem | null => {
         const server = systemFromServer ?? null;
 
-        if (server && server.slug === systemSlug) {
+        if (server && server.slug.toLowerCase() === systemSlug.toLowerCase()) {
             return server;
         }
 
@@ -397,6 +398,7 @@ export default function SoftwareDetail() {
         const slug = system.slug.toLowerCase();
         const isVetsaas = ['vetsaas', 'vet-saas'].includes(slug);
         const isTallersaas = ['tallersaas', 'taller-saas'].includes(slug);
+        const isFoodsaas = ['foodsaas', 'food-saas'].includes(slug);
 
         const base: Record<string, unknown> = {
             '@type': 'SoftwareApplication',
@@ -405,12 +407,16 @@ export default function SoftwareDetail() {
                 ? 'VetSaaS — Software veterinario'
                 : isTallersaas
                   ? 'TallerSaaS — Software para talleres'
-                  : system.name,
+                  : isFoodsaas
+                    ? 'FoodSaaS — Software para restaurantes'
+                    : system.name,
             description: isVetsaas
                 ? marketingSeo.vetsaas.description
                 : isTallersaas
                   ? marketingSeo.tallersaas.description
-                  : system.shortDescription,
+                  : isFoodsaas
+                    ? marketingSeo.foodsaas.description
+                    : system.shortDescription,
             applicationCategory: 'BusinessApplication',
             operatingSystem: 'Web',
             url: productUrl,
@@ -457,6 +463,25 @@ export default function SoftwareDetail() {
                 'Portal por placa',
             ];
             base.image = `${seo.siteUrl}/images/tallersaas/og.jpg`;
+        }
+
+        if (isFoodsaas) {
+            base.alternateName = [
+                'Software para restaurantes',
+                'Sistema para restaurantes Perú',
+                'POS restaurante',
+                'Food SaaS',
+            ];
+            base.keywords = marketingSeo.foodsaas.keywords;
+            base.featureList = [
+                'Salón y mesas',
+                'Cocina en vivo',
+                'Caja',
+                'Carta y almacén',
+                'Delivery y reservas',
+                'Facturación SUNAT',
+            ];
+            base.image = `${seo.siteUrl}/images/foodsaas/cover.svg`;
         }
 
         const first = system.pricingPlans[0];
@@ -790,6 +815,93 @@ export default function SoftwareDetail() {
                 <TallerSaaSLanding
                     system={system}
                     marketing={tallersaasMarketing}
+                    selectedPlan={selectedPlan}
+                    selectedPlanId={selectedPlanId}
+                    onSelectPlanId={setSelectedPlanId}
+                    purchaseEnabled={purchaseEnabled}
+                    webCheckoutEnabled={webCheckoutEnabled}
+                    isFreeSubscription={isFreeSubscription}
+                    checkoutLoading={checkoutLoading}
+                    checkoutError={checkoutError}
+                    addedCount={addedCount}
+                    selectionTitle={
+                        selectedPlan
+                            ? `${selectedPlan.label} · ${inferSaleModelLabel(selectedPlan)}`
+                            : 'Elige un plan para continuar con el carrito o el checkout.'
+                    }
+                    selectionPriceLine={selectionPriceLine}
+                    selectionPriceCaption={selectionPriceCaption}
+                    consultationWhatsAppHref={consultationWhatsAppHref || undefined}
+                    onAddToCart={onAddToCart}
+                    onStartCheckout={() => {
+                        void handleStartCheckout();
+                    }}
+                />
+            </MarketingLayout>
+        );
+    }
+
+    const isFoodsaasLanding = ['foodsaas', 'food-saas'].includes(system.slug.toLowerCase());
+
+    if (isFoodsaasLanding) {
+        return (
+            <MarketingLayout
+                heroBehindNav
+                title={marketingSeo.foodsaas.title}
+                description={marketingSeo.foodsaas.description}
+                canonicalPath={`/software/${system.slug}`}
+                ogType="product"
+                ogImage="/images/foodsaas/cover.svg"
+                ogImageAlt="Software para restaurantes FoodSaaS — salón, cocina, caja y SUNAT"
+                keywords={marketingSeo.foodsaas.keywords}
+                breadcrumbs={[
+                    { name: 'Inicio', path: '/' },
+                    { name: 'Software', path: '/software' },
+                    {
+                        name: 'Software para restaurantes FoodSaaS',
+                        path: `/software/${system.slug}`,
+                    },
+                ]}
+                jsonLd={
+                    softwareApplicationLd
+                        ? [
+                              softwareApplicationLd,
+                              {
+                                  '@type': 'FAQPage',
+                                  '@id': `${seo.siteUrl}/software/${system.slug}#faq`,
+                                  mainEntity: [
+                                      {
+                                          '@type': 'Question',
+                                          name: '¿Qué es FoodSaaS?',
+                                          acceptedAnswer: {
+                                              '@type': 'Answer',
+                                              text: 'FoodSaaS es el sistema del restaurante en la nube: salón, pedidos, cocina, caja, carta y comprobantes SUNAT. Cada local entra por su subdominio.',
+                                          },
+                                      },
+                                      {
+                                          '@type': 'Question',
+                                          name: '¿FoodSaaS sirve para restaurantes en Perú?',
+                                          acceptedAnswer: {
+                                              '@type': 'Answer',
+                                              text: 'Sí. FoodSaaS es software multi-tenant para restaurantes en Perú, con boleta y factura SUNAT, PWA de mesero y cocina, y activación desde Orvae.',
+                                          },
+                                      },
+                                      {
+                                          '@type': 'Question',
+                                          name: '¿Cómo activo FoodSaaS?',
+                                          acceptedAnswer: {
+                                              '@type': 'Answer',
+                                              text: 'Eliges un plan en Orvae, confirmas y entras a tu subdominio a crear tu contraseña para empezar a operar.',
+                                          },
+                                      },
+                                  ],
+                              },
+                          ]
+                        : undefined
+                }
+            >
+                <FoodSaaSLanding
+                    system={system}
                     selectedPlan={selectedPlan}
                     selectedPlanId={selectedPlanId}
                     onSelectPlanId={setSelectedPlanId}

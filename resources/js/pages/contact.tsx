@@ -527,7 +527,7 @@ export default function Contact() {
                             </div>
 
                             <div className="relative z-10 mx-auto w-full max-w-6xl px-4 pb-20 sm:px-6">
-                                <div className="grid gap-4 sm:grid-cols-2">
+                                <div className="grid gap-4 lg:grid-cols-3">
                                     <Link
                                         href="/software/VETSAAS"
                                         className="home-glass group flex min-h-20 cursor-pointer items-center justify-between gap-4 rounded-2xl px-5 py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0d9488]"
@@ -551,6 +551,18 @@ export default function Contact() {
                                             <span className="mt-0.5 block text-lg font-bold text-foreground">Ver planes de TallerSaaS</span>
                                         </span>
                                         <ArrowRight className="size-5 text-[#c2410c] transition-transform group-hover:translate-x-1 dark:text-[#fb923c]" aria-hidden />
+                                    </Link>
+                                    <Link
+                                        href="/software/FOODSAAS"
+                                        className="home-glass group flex min-h-20 cursor-pointer items-center justify-between gap-4 rounded-2xl px-5 py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#660033]"
+                                    >
+                                        <span>
+                                            <span className="block text-xs font-semibold uppercase tracking-wider text-[#660033] dark:text-[#f9a8d4]">
+                                                Restaurantes
+                                            </span>
+                                            <span className="mt-0.5 block text-lg font-bold text-foreground">Ver planes de FoodSaaS</span>
+                                        </span>
+                                        <ArrowRight className="size-5 text-[#660033] transition-transform group-hover:translate-x-1 dark:text-[#f9a8d4]" aria-hidden />
                                     </Link>
                                 </div>
                             </div>
