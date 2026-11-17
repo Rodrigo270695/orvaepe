@@ -1,6 +1,7 @@
 import { ArrowRight } from 'lucide-react';
 
-import { COURSES, DEMO } from '../data';
+import { COURSES } from '../data';
+import DemoCredentials from './DemoCredentials';
 
 type Props = {
     demoUrl: string;
@@ -35,11 +36,7 @@ export default function HeroSection({ demoUrl, demoUser, demoPassword }: Props) 
                             Abrir la demo
                         </a>
                     </div>
-                    <p className="mt-6 font-sans text-sm text-[var(--fs-muted)]">
-                        Demo: <span className="text-[var(--fs-ink)]">{demoUser}</span>
-                        <span className="mx-2 text-[var(--fs-rule)]">/</span>
-                        <span className="text-[var(--fs-ink)]">{demoPassword || DEMO.password}</span>
-                    </p>
+                    <DemoCredentials url={demoUrl} user={demoUser} password={demoPassword} />
                 </div>
 
                 <div className="overflow-hidden rounded-[1.6rem] border border-[#c4a574]/40 shadow-[0_24px_50px_-28px_rgba(58,0,28,0.45)]">
@@ -50,7 +47,7 @@ export default function HeroSection({ demoUrl, demoUser, demoPassword }: Props) 
                         width={960}
                         height={600}
                     />
-                <aside className="fs-ticket relative px-8 py-8 sm:px-10" aria-label="Recorrido del servicio">
+                    <aside className="fs-ticket relative px-8 py-8 sm:px-10" aria-label="Recorrido del servicio">
                     <p className="fs-kicker">Comanda</p>
                     <p className="fs-display mt-3 text-4xl text-[var(--fs-wine)]">Mesa 12</p>
                     <p className="mt-1 font-sans text-sm text-[var(--fs-muted)]">4 comensales · un solo piso</p>
