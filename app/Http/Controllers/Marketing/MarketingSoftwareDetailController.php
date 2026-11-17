@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Marketing;
 
 use App\Http\Controllers\Controller;
 use App\Models\CatalogProduct;
+use App\Services\Checkout\FoodSaaSMarketingClient;
 use App\Services\Checkout\TallerSaaSMarketingClient;
 use App\Services\Checkout\VetSaaSMarketingClient;
 use App\Services\Checkout\VetSaaSShowcaseClient;
@@ -24,6 +25,7 @@ class MarketingSoftwareDetailController extends Controller
         VetSaaSShowcaseClient $showcaseClient,
         VetSaaSMarketingClient $marketingClient,
         TallerSaaSMarketingClient $tallerMarketingClient,
+        FoodSaaSMarketingClient $foodMarketingClient,
     ): Response {
         $saleModels = MarketingSoftwareCatalogPresenter::OWN_SOFTWARE_SALE_MODELS;
 
@@ -95,6 +97,9 @@ class MarketingSoftwareDetailController extends Controller
                 : null,
             'tallersaasMarketing' => TallerSaaSSoftware::isProduct($product)
                 ? $tallerMarketingClient->payload()
+                : null,
+            'foodsaasMarketing' => FoodSaaSSoftware::isSlug($system) || FoodSaaSSoftware::isProduct($product)
+                ? $foodMarketingClient->payload()
                 : null,
         ]);
     }

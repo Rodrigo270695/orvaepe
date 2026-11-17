@@ -4,11 +4,35 @@
     --fs-wine-deep: #3a001c;
     --fs-paper: #f6efe6;
     --fs-paper-2: #fffaf4;
-    --fs-rule: #c4a574;
-    --fs-muted: #6b4a3a;
+    --fs-rule: #8a6a3b;
+    --fs-muted: #5c3a30;
+    --fs-btn: #660033;
+    --fs-btn-ink: #fffaf4;
+    --fs-btn-hover: #3a001c;
+    --fs-band: #3a001c;
+    --fs-band-card: #4a1028;
+    --fs-on-band: #f6efe6;
+    --fs-danger: #9f1239;
     background: var(--fs-paper);
     color: var(--fs-ink);
     font-family: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+}
+
+.dark .fs-landing {
+    --fs-ink: #f8efe8;
+    --fs-wine: #f3c4d4;
+    --fs-wine-deep: #f8efe8;
+    --fs-paper: #12080c;
+    --fs-paper-2: #221018;
+    --fs-rule: #d4b48a;
+    --fs-muted: #e8d4c8;
+    --fs-btn: #f3c4d4;
+    --fs-btn-ink: #1a0a10;
+    --fs-btn-hover: #ffffff;
+    --fs-band: #1a0a10;
+    --fs-band-card: #2c1220;
+    --fs-on-band: #f8efe8;
+    --fs-danger: #fecdd3;
 }
 
 .fs-landing :where(a, button) {
@@ -48,13 +72,13 @@
 }
 
 .fs-btn {
-    background: var(--fs-wine);
-    color: #fffaf4;
+    background: var(--fs-btn);
+    color: var(--fs-btn-ink);
 }
 
 .fs-btn:hover {
     transform: translateY(-1px);
-    background: var(--fs-wine-deep);
+    background: var(--fs-btn-hover);
 }
 
 .fs-btn-ghost {

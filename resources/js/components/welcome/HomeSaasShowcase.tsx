@@ -102,7 +102,7 @@ export default function HomeSaasShowcase() {
                 <Link
                     href="/software/FOODSAAS"
                     data-saas-card
-                    className="group mb-5 grid cursor-pointer overflow-hidden rounded-[1.6rem] border border-[#c4a574]/50 bg-[#f6efe6] shadow-[0_24px_70px_-32px_rgba(102,0,51,0.45)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#660033] lg:grid-cols-[1.1fr_0.9fr]"
+                    className="group mb-5 grid cursor-pointer overflow-hidden rounded-[1.6rem] border border-[#8a6a3b]/45 bg-[#fffaf4] shadow-[0_24px_70px_-32px_rgba(102,0,51,0.45)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#660033] dark:border-[#d4b48a]/35 dark:bg-[#12080c] lg:grid-cols-[1.1fr_0.9fr]"
                 >
                     <span className="flex flex-col justify-between bg-[#3a001c] p-6 text-[#f6efe6] sm:p-8">
                         <span>

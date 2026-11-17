@@ -208,6 +208,12 @@ final class SaasCatalogSku
             return 'restaurante';
         }
 
+        if (str_contains($normalized, 'multi_sede')
+            || str_contains($normalized, 'multi-sede')
+            || str_contains($normalized, 'multisede')) {
+            return 'multi_sede';
+        }
+
         if (str_contains($normalized, 'starter')) {
             return 'starter';
         }

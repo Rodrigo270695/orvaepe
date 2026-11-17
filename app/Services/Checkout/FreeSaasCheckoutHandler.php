@@ -67,7 +67,7 @@ final class FreeSaasCheckoutHandler
             'order_number' => $order->order_number,
             'redirect_url' => $redirectUrl,
             'message' => $redirectUrl !== null
-                ? 'Pedido confirmado. Te llevamos a tu clínica.'
+                ? 'Pedido confirmado. Te llevamos a tu plataforma.'
                 : 'Pedido confirmado. Revisa tu correo o WhatsApp con el acceso a tu plataforma.',
         ]);
     }

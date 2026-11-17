@@ -110,3 +110,18 @@ test('detects free and paid vetsaas plans', function (): void {
         ->and(SaasCatalogSku::isPaidVetsaasPlan($pro))->toBeTrue()
         ->and(SaasCatalogSku::isPaidVetsaasPlan($clinica))->toBeTrue();
 });
+
+test('maps foodsaas sku codes to the plan codigo foodsaas stores', function (): void {
+    $sku = new CatalogSku([
+        'sale_model' => 'saas_subscription',
+        'code' => 'FOODSAAS-MULTI-SEDE-MENSUAL',
+        'name' => 'FoodSaaS Multi-sede',
+    ]);
+
+    expect(SaasCatalogSku::isFoodsaas($sku))->toBeTrue()
+        ->and(SaasCatalogSku::normalizePlanSlug($sku, 'FOODSAAS-FREE-MENSUAL'))->toBe('free')
+        ->and(SaasCatalogSku::normalizePlanSlug($sku, 'FOODSAAS-STARTER-MENSUAL'))->toBe('starter')
+        ->and(SaasCatalogSku::normalizePlanSlug($sku, 'FOODSAAS-PRO-MENSUAL'))->toBe('pro')
+        ->and(SaasCatalogSku::normalizePlanSlug($sku, 'FOODSAAS-RESTAURANTE-MENSUAL'))->toBe('restaurante')
+        ->and(SaasCatalogSku::normalizePlanSlug($sku, 'FOODSAAS-MULTI-SEDE-MENSUAL'))->toBe('multi_sede');
+});

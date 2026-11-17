@@ -18,6 +18,7 @@ import VetSaaSLanding, {
     type VetSaaSMarketingPayload,
 } from '@/components/software/VetSaaSLanding';
 import FoodSaaSLanding from '@/components/software/foodsaas/FoodSaaSLanding';
+import type { FoodSaaSMarketing } from '@/components/software/foodsaas/types';
 import TallerSaaSLanding from '@/components/software/tallersaas/TallerSaaSLanding';
 import type { TallerSaaSMarketing } from '@/components/software/tallersaas/types';
 import GeometricBackground from '@/components/welcome/GeometricBackground';
@@ -105,6 +106,7 @@ type SoftwareDetailPageProps = {
     vetsaasShowcaseClients?: VetSaaSShowcaseClient[];
     vetsaasMarketing?: VetSaaSMarketingPayload | null;
     tallersaasMarketing?: TallerSaaSMarketing | null;
+    foodsaasMarketing?: FoodSaaSMarketing | null;
 };
 
 export default function SoftwareDetail() {
@@ -125,6 +127,7 @@ export default function SoftwareDetail() {
         vetsaasShowcaseClients = [],
         vetsaasMarketing = null,
         tallersaasMarketing = null,
+        foodsaasMarketing = null,
     } = page.props;
     const mercadoPagoEnabled = Boolean(mercadoPagoEnabledProp);
     const paypalSimulateCheckout = Boolean(paypalSimulateCheckoutProp);
@@ -902,6 +905,7 @@ export default function SoftwareDetail() {
             >
                 <FoodSaaSLanding
                     system={system}
+                    marketing={foodsaasMarketing}
                     selectedPlan={selectedPlan}
                     selectedPlanId={selectedPlanId}
                     onSelectPlanId={setSelectedPlanId}

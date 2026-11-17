@@ -7,13 +7,13 @@ type Props = {
 
 export default function ClosingCta({ whatsappHref, demoUrl }: Props) {
     return (
-        <section className="relative overflow-hidden px-5 py-20 sm:px-8" style={{ background: 'var(--fs-wine)', color: '#f6efe6' }}>
+        <section className="relative overflow-hidden px-5 py-20 sm:px-8" style={{ background: 'var(--fs-band)', color: 'var(--fs-on-band)' }}>
             <img src="/images/foodsaas/salon.jpg" alt="" className="pointer-events-none absolute inset-0 size-full object-cover opacity-25" />
             <div className="relative mx-auto flex max-w-6xl flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
                 <div className="max-w-xl">
                     <p className="font-mono text-xs uppercase tracking-[0.22em] text-[#c4a574]">ORVAE</p>
                     <h2 className="fs-display mt-4 text-4xl sm:text-6xl">Tu local empieza a operar.</h2>
-                    <p className="mt-4 font-sans text-base leading-relaxed text-[#f6efe6]/85">
+                    <p className="mt-4 font-sans text-base leading-relaxed text-[color-mix(in_srgb,var(--fs-on-band)_85%,transparent)]">
                         Activas FoodSaaS desde Orvae y entras a tu subdominio. Si prefieres verlo primero, la demo y el WhatsApp están abiertos.
                     </p>
                 </div>
@@ -21,13 +21,13 @@ export default function ClosingCta({ whatsappHref, demoUrl }: Props) {
                     <a href="#planes" className="fs-btn" style={{ background: '#f6efe6', color: '#3a001c' }}>
                         Ver planes
                     </a>
-                    <a href={demoUrl} className="fs-btn-ghost" style={{ color: '#f6efe6', borderColor: '#c4a574' }} target="_blank" rel="noopener noreferrer">
+                    <a href={demoUrl} className="fs-btn-ghost" style={{ color: 'var(--fs-on-band)', borderColor: '#c4a574' }} target="_blank" rel="noopener noreferrer">
                         Demo
                     </a>
                     <a
                         href={whatsappHref || WHATSAPP_HREF}
                         className="fs-btn-ghost"
-                        style={{ color: '#f6efe6', borderColor: '#c4a574' }}
+                        style={{ color: 'var(--fs-on-band)', borderColor: '#c4a574' }}
                         target="_blank"
                         rel="noopener noreferrer"
                     >

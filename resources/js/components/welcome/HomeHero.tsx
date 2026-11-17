@@ -115,11 +115,11 @@ export default function HomeHero() {
                     </div>
 
                     <div className="relative mx-auto w-full max-w-lg lg:max-w-none">
-                        <div className="relative aspect-[5/4] sm:aspect-[4/3]">
+                        <div className="relative aspect-[3/4] sm:aspect-[5/4]">
                             <Link
                                 href="/software/VETSAAS"
-                                className="home-hero-card home-hero-card--vet group absolute left-0 top-0 z-10 w-[78%] overflow-hidden rounded-2xl border border-white/20 shadow-[0_24px_60px_-24px_rgba(0,80,60,0.55)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                                style={{ '--home-hero-tilt': '-4deg' } as CSSProperties}
+                                className="home-hero-card home-hero-card--vet group absolute left-0 top-0 z-10 w-[62%] overflow-hidden rounded-2xl border border-black/10 shadow-[0_24px_60px_-24px_rgba(0,80,60,0.55)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:border-white/20"
+                                style={{ '--home-hero-tilt': '-3deg' } as CSSProperties}
                             >
                                 <img
                                     src="/images/vetsaas-hero-pets.webp"
@@ -129,30 +129,34 @@ export default function HomeHero() {
                                     height={400}
                                     fetchPriority="high"
                                 />
-                                <span className="absolute bottom-3 left-3 rounded-md bg-[#015743] px-2.5 py-1 text-[11px] font-semibold text-white">
-                                    VetSaaS · clínicas
+                                <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-3 pb-3 pt-10">
+                                    <span className="inline-flex min-h-7 items-center rounded-md bg-white px-2.5 text-[11px] font-semibold text-[#015743] shadow-sm">
+                                        VetSaaS · clínicas
+                                    </span>
                                 </span>
                             </Link>
                             <Link
                                 href="/software/TALLERSAAS"
-                                className="home-hero-card home-hero-card--taller group absolute bottom-0 right-0 z-20 w-[78%] overflow-hidden rounded-2xl border border-white/15 shadow-[0_24px_60px_-24px_rgba(234,88,12,0.4)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                                style={{ '--home-hero-tilt': '3deg' } as CSSProperties}
+                                className="home-hero-card home-hero-card--taller group absolute right-0 top-[7%] z-20 w-[58%] overflow-hidden rounded-2xl border border-black/10 shadow-[0_24px_60px_-24px_rgba(234,88,12,0.4)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:border-white/15"
+                                style={{ '--home-hero-tilt': '2.5deg' } as CSSProperties}
                             >
                                 <img
                                     src="/images/tallersaas/hero.jpg"
                                     alt="TallerSaaS, software para talleres mecánicos y car wash"
-                                    className="aspect-[16/10] w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                                    className="aspect-[16/10] w-full object-cover object-top transition-transform duration-500 group-hover:scale-[1.03]"
                                     width={640}
                                     height={400}
                                 />
-                                <span className="absolute bottom-3 left-3 rounded-md bg-[#ea580c] px-2.5 py-1 text-[11px] font-semibold text-white">
-                                    TallerSaaS · talleres
+                                <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-3 pb-3 pt-10">
+                                    <span className="inline-flex min-h-7 items-center rounded-md bg-white px-2.5 text-[11px] font-semibold text-[#9a3412] shadow-sm">
+                                        TallerSaaS · talleres
+                                    </span>
                                 </span>
                             </Link>
                             <Link
                                 href="/software/FOODSAAS"
-                                className="home-hero-card home-hero-card--food group absolute bottom-4 left-6 z-30 w-[58%] overflow-hidden rounded-2xl border border-white/20 shadow-[0_18px_40px_-18px_rgba(102,0,51,0.65)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                                style={{ '--home-hero-tilt': '-2deg' } as CSSProperties}
+                                className="home-hero-card home-hero-card--food group absolute bottom-0 left-[6%] z-30 w-[56%] overflow-hidden rounded-2xl border border-black/10 shadow-[0_18px_40px_-18px_rgba(102,0,51,0.65)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:border-white/20"
+                                style={{ '--home-hero-tilt': '-1.5deg' } as CSSProperties}
                             >
                                 <img
                                     src="/images/foodsaas/carta.jpg"
@@ -161,8 +165,10 @@ export default function HomeHero() {
                                     width={640}
                                     height={400}
                                 />
-                                <span className="absolute bottom-3 left-3 rounded-md bg-[#660033] px-2.5 py-1 text-[11px] font-semibold text-white">
-                                    FoodSaaS · restaurantes
+                                <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent px-3 pb-3 pt-10">
+                                    <span className="inline-flex min-h-7 items-center rounded-md bg-white px-2.5 text-[11px] font-semibold text-[#660033] shadow-sm">
+                                        FoodSaaS · restaurantes
+                                    </span>
                                 </span>
                             </Link>
                         </div>

@@ -23,10 +23,10 @@ return [
 
     'openai' => [
         'api_key' => env('OPENAI_API_KEY'),
-        'model' => env('SALESHUB_OPENAI_MODEL', 'gpt-4o-mini'),
+        'model' => env('SALESHUB_OPENAI_MODEL', env('OPENAI_MODEL', 'gpt-4o-mini')),
         'max_tokens' => (int) env('SALESHUB_MAX_TOKENS', 450),
         'temperature' => (float) env('SALESHUB_TEMPERATURE', 0.6),
-        'whisper_model' => env('SALESHUB_WHISPER_MODEL', 'whisper-1'),
+        'whisper_model' => env('SALESHUB_WHISPER_MODEL', env('OPENAI_TRANSCRIBE_MODEL', 'whisper-1')),
         'tts_model' => env('SALESHUB_TTS_MODEL', 'tts-1'),
         'tts_voice' => env('SALESHUB_TTS_VOICE', 'nova'),
     ],
