@@ -32,7 +32,7 @@ export type FoodSaaSMarketingPlan = {
 
 export type FoodSaaSMarketing = {
     plans: FoodSaaSMarketingPlan[];
-    comparison: { key: string; label: string; values: Record<string, string> }[];
+    comparison: { key: string; label: string; group?: string; values: Record<string, string> }[];
 };
 
 export type FoodSaaSLandingProps = FoodSaaSPurchaseProps & {

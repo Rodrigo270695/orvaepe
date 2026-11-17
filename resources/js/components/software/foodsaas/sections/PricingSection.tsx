@@ -1,5 +1,5 @@
 import { Check } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 
 import { usePlanTiers } from '@/components/software/vetsaas/pricing/usePlanTiers';
 import type { SoftwarePricingPlan } from '@/marketplace/softwareCatalog';
@@ -25,36 +25,11 @@ function soles(value: number | null): string {
     }).format(value);
 }
 
-const LIMIT_ROWS: Array<[string, string]> = [
-    ['max_sedes', 'Sedes'],
-    ['max_usuarios', 'Usuarios'],
-    ['max_mesas', 'Mesas'],
-    ['max_productos', 'Productos'],
-    ['max_pedidos_mes', 'Pedidos / mes'],
-    ['modulo_delivery', 'Delivery'],
-    ['modulo_reservas', 'Reservas'],
-    ['boletas_electronicas', 'Boleta SUNAT'],
-    ['facturas_electronicas', 'Factura SUNAT'],
-    ['max_comprobantes_mes', 'Comprobantes / mes'],
-];
-
-function featureValue(value: number | boolean | string | null | undefined): string {
-    if (typeof value === 'boolean') {
-        return value ? 'Sí' : 'No';
-    }
-    if (typeof value === 'number') {
-        if (value < 0) {
-            return 'Ilimitado';
-        }
-        if (value === 0) {
-            return 'No incluye';
-        }
-
-        return new Intl.NumberFormat('es-PE').format(value);
-    }
-
-    return value == null || value === '' ? '—' : String(value);
-}
+const GROUP_LABELS: Record<string, string> = {
+    limites: 'Límites',
+    modulos: 'Módulos',
+    facturacion: 'Facturación',
+};
 
 function skuFor(plans: SoftwarePricingPlan[], codigo: string, period: 'monthly' | 'annual'): SoftwarePricingPlan | undefined {
     const needle = codigo.toLowerCase();
@@ -76,6 +51,7 @@ function FoodPlanCard({
     active,
     featured,
     linked,
+    rows,
     onChoose,
 }: {
     plan: FoodSaaSMarketingPlan;
@@ -83,6 +59,7 @@ function FoodPlanCard({
     active: boolean;
     featured: boolean;
     linked: boolean;
+    rows: { key: string; label: string; value: string }[];
     onChoose: () => void;
 }) {
     const annual = period === 'annual' && plan.precio_anual != null;
@@ -100,28 +77,17 @@ function FoodPlanCard({
                     boxShadow: active ? '0 0 0 2px var(--fs-wine)' : undefined,
                 }}
             >
-                <div className="flex items-start justify-between gap-2">
-                    <h3 className="fs-display text-2xl">{plan.nombre}</h3>
+                <div className="min-h-7">
                     {plan.badge ? (
-                        <span
-                            className="shrink-0 rounded-full px-2 py-1 font-sans text-[10px] font-semibold uppercase tracking-wide"
-                            style={{
-                                background: featured ? 'var(--fs-on-band)' : 'transparent',
-                                color: featured ? 'var(--fs-band)' : 'var(--fs-wine)',
-                                border: featured ? 'none' : '1px solid var(--fs-rule)',
-                            }}
-                        >
+                        <span className="inline-flex max-w-full items-center rounded-full bg-[#fffaf4] px-2.5 py-1 font-sans text-[11px] font-bold uppercase tracking-[0.08em] text-[#3a001c]">
                             {plan.badge}
                         </span>
                     ) : null}
                 </div>
-                {plan.descripcion ? (
-                    <p className="mt-2 min-h-10 font-sans text-sm leading-snug opacity-80">{plan.descripcion}</p>
-                ) : (
-                    <p className="mt-2 min-h-10 font-sans text-sm leading-snug opacity-80">
-                        {free ? 'Para conocer el sistema sin compromiso.' : 'Salón, cocina y caja listos para abrir el turno.'}
-                    </p>
-                )}
+                <h3 className="fs-display mt-3 text-3xl leading-none">{plan.nombre}</h3>
+                <p className="mt-2 line-clamp-3 min-h-[3.75rem] font-sans text-sm leading-snug opacity-80">
+                    {plan.descripcion || (free ? 'Para conocer el sistema sin compromiso.' : 'Salón, cocina y caja listos para abrir el turno.')}
+                </p>
                 <p className="mt-5 font-sans text-3xl font-semibold tabular-nums">
                     {free ? 'Gratis' : soles(amount)}
                     {free ? null : <span className="ml-1 text-sm font-medium opacity-75">{annual ? '/ año' : '/ mes'}</span>}
@@ -152,14 +118,16 @@ function FoodPlanCard({
                         'Elegir plan'
                     )}
                 </button>
-                <dl className="mt-5 border-t border-current/15 text-sm">
-                    {LIMIT_ROWS.map(([key, label]) => (
-                        <div key={key} className="flex items-center justify-between gap-3 border-b border-current/10 py-2">
-                            <dt className="opacity-75">{label}</dt>
-                            <dd className="font-semibold tabular-nums">{featureValue(plan.features[key])}</dd>
-                        </div>
-                    ))}
-                </dl>
+                {rows.length > 0 ? (
+                    <dl className="mt-5 border-t border-current/15 text-sm">
+                        {rows.map((row) => (
+                            <div key={row.key} className="flex items-baseline justify-between gap-3 border-b border-current/10 py-2">
+                                <dt className="opacity-75">{row.label}</dt>
+                                <dd className="text-right font-semibold tabular-nums">{row.value}</dd>
+                            </div>
+                        ))}
+                    </dl>
+                ) : null}
                 {linked ? null : (
                     <p className="mt-3 font-sans text-[11px] uppercase tracking-[0.14em] opacity-70">Actívalo con ventas</p>
                 )}
@@ -254,7 +222,7 @@ function RemotePlans({
                     </div>
                 ) : null}
 
-                <ul className="mt-12 grid items-stretch gap-4 sm:grid-cols-2 xl:grid-cols-5">
+                <ul className="mt-12 grid items-stretch gap-4 md:grid-cols-2 xl:grid-cols-3">
                     {marketing.plans.map((plan) => (
                         <FoodPlanCard
                             key={plan.codigo}
@@ -263,6 +231,13 @@ function RemotePlans({
                             active={activeCodigo === plan.codigo}
                             featured={plan.codigo === 'pro'}
                             linked={Boolean(skuFor(plans, plan.codigo, period))}
+                            rows={marketing.comparison
+                                .filter((row) => (row.group ?? '') === '' || row.group === 'limites')
+                                .map((row) => ({
+                                    key: row.key,
+                                    label: row.label,
+                                    value: row.values[plan.codigo] ?? '—',
+                                }))}
                             onChoose={() => choose(plan.codigo)}
                         />
                     ))}
@@ -283,16 +258,36 @@ function RemotePlans({
                                 </tr>
                             </thead>
                             <tbody>
-                                {marketing.comparison.map((row) => (
-                                    <tr key={row.key}>
-                                        <th className="border-b border-[var(--fs-rule)] px-3 py-3 text-left font-medium text-[var(--fs-muted)]">{row.label}</th>
-                                        {marketing.plans.map((plan) => (
-                                            <td key={plan.codigo} className="border-b border-[var(--fs-rule)] px-3 py-3 text-[var(--fs-ink)]">
-                                                {row.values[plan.codigo] ?? '—'}
-                                            </td>
-                                        ))}
-                                    </tr>
-                                ))}
+                                {marketing.comparison.map((row, index) => {
+                                    const group = row.group ?? '';
+                                    const previous = marketing.comparison[index - 1]?.group ?? '';
+                                    const showGroup = group !== '' && group !== previous;
+
+                                    return (
+                                        <Fragment key={row.key}>
+                                            {showGroup ? (
+                                                <tr>
+                                                    <th
+                                                        colSpan={marketing.plans.length + 1}
+                                                        className="bg-[var(--fs-paper)] px-3 pb-2 pt-6 text-left font-mono text-[11px] uppercase tracking-[0.16em] text-[var(--fs-wine)]"
+                                                    >
+                                                        {GROUP_LABELS[group] ?? group}
+                                                    </th>
+                                                </tr>
+                                            ) : null}
+                                            <tr>
+                                                <th className="sticky left-0 border-b border-[var(--fs-rule)] bg-[var(--fs-paper-2)] px-3 py-3 text-left font-medium text-[var(--fs-muted)]">
+                                                    {row.label}
+                                                </th>
+                                                {marketing.plans.map((plan) => (
+                                                    <td key={plan.codigo} className="border-b border-[var(--fs-rule)] px-3 py-3 text-[var(--fs-ink)]">
+                                                        {row.values[plan.codigo] ?? '—'}
+                                                    </td>
+                                                ))}
+                                            </tr>
+                                        </Fragment>
+                                    );
+                                })}
                             </tbody>
                         </table>
                     </div>

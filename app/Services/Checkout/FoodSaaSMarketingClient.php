@@ -14,24 +14,35 @@ use Illuminate\Support\Facades\Log;
  */
 final class FoodSaaSMarketingClient
 {
-    private const CACHE_KEY = 'foodsaas.marketing_payload';
+    private const CACHE_KEY = 'foodsaas.marketing_payload.v2';
 
     private const LAST_GOOD_KEY = 'foodsaas.marketing_last_good';
 
     private const TTL_SECONDS = 600;
 
-    /** Filas de la tabla. Delivery, reservas, WhatsApp y SUNAT dependen del plan. */
-    private const COMPARISON_FEATURES = [
+    /** Solo si la API aún no manda `label`. El valor siempre sale del feature del plan. */
+    private const FEATURE_LABELS = [
         'max_sedes' => 'Sedes',
         'max_usuarios' => 'Usuarios',
-        'max_mesas' => 'Mesas',
         'max_productos' => 'Productos en carta',
+        'max_mesas' => 'Mesas',
         'max_pedidos_mes' => 'Pedidos / mes',
         'modulo_delivery' => 'Delivery',
         'modulo_reservas' => 'Reservas',
+        'modulo_reportes' => 'Reportes',
+        'modulo_recetas' => 'Recetas',
+        'modulo_compras' => 'Compras',
+        'modulo_ofertas' => 'Ofertas',
         'modulo_whatsapp' => 'WhatsApp',
+        'multi_almacen' => 'Varios almacenes',
+        'franquicia_consolidado' => 'Consolidado de franquicia',
+        'abastecimiento_central' => 'Abastecimiento central',
+        'integraciones_delivery' => 'Integraciones de delivery',
         'boletas_electronicas' => 'Boleta SUNAT',
         'facturas_electronicas' => 'Factura SUNAT',
+        'guias_remision' => 'Guías de remisión',
+        'notas_credito' => 'Notas de crédito',
+        'notas_debito' => 'Notas de débito',
         'max_comprobantes_mes' => 'Comprobantes SUNAT / mes',
     ];
 
@@ -117,13 +128,32 @@ final class FoodSaaSMarketingClient
             return null;
         }
 
+        $catalog = is_array($remote['feature_catalog'] ?? null) ? $remote['feature_catalog'] : [];
+        $order = array_keys($catalog);
+        if ($order === []) {
+            $order = array_keys($plans[0]['features']);
+        }
+
         $comparison = [];
-        foreach (self::COMPARISON_FEATURES as $feature => $label) {
+        foreach ($order as $feature) {
+            if (! is_string($feature) || $feature === '') {
+                continue;
+            }
+            $meta = is_array($catalog[$feature] ?? null) ? $catalog[$feature] : [];
+            $label = trim((string) ($meta['label'] ?? ''));
+            if ($label === '') {
+                $label = self::FEATURE_LABELS[$feature] ?? str_replace('_', ' ', $feature);
+            }
             $values = [];
             foreach ($plans as $plan) {
                 $values[$plan['codigo']] = self::formatValue($plan['features'][$feature] ?? null);
             }
-            $comparison[] = ['key' => $feature, 'label' => $label, 'values' => $values];
+            $comparison[] = [
+                'key' => $feature,
+                'label' => $label,
+                'group' => (string) ($meta['group'] ?? ''),
+                'values' => $values,
+            ];
         }
 
         return ['plans' => $plans, 'comparison' => $comparison];

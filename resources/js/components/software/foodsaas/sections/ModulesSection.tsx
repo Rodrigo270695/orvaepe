@@ -1,4 +1,5 @@
 import { MENU } from '../data';
+import FoodSaaSReveal from '../FoodSaaSReveal';
 
 export default function ModulesSection() {
     return (
@@ -12,8 +13,9 @@ export default function ModulesSection() {
                     No es un POS con un módulo de cocina pegado. Es el recorrido del local, y cada plan abre los platos que tu casa necesita.
                 </p>
                 <div className="mt-14 grid gap-10 lg:grid-cols-3">
-                    {MENU.map((column) => (
-                        <section key={column.course}>
+                    {MENU.map((column, index) => (
+                        <FoodSaaSReveal key={column.course} delay={index * 0.08}>
+                        <section>
                             <h3 className="fs-display text-3xl text-[var(--fs-wine)]">{column.course}</h3>
                             <div className="fs-rule mt-4" />
                             <ul className="mt-2">
@@ -25,6 +27,7 @@ export default function ModulesSection() {
                                 ))}
                             </ul>
                         </section>
+                        </FoodSaaSReveal>
                     ))}
                 </div>
             </div>

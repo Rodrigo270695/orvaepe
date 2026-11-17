@@ -1,4 +1,5 @@
 import { COURSES } from '../data';
+import FoodSaaSReveal from '../FoodSaaSReveal';
 
 export default function ServiceLine() {
     return (
@@ -11,6 +12,7 @@ export default function ServiceLine() {
                 <ol className="mt-12 grid gap-px overflow-hidden rounded-3xl bg-[#c4a574]/30 sm:grid-cols-2 lg:grid-cols-4">
                     {COURSES.map((course) => (
                         <li key={course.index} style={{ background: 'var(--fs-band-card)' }}>
+                        <FoodSaaSReveal delay={Number(course.index) * 0.04}>
                             {course.image ? (
                                 <img src={course.image} alt={course.imageAlt} className="aspect-[16/10] w-full object-cover" />
                             ) : null}
@@ -19,6 +21,7 @@ export default function ServiceLine() {
                                 <h3 className="fs-display mt-3 text-3xl">{course.name}</h3>
                                 <p className="mt-2 font-sans text-sm leading-relaxed text-[color-mix(in_srgb,var(--fs-on-band)_82%,transparent)]">{course.detail}</p>
                             </div>
+                        </FoodSaaSReveal>
                         </li>
                     ))}
                 </ol>

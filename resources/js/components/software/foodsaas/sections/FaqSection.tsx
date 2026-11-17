@@ -1,4 +1,5 @@
 import { FAQ } from '../data';
+import FoodSaaSReveal from '../FoodSaaSReveal';
 
 export default function FaqSection() {
     return (
@@ -11,8 +12,9 @@ export default function FaqSection() {
                     </h2>
                 </div>
                 <div>
-                    {FAQ.map((item) => (
-                        <details key={item.q} className="group border-b border-[#c4a574]/70 py-4">
+                    {FAQ.map((item, index) => (
+                        <FoodSaaSReveal key={item.q} delay={index * 0.05}>
+                        <details className="group border-b border-[#c4a574]/70 py-4">
                             <summary className="cursor-pointer list-none font-sans text-base font-semibold text-[var(--fs-ink)] [&::-webkit-details-marker]:hidden">
                                 <span className="flex items-start justify-between gap-4">
                                     {item.q}
@@ -26,6 +28,7 @@ export default function FaqSection() {
                             </summary>
                             <p className="mt-3 max-w-xl font-sans text-sm leading-relaxed text-[var(--fs-muted)]">{item.a}</p>
                         </details>
+                        </FoodSaaSReveal>
                     ))}
                 </div>
             </div>
