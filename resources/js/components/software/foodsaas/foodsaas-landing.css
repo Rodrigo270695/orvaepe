@@ -94,6 +94,13 @@
     outline-offset: 3px;
 }
 
+.fs-btn:disabled,
+.fs-btn-ghost:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+    transform: none;
+}
+
 .fs-ticket {
     background:
         radial-gradient(circle at left, transparent 12px, var(--fs-paper-2) 13px) left / 18px 100% repeat-y,

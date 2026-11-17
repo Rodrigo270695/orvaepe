@@ -51,7 +51,7 @@ export function tierKeyFromPlan(plan: SoftwarePricingPlan): string {
     if (code !== '') {
         return code
             .replace(/-?(mensual|anual|monthly|annual)$/i, '')
-            .replace(/^(vetsaas|saas|orvae)-/i, '')
+            .replace(/^(vetsaas|foodsaas|food-saas|saas|orvae)-/i, '')
             .trim();
     }
 

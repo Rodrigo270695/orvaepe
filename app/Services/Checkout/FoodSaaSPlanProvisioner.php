@@ -91,7 +91,7 @@ class FoodSaaSPlanProvisioner
         $tenantSlug = $this->resolveTenantSlug($tenantName, $user->email);
         $metadata = is_array($sku->metadata) ? $sku->metadata : [];
         $forcedSlug = $metadata['foodsaas_tenant_slug'] ?? null;
-        if (is_string($forcedSlug) && preg_match('/^[a-z0-9\-]{3,60}$/', strtolower(trim($forcedSlug))) {
+        if (is_string($forcedSlug) && preg_match('/^[a-z0-9\-]{3,60}$/', strtolower(trim($forcedSlug)))) {
             $tenantSlug = strtolower(trim($forcedSlug));
         }
         $temporaryPassword = Str::password(16);
