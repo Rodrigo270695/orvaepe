@@ -48,7 +48,7 @@ final class FoodSaaSSoftware
             'demoUrl' => 'https://demo.foodsaas.orvae.pe/login',
             'demoUser' => 'demo@foodsaas.pe',
             'demoPassword' => 'demo1234',
-            'images' => ['/images/foodsaas/cover.svg'],
+            'images' => ['/images/foodsaas/hero.jpg'],
         ];
     }
 }

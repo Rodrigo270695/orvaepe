@@ -7,8 +7,9 @@ type Props = {
 
 export default function ClosingCta({ whatsappHref, demoUrl }: Props) {
     return (
-        <section className="px-5 py-20 sm:px-8" style={{ background: 'var(--fs-wine)', color: '#f6efe6' }}>
-            <div className="mx-auto flex max-w-6xl flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+        <section className="relative overflow-hidden px-5 py-20 sm:px-8" style={{ background: 'var(--fs-wine)', color: '#f6efe6' }}>
+            <img src="/images/foodsaas/salon.jpg" alt="" className="pointer-events-none absolute inset-0 size-full object-cover opacity-25" />
+            <div className="relative mx-auto flex max-w-6xl flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
                 <div className="max-w-xl">
                     <p className="font-mono text-xs uppercase tracking-[0.22em] text-[#c4a574]">ORVAE</p>
                     <h2 className="fs-display mt-4 text-4xl sm:text-6xl">Tu local empieza a operar.</h2>

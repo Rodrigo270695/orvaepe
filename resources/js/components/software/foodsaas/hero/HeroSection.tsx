@@ -42,6 +42,14 @@ export default function HeroSection({ demoUrl, demoUser, demoPassword }: Props) 
                     </p>
                 </div>
 
+                <div className="overflow-hidden rounded-[1.6rem] border border-[#c4a574]/40 shadow-[0_24px_50px_-28px_rgba(58,0,28,0.45)]">
+                    <img
+                        src="/images/foodsaas/hero.jpg"
+                        alt="Mesa de un restaurante peruano: lomo saltado y chicha morada"
+                        className="aspect-[16/10] w-full object-cover"
+                        width={960}
+                        height={600}
+                    />
                 <aside className="fs-ticket relative px-8 py-8 sm:px-10" aria-label="Recorrido del servicio">
                     <p className="fs-kicker">Comanda</p>
                     <p className="fs-display mt-3 text-4xl text-[var(--fs-wine)]">Mesa 12</p>
@@ -61,6 +69,7 @@ export default function HeroSection({ demoUrl, demoUser, demoPassword }: Props) 
                         ))}
                     </ol>
                 </aside>
+                </div>
             </div>
         </section>
     );

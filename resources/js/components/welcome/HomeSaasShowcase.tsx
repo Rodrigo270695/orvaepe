@@ -120,21 +120,12 @@ export default function HomeSaasShowcase() {
                             <ArrowRight className="size-4" aria-hidden />
                         </span>
                     </span>
-                    <span className="grid content-center gap-3 p-6 sm:p-8" aria-hidden>
-                        {[
-                            ['01', 'Salón', 'Mesas y cuentas'],
-                            ['02', 'Cocina', 'Comanda en vivo'],
-                            ['03', 'Caja', 'Turno y medios'],
-                            ['04', 'SUNAT', 'Boleta al cobrar'],
-                        ].map(([index, name, note]) => (
-                            <span key={index} className="flex items-baseline justify-between gap-4 border-b border-[#c4a574]/60 pb-2 font-serif text-[#3a001c]">
-                                <span>
-                                    <span className="mr-3 font-mono text-[10px] tracking-widest text-[#c4a574]">{index}</span>
-                                    {name}
-                                </span>
-                                <span className="font-sans text-xs text-[#6b4a3a]">{note}</span>
-                            </span>
-                        ))}
+                    <span className="relative min-h-64">
+                        <img
+                            src="/images/foodsaas/hero.jpg"
+                            alt="Salón de un restaurante que opera con FoodSaaS"
+                            className="absolute inset-0 size-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                        />
                     </span>
                 </Link>
 

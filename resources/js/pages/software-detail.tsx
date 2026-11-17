@@ -481,7 +481,7 @@ export default function SoftwareDetail() {
                 'Delivery y reservas',
                 'Facturación SUNAT',
             ];
-            base.image = `${seo.siteUrl}/images/foodsaas/cover.svg`;
+            base.image = `${seo.siteUrl}/images/foodsaas/hero.jpg`;
         }
 
         const first = system.pricingPlans[0];
@@ -851,7 +851,7 @@ export default function SoftwareDetail() {
                 description={marketingSeo.foodsaas.description}
                 canonicalPath={`/software/${system.slug}`}
                 ogType="product"
-                ogImage="/images/foodsaas/cover.svg"
+                ogImage="/images/foodsaas/hero.jpg"
                 ogImageAlt="Software para restaurantes FoodSaaS — salón, cocina, caja y SUNAT"
                 keywords={marketingSeo.foodsaas.keywords}
                 breadcrumbs={[

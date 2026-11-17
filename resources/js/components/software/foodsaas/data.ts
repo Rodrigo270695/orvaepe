@@ -13,21 +13,29 @@ export const COURSES = [
         index: '01',
         name: 'Salón',
         detail: 'Mesas, cuentas y el pedido que sale de la mesa.',
+        image: '/images/foodsaas/salon.jpg',
+        imageAlt: 'Salón de un restaurante con mesas puestas',
     },
     {
         index: '02',
         name: 'Cocina',
         detail: 'La comanda llega sola. El plato se marca listo.',
+        image: '/images/foodsaas/cocina.jpg',
+        imageAlt: 'Pase de cocina con lomo saltado y ceviche',
     },
     {
         index: '03',
         name: 'Caja',
         detail: 'Turno, medios de pago y el ticket del día.',
+        image: '/images/foodsaas/caja.jpg',
+        imageAlt: 'Caja del restaurante con tablet, efectivo y tarjeta',
     },
     {
         index: '04',
         name: 'SUNAT',
         detail: 'Boleta o factura en el mismo cobro.',
+        image: '',
+        imageAlt: '',
     },
 ] as const;
 

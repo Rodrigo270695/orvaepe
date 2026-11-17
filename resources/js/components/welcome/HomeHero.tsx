@@ -151,16 +151,19 @@ export default function HomeHero() {
                             </Link>
                             <Link
                                 href="/software/FOODSAAS"
-                                className="home-hero-card home-hero-card--food absolute bottom-6 left-8 z-30 w-[46%] rounded-2xl border border-[#c4a574]/50 bg-[#f6efe6] px-4 py-3 shadow-[0_18px_40px_-20px_rgba(102,0,51,0.55)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                className="home-hero-card home-hero-card--food group absolute bottom-4 left-6 z-30 w-[58%] overflow-hidden rounded-2xl border border-white/20 shadow-[0_18px_40px_-18px_rgba(102,0,51,0.65)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                                 style={{ '--home-hero-tilt': '-2deg' } as CSSProperties}
                             >
-                                <span className="block font-mono text-[10px] uppercase tracking-[0.18em] text-[#660033]">
-                                    Comanda
+                                <img
+                                    src="/images/foodsaas/carta.jpg"
+                                    alt="FoodSaaS, software para restaurantes"
+                                    className="aspect-[16/10] w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                                    width={640}
+                                    height={400}
+                                />
+                                <span className="absolute bottom-3 left-3 rounded-md bg-[#660033] px-2.5 py-1 text-[11px] font-semibold text-white">
+                                    FoodSaaS · restaurantes
                                 </span>
-                                <span className="mt-1 block font-display text-lg font-bold leading-none text-[#3a001c]">
-                                    FoodSaaS
-                                </span>
-                                <span className="mt-1 block text-[11px] text-[#6b4a3a]">Salón · cocina · caja</span>
                             </Link>
                         </div>
                     </div>

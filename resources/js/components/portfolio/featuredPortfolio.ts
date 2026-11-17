@@ -36,7 +36,7 @@ const FALLBACK: FeaturedSaasCard[] = [
         hint: 'Restaurantes',
         description: 'Salón, cocina, caja y SUNAT en el subdominio de tu local.',
         href: '/software/FOODSAAS',
-        image: '/images/foodsaas/cover.svg',
+        image: '/images/foodsaas/hero.jpg',
         accent: '#660033',
     },
 ];
